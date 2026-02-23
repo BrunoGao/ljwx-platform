@@ -65,13 +65,13 @@ fi
 
 # ── Check 3: All concrete scope files exist ──
 if [[ -f "$PHASE_BRIEF" ]]; then
-  SCOPE_BLOCK=$(sed -n '/^scope:/,/^[a-z]/p' "$PHASE_BRIEF" | grep '^\s*-' || true)
+  SCOPE_BLOCK=$(sed -n '/^scope:/,/^---$/p' "$PHASE_BRIEF" | grep '^[[:space:]]*-' | grep -v '^---$' || true)
   if [[ -z "$SCOPE_BLOCK" ]]; then
     echo "  WARN: No scope entries found in $PHASE_BRIEF"
   else
     while IFS= read -r line; do
       # Extract path from "  - \"path\"" or "  - path"
-      ENTRY=$(echo "$line" | sed 's/^\s*-\s*//; s/^"//; s/"$//')
+      ENTRY=$(echo "$line" | sed 's/^[[:space:]]*-[[:space:]]*//' | sed 's/^"//; s/"$//')
       # Skip glob patterns
       if [[ "$ENTRY" == *"*"* || "$ENTRY" == *"**"* ]]; then
         continue
