@@ -21,7 +21,7 @@
 
 ## Current Phase
 
-Phase: 1 (Dict and Config) — 尚未开始
+Phase: 2 (Dict and Config) — 尚未开始
 
 ## 硬规则（违反任何一篇为 FAIL）
 
