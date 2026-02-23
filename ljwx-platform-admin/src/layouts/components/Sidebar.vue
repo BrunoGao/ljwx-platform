@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import type { Component } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+import { Grid, Odometer } from '@element-plus/icons-vue'
 import { useAppStore } from '@/stores/app'
 
 const appStore = useAppStore()
@@ -12,12 +14,12 @@ const isCollapsed = computed(() => appStore.sidebarCollapsed)
 interface MenuItem {
   name: string
   path: string
-  icon: string
+  icon: Component
   title: string
 }
 
 const menuItems: MenuItem[] = [
-  { name: 'Dashboard', path: '/dashboard', icon: 'Odometer', title: '仪表盘' },
+  { name: 'Dashboard', path: '/dashboard', icon: Odometer, title: '仪表盘' },
 ]
 
 function isActive(path: string): boolean {

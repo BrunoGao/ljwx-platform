@@ -3,6 +3,7 @@ import { ref, reactive } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import type { FormInstance, FormRules } from 'element-plus'
 import { ElMessage } from 'element-plus'
+import { Grid, User, Lock } from '@element-plus/icons-vue'
 import { useUserStore } from '@/stores/user'
 import type { LoginDTO } from '@ljwx/shared'
 
@@ -75,7 +76,7 @@ async function handleLogin(): Promise<void> {
             v-model="form.username"
             placeholder="请输入用户名"
             size="large"
-            :prefix-icon="'User'"
+            :prefix-icon="User"
             clearable
           />
         </el-form-item>
@@ -86,7 +87,7 @@ async function handleLogin(): Promise<void> {
             type="password"
             placeholder="请输入密码"
             size="large"
-            :prefix-icon="'Lock'"
+            :prefix-icon="Lock"
             show-password
           />
         </el-form-item>

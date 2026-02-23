@@ -1,5 +1,7 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
+import type { Component } from 'vue'
+import { View, User, Timer, Warning } from '@element-plus/icons-vue'
 import { useUserStore } from '@/stores/user'
 import dayjs from 'dayjs'
 
@@ -10,17 +12,32 @@ function updateTime(): void {
   currentTime.value = dayjs().format('YYYY-MM-DD HH:mm:ss')
 }
 
+let timer: ReturnType<typeof setInterval> | null = null
+
 onMounted(() => {
   updateTime()
-  const timer = setInterval(updateTime, 1000)
-  window.addEventListener('beforeunload', () => clearInterval(timer))
+  timer = setInterval(updateTime, 1000)
 })
 
-const stats = ref([
-  { label: '今日访问', value: '0', icon: 'View', color: '#1890ff' },
-  { label: '在线用户', value: '0', icon: 'User', color: '#52c41a' },
-  { label: '系统任务', value: '0', icon: 'Timer', color: '#faad14' },
-  { label: '异常告警', value: '0', icon: 'Warning', color: '#ff4d4f' },
+onUnmounted(() => {
+  if (timer !== null) {
+    clearInterval(timer)
+    timer = null
+  }
+})
+
+interface StatItem {
+  label: string
+  value: string
+  icon: Component
+  color: string
+}
+
+const stats = ref<StatItem[]>([
+  { label: '今日访问', value: '0', icon: View, color: '#1890ff' },
+  { label: '在线用户', value: '0', icon: User, color: '#52c41a' },
+  { label: '系统任务', value: '0', icon: Timer, color: '#faad14' },
+  { label: '异常告警', value: '0', icon: Warning, color: '#ff4d4f' },
 ])
 </script>
 

@@ -3,6 +3,16 @@ import type { RouteRecordRaw } from 'vue-router'
 import NProgress from 'nprogress'
 import { useUserStore } from '@/stores/user'
 
+// Augment vue-router RouteMeta for type-safe route metadata
+declare module 'vue-router' {
+  interface RouteMeta {
+    requiresAuth?: boolean
+    title?: string
+    icon?: string
+    hidden?: boolean
+  }
+}
+
 const routes: RouteRecordRaw[] = [
   {
     path: '/login',

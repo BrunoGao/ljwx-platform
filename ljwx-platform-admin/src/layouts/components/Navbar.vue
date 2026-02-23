@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessageBox } from 'element-plus'
+import { User, ArrowDown, SwitchButton, Fold, Expand } from '@element-plus/icons-vue'
 import { useUserStore } from '@/stores/user'
 import { useAppStore } from '@/stores/app'
 
@@ -16,7 +17,7 @@ function handleToggleSidebar(): void {
   appStore.toggleSidebar()
 }
 
-async function handleLogout(): Promise<void> {
+async function handleLogout(_command?: unknown): Promise<void> {
   try {
     await ElMessageBox.confirm('确定要退出登录吗？', '提示', {
       confirmButtonText: '确定',
