@@ -16,17 +16,22 @@ if [[ "$TARGET_BACKEND" != "true" || "$TARGET_FRONTEND" != "true" ]]; then
 fi
 
 MAIN_BRANCH=$(git branch --show-current)
-BE_BRANCH="phase-${PHASE_NUM}-backend"
-FE_BRANCH="phase-${PHASE_NUM}-frontend"
-BE_WORKTREE="/tmp/ljwx-worktree-be-${PHASE_NUM}"
-FE_WORKTREE="/tmp/ljwx-worktree-fe-${PHASE_NUM}"
+# Record current HEAD before any merges — used for precise squash
+PRE_MERGE_HEAD=$(git rev-parse HEAD)
+
+BE_WT="phase${PHASE_NUM}-be"
+FE_WT="phase${PHASE_NUM}-fe"
+BE_BRANCH="worktree-${BE_WT}"
+FE_BRANCH="worktree-${FE_WT}"
+BE_DIR=".claude/worktrees/${BE_WT}"
+FE_DIR=".claude/worktrees/${FE_WT}"
 
 # ── Cleanup on exit ───────────────────────────────────────
 cleanup() {
   echo ""
   echo "Cleaning up worktrees..."
-  git worktree remove "$BE_WORKTREE" --force 2>/dev/null || true
-  git worktree remove "$FE_WORKTREE" --force 2>/dev/null || true
+  git worktree remove "$BE_DIR" --force 2>/dev/null || true
+  git worktree remove "$FE_DIR" --force 2>/dev/null || true
   git branch -D "$BE_BRANCH" 2>/dev/null || true
   git branch -D "$FE_BRANCH" 2>/dev/null || true
 }
@@ -39,19 +44,20 @@ echo ""
 
 # ── Step 1: Create isolated worktrees ─────────────────────
 echo "═══ Creating worktrees ═══"
+mkdir -p .claude/worktrees
 git branch "$BE_BRANCH" HEAD
 git branch "$FE_BRANCH" HEAD
-git worktree add "$BE_WORKTREE" "$BE_BRANCH"
-git worktree add "$FE_WORKTREE" "$FE_BRANCH"
-echo "  Backend worktree: $BE_WORKTREE ($BE_BRANCH)"
-echo "  Frontend worktree: $FE_WORKTREE ($FE_BRANCH)"
+git worktree add "$BE_DIR" "$BE_BRANCH"
+git worktree add "$FE_DIR" "$FE_BRANCH"
+echo "  Backend worktree: $BE_DIR ($BE_BRANCH)"
+echo "  Frontend worktree: $FE_DIR ($FE_BRANCH)"
 echo ""
 
 # ── Step 2: Parallel generation ───────────────────────────
 echo "═══ Parallel Generation — Phase $PHASE_NUM ═══"
 
 (
-  cd "$BE_WORKTREE"
+  cd "$BE_DIR"
   echo "[BE] Starting backend generation..."
   claude -p "You are backend-builder. Execute Phase $PHASE_NUM backend tasks.
 Read CLAUDE.md, spec/01-constraints.md, spec/08-output-rules.md, and $PHASE_BRIEF.
@@ -67,7 +73,7 @@ Follow spec/08-output-rules.md for output format." \
 PID_BE=$!
 
 (
-  cd "$FE_WORKTREE"
+  cd "$FE_DIR"
   echo "[FE] Starting frontend generation..."
   claude -p "You are frontend-builder. Execute Phase $PHASE_NUM frontend tasks.
 Read CLAUDE.md, spec/06-frontend-config.md, spec/08-output-rules.md, and $PHASE_BRIEF.
@@ -150,9 +156,11 @@ if echo "$REVIEW_RESULT" | grep -q "REVIEW FAILED"; then
   exit 1
 fi
 
-# ── Step 7: Squash merge commits into one ─────────────────
+# ── Step 7: Squash all merge commits into one ─────────────
+# Use PRE_MERGE_HEAD (recorded before merges) for precise squash
+# This avoids the fragile HEAD~N counting
 echo "═══ Final Commit ═══"
-git reset --soft HEAD~2
+git reset --soft "$PRE_MERGE_HEAD"
 git commit -m "feat(phase-${PHASE_NUM}): ${PHASE_TITLE} — parallel verified"
 
 echo ""

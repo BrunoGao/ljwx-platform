@@ -16,7 +16,7 @@ cd "$PROJECT_ROOT"
 ERRORS=0
 
 # ── Determine which checks to run based on current phase ──
-CURRENT_PHASE=$(grep -oP 'Current Phase:\s*\K\d+' CLAUDE.md 2>/dev/null || echo "")
+CURRENT_PHASE=$(sed -n 's/^Phase:[[:space:]]*\([0-9][0-9]*\).*/\1/p' CLAUDE.md 2>/dev/null | head -1 || echo "")
 PHASE_BRIEF=""
 TARGET_BACKEND="true"
 TARGET_FRONTEND="true"

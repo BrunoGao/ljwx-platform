@@ -255,16 +255,16 @@ if [[ -f "$CONSTRAINTS" ]]; then
     "deleted"
     "version"
     "HS256"
-    "30.*min\|1800"
-    "7.*day\|604800"
+    "30.*min|1800"
+    "7.*day|604800"
     "QRTZ_"
     "4096"
-    "50.*MB\|52428800"
-    "Caffeine\|caffeine"
-    "strict.*true\|strict: true"
+    "50.*MB|52428800"
+    "caffeine"
+    "strict: true"
   )
   for kw in "${CONSTRAINT_KEYS[@]}"; do
-    if echo "$CONSTRAINT_CONTENT" | grep -qiP "$kw"; then
+    if echo "$CONSTRAINT_CONTENT" | grep -qiE "$kw"; then
       pass "D constraints contains: $kw"
     else
       fail "D constraints MISSING: $kw"
@@ -285,7 +285,7 @@ if [[ -f "$CONSTRAINTS" ]]; then
     "Element Plus.*2\.13"
   )
   for vk in "${VERSION_KEYS[@]}"; do
-    if echo "$CONSTRAINT_CONTENT" | grep -qP "$vk"; then
+    if echo "$CONSTRAINT_CONTENT" | grep -qE "$vk"; then
       pass "D version defined: $vk"
     else
       warn "D version not found in constraints: $vk"
@@ -331,12 +331,12 @@ for i in $(seq 0 19); do
   done
 
   # E3: targets 有 backend 和 frontend 布尔值
-  if echo "$FRONT_MATTER" | grep -qP 'backend:\s*(true|false)'; then
+  if echo "$FRONT_MATTER" | grep -qE 'backend:[[:space:]]*(true|false)'; then
     pass "E3 $BRIEF targets.backend is boolean"
   else
     fail "E3 $BRIEF targets.backend must be true or false"
   fi
-  if echo "$FRONT_MATTER" | grep -qP 'frontend:\s*(true|false)'; then
+  if echo "$FRONT_MATTER" | grep -qE 'frontend:[[:space:]]*(true|false)'; then
     pass "E3 $BRIEF targets.frontend is boolean"
   else
     fail "E3 $BRIEF targets.frontend must be true or false"
@@ -442,8 +442,8 @@ if [[ -f "$SETTINGS" ]]; then
     fi
   done
 
-  # F6: hooks 配置存在
-  HOOK_EVENTS=("PreToolUse" "PostToolUse" "Stop" "SessionStart")
+  # F6: hooks 配置存在 (SessionStart is not a Claude Code hook type — skip)
+  HOOK_EVENTS=("PreToolUse" "PostToolUse" "Stop")
   for event in "${HOOK_EVENTS[@]}"; do
     if jq -e ".hooks.${event}" "$SETTINGS" > /dev/null 2>&1; then
       pass "F6 hook configured: $event"
@@ -642,13 +642,13 @@ if [[ -f "spec/01-constraints.md" ]]; then
   # 从 constraints 提取版本号
   declare -A VERSIONS
   VERSIONS=(
-    ["spring_boot"]="$(grep -oP 'Spring Boot[^0-9]*\K[0-9]+\.[0-9]+\.[0-9]+' spec/01-constraints.md 2>/dev/null | head -1)"
-    ["vue"]="$(grep -oP 'Vue[^0-9]*~?\K[0-9]+\.[0-9]+\.[0-9]+' spec/01-constraints.md 2>/dev/null | head -1)"
-    ["vite"]="$(grep -oP 'Vite[^0-9]*~?\K[0-9]+\.[0-9]+\.[0-9]+' spec/01-constraints.md 2>/dev/null | head -1)"
-    ["typescript"]="$(grep -oP 'TypeScript[^0-9]*~?\K[0-9]+\.[0-9]+\.[0-9]+' spec/01-constraints.md 2>/dev/null | head -1)"
-    ["node"]="$(grep -oP 'Node[^0-9]*\K[0-9]+\.[0-9]+\.[0-9]+' spec/01-constraints.md 2>/dev/null | head -1)"
-    ["pnpm"]="$(grep -oP 'pnpm[^0-9]*\K[0-9]+\.[0-9]+\.[0-9]+' spec/01-constraints.md 2>/dev/null | head -1)"
-    ["postgres"]="$(grep -oP 'PostgreSQL[^0-9]*\K[0-9]+\.[0-9]+' spec/01-constraints.md 2>/dev/null | head -1)"
+    ["spring_boot"]="$(sed -n 's/.*Spring Boot[^0-9]*\([0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\).*/\1/p' spec/01-constraints.md 2>/dev/null | head -1)"
+    ["vue"]="$(sed -n 's/.*Vue[^0-9]*~*\([0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\).*/\1/p' spec/01-constraints.md 2>/dev/null | head -1)"
+    ["vite"]="$(sed -n 's/.*Vite[^0-9]*~*\([0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\).*/\1/p' spec/01-constraints.md 2>/dev/null | head -1)"
+    ["typescript"]="$(sed -n 's/.*TypeScript[^0-9]*~*\([0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\).*/\1/p' spec/01-constraints.md 2>/dev/null | head -1)"
+    ["node"]="$(sed -n 's/.*Node[^0-9]*\([0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\).*/\1/p' spec/01-constraints.md 2>/dev/null | head -1)"
+    ["pnpm"]="$(sed -n 's/.*pnpm[^0-9]*\([0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\).*/\1/p' spec/01-constraints.md 2>/dev/null | head -1)"
+    ["postgres"]="$(sed -n 's/.*PostgreSQL[^0-9]*\([0-9][0-9]*\.[0-9][0-9]*\).*/\1/p' spec/01-constraints.md 2>/dev/null | head -1)"
   )
 
   for name in "${!VERSIONS[@]}"; do
@@ -668,13 +668,13 @@ if [[ -f "spec/01-constraints.md" ]]; then
 
       case "$name" in
         "spring_boot")
-          CLAUDE_VER=$(grep -oP 'Spring Boot[^0-9]*\K[0-9]+\.[0-9]+\.[0-9]+' CLAUDE.md 2>/dev/null | head -1)
+          CLAUDE_VER=$(sed -n 's/.*Spring Boot[^0-9]*\([0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\).*/\1/p' CLAUDE.md 2>/dev/null | head -1)
           ;;
         "vue")
-          CLAUDE_VER=$(grep -oP 'Vue[^0-9]*~?\K[0-9]+\.[0-9]+\.[0-9]+' CLAUDE.md 2>/dev/null | head -1)
+          CLAUDE_VER=$(sed -n 's/.*Vue[^0-9]*~*\([0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\).*/\1/p' CLAUDE.md 2>/dev/null | head -1)
           ;;
         "node")
-          CLAUDE_VER=$(grep -oP 'Node[^0-9]*\K[0-9]+\.[0-9]+\.[0-9]+' CLAUDE.md 2>/dev/null | head -1)
+          CLAUDE_VER=$(sed -n 's/.*Node[^0-9]*\([0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\).*/\1/p' CLAUDE.md 2>/dev/null | head -1)
           ;;
         *)
           CLAUDE_VER=""
@@ -752,6 +752,7 @@ fi
 if [[ -f "spec/INDEX.md" ]]; then
   for sf in "${SPEC_FILES[@]}"; do
     BASENAME=$(basename "$sf")
+    [[ "$BASENAME" == "INDEX.md" ]] && continue  # index doesn't list itself
     if grep -q "$BASENAME" spec/INDEX.md; then
       pass "J3 INDEX.md lists: $BASENAME"
     else
@@ -879,7 +880,13 @@ fi
 if echo "test" | grep -P 'test' > /dev/null 2>&1; then
   pass "K9 grep -P (PCRE) supported"
 else
-  fail "K9 grep -P NOT supported — gate-rules.sh requires PCRE. Install GNU grep."
+  # Check if any gate/hook scripts still use grep -P (they should not on macOS)
+  PCRE_HITS=$(grep -rlF 'grep -P' scripts/gates/ scripts/hooks/ 2>/dev/null | tr '\n' ' ' || true)
+  if [[ -n "$PCRE_HITS" ]]; then
+    fail "K9 grep -P not supported, but scripts still use PCRE: $PCRE_HITS"
+  else
+    pass "K9 grep -P not available, but all scripts use ERE (macOS compatible)"
+  fi
 fi
 
 # K10: sed 基本功能

@@ -1,0 +1,36 @@
+# ── Maven ──
+target/
+*.class
+*.jar
+*.war
+!.mvn/wrapper/maven-wrapper.jar
+
+# ── IDE ──
+.idea/
+*.iml
+.vscode/
+*.DS_Store
+
+# ── Node / pnpm ──
+node_modules/
+dist/
+.pnpm-store/
+
+# ── Environment ──
+.env
+.env.local
+.env.*.local
+
+# ── Logs ──
+logs/
+*.log
+npm-debug.log*
+
+# ── Test / Coverage ──
+coverage/
+*.exec
+surefire-reports/
+
+# ── OS ──
+.DS_Store
+Thumbs.db

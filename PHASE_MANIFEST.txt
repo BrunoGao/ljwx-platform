@@ -1,0 +1,22 @@
+## PHASE 0
+Status: PASSED
+
+pom.xml
+.mvn/wrapper/maven-wrapper.properties
+pnpm-workspace.yaml
+package.json
+.npmrc
+.nvmrc
+docker-compose.yml
+.env.example
+.gitignore
+.editorconfig
+scripts/gates/gate-all.sh
+scripts/gates/gate-compile.sh
+scripts/gates/gate-integration.sh
+scripts/gates/gate-contract.sh
+scripts/gates/gate-manifest.sh
+scripts/gates/gate-nfr.sh
+scripts/tools/export-openapi.sh
+scripts/acceptance/smoke-test.sh
+PHASE_MANIFEST.txt

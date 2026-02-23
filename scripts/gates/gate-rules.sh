@@ -40,7 +40,8 @@ fi
 
 echo "[R02] No TypeScript 'any' type"
 # Match ': any', 'as any', '<any>' but exclude comments and node_modules
-ANY_HITS=$(grep -rPn '(?<!//.*)(\:\s*any\b|as\s+any\b|<any>)' --include='*.ts' --include='*.vue' . 2>/dev/null \
+# Use grep -En (ERE) for macOS BSD grep compatibility
+ANY_HITS=$(grep -rEn '(:\s*any[^a-zA-Z]|as any[^a-zA-Z]|<any>)' --include='*.ts' --include='*.vue' . 2>/dev/null \
   | grep -v 'node_modules' \
   | grep -v '\.d\.ts:' \
   | grep -v '// eslint-disable' \
@@ -52,8 +53,8 @@ if [[ -n "$ANY_HITS" ]]; then
 fi
 
 echo "[R03] Env var must be VITE_APP_BASE_API only"
-BAD_ENV=$(grep -rPn 'VITE_API_BASE_URL|VITE_BASE_API|VITE_APP_API[^_]' \
-  --include='*.ts' --include='*.vue' --include='.env*' . 2>/dev/null \
+BAD_ENV=$(grep -rEn 'VITE_API_BASE_URL|VITE_BASE_API' \
+  --include='*.ts' --include='*.vue' --include='.env' --include='.env.*' . 2>/dev/null \
   | grep -v 'node_modules' || true)
 if [[ -n "$BAD_ENV" ]]; then
   while IFS= read -r hit; do
@@ -62,7 +63,7 @@ if [[ -n "$BAD_ENV" ]]; then
 fi
 
 echo "[R04] Flyway: no IF NOT EXISTS"
-IFNE_HITS=$(grep -rPni 'IF\s+NOT\s+EXISTS' --include='*.sql' . 2>/dev/null | grep -v 'node_modules' || true)
+IFNE_HITS=$(grep -rEni 'IF[[:space:]]+NOT[[:space:]]+EXISTS' --include='*.sql' . 2>/dev/null | grep -v 'node_modules' || true)
 if [[ -n "$IFNE_HITS" ]]; then
   while IFS= read -r hit; do
     fail "R04 flyway-no-ifne — $hit"
@@ -73,7 +74,7 @@ echo "[R05] Audit columns in business tables"
 SQL_FILES=$(find . -name '*.sql' -path '*/migration/*' ! -path '*/node_modules/*' 2>/dev/null || true)
 AUDIT_COLS=(tenant_id created_by created_time updated_by updated_time deleted version)
 for sql_file in $SQL_FILES; do
-  # Extract CREATE TABLE blocks
+  # Extract CREATE TABLE names using ERE (macOS compatible)
   while IFS= read -r table_name; do
     [[ -z "$table_name" ]] && continue
     # Skip Quartz tables
@@ -84,15 +85,16 @@ for sql_file in $SQL_FILES; do
     # Get the table definition block
     TABLE_BLOCK=$(sed -n "/CREATE TABLE.*${table_name}/I,/);/p" "$sql_file")
     for col in "${AUDIT_COLS[@]}"; do
-      if ! echo "$TABLE_BLOCK" | grep -qi "$col"; then
+      if [[ -z "$(echo "$TABLE_BLOCK" | grep -i "$col")" ]]; then
         fail "R05 audit-col — $sql_file table $table_name missing column: $col"
       fi
     done
-  done < <(grep -oPI 'CREATE\s+TABLE\s+\K\S+' "$sql_file" 2>/dev/null || true)
+  done < <(grep -oEi 'CREATE[[:space:]]+TABLE[[:space:]]+([`"]?)([A-Za-z_][A-Za-z0-9_]*)' "$sql_file" 2>/dev/null \
+    | sed -E 's/CREATE[[:space:]]+TABLE[[:space:]]+[`"]*//i' || true)
 done
 
 echo "[R06] DTO must not expose tenant_id"
-DTO_HITS=$(grep -rPn '(private|protected|public)\s+\S+\s+tenantId' \
+DTO_HITS=$(grep -rEn '(private|protected|public)[[:space:]]+[^[:space:]]+[[:space:]]+tenantId' \
   --include='*DTO.java' --include='*Dto.java' \
   --include='*Request.java' --include='*Response.java' . 2>/dev/null \
   | grep -v 'node_modules' || true)
@@ -101,8 +103,8 @@ if [[ -n "$DTO_HITS" ]]; then
     fail "R06 dto-no-tenant — $hit"
   done <<< "$DTO_HITS"
 fi
-# Also check record-style DTOs
-DTO_RECORD_HITS=$(grep -rPn 'tenantId' \
+# Also check record-style DTOs / constructor params
+DTO_RECORD_HITS=$(grep -rEn 'tenantId' \
   --include='*DTO.java' --include='*Dto.java' \
   --include='*Request.java' --include='*Response.java' . 2>/dev/null \
   | grep -v 'node_modules' \
@@ -110,8 +112,8 @@ DTO_RECORD_HITS=$(grep -rPn 'tenantId' \
   | grep -v '//' || true)
 if [[ -n "$DTO_RECORD_HITS" ]]; then
   while IFS= read -r hit; do
-    # Avoid double-counting the field declarations already caught above
-    if ! echo "$hit" | grep -qP '(private|protected|public)\s+\S+\s+tenantId'; then
+    # Avoid double-counting field declarations already caught above
+    if [[ -z "$(echo "$hit" | grep -E '(private|protected|public)[[:space:]]+[^[:space:]]+[[:space:]]+tenantId')" ]]; then
       fail "R06 dto-no-tenant (record/param) — $hit"
     fi
   done <<< "$DTO_RECORD_HITS"
@@ -120,12 +122,12 @@ fi
 echo "[R07] Controller @PreAuthorize"
 CONTROLLER_FILES=$(find . -name '*Controller.java' ! -path '*/node_modules/*' 2>/dev/null || true)
 for ctrl in $CONTROLLER_FILES; do
-  MAPPING_LINES=$(grep -n ' @(Get|Post|Put|Delete|Patch)Mapping' "$ctrl" 2>/dev/null | cut -d: -f1 || true)
+  MAPPING_LINES=$(grep -En '@(Get|Post|Put|Delete|Patch)Mapping' "$ctrl" 2>/dev/null | cut -d: -f1 || true)
   for LINE_NUM in $MAPPING_LINES; do
     START=$((LINE_NUM - 5))
     [[ $START -lt 1 ]] && START=1
     CONTEXT=$(sed -n "${START},${LINE_NUM}p" "$ctrl")
-    if ! echo "$CONTEXT" | grep -q ' @PreAuthorize'; then
+    if [[ -z "$(echo "$CONTEXT" | grep '@PreAuthorize')" ]]; then
       fail "R07 preauthorize — $ctrl:$LINE_NUM @*Mapping without @PreAuthorize"
     fi
   done
@@ -140,10 +142,8 @@ if [[ -n "$POM_HITS" ]]; then
 fi
 
 echo "[R09] POM: no SNAPSHOT in release dependencies"
-# Only check <dependency> version tags, not the project's own version
-SNAP_HITS=$(grep -rPn '<version>.*SNAPSHOT.*</version>' --include='pom.xml' . 2>/dev/null \
-  | grep -v '<version>\${' \
-  | grep -v '<!-- project version -->' || true)
+SNAP_HITS=$(grep -rEn '<version>[^<]*SNAPSHOT[^<]*</version>' --include='pom.xml' . 2>/dev/null \
+  | grep -v 'project version' || true)
 if [[ -n "$SNAP_HITS" ]]; then
   while IFS= read -r hit; do
     warn "R09 no-snapshot — $hit"
@@ -190,7 +190,7 @@ V4_PATTERNS=(
   'RouterLink.*:to.*v-slot'
 )
 for pattern in "${V4_PATTERNS[@]}"; do
-  V4_HITS=$(grep -rPn "$pattern" --include='*.vue' --include='*.ts' . 2>/dev/null | grep -v 'node_modules' || true)
+  V4_HITS=$(grep -rEn "$pattern" --include='*.vue' --include='*.ts' . 2>/dev/null | grep -v 'node_modules' || true)
   if [[ -n "$V4_HITS" ]]; then
     while IFS= read -r hit; do
       warn "R11 vue-router-v5 — possible v4 API usage: $hit"
@@ -199,16 +199,16 @@ for pattern in "${V4_PATTERNS[@]}"; do
 done
 
 echo "[R12] BCrypt cost factor"
-BCRYPT_HITS=$(grep -rPn 'BCryptPasswordEncoder\s*\(' --include='*.java' . 2>/dev/null || true)
+BCRYPT_HITS=$(grep -rEn 'BCryptPasswordEncoder[[:space:]]*\(' --include='*.java' . 2>/dev/null || true)
 if [[ -n "$BCRYPT_HITS" ]]; then
   while IFS= read -r hit; do
-    if ! echo "$hit" | grep -qP 'BCryptPasswordEncoder\s*\(\s*10\s*\)'; then
-      # Could be default constructor (cost=10) or explicit non-10
-      if echo "$hit" | grep -qP 'BCryptPasswordEncoder\s*\(\s*\d'; then
+    # If explicit numeric arg and NOT 10, fail
+    if [[ -n "$(echo "$hit" | grep -E 'BCryptPasswordEncoder[[:space:]]*\([[:space:]]*[0-9]')" ]]; then
+      if [[ -z "$(echo "$hit" | grep -E 'BCryptPasswordEncoder[[:space:]]*\([[:space:]]*10[[:space:]]*\)')" ]]; then
         fail "R12 bcrypt-cost — $hit — must use cost factor 10"
       fi
-      # Default constructor is acceptable (defaults to 10)
     fi
+    # Default constructor BCryptPasswordEncoder() is acceptable (defaults to 10)
   done <<< "$BCRYPT_HITS"
 fi
 

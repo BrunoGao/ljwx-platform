@@ -27,7 +27,7 @@ warn() { echo "  WARNING   $1"; ((WARNINGS++)); }
 
 # ── Helper: grep across all yml/yaml files ──
 find_in_config() {
-  grep -rPn "$1" --include='*.yml' --include='*.yaml' --include='*.properties' . 2>/dev/null \
+  grep -rEn "$1" --include='*.yml' --include='*.yaml' --include='*.properties' . 2>/dev/null \
     | grep -v 'node_modules' | grep -v 'target/' || true
 }
 
@@ -50,7 +50,7 @@ fi
 echo "[N02] Caffeine cache TTL: 10 min"
 CACHE_CFG=$(find_in_config 'caffeine|cache.*spec|cache.*expire')
 if [[ -n "$CACHE_CFG" ]]; then
-  if ! echo "$CACHE_CFG" | grep -qP '(expireAfterWrite|expire-after-write)\s*[=:]\s*10m|600'; then
+  if ! echo "$CACHE_CFG" | grep -qE '(expireAfterWrite|expire-after-write)[[:space:]]*[=:][[:space:]]*(10m|600)'; then
     warn "N02 cache-ttl — caffeine config found but TTL may not be 10min"
   else
     echo "  OK: Caffeine TTL=10min configured"
@@ -60,10 +60,10 @@ fi
 echo "[N03] JWT configuration"
 JWT_CFG=$(find_in_config 'jwt|access.*token.*expir|refresh.*token.*expir')
 if [[ -n "$JWT_CFG" ]]; then
-  if ! echo "$JWT_CFG" | grep -qiP '(30|1800)'; then
+  if ! echo "$JWT_CFG" | grep -qiE '(30|1800)'; then
     warn "N03 jwt — access token expiry may not be 30min"
   fi
-  if ! echo "$JWT_CFG" | grep -qiP '(7d|604800|10080)'; then
+  if ! echo "$JWT_CFG" | grep -qiE '(7d|604800|10080)'; then
     warn "N03 jwt — refresh token expiry may not be 7 days"
   fi
 fi
@@ -76,28 +76,28 @@ if [[ -z "$HS256" ]]; then
 fi
 
 echo "[N04] Async log thread pool"
-ASYNC_CFG=$(grep -rPn 'core.?pool.?size|max.?pool.?size|queue.?capacity' --include='*.java' --include='*.yml' . 2>/dev/null \
+ASYNC_CFG=$(grep -rEn 'core.?pool.?size|max.?pool.?size|queue.?capacity' --include='*.java' --include='*.yml' . 2>/dev/null \
   | grep -v 'node_modules' | grep -vi 'quartz' || true)
 if [[ -n "$ASYNC_CFG" ]]; then
   echo "  OK: Async pool configuration found"
   # Detailed check
-  if ! echo "$ASYNC_CFG" | grep -qP '(core|corePoolSize)\s*[=:(]\s*2'; then
+  if ! echo "$ASYNC_CFG" | grep -qE '(core|corePoolSize)[[:space:]]*[=:(][[:space:]]*2'; then
     warn "N04 async-pool — core pool size may not be 2"
   fi
-  if ! echo "$ASYNC_CFG" | grep -qP '(max|maxPoolSize|maximum)\s*[=:(]\s*4'; then
+  if ! echo "$ASYNC_CFG" | grep -qE '(max|maxPoolSize|maximum)[[:space:]]*[=:(][[:space:]]*4'; then
     warn "N04 async-pool — max pool size may not be 4"
   fi
 fi
 
 echo "[N05] Operation log truncation: 4096 bytes"
-TRUNC=$(grep -rPn '4096|TRUNCATE|truncat' --include='*.java' . 2>/dev/null \
+TRUNC=$(grep -rEn '4096|TRUNCATE|truncat' --include='*.java' . 2>/dev/null \
   | grep -v 'node_modules' | grep -i 'log\|oper' || true)
 if [[ -n "$TRUNC" ]]; then
   echo "  OK: Log truncation reference found"
 fi
 
 echo "[N06] Log field masking"
-MASK=$(grep -rPn 'mask|sensitive|password.*\*|token.*\*|secret.*\*' --include='*.java' . 2>/dev/null \
+MASK=$(grep -rEn 'mask|sensitive|password.*\*|token.*\*|secret.*\*' --include='*.java' . 2>/dev/null \
   | grep -v 'node_modules' || true)
 if [[ -n "$MASK" ]]; then
   echo "  OK: Field masking references found"
@@ -116,14 +116,14 @@ fi
 echo "[N08] Toolchain version locks"
 # Check Java version
 if [[ -f "pom.xml" ]]; then
-  JAVA_VER=$(grep -oP '<java.version>\K[^<]+' pom.xml 2>/dev/null || true)
+  JAVA_VER=$(grep '<java.version>' pom.xml 2>/dev/null | sed 's/.*<java.version>//;s|</java.version>.*||' | tr -d '[:space:]')
   if [[ -n "$JAVA_VER" && "$JAVA_VER" != "21" ]]; then
     fail "N08 java-version — pom.xml java.version=$JAVA_VER, expected 21"
   fi
 fi
 # Check Node version
 if [[ -f ".nvmrc" ]]; then
-  NODE_VER=$(cat .nvmrc | tr -d '[:space:]')
+  NODE_VER=$(tr -d '[:space:]' < .nvmrc)
   if [[ "$NODE_VER" != "22.22.0" ]]; then
     fail "N08 node-version — .nvmrc=$NODE_VER, expected 22.22.0"
   else
@@ -132,9 +132,9 @@ if [[ -f ".nvmrc" ]]; then
 fi
 # Check pnpm version
 if [[ -f "package.json" ]]; then
-  PNPM_VER=$(grep -oP '"packageManager"\s*:\s*"pnpm@\K[^"]+' package.json 2>/dev/null || true)
+  PNPM_VER=$(grep '"packageManager"' package.json 2>/dev/null | sed 's/.*pnpm@//;s/".*//' | tr -d '[:space:]')
   if [[ -n "$PNPM_VER" && "$PNPM_VER" != "10.30.1" ]]; then
-    fail "N08 pnpm-version — packageManager pnpm @$PNPM_VER, expected 10.30.1"
+    fail "N08 pnpm-version — packageManager pnpm@$PNPM_VER, expected 10.30.1"
   fi
 fi
 
@@ -151,7 +151,7 @@ fi
 
 echo "[N10] Docker image tag locked"
 if [[ -f "docker-compose.yml" ]]; then
-  PG_IMAGE=$(grep -oP 'image:\s*\Kpostgres:\S+' docker-compose.yml 2>/dev/null || true)
+  PG_IMAGE=$(grep 'image:.*postgres:' docker-compose.yml 2>/dev/null | sed 's/.*image:[[:space:]]*//' | tr -d '[:space:]')
   if [[ -n "$PG_IMAGE" ]]; then
     if [[ "$PG_IMAGE" != "postgres:16.12-alpine" ]]; then
       fail "N10 docker-tag — postgres image=$PG_IMAGE, expected postgres:16.12-alpine"

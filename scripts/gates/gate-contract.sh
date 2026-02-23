@@ -98,7 +98,7 @@ fi
 if [[ -f "spec/03-api.md" ]]; then
   echo "[Contract] Cross-checking with spec/03-api.md"
   # Extract expected paths from api spec (lines like "POST /api/v1/auth/login")
-  EXPECTED_PATHS=$(grep -oP '(GET|POST|PUT|DELETE|PATCH)\s+/api/\S+' spec/03-api.md \
+  EXPECTED_PATHS=$(grep -oE '(GET|POST|PUT|DELETE|PATCH)[[:space:]]+/api/[^[:space:]]+' spec/03-api.md \
     | awk '{print $2}' | sort -u || true)
 
   if [[ -n "$EXPECTED_PATHS" ]]; then
@@ -110,7 +110,7 @@ if [[ -f "spec/03-api.md" ]]; then
       [[ -z "$expected" ]] && continue
       # Normalize path parameters: /api/v1/users/{id} → match with regex
       PATTERN=$(echo "$expected" | sed 's/{[^}]*}/[^\/]*/g')
-      if ! echo "$ACTUAL_PATHS" | grep -qP "^${PATTERN}$"; then
+      if ! echo "$ACTUAL_PATHS" | grep -qE "^${PATTERN}$"; then
         echo "  WARN: Expected path $expected not found in generated spec"
         ((MISSING_COUNT++))
       fi

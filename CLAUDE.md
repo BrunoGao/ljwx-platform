@@ -27,7 +27,7 @@ Phase: 0 (Skeleton) — 尚未开始
 
 1. **DAG 依赖**: core ← {security, data} ← web ← app。security 和 data 互不依赖。禁止 data import security 的任何类，反之亦然
 2. **前端 semver**: 所有 dependencies / devDependencies 仅用 `~`（tilde），禁止 `^`（caret）
-3. **审计字段**: 所有业务表（Quartz 除外）必须含 tenant_id, created_by, created_time, updated_by, updated_time, deleted, version 共 7 列，均 NOT NULL + 有 DEFAULT
+3. **审计字段 (audit fields)**: 所有业务表（Quartz 除外）必须含 tenant_id, created_by, created_time, updated_by, updated_time, deleted, version 共 7 列，均 NOT NULL + 有 DEFAULT
 4. **TypeScript**: 禁止 `any`，tsconfig 开启 `strict: true`
 5. **权限注解**: 每个 Controller 方法必须 `@PreAuthorize`（login / refresh 除外），格式 `hasAuthority('resource:action')`，不使用 ROLE_ 前缀
 6. **tenant_id**: DTO 中禁止出现，前端禁止传递，后端由 Interceptor 自动注入

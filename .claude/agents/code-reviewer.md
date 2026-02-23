@@ -2,6 +2,7 @@
 name: code-reviewer
 description: "Diff-driven code reviewer for LJWX platform. Reviews ONLY files listed in the prompt against Phase scope and hard rules. Read-only access. Outputs structured findings. Use proactively after implementing a phase."
 model: claude-sonnet-4-6
+permissionMode: plan
 tools:
   - Read
   - Grep

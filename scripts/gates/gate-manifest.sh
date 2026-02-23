@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 # ═══════════════════════════════════════════════════════════
 # gate-manifest.sh — Phase-local manifest 与 scope 文件检查
+# 用法: bash scripts/gates/gate-manifest.sh [phase-number]
 #
 # 检查项：
-#   1. PHASE_MANIFEST.txt 存在且非空
-#   2. 当前 Phase 的 section 存在
-#   3. Phase Brief 中 scope 列出的具体文件全部存在
-#   4. Phase Brief 文件本身存在且有 YAML front-matter
+#   1. Phase Brief 存在且有 YAML front-matter
+#   2. Phase Brief 中 scope 列出的具体文件全部存在
+#   3. PHASE_MANIFEST.txt 有对应 Phase section（warn only）
 # ═══════════════════════════════════════════════════════════
 set -euo pipefail
 
@@ -15,10 +15,15 @@ cd "$PROJECT_ROOT"
 
 ERRORS=0
 
-# ── Determine current phase ──
-CURRENT_PHASE=$(grep -oP 'Current Phase:\s*\K\d+' CLAUDE.md 2>/dev/null || echo "")
+# ── Determine current phase: arg > CLAUDE.md ──
+if [[ -n "${1:-}" ]]; then
+  CURRENT_PHASE="$1"
+else
+  CURRENT_PHASE=$(sed -n 's/^Phase:[[:space:]]*\([0-9][0-9]*\).*/\1/p' CLAUDE.md 2>/dev/null | head -1 || echo "")
+fi
+
 if [[ -z "$CURRENT_PHASE" ]]; then
-  echo "  WARN: Cannot determine Current Phase from CLAUDE.md — skipping manifest check"
+  echo "  WARN: Cannot determine current Phase — skipping manifest check"
   exit 0
 fi
 
@@ -46,18 +51,15 @@ else
   done
 fi
 
-# ── Check 2: PHASE_MANIFEST.txt exists and has current phase section ──
+# ── Check 2: PHASE_MANIFEST.txt — warn only (written AFTER gates pass) ──
 if [[ ! -f "PHASE_MANIFEST.txt" ]]; then
-  echo "  FAIL: PHASE_MANIFEST.txt not found"
-  ((ERRORS++))
+  echo "  WARN: PHASE_MANIFEST.txt not found (will be written after commit)"
 elif [[ ! -s "PHASE_MANIFEST.txt" ]]; then
-  echo "  FAIL: PHASE_MANIFEST.txt is empty"
-  ((ERRORS++))
+  echo "  WARN: PHASE_MANIFEST.txt is empty"
 else
   MANIFEST_MARKER="## PHASE $CURRENT_PHASE"
   if ! grep -q "$MANIFEST_MARKER" PHASE_MANIFEST.txt; then
-    echo "  FAIL: PHASE_MANIFEST.txt missing section: $MANIFEST_MARKER"
-    ((ERRORS++))
+    echo "  WARN: PHASE_MANIFEST.txt missing section: $MANIFEST_MARKER (will be added)"
   fi
 fi
 
