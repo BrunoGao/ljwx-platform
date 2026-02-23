@@ -41,7 +41,7 @@
       "Bash(node --version)",
       "Bash(java -version)",
       "Bash(java --version)",
-      "Bash(bash scripts/gates/gate-all.sh)",
+      "Bash(bash scripts/gates/gate-all.sh *)",
       "Bash(bash scripts/gates/gate-compile.sh)",
       "Bash(bash scripts/gates/gate-integration.sh)",
       "Bash(bash scripts/gates/gate-manifest.sh)",
