@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ljwx.platform.app.infra.mapper.SysDictTypeMapper">
+
+    <resultMap id="BaseResultMap" type="com.ljwx.platform.app.domain.entity.SysDictType">
+        <id     column="id"           property="id"/>
+        <result column="dict_name"    property="dictName"/>
+        <result column="dict_type"    property="dictType"/>
+        <result column="status"       property="status"/>
+        <result column="remark"       property="remark"/>
+        <result column="tenant_id"    property="tenantId"/>
+        <result column="created_by"   property="createdBy"/>
+        <result column="created_time" property="createdTime"/>
+        <result column="updated_by"   property="updatedBy"/>
+        <result column="updated_time" property="updatedTime"/>
+        <result column="deleted"      property="deleted"/>
+        <result column="version"      property="version"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id, dict_name, dict_type, status, remark,
+        tenant_id, created_by, created_time, updated_by, updated_time, deleted, version
+    </sql>
+
+    <insert id="insert" parameterType="com.ljwx.platform.app.domain.entity.SysDictType">
+        INSERT INTO sys_dict_type (
+            id, dict_name, dict_type, status, remark,
+            tenant_id, created_by, created_time, updated_by, updated_time, deleted, version
+        ) VALUES (
+            #{id}, #{dictName}, #{dictType}, #{status}, #{remark},
+            #{tenantId}, #{createdBy}, #{createdTime}, #{updatedBy}, #{updatedTime}, #{deleted}, #{version}
+        )
+    </insert>
+
+    <update id="updateById" parameterType="com.ljwx.platform.app.domain.entity.SysDictType">
+        UPDATE sys_dict_type
+        SET dict_name    = #{dictName},
+            dict_type    = #{dictType},
+            status       = #{status},
+            remark       = #{remark},
+            updated_by   = #{updatedBy},
+            updated_time = #{updatedTime},
+            version      = version + 1
+        WHERE id = #{id}
+          AND deleted = FALSE
+          AND version = #{version}
+    </update>
+
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM sys_dict_type
+        WHERE id = #{id}
+          AND deleted = FALSE
+    </select>
+
+    <select id="selectList" parameterType="com.ljwx.platform.app.domain.dto.DictQueryDTO"
+            resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM sys_dict_type
+        WHERE deleted = FALSE
+        <if test="dictName != null and dictName != ''">
+            AND dict_name LIKE CONCAT('%', #{dictName}, '%')
+        </if>
+        <if test="dictType != null and dictType != ''">
+            AND dict_type = #{dictType}
+        </if>
+        <if test="status != null">
+            AND status = #{status}
+        </if>
+        ORDER BY created_time DESC
+    </select>
+
+    <select id="countList" parameterType="com.ljwx.platform.app.domain.dto.DictQueryDTO"
+            resultType="long">
+        SELECT COUNT(*)
+        FROM sys_dict_type
+        WHERE deleted = FALSE
+        <if test="dictName != null and dictName != ''">
+            AND dict_name LIKE CONCAT('%', #{dictName}, '%')
+        </if>
+        <if test="dictType != null and dictType != ''">
+            AND dict_type = #{dictType}
+        </if>
+        <if test="status != null">
+            AND status = #{status}
+        </if>
+    </select>
+
+    <update id="deleteById">
+        UPDATE sys_dict_type SET deleted = TRUE WHERE id = #{id}
+    </update>
+
+</mapper>

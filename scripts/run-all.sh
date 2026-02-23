@@ -128,7 +128,6 @@ for phase in "${PHASE_LIST[@]}"; do
     EXECUTOR="scripts/phase-parallel.sh"
   fi
 
-  PHASE_LOG="$LOG_DIR_BASE/phase-${padded}/run.log" 2>/dev/null || true
   LOG_BASE="logs/phase-${padded}"
   mkdir -p "$LOG_BASE"
 

@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ljwx.platform.app.infra.mapper.SysJobMapper">
+
+    <resultMap id="BaseResultMap" type="com.ljwx.platform.app.domain.entity.SysJob">
+        <id     column="id"              property="id"/>
+        <result column="job_name"        property="jobName"/>
+        <result column="job_group"       property="jobGroup"/>
+        <result column="job_class_name"  property="jobClassName"/>
+        <result column="cron_expression" property="cronExpression"/>
+        <result column="description"     property="description"/>
+        <result column="status"          property="status"/>
+        <result column="tenant_id"       property="tenantId"/>
+        <result column="created_by"      property="createdBy"/>
+        <result column="created_time"    property="createdTime"/>
+        <result column="updated_by"      property="updatedBy"/>
+        <result column="updated_time"    property="updatedTime"/>
+        <result column="deleted"         property="deleted"/>
+        <result column="version"         property="version"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id, job_name, job_group, job_class_name, cron_expression, description, status,
+        tenant_id, created_by, created_time, updated_by, updated_time, deleted, version
+    </sql>
+
+    <insert id="insert" parameterType="com.ljwx.platform.app.domain.entity.SysJob">
+        INSERT INTO sys_job (
+            id, job_name, job_group, job_class_name, cron_expression, description, status,
+            tenant_id, created_by, created_time, updated_by, updated_time, deleted, version
+        ) VALUES (
+            #{id}, #{jobName}, #{jobGroup}, #{jobClassName}, #{cronExpression}, #{description}, #{status},
+            #{tenantId}, #{createdBy}, #{createdTime}, #{updatedBy}, #{updatedTime}, #{deleted}, #{version}
+        )
+    </insert>
+
+    <update id="updateById" parameterType="com.ljwx.platform.app.domain.entity.SysJob">
+        UPDATE sys_job
+        SET job_name        = #{jobName},
+            job_group       = #{jobGroup},
+            job_class_name  = #{jobClassName},
+            cron_expression = #{cronExpression},
+            description     = #{description},
+            status          = #{status},
+            updated_by      = #{updatedBy},
+            updated_time    = #{updatedTime},
+            version         = version + 1
+        WHERE id = #{id}
+          AND deleted = FALSE
+          AND version = #{version}
+    </update>
+
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM sys_job
+        WHERE id = #{id}
+          AND deleted = FALSE
+    </select>
+
+    <select id="selectList" parameterType="com.ljwx.platform.app.domain.entity.SysJob"
+            resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM sys_job
+        WHERE deleted = FALSE
+        <if test="jobName != null and jobName != ''">
+            AND job_name LIKE CONCAT('%', #{jobName}, '%')
+        </if>
+        <if test="status != null">
+            AND status = #{status}
+        </if>
+        ORDER BY created_time DESC
+    </select>
+
+    <select id="countList" parameterType="com.ljwx.platform.app.domain.entity.SysJob"
+            resultType="long">
+        SELECT COUNT(*)
+        FROM sys_job
+        WHERE deleted = FALSE
+        <if test="jobName != null and jobName != ''">
+            AND job_name LIKE CONCAT('%', #{jobName}, '%')
+        </if>
+        <if test="status != null">
+            AND status = #{status}
+        </if>
+    </select>
+
+    <update id="deleteById">
+        UPDATE sys_job SET deleted = TRUE WHERE id = #{id}
+    </update>
+
+</mapper>

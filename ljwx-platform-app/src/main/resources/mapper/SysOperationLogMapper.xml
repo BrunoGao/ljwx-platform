@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ljwx.platform.app.infra.mapper.SysOperationLogMapper">
+
+    <resultMap id="BaseResultMap" type="com.ljwx.platform.app.domain.entity.SysOperationLog">
+        <id     column="id"              property="id"/>
+        <result column="title"           property="title"/>
+        <result column="business_type"   property="businessType"/>
+        <result column="method"          property="method"/>
+        <result column="request_method"  property="requestMethod"/>
+        <result column="request_url"     property="requestUrl"/>
+        <result column="request_param"   property="requestParam"/>
+        <result column="response_result" property="responseResult"/>
+        <result column="status"          property="status"/>
+        <result column="error_msg"       property="errorMsg"/>
+        <result column="operator_id"     property="operatorId"/>
+        <result column="operator_name"   property="operatorName"/>
+        <result column="operator_ip"     property="operatorIp"/>
+        <result column="cost_time"       property="costTime"/>
+        <result column="tenant_id"       property="tenantId"/>
+        <result column="created_by"      property="createdBy"/>
+        <result column="created_time"    property="createdTime"/>
+        <result column="updated_by"      property="updatedBy"/>
+        <result column="updated_time"    property="updatedTime"/>
+        <result column="deleted"         property="deleted"/>
+        <result column="version"         property="version"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id, title, business_type, method, request_method, request_url,
+        request_param, response_result, status, error_msg,
+        operator_id, operator_name, operator_ip, cost_time,
+        tenant_id, created_by, created_time, updated_by, updated_time, deleted, version
+    </sql>
+
+    <insert id="insert" parameterType="com.ljwx.platform.app.domain.entity.SysOperationLog">
+        INSERT INTO sys_operation_log (
+            id, title, business_type, method, request_method, request_url,
+            request_param, response_result, status, error_msg,
+            operator_id, operator_name, operator_ip, cost_time,
+            tenant_id, created_by, created_time, updated_by, updated_time, deleted, version
+        ) VALUES (
+            #{id}, #{title}, #{businessType}, #{method}, #{requestMethod}, #{requestUrl},
+            #{requestParam}, #{responseResult}, #{status}, #{errorMsg},
+            #{operatorId}, #{operatorName}, #{operatorIp}, #{costTime},
+            #{tenantId}, #{createdBy}, #{createdTime}, #{updatedBy}, #{updatedTime}, #{deleted}, #{version}
+        )
+    </insert>
+
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM sys_operation_log
+        WHERE id = #{id}
+          AND deleted = FALSE
+    </select>
+
+    <select id="selectList" parameterType="com.ljwx.platform.app.domain.dto.OperationLogQueryDTO"
+            resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM sys_operation_log
+        WHERE deleted = FALSE
+        <if test="title != null and title != ''">
+            AND title LIKE CONCAT('%', #{title}, '%')
+        </if>
+        <if test="operatorName != null and operatorName != ''">
+            AND operator_name LIKE CONCAT('%', #{operatorName}, '%')
+        </if>
+        <if test="status != null">
+            AND status = #{status}
+        </if>
+        <if test="startTime != null and startTime != ''">
+            AND created_time &gt;= CAST(#{startTime} AS TIMESTAMP)
+        </if>
+        <if test="endTime != null and endTime != ''">
+            AND created_time &lt; CAST(#{endTime} AS TIMESTAMP) + INTERVAL '1 day'
+        </if>
+        ORDER BY created_time DESC
+        LIMIT #{pageSize} OFFSET #{offset}
+    </select>
+
+    <select id="countList" parameterType="com.ljwx.platform.app.domain.dto.OperationLogQueryDTO"
+            resultType="long">
+        SELECT COUNT(*)
+        FROM sys_operation_log
+        WHERE deleted = FALSE
+        <if test="title != null and title != ''">
+            AND title LIKE CONCAT('%', #{title}, '%')
+        </if>
+        <if test="operatorName != null and operatorName != ''">
+            AND operator_name LIKE CONCAT('%', #{operatorName}, '%')
+        </if>
+        <if test="status != null">
+            AND status = #{status}
+        </if>
+        <if test="startTime != null and startTime != ''">
+            AND created_time &gt;= CAST(#{startTime} AS TIMESTAMP)
+        </if>
+        <if test="endTime != null and endTime != ''">
+            AND created_time &lt; CAST(#{endTime} AS TIMESTAMP) + INTERVAL '1 day'
+        </if>
+    </select>
+
+</mapper>

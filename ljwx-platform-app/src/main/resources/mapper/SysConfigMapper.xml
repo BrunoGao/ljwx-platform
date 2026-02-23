@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ljwx.platform.app.infra.mapper.SysConfigMapper">
+
+    <resultMap id="BaseResultMap" type="com.ljwx.platform.app.domain.entity.SysConfig">
+        <id     column="id"            property="id"/>
+        <result column="config_name"   property="configName"/>
+        <result column="config_key"    property="configKey"/>
+        <result column="config_value"  property="configValue"/>
+        <result column="config_type"   property="configType"/>
+        <result column="remark"        property="remark"/>
+        <result column="tenant_id"     property="tenantId"/>
+        <result column="created_by"    property="createdBy"/>
+        <result column="created_time"  property="createdTime"/>
+        <result column="updated_by"    property="updatedBy"/>
+        <result column="updated_time"  property="updatedTime"/>
+        <result column="deleted"       property="deleted"/>
+        <result column="version"       property="version"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id, config_name, config_key, config_value, config_type, remark,
+        tenant_id, created_by, created_time, updated_by, updated_time, deleted, version
+    </sql>
+
+    <insert id="insert" parameterType="com.ljwx.platform.app.domain.entity.SysConfig">
+        INSERT INTO sys_config (
+            id, config_name, config_key, config_value, config_type, remark,
+            tenant_id, created_by, created_time, updated_by, updated_time, deleted, version
+        ) VALUES (
+            #{id}, #{configName}, #{configKey}, #{configValue}, #{configType}, #{remark},
+            #{tenantId}, #{createdBy}, #{createdTime}, #{updatedBy}, #{updatedTime}, #{deleted}, #{version}
+        )
+    </insert>
+
+    <update id="updateById" parameterType="com.ljwx.platform.app.domain.entity.SysConfig">
+        UPDATE sys_config
+        SET config_name  = #{configName},
+            config_key   = #{configKey},
+            config_value = #{configValue},
+            config_type  = #{configType},
+            remark       = #{remark},
+            updated_by   = #{updatedBy},
+            updated_time = #{updatedTime},
+            version      = version + 1
+        WHERE id = #{id}
+          AND deleted = FALSE
+          AND version = #{version}
+    </update>
+
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM sys_config
+        WHERE id = #{id}
+          AND deleted = FALSE
+    </select>
+
+    <select id="selectByKey" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM sys_config
+        WHERE config_key = #{configKey}
+          AND deleted = FALSE
+        LIMIT 1
+    </select>
+
+    <select id="selectList" parameterType="com.ljwx.platform.app.domain.dto.ConfigQueryDTO"
+            resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM sys_config
+        WHERE deleted = FALSE
+        <if test="configName != null and configName != ''">
+            AND config_name LIKE CONCAT('%', #{configName}, '%')
+        </if>
+        <if test="configKey != null and configKey != ''">
+            AND config_key LIKE CONCAT('%', #{configKey}, '%')
+        </if>
+        <if test="configType != null">
+            AND config_type = #{configType}
+        </if>
+        ORDER BY created_time DESC
+    </select>
+
+    <select id="countList" parameterType="com.ljwx.platform.app.domain.dto.ConfigQueryDTO"
+            resultType="long">
+        SELECT COUNT(*)
+        FROM sys_config
+        WHERE deleted = FALSE
+        <if test="configName != null and configName != ''">
+            AND config_name LIKE CONCAT('%', #{configName}, '%')
+        </if>
+        <if test="configKey != null and configKey != ''">
+            AND config_key LIKE CONCAT('%', #{configKey}, '%')
+        </if>
+        <if test="configType != null">
+            AND config_type = #{configType}
+        </if>
+    </select>
+
+    <update id="deleteById">
+        UPDATE sys_config SET deleted = TRUE WHERE id = #{id}
+    </update>
+
+</mapper>

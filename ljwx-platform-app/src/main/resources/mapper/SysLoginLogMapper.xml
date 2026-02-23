@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ljwx.platform.app.infra.mapper.SysLoginLogMapper">
+
+    <resultMap id="BaseResultMap" type="com.ljwx.platform.app.domain.entity.SysLoginLog">
+        <id     column="id"           property="id"/>
+        <result column="username"     property="username"/>
+        <result column="ip"           property="ip"/>
+        <result column="location"     property="location"/>
+        <result column="browser"      property="browser"/>
+        <result column="os"           property="os"/>
+        <result column="status"       property="status"/>
+        <result column="msg"          property="msg"/>
+        <result column="tenant_id"    property="tenantId"/>
+        <result column="created_by"   property="createdBy"/>
+        <result column="created_time" property="createdTime"/>
+        <result column="updated_by"   property="updatedBy"/>
+        <result column="updated_time" property="updatedTime"/>
+        <result column="deleted"      property="deleted"/>
+        <result column="version"      property="version"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id, username, ip, location, browser, os, status, msg,
+        tenant_id, created_by, created_time, updated_by, updated_time, deleted, version
+    </sql>
+
+    <insert id="insert" parameterType="com.ljwx.platform.app.domain.entity.SysLoginLog">
+        INSERT INTO sys_login_log (
+            id, username, ip, location, browser, os, status, msg,
+            tenant_id, created_by, created_time, updated_by, updated_time, deleted, version
+        ) VALUES (
+            #{id}, #{username}, #{ip}, #{location}, #{browser}, #{os}, #{status}, #{msg},
+            #{tenantId}, #{createdBy}, #{createdTime}, #{updatedBy}, #{updatedTime}, #{deleted}, #{version}
+        )
+    </insert>
+
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM sys_login_log
+        WHERE id = #{id}
+          AND deleted = FALSE
+    </select>
+
+    <select id="selectList" parameterType="com.ljwx.platform.app.domain.dto.LoginLogQueryDTO"
+            resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM sys_login_log
+        WHERE deleted = FALSE
+        <if test="username != null and username != ''">
+            AND username LIKE CONCAT('%', #{username}, '%')
+        </if>
+        <if test="status != null">
+            AND status = #{status}
+        </if>
+        <if test="startTime != null and startTime != ''">
+            AND created_time &gt;= CAST(#{startTime} AS TIMESTAMP)
+        </if>
+        <if test="endTime != null and endTime != ''">
+            AND created_time &lt; CAST(#{endTime} AS TIMESTAMP) + INTERVAL '1 day'
+        </if>
+        ORDER BY created_time DESC
+        LIMIT #{pageSize} OFFSET #{offset}
+    </select>
+
+    <select id="countList" parameterType="com.ljwx.platform.app.domain.dto.LoginLogQueryDTO"
+            resultType="long">
+        SELECT COUNT(*)
+        FROM sys_login_log
+        WHERE deleted = FALSE
+        <if test="username != null and username != ''">
+            AND username LIKE CONCAT('%', #{username}, '%')
+        </if>
+        <if test="status != null">
+            AND status = #{status}
+        </if>
+        <if test="startTime != null and startTime != ''">
+            AND created_time &gt;= CAST(#{startTime} AS TIMESTAMP)
+        </if>
+        <if test="endTime != null and endTime != ''">
+            AND created_time &lt; CAST(#{endTime} AS TIMESTAMP) + INTERVAL '1 day'
+        </if>
+    </select>
+
+</mapper>

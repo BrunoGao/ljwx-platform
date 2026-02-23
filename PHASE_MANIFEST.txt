@@ -1,3 +1,166 @@
+## PHASE 11
+Title: Shared Package
+Completed: 2026-02-23T23:30:00Z
+Files:
+  - packages/shared/package.json
+  - packages/shared/tsconfig.json
+  - packages/shared/tsup.config.ts
+  - packages/shared/src/index.ts
+  - packages/shared/src/types/index.ts
+  - packages/shared/src/types/api.ts
+  - packages/shared/src/types/user.ts
+  - packages/shared/src/types/role.ts
+  - packages/shared/src/types/common.ts
+  - packages/shared/src/constants/index.ts
+  - packages/shared/src/constants/error-codes.ts
+  - packages/shared/src/constants/permissions.ts
+  - packages/shared/src/utils/index.ts
+Status: PASSED
+
+## PHASE 10
+Title: Index and Contract
+Completed: 2026-02-23T22:00:00Z
+Files:
+  - ljwx-platform-app/src/main/resources/db/migration/V021__create_indexes.sql
+  - scripts/tools/export-openapi.sh
+  - docs/contracts/.gitkeep
+Status: PASSED
+
+## PHASE 9
+Title: Dict and Config — Gate Fix
+Completed: 2026-02-23T21:00:00Z
+Files:
+  - ljwx-platform-app/src/main/java/com/ljwx/platform/app/domain/dto/LoginLogQueryDTO.java
+  - ljwx-platform-app/src/main/java/com/ljwx/platform/app/domain/dto/NoticeUpdateDTO.java
+  - ljwx-platform-app/src/main/java/com/ljwx/platform/app/domain/dto/OperationLogQueryDTO.java
+  - ljwx-platform-app/src/main/java/com/ljwx/platform/app/domain/dto/NoticeQueryDTO.java
+  - ljwx-platform-app/src/main/java/com/ljwx/platform/app/domain/dto/FileQueryDTO.java
+  - ljwx-platform-app/src/main/java/com/ljwx/platform/app/domain/dto/NoticeCreateDTO.java
+Status: PASSED
+
+## PHASE 8
+Title: Dict and Config
+Completed: 2026-02-23T20:35:00Z
+Files:
+  - ljwx-platform-app/src/main/resources/db/migration/V012__create_sys_dict_type.sql
+  - ljwx-platform-app/src/main/resources/db/migration/V013__create_sys_dict_data.sql
+  - ljwx-platform-app/src/main/resources/db/migration/V014__create_sys_config.sql
+  - ljwx-platform-app/src/main/resources/db/migration/V019__seed_dict_data.sql
+  - ljwx-platform-app/src/main/resources/db/migration/V020__seed_config_data.sql
+  - ljwx-platform-app/src/main/java/com/ljwx/platform/app/controller/DictController.java
+  - ljwx-platform-app/src/main/java/com/ljwx/platform/app/controller/ConfigController.java
+  - ljwx-platform-app/src/main/java/com/ljwx/platform/app/appservice/DictAppService.java
+  - ljwx-platform-app/src/main/java/com/ljwx/platform/app/appservice/ConfigAppService.java
+  - ljwx-platform-app/src/main/java/com/ljwx/platform/app/domain/entity/SysDictType.java
+  - ljwx-platform-app/src/main/java/com/ljwx/platform/app/domain/entity/SysDictData.java
+  - ljwx-platform-app/src/main/java/com/ljwx/platform/app/domain/entity/SysConfig.java
+  - ljwx-platform-app/src/main/java/com/ljwx/platform/app/infra/mapper/SysDictTypeMapper.java
+  - ljwx-platform-app/src/main/java/com/ljwx/platform/app/infra/mapper/SysDictDataMapper.java
+  - ljwx-platform-app/src/main/java/com/ljwx/platform/app/infra/mapper/SysConfigMapper.java
+  - ljwx-platform-app/src/main/resources/mapper/SysDictTypeMapper.xml
+  - ljwx-platform-app/src/main/resources/mapper/SysDictDataMapper.xml
+  - ljwx-platform-app/src/main/resources/mapper/SysConfigMapper.xml
+  - ljwx-platform-app/src/main/java/com/ljwx/platform/app/domain/dto/DictQueryDTO.java
+  - ljwx-platform-app/src/main/java/com/ljwx/platform/app/domain/dto/DictCreateDTO.java
+  - ljwx-platform-app/src/main/java/com/ljwx/platform/app/domain/dto/DictUpdateDTO.java
+  - ljwx-platform-app/src/main/java/com/ljwx/platform/app/domain/dto/ConfigQueryDTO.java
+  - ljwx-platform-app/src/main/java/com/ljwx/platform/app/domain/dto/ConfigCreateDTO.java
+  - ljwx-platform-app/src/main/java/com/ljwx/platform/app/domain/dto/ConfigUpdateDTO.java
+Status: PASSED
+
+## PHASE 7
+Title: Quartz Integration
+Completed: 2026-02-23T12:30:00Z
+Files:
+  - ljwx-platform-app/src/main/resources/db/migration/V010__create_quartz_tables.sql
+  - ljwx-platform-app/src/main/resources/db/migration/V011__create_sys_job.sql
+  - ljwx-platform-app/src/main/java/com/ljwx/platform/app/controller/JobController.java
+  - ljwx-platform-app/src/main/java/com/ljwx/platform/app/appservice/JobAppService.java
+  - ljwx-platform-app/src/main/java/com/ljwx/platform/app/domain/entity/SysJob.java
+  - ljwx-platform-app/src/main/java/com/ljwx/platform/app/infra/mapper/SysJobMapper.java
+  - ljwx-platform-app/src/main/resources/mapper/SysJobMapper.xml
+  - ljwx-platform-app/src/main/java/com/ljwx/platform/app/domain/dto/JobQueryDTO.java
+  - ljwx-platform-app/src/main/java/com/ljwx/platform/app/domain/dto/JobCreateDTO.java
+  - ljwx-platform-app/src/main/java/com/ljwx/platform/app/domain/dto/JobUpdateDTO.java
+  - ljwx-platform-app/src/main/java/com/ljwx/platform/app/infra/quartz/QuartzJobDispatcher.java
+Status: PASSED
+
+## PHASE 6
+Title: AI Context Docs
+Completed: 2026-02-23T15:00:00Z
+Files:
+  - CLAUDE.md
+  - spec.md
+  - spec/INDEX.md
+Status: PASSED
+
+## PHASE 5
+Title: App Skeleton
+Completed: 2026-02-23T14:00:00Z
+Files:
+  - ljwx-platform-app/pom.xml
+  - ljwx-platform-app/src/main/java/com/ljwx/platform/app/LjwxPlatformApplication.java
+  - ljwx-platform-app/src/main/resources/application.yml
+  - ljwx-platform-app/src/main/resources/db/migration/V001__init_schema.sql
+  - ljwx-platform-app/src/main/resources/db/migration/V002__create_user.sql
+  - ljwx-platform-app/src/main/resources/db/migration/V003__create_role.sql
+  - ljwx-platform-app/src/main/resources/db/migration/V004__create_permission.sql
+  - ljwx-platform-app/src/main/resources/db/migration/V005__seed_default_tenant.sql
+  - ljwx-platform-app/src/main/resources/db/migration/V006__seed_admin_user.sql
+  - ljwx-platform-app/src/main/resources/db/migration/V007__seed_permissions.sql
+  - ljwx-platform-app/src/main/resources/db/migration/V008__seed_admin_role.sql
+  - ljwx-platform-app/src/main/resources/db/migration/V009__assign_admin_role.sql
+  - scripts/hooks/pre-edit-guard.sh
+Status: PASSED
+
+## PHASE 4
+Title: Web Module
+Completed: 2026-02-23T13:00:00Z
+Files:
+  - ljwx-platform-web/pom.xml
+  - ljwx-platform-web/src/main/java/com/ljwx/platform/web/exception/BusinessException.java
+  - ljwx-platform-web/src/main/java/com/ljwx/platform/web/advice/GlobalExceptionHandler.java
+  - ljwx-platform-web/src/main/java/com/ljwx/platform/web/advice/ResponseAdvice.java
+  - ljwx-platform-web/src/main/java/com/ljwx/platform/web/config/WebMvcConfig.java
+Status: PASSED
+
+## PHASE 3
+Title: Security Module
+Completed: 2026-02-23T11:37:34Z
+Files:
+  - ljwx-platform-security/pom.xml
+  - ljwx-platform-security/src/main/java/com/ljwx/platform/security/context/SecurityContextUserHolder.java
+  - ljwx-platform-security/src/main/java/com/ljwx/platform/security/context/SecurityContextTenantHolder.java
+  - ljwx-platform-security/src/main/java/com/ljwx/platform/security/jwt/JwtProperties.java
+  - ljwx-platform-security/src/main/java/com/ljwx/platform/security/jwt/JwtTokenProvider.java
+  - ljwx-platform-security/src/main/java/com/ljwx/platform/security/filter/JwtAuthenticationFilter.java
+  - ljwx-platform-security/src/main/java/com/ljwx/platform/security/config/SecurityConfig.java
+Status: PASSED
+
+## PHASE 2
+Title: Data Module
+Completed: 2026-02-23T12:00:00Z
+Files:
+  - ljwx-platform-data/pom.xml
+  - ljwx-platform-data/src/main/java/com/ljwx/platform/data/interceptor/AuditFieldInterceptor.java
+  - ljwx-platform-data/src/main/java/com/ljwx/platform/data/interceptor/TenantLineInterceptor.java
+  - ljwx-platform-data/src/main/java/com/ljwx/platform/data/config/MyBatisConfig.java
+Status: PASSED
+
+## PHASE 1
+Title: Core Module
+Completed: 2026-02-23T00:00:00Z
+Files:
+  - ljwx-platform-core/pom.xml
+  - ljwx-platform-core/src/main/java/com/ljwx/platform/core/result/Result.java
+  - ljwx-platform-core/src/main/java/com/ljwx/platform/core/result/ErrorCode.java
+  - ljwx-platform-core/src/main/java/com/ljwx/platform/core/result/PageResult.java
+  - ljwx-platform-core/src/main/java/com/ljwx/platform/core/id/SnowflakeIdGenerator.java
+  - ljwx-platform-core/src/main/java/com/ljwx/platform/core/entity/BaseEntity.java
+  - ljwx-platform-core/src/main/java/com/ljwx/platform/core/context/CurrentUserHolder.java
+  - ljwx-platform-core/src/main/java/com/ljwx/platform/core/context/CurrentTenantHolder.java
+Status: PASSED
+
 ## PHASE 0
 Status: PASSED
 

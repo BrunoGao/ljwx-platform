@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ljwx.platform.app.infra.mapper.SysNoticeMapper">
+
+    <resultMap id="BaseResultMap" type="com.ljwx.platform.app.domain.entity.SysNotice">
+        <id     column="id"             property="id"/>
+        <result column="notice_title"   property="noticeTitle"/>
+        <result column="notice_type"    property="noticeType"/>
+        <result column="notice_content" property="noticeContent"/>
+        <result column="status"         property="status"/>
+        <result column="publish_time"   property="publishTime"/>
+        <result column="tenant_id"      property="tenantId"/>
+        <result column="created_by"     property="createdBy"/>
+        <result column="created_time"   property="createdTime"/>
+        <result column="updated_by"     property="updatedBy"/>
+        <result column="updated_time"   property="updatedTime"/>
+        <result column="deleted"        property="deleted"/>
+        <result column="version"        property="version"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id, notice_title, notice_type, notice_content, status, publish_time,
+        tenant_id, created_by, created_time, updated_by, updated_time, deleted, version
+    </sql>
+
+    <insert id="insert" parameterType="com.ljwx.platform.app.domain.entity.SysNotice">
+        INSERT INTO sys_notice (
+            id, notice_title, notice_type, notice_content, status, publish_time,
+            tenant_id, created_by, created_time, updated_by, updated_time, deleted, version
+        ) VALUES (
+            #{id}, #{noticeTitle}, #{noticeType}, #{noticeContent}, #{status}, #{publishTime},
+            #{tenantId}, #{createdBy}, #{createdTime}, #{updatedBy}, #{updatedTime}, #{deleted}, #{version}
+        )
+    </insert>
+
+    <update id="updateById" parameterType="com.ljwx.platform.app.domain.entity.SysNotice">
+        UPDATE sys_notice
+        SET notice_title   = #{noticeTitle},
+            notice_type    = #{noticeType},
+            notice_content = #{noticeContent},
+            status         = #{status},
+            publish_time   = #{publishTime},
+            updated_by     = #{updatedBy},
+            updated_time   = #{updatedTime},
+            version        = version + 1
+        WHERE id = #{id}
+          AND deleted = FALSE
+          AND version = #{version}
+    </update>
+
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM sys_notice
+        WHERE id = #{id}
+          AND deleted = FALSE
+    </select>
+
+    <select id="selectList" parameterType="com.ljwx.platform.app.domain.dto.NoticeQueryDTO"
+            resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM sys_notice
+        WHERE deleted = FALSE
+        <if test="noticeTitle != null and noticeTitle != ''">
+            AND notice_title LIKE CONCAT('%', #{noticeTitle}, '%')
+        </if>
+        <if test="noticeType != null">
+            AND notice_type = #{noticeType}
+        </if>
+        <if test="status != null">
+            AND status = #{status}
+        </if>
+        ORDER BY created_time DESC
+        LIMIT #{pageSize} OFFSET #{offset}
+    </select>
+
+    <select id="countList" parameterType="com.ljwx.platform.app.domain.dto.NoticeQueryDTO"
+            resultType="long">
+        SELECT COUNT(*)
+        FROM sys_notice
+        WHERE deleted = FALSE
+        <if test="noticeTitle != null and noticeTitle != ''">
+            AND notice_title LIKE CONCAT('%', #{noticeTitle}, '%')
+        </if>
+        <if test="noticeType != null">
+            AND notice_type = #{noticeType}
+        </if>
+        <if test="status != null">
+            AND status = #{status}
+        </if>
+    </select>
+
+    <update id="deleteById">
+        UPDATE sys_notice SET deleted = TRUE WHERE id = #{id}
+    </update>
+
+</mapper>

@@ -11,7 +11,7 @@ FILE_PATH=$(echo "$INPUT" | jq -r ".tool_input.file_path // empty" 2>/dev/null |
 
 # Rule: Flyway migration must be in the correct directory
 if [[ "$FILE_PATH" =~ \.sql$ ]] && [[ "$FILE_PATH" =~ migration ]]; then
-  if echo "$FILE_PATH" | grep -q "^ljwx-platform-app/src/main/resources/db/migration/"; then
+  if echo "$FILE_PATH" | grep -qE "(^|/)ljwx-platform-app/src/main/resources/db/migration/"; then
     : # correct path
   else
     echo "BLOCKED: SQL migration must be in ljwx-platform-app/src/main/resources/db/migration/" >&2
