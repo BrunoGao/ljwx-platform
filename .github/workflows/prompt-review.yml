@@ -1,0 +1,80 @@
+name: Prompt Review
+
+on:
+  pull_request:
+    paths:
+      - 'CLAUDE.md'
+      - '.claude/rules/**'
+      - '.claude/skills/**'
+      - '.claude/agents/**'
+      - 'prompts/**'
+
+jobs:
+  validate:
+    name: Validate AI Assets
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Shell script syntax check
+        run: bash scripts/ci/lint-shell.sh
+
+      - name: YAML validation
+        run: |
+          pip install pyyaml --quiet
+          bash scripts/ci/lint-yaml.sh
+
+      - name: CLAUDE.md line count check
+        run: |
+          LINES=$(wc -l < CLAUDE.md)
+          echo "CLAUDE.md: $LINES lines"
+          if [ "$LINES" -gt 200 ]; then
+            echo "::warning file=CLAUDE.md::CLAUDE.md exceeds 200 lines ($LINES). Consider moving detail to spec/ files."
+          fi
+
+      - name: Rules files frontmatter check
+        run: |
+          ERRORS=0
+          while IFS= read -r -d '' RULE_FILE; do
+            REL="${RULE_FILE#"$PWD"/}"
+            FIRST=$(head -1 "$RULE_FILE")
+            if [ "$FIRST" = "---" ]; then
+              echo "  [OK] $REL has frontmatter"
+            else
+              echo "  [INFO] $REL has no frontmatter (loads globally)"
+            fi
+          done < <(find .claude/rules -type f -name "*.md" -print0 2>/dev/null)
+
+      - name: Agent files required fields check
+        run: |
+          ERRORS=0
+          for AGENT_FILE in .claude/agents/*.md; do
+            [ -f "$AGENT_FILE" ] || continue
+            REL="$AGENT_FILE"
+            if ! grep -q '^permissionMode:' "$AGENT_FILE"; then
+              echo "  [FAIL] $REL missing permissionMode field"
+              ERRORS=$((ERRORS + 1))
+            else
+              echo "  [OK]   $REL"
+            fi
+          done
+          if [ "$ERRORS" -gt 0 ]; then
+            echo "Agent validation failed: $ERRORS file(s) missing required fields"
+            exit 1
+          fi
+
+      - name: Prompt version bump check
+        run: |
+          CHANGED=$(git diff --name-only origin/${{ github.base_ref }} -- prompts/system/ prompts/templates/ 2>/dev/null || true)
+          for F in $CHANGED; do
+            [ -f "$F" ] || continue
+            OLD_VER=$(git show "origin/${{ github.base_ref }}:$F" 2>/dev/null | grep -m1 '^version:' | sed 's/version:[[:space:]]*//' || echo "none")
+            NEW_VER=$(grep -m1 '^version:' "$F" | sed 's/version:[[:space:]]*//' || echo "none")
+            if [ "$OLD_VER" = "$NEW_VER" ] && [ "$OLD_VER" != "none" ]; then
+              echo "::warning file=$F::Version not bumped (still $OLD_VER). Update 'version:' and add a changelog entry."
+            else
+              echo "  Version bump: $OLD_VER -> $NEW_VER in $F"
+            fi
+          done

@@ -1,0 +1,56 @@
+name: backend-builder-evaluation
+version: "1.0.0"
+target_prompt: backend-builder-system-prompt
+target_prompt_version: "1.0.0"
+description: "Assertions on the backend builder system prompt completeness"
+
+assertions:
+  - id: E-BE-01
+    description: "Prompt mentions tenantId isolation"
+    type: contains
+    value: "tenantId"
+
+  - id: E-BE-02
+    description: "Prompt requires @PreAuthorize"
+    type: contains
+    value: "@PreAuthorize"
+
+  - id: E-BE-03
+    description: "Prompt forbids IF NOT EXISTS in Flyway"
+    type: contains
+    value: "IF NOT EXISTS"
+
+  - id: E-BE-04
+    description: "Prompt specifies compile command"
+    type: contains
+    value: "mvn clean compile"
+
+  - id: E-BE-05
+    description: "Prompt specifies entity generation order"
+    type: contains
+    value: "Entity"
+
+  - id: E-BE-06
+    description: "Prompt references TenantLineInterceptor"
+    type: contains
+    value: "TenantLineInterceptor"
+
+  - id: E-BE-07
+    description: "Prompt specifies BCrypt requirement"
+    type: contains
+    value: "BaseEntity"
+
+  - id: E-BE-08
+    description: "Prompt enforces complete output"
+    type: contains
+    value: "完整"
+
+  - id: E-BE-09
+    description: "Prompt covers DAG dependency"
+    type: contains
+    value: "DAG"
+
+  - id: E-BE-10
+    description: "Prompt covers DTO tenantId prohibition"
+    type: contains
+    value: "DTO"

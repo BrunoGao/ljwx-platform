@@ -1,0 +1,31 @@
+name: phase-execution-template
+version: "1.0.0"
+author: ljwx-team
+description: "Template for executing any numbered phase"
+changelog:
+  - version: "1.0.0"
+    date: "2026-02-23"
+    description: "Initial phase execution template"
+
+template: |
+  执行 Phase {PHASE_NUM}。
+
+  ## 步骤
+
+  1. 读取 spec/phase/phase-{PHASE_NUM_PADDED}.md 获取本阶段任务
+  2. 严格按 "读取清单" 加载指定的 spec 文件（禁止扫描整个 spec/ 目录）
+  3. 按 scope 顺序逐文件生成，每文件生成后立即编译/类型检查
+  4. 运行 gate：bash scripts/gates/gate-all.sh {PHASE_NUM}
+  5. 修复所有 FAIL 项，直到全部 PASS
+  6. 写入 PHASE_MANIFEST.txt
+  7. 提示用户更新 CLAUDE.md 中的 Current Phase
+
+  ## 质量检查清单（输出前自查）
+
+  - [ ] 所有新文件输出完整内容（无省略标记）
+  - [ ] 所有 Controller 方法有 @PreAuthorize
+  - [ ] 所有 Flyway SQL 含 7 列审计字段且无 IF NOT EXISTS
+  - [ ] 所有 DTO 无 tenantId 字段
+  - [ ] 所有 package.json 只用 ~，无 ^
+  - [ ] 所有 TS/Vue 无 any 类型
+  - [ ] 仅修改 Phase scope 内的文件（禁止顺手重构无关文件）
