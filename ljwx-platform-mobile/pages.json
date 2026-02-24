@@ -1,0 +1,22 @@
+{
+  "pages": [
+    { "path": "pages/login/index", "style": { "navigationBarTitleText": "登录" } },
+    { "path": "pages/home/index", "style": { "navigationBarTitleText": "首页" } },
+    { "path": "pages/work/index", "style": { "navigationBarTitleText": "工作台" } },
+    { "path": "pages/message/index", "style": { "navigationBarTitleText": "消息" } },
+    { "path": "pages/mine/index", "style": { "navigationBarTitleText": "我的" } }
+  ],
+  "tabBar": {
+    "list": [
+      { "pagePath": "pages/home/index", "text": "首页" },
+      { "pagePath": "pages/work/index", "text": "工作台" },
+      { "pagePath": "pages/message/index", "text": "消息" },
+      { "pagePath": "pages/mine/index", "text": "我的" }
+    ]
+  },
+  "globalStyle": {
+    "navigationBarTextStyle": "black",
+    "navigationBarTitleText": "LJWX",
+    "navigationBarBackgroundColor": "#ffffff"
+  }
+}

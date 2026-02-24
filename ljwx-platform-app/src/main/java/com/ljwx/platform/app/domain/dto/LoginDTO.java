@@ -4,7 +4,7 @@ import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
 /**
- * 登录请求 DTO（无 tenantId，由后端从用户记录中获取）。
+ * 登录请求 DTO（由后端从用户记录中获取租户信息）。
  */
 @Data
 public class LoginDTO {

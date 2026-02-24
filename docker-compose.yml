@@ -3,7 +3,7 @@ version: '3.8'
 services:
   postgres:
     image: postgres:16.12-alpine
-    container_name: ljwx-postgres
+    container_name: ljwx-platform-postgres
     ports:
       - "${DB_PORT:-5432}:5432"
     environment:

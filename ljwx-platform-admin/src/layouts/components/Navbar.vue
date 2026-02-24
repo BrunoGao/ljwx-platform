@@ -5,6 +5,7 @@ import { ElMessageBox } from 'element-plus'
 import { User, ArrowDown, SwitchButton, Fold, Expand } from '@element-plus/icons-vue'
 import { useUserStore } from '@/stores/user'
 import { useAppStore } from '@/stores/app'
+import ThemeSwitch from './ThemeSwitch.vue'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -45,6 +46,7 @@ async function handleLogout(_command?: unknown): Promise<void> {
       </el-icon>
     </div>
     <div class="navbar-right">
+      <ThemeSwitch />
       <el-dropdown trigger="click" @command="handleLogout">
         <div class="user-info">
           <el-avatar

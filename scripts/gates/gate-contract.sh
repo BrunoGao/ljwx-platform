@@ -31,6 +31,7 @@ fi
 # ── Generate OpenAPI spec ──
 # Method 1: Use springdoc-openapi-maven-plugin if configured
 OPENAPI_OUTPUT="target/openapi.json"
+mkdir -p "$(dirname "$OPENAPI_OUTPUT")"
 
 echo "[Contract] Generating OpenAPI spec"
 if grep -q 'springdoc-openapi-maven-plugin' pom.xml 2>/dev/null || \

@@ -1,3 +1,133 @@
+## PHASE 19
+Title: Final Gate and Docs
+Completed: 2026-02-24T16:00:00Z
+Files:
+  - FULL_MANIFEST.txt
+  - docs/adr/001-module-dependency-dag.md
+  - docs/adr/002-audit-field-interceptor.md
+  - docs/adr/003-jwt-authorities-convention.md
+  - docs/adr/004-frontend-semver-tilde-only.md
+  - docs/adr/005-changelog.md
+  - README.md
+Status: PASSED
+
+## PHASE 18
+Title: Screen Components
+Status: PASSED
+Completed: 2026-02-24T13:30:00Z
+Files:
+  - ljwx-platform-screen/src/components/charts/BarChart.vue
+  - ljwx-platform-screen/src/components/charts/LineChart.vue
+  - ljwx-platform-screen/src/components/charts/PieChart.vue
+  - ljwx-platform-screen/src/components/charts/RadarChart.vue
+  - ljwx-platform-screen/src/components/charts/GaugeChart.vue
+  - ljwx-platform-screen/src/components/charts/ScatterChart.vue
+  - ljwx-platform-screen/src/components/charts/MapChart.vue
+  - ljwx-platform-screen/src/components/charts/FunnelChart.vue
+  - ljwx-platform-screen/src/components/charts/HeatmapChart.vue
+  - ljwx-platform-screen/src/components/charts/TreemapChart.vue
+  - ljwx-platform-screen/src/components/charts/SankeyChart.vue
+  - ljwx-platform-screen/src/components/charts/WaterBallChart.vue
+  - ljwx-platform-screen/src/components/charts/RingChart.vue
+  - ljwx-platform-screen/src/components/widgets/NumberFlip.vue
+  - ljwx-platform-screen/src/components/widgets/ScrollTable.vue
+  - ljwx-platform-screen/src/views/home/index.vue
+
+## PHASE 17
+Title: Screen Scaffold
+Completed: 2026-02-24T13:15:00Z
+Files:
+  - ljwx-platform-screen/package.json
+  - ljwx-platform-screen/vite.config.ts
+  - ljwx-platform-screen/tsconfig.json
+  - ljwx-platform-screen/tsconfig.app.json
+  - ljwx-platform-screen/tsconfig.node.json
+  - ljwx-platform-screen/env.d.ts
+  - ljwx-platform-screen/index.html
+  - ljwx-platform-screen/src/main.ts
+  - ljwx-platform-screen/src/App.vue
+  - ljwx-platform-screen/src/router/index.ts
+  - ljwx-platform-screen/src/composables/useScreenAdapt.ts
+  - ljwx-platform-screen/src/utils/echarts-setup.ts
+  - ljwx-platform-screen/src/utils/echarts-dark-theme.ts
+  - ljwx-platform-screen/src/layouts/ScreenLayout.vue
+  - ljwx-platform-screen/src/views/home/index.vue
+  - ljwx-platform-screen/src/api/request.ts
+  - ljwx-platform-screen/src/api/screen.ts
+  - ljwx-platform-screen/src/styles/index.scss
+Status: PASSED
+
+## PHASE 16
+Title: Mobile Feature Pages
+Completed: 2026-02-24T15:00:00Z
+Files:
+  - ljwx-platform-mobile/src/pages/work/index.vue
+  - ljwx-platform-mobile/src/pages/message/index.vue
+  - ljwx-platform-mobile/src/pages/mine/index.vue
+  - ljwx-platform-mobile/src/api/notice.ts
+  - ljwx-platform-mobile/src/api/user.ts
+Status: PASSED
+
+## PHASE 15
+Title: Mobile Scaffold
+Completed: 2026-02-24T14:00:00Z
+Files:
+  - ljwx-platform-mobile/package.json
+  - ljwx-platform-mobile/manifest.json
+  - ljwx-platform-mobile/pages.json
+  - ljwx-platform-mobile/tsconfig.json
+  - ljwx-platform-mobile/src/main.ts
+  - ljwx-platform-mobile/src/App.vue
+  - ljwx-platform-mobile/src/uni.d.ts
+  - ljwx-platform-mobile/src/pages/login/index.vue
+  - ljwx-platform-mobile/src/pages/home/index.vue
+  - ljwx-platform-mobile/src/pages/work/index.vue
+  - ljwx-platform-mobile/src/pages/message/index.vue
+  - ljwx-platform-mobile/src/pages/mine/index.vue
+  - ljwx-platform-mobile/src/stores/user.ts
+  - ljwx-platform-mobile/src/api/request.ts
+  - ljwx-platform-mobile/src/api/auth.ts
+Status: PASSED
+
+## PHASE 14
+Title: Admin Permission and Polish
+Completed: 2026-02-24T12:45:00Z
+Files:
+  - ljwx-platform-admin/src/router/guards.ts
+  - ljwx-platform-admin/src/stores/permission.ts
+  - ljwx-platform-admin/src/composables/usePermission.ts
+  - ljwx-platform-admin/src/composables/useTheme.ts
+  - ljwx-platform-admin/src/layouts/components/Breadcrumb.vue
+  - ljwx-platform-admin/src/layouts/components/TagsView.vue
+  - ljwx-platform-admin/src/layouts/components/ThemeSwitch.vue
+Status: PASSED
+
+## PHASE 13
+Title: Admin CRUD Pages
+Completed: 2026-02-24T00:00:00Z
+Files:
+  - ljwx-platform-admin/src/api/user.ts
+  - ljwx-platform-admin/src/api/role.ts
+  - ljwx-platform-admin/src/api/tenant.ts
+  - ljwx-platform-admin/src/api/dict.ts
+  - ljwx-platform-admin/src/api/config.ts
+  - ljwx-platform-admin/src/api/log.ts
+  - ljwx-platform-admin/src/api/file.ts
+  - ljwx-platform-admin/src/api/notice.ts
+  - ljwx-platform-admin/src/api/job.ts
+  - ljwx-platform-admin/src/views/system/user/index.vue
+  - ljwx-platform-admin/src/views/system/role/index.vue
+  - ljwx-platform-admin/src/views/system/tenant/index.vue
+  - ljwx-platform-admin/src/views/system/dict/index.vue
+  - ljwx-platform-admin/src/views/system/config/index.vue
+  - ljwx-platform-admin/src/views/system/job/index.vue
+  - ljwx-platform-admin/src/views/monitor/operlog/index.vue
+  - ljwx-platform-admin/src/views/monitor/loginlog/index.vue
+  - ljwx-platform-admin/src/views/system/file/index.vue
+  - ljwx-platform-admin/src/views/system/notice/index.vue
+  - ljwx-platform-admin/src/router/index.ts
+Status: PASSED
+
 ## PHASE 12
 Title: Admin Scaffold
 Completed: 2026-02-23T23:59:00Z

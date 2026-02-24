@@ -1,7 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import type { RouteRecordRaw } from 'vue-router'
-import NProgress from 'nprogress'
-import { useUserStore } from '@/stores/user'
+import { setupRouterGuards } from './guards'
 
 // Augment vue-router RouteMeta for type-safe route metadata
 declare module 'vue-router' {
@@ -10,6 +9,8 @@ declare module 'vue-router' {
     title?: string
     icon?: string
     hidden?: boolean
+    /** RBAC authority string required to access this route, e.g. 'user:read' */
+    authority?: string
   }
 }
 
@@ -62,6 +63,86 @@ const routes: RouteRecordRaw[] = [
           requiresAuth: true,
         },
       },
+      {
+        path: 'system/tenant',
+        name: 'SystemTenant',
+        component: () => import('@/views/system/tenant/index.vue'),
+        meta: {
+          title: '租户管理',
+          icon: 'OfficeBuilding',
+          requiresAuth: true,
+        },
+      },
+      {
+        path: 'system/dict',
+        name: 'SystemDict',
+        component: () => import('@/views/system/dict/index.vue'),
+        meta: {
+          title: '字典管理',
+          icon: 'Collection',
+          requiresAuth: true,
+        },
+      },
+      {
+        path: 'system/config',
+        name: 'SystemConfig',
+        component: () => import('@/views/system/config/index.vue'),
+        meta: {
+          title: '系统配置',
+          icon: 'Setting',
+          requiresAuth: true,
+        },
+      },
+      {
+        path: 'system/job',
+        name: 'SystemJob',
+        component: () => import('@/views/system/job/index.vue'),
+        meta: {
+          title: '定时任务',
+          icon: 'Timer',
+          requiresAuth: true,
+        },
+      },
+      {
+        path: 'system/file',
+        name: 'SystemFile',
+        component: () => import('@/views/system/file/index.vue'),
+        meta: {
+          title: '文件管理',
+          icon: 'FolderOpened',
+          requiresAuth: true,
+        },
+      },
+      {
+        path: 'system/notice',
+        name: 'SystemNotice',
+        component: () => import('@/views/system/notice/index.vue'),
+        meta: {
+          title: '通知公告',
+          icon: 'Bell',
+          requiresAuth: true,
+        },
+      },
+      {
+        path: 'monitor/operlog',
+        name: 'MonitorOperlog',
+        component: () => import('@/views/monitor/operlog/index.vue'),
+        meta: {
+          title: '操作日志',
+          icon: 'Document',
+          requiresAuth: true,
+        },
+      },
+      {
+        path: 'monitor/loginlog',
+        name: 'MonitorLoginlog',
+        component: () => import('@/views/monitor/loginlog/index.vue'),
+        meta: {
+          title: '登录日志',
+          icon: 'Key',
+          requiresAuth: true,
+        },
+      },
     ],
   },
   {
@@ -76,19 +157,6 @@ export const router = createRouter({
   scrollBehavior: () => ({ left: 0, top: 0 }),
 })
 
-router.beforeEach((to) => {
-  NProgress.start()
-  const userStore = useUserStore()
-  if (to.meta.requiresAuth && !userStore.accessToken) {
-    return { name: 'Login', query: { redirect: to.fullPath } }
-  }
-  if (to.name === 'Login' && userStore.accessToken) {
-    return { path: '/dashboard' }
-  }
-})
-
-router.afterEach(() => {
-  NProgress.done()
-})
+setupRouterGuards(router)
 
 export default router

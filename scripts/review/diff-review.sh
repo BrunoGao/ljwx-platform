@@ -6,6 +6,7 @@
 set -euo pipefail
 
 PHASE_NUM="${1:?Usage: diff-review.sh <phase-number>}"
+PRE_PHASE_FILE="${2:-}"   # optional: file listing changes that existed before this phase
 PROJECT_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 cd "$PROJECT_ROOT"
 
@@ -75,6 +76,10 @@ while IFS= read -r file; do
     case "$file" in
       PHASE_MANIFEST.txt|CLAUDE.md|.gitignore) continue ;;
     esac
+    # Skip files that were already changed before this phase started
+    if [[ -n "$PRE_PHASE_FILE" ]] && grep -qxF "$file" "$PRE_PHASE_FILE" 2>/dev/null; then
+      continue
+    fi
     echo "  CRITICAL: $file — outside Phase $PHASE_NUM scope"
     ((ERRORS++))
   fi

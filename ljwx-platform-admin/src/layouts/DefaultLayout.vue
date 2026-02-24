@@ -3,6 +3,8 @@ import { computed } from 'vue'
 import { useAppStore } from '@/stores/app'
 import Sidebar from './components/Sidebar.vue'
 import Navbar from './components/Navbar.vue'
+import Breadcrumb from './components/Breadcrumb.vue'
+import TagsView from './components/TagsView.vue'
 
 const appStore = useAppStore()
 const isCollapsed = computed(() => appStore.sidebarCollapsed)
@@ -20,6 +22,10 @@ const isCollapsed = computed(() => appStore.sidebarCollapsed)
       <el-header class="layout-header" height="56px">
         <Navbar />
       </el-header>
+      <div class="layout-breadcrumb">
+        <Breadcrumb />
+      </div>
+      <TagsView />
       <el-main class="layout-content">
         <RouterView />
       </el-main>
@@ -54,6 +60,12 @@ const isCollapsed = computed(() => appStore.sidebarCollapsed)
   align-items: center;
   box-shadow: 0 1px 4px rgba(0, 21, 41, 0.08);
   z-index: 10;
+}
+
+.layout-breadcrumb {
+  padding: 8px 16px;
+  background-color: #fff;
+  border-bottom: 1px solid #f0f0f0;
 }
 
 .layout-content {

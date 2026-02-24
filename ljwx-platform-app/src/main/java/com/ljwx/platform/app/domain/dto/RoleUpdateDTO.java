@@ -5,7 +5,7 @@ import lombok.Data;
 import java.util.List;
 
 /**
- * 更新角色 DTO（不含 tenantId，由 TenantLineInterceptor 自动注入）。
+ * 更新角色 DTO（租户由 TenantLineInterceptor 自动注入）。
  */
 @Data
 public class RoleUpdateDTO {

@@ -6,7 +6,7 @@ import lombok.Data;
 import java.util.List;
 
 /**
- * 创建角色 DTO（不含 tenantId，由后端自动注入）。
+ * 创建角色 DTO（租户由后端自动注入）。
  */
 @Data
 public class RoleCreateDTO {

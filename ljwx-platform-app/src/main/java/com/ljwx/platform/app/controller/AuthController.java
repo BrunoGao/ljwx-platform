@@ -30,26 +30,26 @@ public class AuthController {
 
     private final AuthAppService authAppService;
 
-    @PostMapping("/login")
     @PreAuthorize("permitAll()")
+    @PostMapping("/login")
     public Result<LoginVO> login(@RequestBody @Valid LoginDTO dto) {
         return Result.ok(authAppService.login(dto));
     }
 
-    @PostMapping("/refresh")
     @PreAuthorize("permitAll()")
+    @PostMapping("/refresh")
     public Result<TokenVO> refresh(@RequestBody @Valid RefreshDTO dto) {
         return Result.ok(authAppService.refresh(dto));
     }
 
-    @GetMapping("/me")
     @PreAuthorize("isAuthenticated()")
+    @GetMapping("/me")
     public Result<UserInfoVO> me() {
         return Result.ok(authAppService.getCurrentUser());
     }
 
-    @PostMapping("/logout")
     @PreAuthorize("isAuthenticated()")
+    @PostMapping("/logout")
     public Result<Void> logout() {
         // 无状态 JWT：服务端无 session，客户端删除 token 即可
         return Result.ok();

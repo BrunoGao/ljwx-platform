@@ -46,6 +46,10 @@ if [[ "$SKIP_PREFLIGHT" != "--skip-preflight" ]]; then
   echo ""
 fi
 
+# Record files already changed before this phase starts (for diff-review baseline)
+PRE_PHASE_FILE=$(mktemp)
+git diff --name-only HEAD > "$PRE_PHASE_FILE" 2>/dev/null || true
+
 # ── Build generation prompt ───────────────────────────────
 BUILD_PROMPT="You are executing Phase $PHASE_NUM of the LJWX Platform.
 
@@ -148,7 +152,7 @@ fi
 
 # ── Step 3: Zero-token diff review ────────────────────────
 echo "═══ STEP 3: Diff Review (zero-token rules scan) ═══"
-bash scripts/review/diff-review.sh "$PHASE_NUM" 2>&1 | tee "$LOG_DIR/diff-review.log"
+bash scripts/review/diff-review.sh "$PHASE_NUM" "$PRE_PHASE_FILE" 2>&1 | tee "$LOG_DIR/diff-review.log"
 REVIEW_EXIT=${PIPESTATUS[0]}
 if [[ "$REVIEW_EXIT" -ne 0 ]]; then
   echo "DIFF REVIEW FAILED — aborting."
@@ -213,6 +217,7 @@ fi
 
 # ── Step 6: Git commit ────────────────────────────────────
 echo "═══ STEP 6: Git Commit ═══"
+rm -f "$PRE_PHASE_FILE"
 git add -A
 git commit -m "feat(phase-${PHASE_NUM}): ${PHASE_TITLE} — auto-verified" || true
 echo ""
