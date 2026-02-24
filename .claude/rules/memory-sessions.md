@@ -42,3 +42,35 @@ Phase 0 骨架文件已创建，PHASE_MANIFEST.txt 已写入 PASSED。
 
 ### 下一步
 确认 preflight 全绿，执行 Phase 1。
+
+## 2026-02-23: Phase 状态核查与修正（Session 4）
+
+### 背景
+用户指出 CLAUDE.md 中 Current Phase 停留在 "Phase 1 — 尚未开始"，与实际不符。
+
+### 核查结论
+通过磁盘文件 + PHASE_MANIFEST.txt 对照 spec 规格，确认 **Phase 0–12 全部已实施完毕**：
+
+| Phase | 标题 | 状态 |
+|---|---|---|
+| 0 | Skeleton | ✅ PASSED |
+| 1 | Core Module | ✅ PASSED |
+| 2 | Data Module | ✅ PASSED |
+| 3 | Security Module | ✅ PASSED |
+| 4 | Web Module | ✅ PASSED |
+| 5 | App Skeleton | ✅ PASSED |
+| 6 | AI Context Docs | ✅ PASSED |
+| 7 | Quartz Integration | ✅ PASSED |
+| 8 | Dict & Config | ✅ PASSED |
+| 9 | Logs, Notice & File | ✅ PASSED |
+| 10 | Index & Contract | ✅ PASSED |
+| 11 | Shared Package | ✅ PASSED |
+| 12 | Admin Scaffold | ✅ PASSED |
+
+### 修正内容
+1. `CLAUDE.md` Current Phase: "Phase 1 — 尚未开始" → "Phase 12 — PASSED，Phase 13 next"
+2. `PHASE_MANIFEST.txt` Phase 9 标题: "Dict and Config — Gate Fix" → "Logs Notice and File"，并补全缺失文件列表（controllers/services/entities/mappers/XMLs/LogAsyncConfig）
+
+### 当前状态
+- Phase 12 (Admin Scaffold) PASSED
+- 下一步：执行 `/phase-exec 13`（Admin CRUD Pages）

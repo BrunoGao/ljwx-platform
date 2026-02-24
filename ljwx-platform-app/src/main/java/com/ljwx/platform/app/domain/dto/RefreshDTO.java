@@ -1,0 +1,14 @@
+package com.ljwx.platform.app.domain.dto;
+
+import jakarta.validation.constraints.NotBlank;
+import lombok.Data;
+
+/**
+ * 刷新令牌请求 DTO。
+ */
+@Data
+public class RefreshDTO {
+
+    @NotBlank(message = "刷新令牌不能为空")
+    private String refreshToken;
+}

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ljwx.platform.app.infra.mapper.SysPermissionMapper">
+
+    <!--
+      已认证上下文：TenantLineInterceptor 在 ORDER BY 前注入
+      AND tenant_id = X（外层 FROM 仅 sys_permission，无二义性）。
+    -->
+    <select id="selectAll" resultType="com.ljwx.platform.app.domain.vo.PermissionVO">
+        SELECT id, name, code,
+               SPLIT_PART(code, ':', 1) AS resource,
+               SPLIT_PART(code, ':', 2) AS action
+        FROM sys_permission
+        WHERE deleted = FALSE
+        ORDER BY code
+    </select>
+
+</mapper>

@@ -43,8 +43,12 @@ RUN_LOG="logs/run-all-$(date +%Y%m%d-%H%M%S).log"
 # ── Helper functions ───────────────────────────────────────
 is_completed() {
   local phase="$1"
-  [[ -f "$MANIFEST" ]] && grep -q "^## PHASE $phase$" "$MANIFEST" && \
-    grep -A5 "^## PHASE $phase$" "$MANIFEST" | grep -q "Status: PASSED"
+  [[ -f "$MANIFEST" ]] || return 1
+  awk -v p="## PHASE $phase" '
+    $0 == p { found=1; next }
+    found && /^## PHASE / { exit }
+    found && /Status: PASSED/ { print; exit }
+  ' "$MANIFEST" | grep -q "Status: PASSED"
 }
 
 phase_exists() {

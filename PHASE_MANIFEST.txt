@@ -58,15 +58,39 @@ Files:
 Status: PASSED
 
 ## PHASE 9
-Title: Dict and Config — Gate Fix
+Title: Logs Notice and File
 Completed: 2026-02-23T21:00:00Z
 Files:
+  - ljwx-platform-app/src/main/resources/db/migration/V015__create_sys_operation_log.sql
+  - ljwx-platform-app/src/main/resources/db/migration/V016__create_sys_login_log.sql
+  - ljwx-platform-app/src/main/resources/db/migration/V017__create_sys_file.sql
+  - ljwx-platform-app/src/main/resources/db/migration/V018__create_sys_notice.sql
+  - ljwx-platform-app/src/main/java/com/ljwx/platform/app/controller/OperationLogController.java
+  - ljwx-platform-app/src/main/java/com/ljwx/platform/app/controller/LoginLogController.java
+  - ljwx-platform-app/src/main/java/com/ljwx/platform/app/controller/FileController.java
+  - ljwx-platform-app/src/main/java/com/ljwx/platform/app/controller/NoticeController.java
+  - ljwx-platform-app/src/main/java/com/ljwx/platform/app/appservice/OperationLogAppService.java
+  - ljwx-platform-app/src/main/java/com/ljwx/platform/app/appservice/FileAppService.java
+  - ljwx-platform-app/src/main/java/com/ljwx/platform/app/appservice/NoticeAppService.java
+  - ljwx-platform-app/src/main/java/com/ljwx/platform/app/domain/entity/SysOperationLog.java
+  - ljwx-platform-app/src/main/java/com/ljwx/platform/app/domain/entity/SysLoginLog.java
+  - ljwx-platform-app/src/main/java/com/ljwx/platform/app/domain/entity/SysFile.java
+  - ljwx-platform-app/src/main/java/com/ljwx/platform/app/domain/entity/SysNotice.java
+  - ljwx-platform-app/src/main/java/com/ljwx/platform/app/infra/mapper/SysOperationLogMapper.java
+  - ljwx-platform-app/src/main/java/com/ljwx/platform/app/infra/mapper/SysLoginLogMapper.java
+  - ljwx-platform-app/src/main/java/com/ljwx/platform/app/infra/mapper/SysFileMapper.java
+  - ljwx-platform-app/src/main/java/com/ljwx/platform/app/infra/mapper/SysNoticeMapper.java
+  - ljwx-platform-app/src/main/resources/mapper/SysOperationLogMapper.xml
+  - ljwx-platform-app/src/main/resources/mapper/SysLoginLogMapper.xml
+  - ljwx-platform-app/src/main/resources/mapper/SysFileMapper.xml
+  - ljwx-platform-app/src/main/resources/mapper/SysNoticeMapper.xml
   - ljwx-platform-app/src/main/java/com/ljwx/platform/app/domain/dto/LoginLogQueryDTO.java
   - ljwx-platform-app/src/main/java/com/ljwx/platform/app/domain/dto/NoticeUpdateDTO.java
   - ljwx-platform-app/src/main/java/com/ljwx/platform/app/domain/dto/OperationLogQueryDTO.java
   - ljwx-platform-app/src/main/java/com/ljwx/platform/app/domain/dto/NoticeQueryDTO.java
   - ljwx-platform-app/src/main/java/com/ljwx/platform/app/domain/dto/FileQueryDTO.java
   - ljwx-platform-app/src/main/java/com/ljwx/platform/app/domain/dto/NoticeCreateDTO.java
+  - ljwx-platform-app/src/main/java/com/ljwx/platform/app/infra/config/LogAsyncConfig.java
 Status: PASSED
 
 ## PHASE 8

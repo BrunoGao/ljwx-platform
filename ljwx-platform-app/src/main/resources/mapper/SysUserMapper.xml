@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ljwx.platform.app.infra.mapper.SysUserMapper">
+
+    <resultMap id="BaseResultMap" type="com.ljwx.platform.app.domain.entity.SysUser">
+        <id     column="id"           property="id"/>
+        <result column="username"     property="username"/>
+        <result column="password"     property="password"/>
+        <result column="nickname"     property="nickname"/>
+        <result column="email"        property="email"/>
+        <result column="phone"        property="phone"/>
+        <result column="avatar"       property="avatar"/>
+        <result column="status"       property="status"/>
+        <result column="tenant_id"    property="tenantId"/>
+        <result column="created_by"   property="createdBy"/>
+        <result column="created_time" property="createdTime"/>
+        <result column="updated_by"   property="updatedBy"/>
+        <result column="updated_time" property="updatedTime"/>
+        <result column="deleted"      property="deleted"/>
+        <result column="version"      property="version"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id, username, password, nickname, email, phone, avatar, status,
+        tenant_id, created_by, created_time, updated_by, updated_time, deleted, version
+    </sql>
+
+    <!--
+      登录专用：无 Auth 上下文，TenantLineInterceptor 绕过，跨租户查询。
+      LIMIT 1 确保单值（相同 username 可能存在于多个租户）。
+    -->
+    <select id="selectByUsername" parameterType="string" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM sys_user
+        WHERE username = #{username}
+          AND deleted = FALSE
+        LIMIT 1
+    </select>
+
+    <!--
+      登录专用：嵌套子查询，避免已认证上下文多表 tenant_id 二义性。
+      TenantLineInterceptor 在外层 WHERE 末尾注入 AND tenant_id = X，
+      外层 FROM 仅有 sys_permission → 无二义性。
+    -->
+    <select id="selectPermissionCodes" parameterType="long" resultType="string">
+        SELECT DISTINCT p.code
+        FROM sys_permission p
+        WHERE p.deleted = FALSE
+          AND p.id IN (
+              SELECT rp.permission_id FROM sys_role_permission rp
+              WHERE rp.deleted = FALSE
+                AND rp.role_id IN (
+                    SELECT ur.role_id FROM sys_user_role ur
+                    WHERE ur.user_id = #{userId}
+                      AND ur.deleted = FALSE
+                      AND ur.role_id IN (
+                          SELECT r.id FROM sys_role r
+                          WHERE r.status = 1 AND r.deleted = FALSE
+                      )
+                )
+          )
+    </select>
+
+    <!-- 登录专用：子查询版，安全用于已认证上下文 -->
+    <select id="selectRoleCodes" parameterType="long" resultType="string">
+        SELECT DISTINCT r.code
+        FROM sys_role r
+        WHERE r.deleted = FALSE
+          AND r.status = 1
+          AND r.id IN (
+              SELECT ur.role_id FROM sys_user_role ur
+              WHERE ur.user_id = #{userId}
+                AND ur.deleted = FALSE
+          )
+    </select>
+
+    <select id="selectById" parameterType="long" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM sys_user
+        WHERE id = #{id}
+          AND deleted = FALSE
+    </select>
+
+    <select id="selectList" parameterType="com.ljwx.platform.app.domain.dto.UserQueryDTO"
+            resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM sys_user
+        WHERE deleted = FALSE
+        <if test="username != null and username != ''">
+            AND username LIKE CONCAT('%', #{username}, '%')
+        </if>
+        <if test="nickname != null and nickname != ''">
+            AND nickname LIKE CONCAT('%', #{nickname}, '%')
+        </if>
+        <if test="status != null">
+            AND status = #{status}
+        </if>
+        ORDER BY created_time DESC
+        LIMIT #{pageSize} OFFSET #{offset}
+    </select>
+
+    <select id="countList" parameterType="com.ljwx.platform.app.domain.dto.UserQueryDTO"
+            resultType="long">
+        SELECT COUNT(*)
+        FROM sys_user
+        WHERE deleted = FALSE
+        <if test="username != null and username != ''">
+            AND username LIKE CONCAT('%', #{username}, '%')
+        </if>
+        <if test="nickname != null and nickname != ''">
+            AND nickname LIKE CONCAT('%', #{nickname}, '%')
+        </if>
+        <if test="status != null">
+            AND status = #{status}
+        </if>
+    </select>
+
+    <!--
+      已认证上下文：子查询保证外层 FROM 仅 sys_role r，
+      TenantLineInterceptor 注入的 AND tenant_id = X 无二义性。
+    -->
+    <select id="selectRolesForUser" parameterType="long"
+            resultType="com.ljwx.platform.app.domain.vo.UserRoleVO">
+        SELECT r.id, r.name, r.code
+        FROM sys_role r
+        WHERE r.deleted = FALSE
+          AND r.status = 1
+          AND r.id IN (
+              SELECT role_id FROM sys_user_role
+              WHERE user_id = #{userId}
+                AND deleted = FALSE
+          )
+    </select>
+
+    <!--
+      INSERT 不包含 deleted/version：依赖 DB DEFAULT（FALSE / 1）。
+      AuditFieldInterceptor 在 INSERT 前自动填充 createdBy/Time, updatedBy/Time。
+      tenantId 必须由 Service 层在调用前手动设置。
+    -->
+    <insert id="insert" parameterType="com.ljwx.platform.app.domain.entity.SysUser">
+        INSERT INTO sys_user (
+            id, username, password, nickname, email, phone, avatar, status,
+            tenant_id, created_by, created_time, updated_by, updated_time
+        ) VALUES (
+            #{id}, #{username}, #{password}, #{nickname}, #{email}, #{phone}, #{avatar}, #{status},
+            #{tenantId}, #{createdBy}, #{createdTime}, #{updatedBy}, #{updatedTime}
+        )
+    </insert>
+
+    <update id="updateById" parameterType="com.ljwx.platform.app.domain.entity.SysUser">
+        UPDATE sys_user
+        SET nickname     = #{nickname},
+            email        = #{email},
+            phone        = #{phone},
+            avatar       = #{avatar},
+            status       = #{status},
+            updated_by   = #{updatedBy},
+            updated_time = #{updatedTime},
+            version      = version + 1
+        WHERE id = #{id}
+          AND deleted = FALSE
+          AND version = #{version}
+    </update>
+
+    <update id="deleteById" parameterType="long">
+        UPDATE sys_user SET deleted = TRUE WHERE id = #{id}
+    </update>
+
+    <update id="deleteUserRoles" parameterType="long">
+        UPDATE sys_user_role SET deleted = TRUE
+        WHERE user_id = #{userId} AND deleted = FALSE
+    </update>
+
+    <insert id="insertUserRole">
+        INSERT INTO sys_user_role (id, user_id, role_id, tenant_id, created_by, updated_by, version)
+        VALUES (#{id}, #{userId}, #{roleId}, #{tenantId}, #{createdBy}, #{updatedBy}, 1)
+    </insert>
+
+</mapper>

@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ljwx.platform.app.infra.mapper.SysRoleMapper">
+
+    <resultMap id="BaseResultMap" type="com.ljwx.platform.app.domain.entity.SysRole">
+        <id     column="id"           property="id"/>
+        <result column="name"         property="name"/>
+        <result column="code"         property="code"/>
+        <result column="status"       property="status"/>
+        <result column="remark"       property="remark"/>
+        <result column="tenant_id"    property="tenantId"/>
+        <result column="created_by"   property="createdBy"/>
+        <result column="created_time" property="createdTime"/>
+        <result column="updated_by"   property="updatedBy"/>
+        <result column="updated_time" property="updatedTime"/>
+        <result column="deleted"      property="deleted"/>
+        <result column="version"      property="version"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id, name, code, status, remark,
+        tenant_id, created_by, created_time, updated_by, updated_time, deleted, version
+    </sql>
+
+    <select id="selectById" parameterType="long" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM sys_role
+        WHERE id = #{id}
+          AND deleted = FALSE
+    </select>
+
+    <select id="selectList" parameterType="com.ljwx.platform.app.domain.dto.RoleQueryDTO"
+            resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM sys_role
+        WHERE deleted = FALSE
+        <if test="name != null and name != ''">
+            AND name LIKE CONCAT('%', #{name}, '%')
+        </if>
+        <if test="code != null and code != ''">
+            AND code = #{code}
+        </if>
+        <if test="status != null">
+            AND status = #{status}
+        </if>
+        ORDER BY created_time DESC
+        LIMIT #{pageSize} OFFSET #{offset}
+    </select>
+
+    <select id="countList" parameterType="com.ljwx.platform.app.domain.dto.RoleQueryDTO"
+            resultType="long">
+        SELECT COUNT(*)
+        FROM sys_role
+        WHERE deleted = FALSE
+        <if test="name != null and name != ''">
+            AND name LIKE CONCAT('%', #{name}, '%')
+        </if>
+        <if test="code != null and code != ''">
+            AND code = #{code}
+        </if>
+        <if test="status != null">
+            AND status = #{status}
+        </if>
+    </select>
+
+    <!--
+      已认证上下文：子查询使外层 FROM 仅含 sys_permission p，
+      TenantLineInterceptor 注入的 AND tenant_id = X 由 ORDER BY 前的
+      findTailClauseStart 精确定位，无二义性。
+      SPLIT_PART 在 SQL 层计算 resource 和 action。
+    -->
+    <select id="selectPermissionsForRole" parameterType="long"
+            resultType="com.ljwx.platform.app.domain.vo.PermissionVO">
+        SELECT p.id, p.name, p.code,
+               SPLIT_PART(p.code, ':', 1) AS resource,
+               SPLIT_PART(p.code, ':', 2) AS action
+        FROM sys_permission p
+        WHERE p.deleted = FALSE
+          AND p.id IN (
+              SELECT rp.permission_id FROM sys_role_permission rp
+              WHERE rp.role_id = #{roleId}
+                AND rp.deleted = FALSE
+          )
+        ORDER BY p.code
+    </select>
+
+    <insert id="insert" parameterType="com.ljwx.platform.app.domain.entity.SysRole">
+        INSERT INTO sys_role (
+            id, name, code, status, remark,
+            tenant_id, created_by, created_time, updated_by, updated_time
+        ) VALUES (
+            #{id}, #{name}, #{code}, #{status}, #{remark},
+            #{tenantId}, #{createdBy}, #{createdTime}, #{updatedBy}, #{updatedTime}
+        )
+    </insert>
+
+    <update id="updateById" parameterType="com.ljwx.platform.app.domain.entity.SysRole">
+        UPDATE sys_role
+        SET name         = #{name},
+            code         = #{code},
+            status       = #{status},
+            remark       = #{remark},
+            updated_by   = #{updatedBy},
+            updated_time = #{updatedTime},
+            version      = version + 1
+        WHERE id = #{id}
+          AND deleted = FALSE
+          AND version = #{version}
+    </update>
+
+    <update id="deleteById" parameterType="long">
+        UPDATE sys_role SET deleted = TRUE WHERE id = #{id}
+    </update>
+
+    <update id="deleteRolePermissions" parameterType="long">
+        UPDATE sys_role_permission SET deleted = TRUE
+        WHERE role_id = #{roleId} AND deleted = FALSE
+    </update>
+
+    <insert id="insertRolePermission">
+        INSERT INTO sys_role_permission (id, role_id, permission_id, tenant_id, created_by, updated_by, version)
+        VALUES (#{id}, #{roleId}, #{permissionId}, #{tenantId}, #{createdBy}, #{updatedBy}, 1)
+    </insert>
+
+</mapper>

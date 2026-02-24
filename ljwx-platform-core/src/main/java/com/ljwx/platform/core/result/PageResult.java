@@ -24,11 +24,11 @@ import java.util.List;
 @NoArgsConstructor
 public class PageResult<T> implements Serializable {
 
-    private List<T> records;
+    private List<T> rows;
     private long total;
 
-    public PageResult(List<T> records, long total) {
-        this.records = records;
+    public PageResult(List<T> rows, long total) {
+        this.rows = rows;
         this.total = total;
     }
 }
