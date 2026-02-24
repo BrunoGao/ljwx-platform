@@ -21,7 +21,7 @@
 
 ## Current Phase
 
-Phase: 19 (Admin CRUD Pages) — IN PROGRESS
+Phase: 13 (Admin CRUD Pages) — IN PROGRESS
 
 ## 硬规则（违反任何一篇为 FAIL）
 
