@@ -1,3 +1,25 @@
+## PHASE 28
+Title: Security Hardening XSS Idempotency Token Blacklist
+Completed: 2026-02-24T23:59:00Z
+Files:
+  - ljwx-platform-web/src/main/java/com/ljwx/platform/web/filter/XssFilter.java
+  - ljwx-platform-web/src/main/java/com/ljwx/platform/web/filter/XssHttpServletRequestWrapper.java
+  - ljwx-platform-web/src/main/java/com/ljwx/platform/web/annotation/Idempotent.java
+  - ljwx-platform-web/src/main/java/com/ljwx/platform/web/annotation/StrongPassword.java
+  - ljwx-platform-web/src/main/java/com/ljwx/platform/web/validator/StrongPasswordValidator.java
+  - ljwx-platform-web/src/main/java/com/ljwx/platform/web/interceptor/IdempotentInterceptor.java
+  - ljwx-platform-security/src/main/java/com/ljwx/platform/security/blacklist/TokenBlacklistService.java
+  - ljwx-platform-security/src/main/java/com/ljwx/platform/security/blacklist/LoginLockoutService.java
+Gate: PASSED
+
+## PHASE 27
+Title: Final Gate and Full Manifest v2
+Completed: 2026-02-24T23:30:00Z
+Files:
+  - FULL_MANIFEST.txt
+  - README.md
+Gate: PASSED
+
 ## PHASE 24
 Title: Tenant Package Notice Read and Import Export
 Completed: 2026-02-24T23:00:00Z

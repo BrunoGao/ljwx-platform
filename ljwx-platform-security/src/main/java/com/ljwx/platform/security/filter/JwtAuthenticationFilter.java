@@ -1,5 +1,6 @@
 package com.ljwx.platform.security.filter;
 
+import com.ljwx.platform.security.blacklist.TokenBlacklistService;
 import com.ljwx.platform.security.jwt.JwtTokenProvider;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
@@ -48,6 +49,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private static final String BEARER_PREFIX = "Bearer ";
 
     private final JwtTokenProvider jwtTokenProvider;
+    private final TokenBlacklistService tokenBlacklistService;
 
     @Override
     protected void doFilterInternal(@NonNull HttpServletRequest request,
@@ -64,6 +66,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 // Only access tokens are valid for general API requests.
                 // Refresh tokens must only be used at /api/auth/refresh.
                 if (jwtTokenProvider.isAccessToken(claims)) {
+                    // Reject blacklisted tokens (e.g., after logout)
+                    String jti = jwtTokenProvider.getJti(claims);
+                    if (jti != null && tokenBlacklistService.isBlacklisted(jti)) {
+                        SecurityContextHolder.clearContext();
+                        filterChain.doFilter(request, response);
+                        return;
+                    }
                     List<String> rawAuthorities = jwtTokenProvider.getAuthorities(claims);
                     List<SimpleGrantedAuthority> grantedAuthorities = rawAuthorities.stream()
                             .map(SimpleGrantedAuthority::new)

@@ -7,6 +7,7 @@ import com.ljwx.platform.app.domain.vo.LoginVO;
 import com.ljwx.platform.app.domain.vo.TokenVO;
 import com.ljwx.platform.app.domain.vo.UserInfoVO;
 import com.ljwx.platform.core.result.Result;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -50,8 +51,10 @@ public class AuthController {
 
     @PreAuthorize("isAuthenticated()")
     @PostMapping("/logout")
-    public Result<Void> logout() {
-        // 无状态 JWT：服务端无 session，客户端删除 token 即可
+    public Result<Void> logout(HttpServletRequest request) {
+        String header = request.getHeader("Authorization");
+        String token = (header != null && header.startsWith("Bearer ")) ? header.substring(7) : null;
+        authAppService.logout(token);
         return Result.ok();
     }
 }

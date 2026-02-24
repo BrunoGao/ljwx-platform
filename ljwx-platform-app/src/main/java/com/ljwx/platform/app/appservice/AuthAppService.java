@@ -10,6 +10,8 @@ import com.ljwx.platform.app.infra.mapper.SysUserMapper;
 import com.ljwx.platform.core.context.CurrentTenantHolder;
 import com.ljwx.platform.core.context.CurrentUserHolder;
 import com.ljwx.platform.core.result.ErrorCode;
+import com.ljwx.platform.security.blacklist.LoginLockoutService;
+import com.ljwx.platform.security.blacklist.TokenBlacklistService;
 import com.ljwx.platform.security.jwt.JwtProperties;
 import com.ljwx.platform.security.jwt.JwtTokenProvider;
 import com.ljwx.platform.web.exception.BusinessException;
@@ -40,6 +42,8 @@ public class AuthAppService {
     private final PasswordEncoder passwordEncoder;
     private final CurrentUserHolder userHolder;
     private final CurrentTenantHolder tenantHolder;
+    private final TokenBlacklistService tokenBlacklistService;
+    private final LoginLockoutService loginLockoutService;
 
     /**
      * 用户登录：校验密码 → 加载权限 → 签发双 Token。
@@ -48,14 +52,21 @@ public class AuthAppService {
      * selectByUsername 跨租户查询（LIMIT 1 取首条）。
      */
     public LoginVO login(LoginDTO dto) {
+        // 0. 检查账号是否被锁定
+        if (loginLockoutService.isLocked(dto.getUsername())) {
+            throw new BusinessException(ErrorCode.ACCOUNT_LOCKED, "账号已锁定，请30分钟后重试");
+        }
+
         // 1. 按用户名查询（无 tenant 过滤）
         SysUser user = userMapper.selectByUsername(dto.getUsername());
         if (user == null) {
+            loginLockoutService.recordFailure(dto.getUsername());
             throw new BusinessException(ErrorCode.TOKEN_INVALID, "用户名或密码错误");
         }
 
         // 2. BCrypt 密码校验（日志不输出 password）
         if (!passwordEncoder.matches(dto.getPassword(), user.getPassword())) {
+            loginLockoutService.recordFailure(dto.getUsername());
             throw new BusinessException(ErrorCode.TOKEN_INVALID, "用户名或密码错误");
         }
 
@@ -64,7 +75,10 @@ public class AuthAppService {
             throw new BusinessException(ErrorCode.TOKEN_INVALID, "账号已禁用");
         }
 
-        // 4. 加载权限码与角色编码
+        // 4. 登录成功，清除失败记录
+        loginLockoutService.clearFailure(dto.getUsername());
+
+        // 5. 加载权限码与角色编码
         List<String> authorities = userMapper.selectPermissionCodes(user.getId());
         List<String> roles = userMapper.selectRoleCodes(user.getId());
 
@@ -141,6 +155,24 @@ public class AuthAppService {
         }
 
         return buildUserInfo(user, authorities, roles);
+    }
+
+    /**
+     * 登出：将当前 access token 的 jti 加入黑名单。
+     *
+     * @param token Bearer token 字符串（不含 "Bearer " 前缀）
+     */
+    public void logout(String token) {
+        if (token == null || !jwtTokenProvider.isTokenValid(token)) {
+            return;
+        }
+        Claims claims = jwtTokenProvider.parseToken(token);
+        String jti = jwtTokenProvider.getJti(claims);
+        if (jti != null) {
+            long remainingSeconds =
+                    (claims.getExpiration().getTime() - System.currentTimeMillis()) / 1000;
+            tokenBlacklistService.addToBlacklist(jti, remainingSeconds);
+        }
     }
 
     private UserInfoVO buildUserInfo(SysUser user, List<String> authorities, List<String> roles) {

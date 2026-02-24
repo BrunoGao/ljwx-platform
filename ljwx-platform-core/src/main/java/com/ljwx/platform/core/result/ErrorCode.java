@@ -22,6 +22,10 @@ public enum ErrorCode {
 
     RESOURCE_NOT_FOUND(404001, "资源不存在"),
 
+    REPEAT_SUBMIT(409001, "重复提交，请稍后再试"),
+
+    ACCOUNT_LOCKED(423001, "账号已锁定，请30分钟后重试"),
+
     SYSTEM_ERROR(500001, "系统内部错误");
 
     private final int code;

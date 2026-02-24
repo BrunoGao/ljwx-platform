@@ -21,10 +21,10 @@
 
 ## Current Phase
 
-Phase: 22 (Integration Tests Phase 2) — PENDING
+Phase: 28 (Security Hardening) — PASSED, Phase 29 next
 
-已完成: Phase 0-25 PASSED
-待执行: Phase 26 → 27 → 28 → 29 → 30 → 31 → 32
+已完成: Phase 0-28 PASSED
+待执行: Phase 29 → 30 → 31 → 32
 
 ## 硬规则（违反任何一篇为 FAIL）
 

@@ -3,9 +3,12 @@ package com.ljwx.platform.security.config;
 import com.ljwx.platform.security.filter.JwtAuthenticationFilter;
 import com.ljwx.platform.security.jwt.JwtProperties;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.Ordered;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -89,6 +92,22 @@ public class SecurityConfig {
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder(10);
+    }
+
+    /**
+     * XSS 过滤器注册 — order=1（最高优先级）。
+     * XssFilter 定义在 web 模块，此处通过类名引用避免 DAG 违规。
+     * 实际 Bean 由 web 模块的 @Component 提供，此处仅设置 order。
+     */
+    @Bean
+    public FilterRegistrationBean<jakarta.servlet.Filter> xssFilterRegistration(
+            @Qualifier("xssFilter") jakarta.servlet.Filter xssFilter) {
+        FilterRegistrationBean<jakarta.servlet.Filter> registration = new FilterRegistrationBean<>();
+        registration.setFilter(xssFilter);
+        registration.addUrlPatterns("/api/*");
+        registration.setOrder(Ordered.HIGHEST_PRECEDENCE);
+        registration.setName("xssFilter");
+        return registration;
     }
 }
 

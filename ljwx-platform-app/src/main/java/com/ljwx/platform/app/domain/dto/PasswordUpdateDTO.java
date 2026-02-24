@@ -1,7 +1,7 @@
 package com.ljwx.platform.app.domain.dto;
 
+import com.ljwx.platform.web.annotation.StrongPassword;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
 
 /**
  * 修改密码 DTO。
@@ -13,7 +13,7 @@ public class PasswordUpdateDTO {
     private String oldPassword;
 
     @NotBlank
-    @Size(min = 6, max = 100)
+    @StrongPassword
     private String newPassword;
 
     public String getOldPassword() { return oldPassword; }

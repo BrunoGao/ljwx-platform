@@ -1,5 +1,5 @@
 # LJWX Platform — Full Repository Manifest
-# Generated: Phase 19 Final Gate & Docs
+# Generated: Phase 27 Final Gate & Full Manifest v2
 # Excludes: node_modules/, target/, .git/, *.class
 
 ## Root Configuration
@@ -50,6 +50,14 @@ spec/phase/phase-16.md
 spec/phase/phase-17.md
 spec/phase/phase-18.md
 spec/phase/phase-19.md
+spec/phase/phase-20.md
+spec/phase/phase-21.md
+spec/phase/phase-22.md
+spec/phase/phase-23.md
+spec/phase/phase-24.md
+spec/phase/phase-25.md
+spec/phase/phase-26.md
+spec/phase/phase-27.md
 spec/phase/TEMPLATE.md
 
 ## Scripts
@@ -120,6 +128,8 @@ ljwx-platform-core/src/main/java/com/ljwx/platform/core/context/CurrentTenantHol
 ljwx-platform-data/pom.xml
 ljwx-platform-data/src/main/java/com/ljwx/platform/data/interceptor/AuditFieldInterceptor.java
 ljwx-platform-data/src/main/java/com/ljwx/platform/data/interceptor/TenantLineInterceptor.java
+ljwx-platform-data/src/main/java/com/ljwx/platform/data/interceptor/DataScopeInterceptor.java
+ljwx-platform-data/src/main/java/com/ljwx/platform/data/context/DataScopeContext.java
 ljwx-platform-data/src/main/java/com/ljwx/platform/data/config/MyBatisConfig.java
 
 ## Backend: Security Module
@@ -137,6 +147,8 @@ ljwx-platform-web/src/main/java/com/ljwx/platform/web/exception/BusinessExceptio
 ljwx-platform-web/src/main/java/com/ljwx/platform/web/advice/GlobalExceptionHandler.java
 ljwx-platform-web/src/main/java/com/ljwx/platform/web/advice/ResponseAdvice.java
 ljwx-platform-web/src/main/java/com/ljwx/platform/web/config/WebMvcConfig.java
+ljwx-platform-web/src/main/java/com/ljwx/platform/web/annotation/RateLimit.java
+ljwx-platform-web/src/main/java/com/ljwx/platform/web/interceptor/RateLimitInterceptor.java
 
 ## Backend: App Module
 ljwx-platform-app/pom.xml
@@ -165,6 +177,13 @@ ljwx-platform-app/src/main/resources/db/migration/V018__create_sys_notice.sql
 ljwx-platform-app/src/main/resources/db/migration/V019__seed_dict_data.sql
 ljwx-platform-app/src/main/resources/db/migration/V020__seed_config_data.sql
 ljwx-platform-app/src/main/resources/db/migration/V021__create_indexes.sql
+ljwx-platform-app/src/main/resources/db/migration/V022__create_sys_menu.sql
+ljwx-platform-app/src/main/resources/db/migration/V023__seed_sys_menu.sql
+ljwx-platform-app/src/main/resources/db/migration/V024__create_sys_dept.sql
+ljwx-platform-app/src/main/resources/db/migration/V025__seed_sys_dept.sql
+ljwx-platform-app/src/main/resources/db/migration/V026__create_sys_login_log.sql
+ljwx-platform-app/src/main/resources/db/migration/V027__create_sys_tenant_package.sql
+ljwx-platform-app/src/main/resources/db/migration/V028__create_sys_notice_user.sql
 
 ### MyBatis Mapper XML
 ljwx-platform-app/src/main/resources/mapper/SysUserMapper.xml
@@ -178,6 +197,10 @@ ljwx-platform-app/src/main/resources/mapper/SysOperationLogMapper.xml
 ljwx-platform-app/src/main/resources/mapper/SysLoginLogMapper.xml
 ljwx-platform-app/src/main/resources/mapper/SysFileMapper.xml
 ljwx-platform-app/src/main/resources/mapper/SysNoticeMapper.xml
+ljwx-platform-app/src/main/resources/mapper/SysMenuMapper.xml
+ljwx-platform-app/src/main/resources/mapper/SysDeptMapper.xml
+ljwx-platform-app/src/main/resources/mapper/SysTenantPackageMapper.xml
+ljwx-platform-app/src/main/resources/mapper/SysNoticeUserMapper.xml
 
 ### Domain Entities
 ljwx-platform-app/src/main/java/com/ljwx/platform/app/domain/entity/SysUser.java
@@ -191,6 +214,10 @@ ljwx-platform-app/src/main/java/com/ljwx/platform/app/domain/entity/SysOperation
 ljwx-platform-app/src/main/java/com/ljwx/platform/app/domain/entity/SysLoginLog.java
 ljwx-platform-app/src/main/java/com/ljwx/platform/app/domain/entity/SysFile.java
 ljwx-platform-app/src/main/java/com/ljwx/platform/app/domain/entity/SysNotice.java
+ljwx-platform-app/src/main/java/com/ljwx/platform/app/domain/entity/SysMenu.java
+ljwx-platform-app/src/main/java/com/ljwx/platform/app/domain/entity/SysDept.java
+ljwx-platform-app/src/main/java/com/ljwx/platform/app/domain/entity/SysTenantPackage.java
+ljwx-platform-app/src/main/java/com/ljwx/platform/app/domain/entity/SysNoticeUser.java
 
 ### DTOs
 ljwx-platform-app/src/main/java/com/ljwx/platform/app/domain/dto/LoginDTO.java
@@ -216,6 +243,15 @@ ljwx-platform-app/src/main/java/com/ljwx/platform/app/domain/dto/FileQueryDTO.ja
 ljwx-platform-app/src/main/java/com/ljwx/platform/app/domain/dto/NoticeQueryDTO.java
 ljwx-platform-app/src/main/java/com/ljwx/platform/app/domain/dto/NoticeCreateDTO.java
 ljwx-platform-app/src/main/java/com/ljwx/platform/app/domain/dto/NoticeUpdateDTO.java
+ljwx-platform-app/src/main/java/com/ljwx/platform/app/domain/dto/MenuCreateDTO.java
+ljwx-platform-app/src/main/java/com/ljwx/platform/app/domain/dto/MenuUpdateDTO.java
+ljwx-platform-app/src/main/java/com/ljwx/platform/app/domain/dto/DeptCreateDTO.java
+ljwx-platform-app/src/main/java/com/ljwx/platform/app/domain/dto/DeptUpdateDTO.java
+ljwx-platform-app/src/main/java/com/ljwx/platform/app/domain/dto/DeptQueryDTO.java
+ljwx-platform-app/src/main/java/com/ljwx/platform/app/domain/dto/ProfileUpdateDTO.java
+ljwx-platform-app/src/main/java/com/ljwx/platform/app/domain/dto/PasswordUpdateDTO.java
+ljwx-platform-app/src/main/java/com/ljwx/platform/app/domain/dto/TenantPackageCreateDTO.java
+ljwx-platform-app/src/main/java/com/ljwx/platform/app/domain/dto/TenantPackageUpdateDTO.java
 
 ### VOs
 ljwx-platform-app/src/main/java/com/ljwx/platform/app/domain/vo/LoginVO.java
@@ -225,6 +261,14 @@ ljwx-platform-app/src/main/java/com/ljwx/platform/app/domain/vo/UserInfoVO.java
 ljwx-platform-app/src/main/java/com/ljwx/platform/app/domain/vo/UserRoleVO.java
 ljwx-platform-app/src/main/java/com/ljwx/platform/app/domain/vo/RoleVO.java
 ljwx-platform-app/src/main/java/com/ljwx/platform/app/domain/vo/PermissionVO.java
+ljwx-platform-app/src/main/java/com/ljwx/platform/app/domain/vo/MenuVO.java
+ljwx-platform-app/src/main/java/com/ljwx/platform/app/domain/vo/MenuTreeVO.java
+ljwx-platform-app/src/main/java/com/ljwx/platform/app/domain/vo/DeptVO.java
+ljwx-platform-app/src/main/java/com/ljwx/platform/app/domain/vo/DeptTreeVO.java
+ljwx-platform-app/src/main/java/com/ljwx/platform/app/domain/vo/LoginLogVO.java
+ljwx-platform-app/src/main/java/com/ljwx/platform/app/domain/vo/TenantPackageVO.java
+ljwx-platform-app/src/main/java/com/ljwx/platform/app/domain/vo/ServerInfoVO.java
+ljwx-platform-app/src/main/java/com/ljwx/platform/app/domain/vo/JvmInfoVO.java
 
 ### Mappers
 ljwx-platform-app/src/main/java/com/ljwx/platform/app/infra/mapper/SysUserMapper.java
@@ -238,6 +282,10 @@ ljwx-platform-app/src/main/java/com/ljwx/platform/app/infra/mapper/SysOperationL
 ljwx-platform-app/src/main/java/com/ljwx/platform/app/infra/mapper/SysLoginLogMapper.java
 ljwx-platform-app/src/main/java/com/ljwx/platform/app/infra/mapper/SysFileMapper.java
 ljwx-platform-app/src/main/java/com/ljwx/platform/app/infra/mapper/SysNoticeMapper.java
+ljwx-platform-app/src/main/java/com/ljwx/platform/app/infra/mapper/SysMenuMapper.java
+ljwx-platform-app/src/main/java/com/ljwx/platform/app/infra/mapper/SysDeptMapper.java
+ljwx-platform-app/src/main/java/com/ljwx/platform/app/infra/mapper/SysTenantPackageMapper.java
+ljwx-platform-app/src/main/java/com/ljwx/platform/app/infra/mapper/SysNoticeUserMapper.java
 
 ### App Services
 ljwx-platform-app/src/main/java/com/ljwx/platform/app/appservice/AuthAppService.java
@@ -249,6 +297,12 @@ ljwx-platform-app/src/main/java/com/ljwx/platform/app/appservice/ConfigAppServic
 ljwx-platform-app/src/main/java/com/ljwx/platform/app/appservice/OperationLogAppService.java
 ljwx-platform-app/src/main/java/com/ljwx/platform/app/appservice/FileAppService.java
 ljwx-platform-app/src/main/java/com/ljwx/platform/app/appservice/NoticeAppService.java
+ljwx-platform-app/src/main/java/com/ljwx/platform/app/appservice/MenuAppService.java
+ljwx-platform-app/src/main/java/com/ljwx/platform/app/appservice/DeptAppService.java
+ljwx-platform-app/src/main/java/com/ljwx/platform/app/appservice/LoginLogAppService.java
+ljwx-platform-app/src/main/java/com/ljwx/platform/app/appservice/ProfileAppService.java
+ljwx-platform-app/src/main/java/com/ljwx/platform/app/appservice/OnlineUserAppService.java
+ljwx-platform-app/src/main/java/com/ljwx/platform/app/appservice/TenantPackageAppService.java
 
 ### Controllers
 ljwx-platform-app/src/main/java/com/ljwx/platform/app/controller/AuthController.java
@@ -262,10 +316,27 @@ ljwx-platform-app/src/main/java/com/ljwx/platform/app/controller/OperationLogCon
 ljwx-platform-app/src/main/java/com/ljwx/platform/app/controller/LoginLogController.java
 ljwx-platform-app/src/main/java/com/ljwx/platform/app/controller/FileController.java
 ljwx-platform-app/src/main/java/com/ljwx/platform/app/controller/NoticeController.java
+ljwx-platform-app/src/main/java/com/ljwx/platform/app/controller/MenuController.java
+ljwx-platform-app/src/main/java/com/ljwx/platform/app/controller/DeptController.java
+ljwx-platform-app/src/main/java/com/ljwx/platform/app/controller/ProfileController.java
+ljwx-platform-app/src/main/java/com/ljwx/platform/app/controller/OnlineUserController.java
+ljwx-platform-app/src/main/java/com/ljwx/platform/app/controller/TenantPackageController.java
+ljwx-platform-app/src/main/java/com/ljwx/platform/app/controller/MonitorController.java
 
 ### Infra Config
 ljwx-platform-app/src/main/java/com/ljwx/platform/app/infra/config/LogAsyncConfig.java
 ljwx-platform-app/src/main/java/com/ljwx/platform/app/infra/quartz/QuartzJobDispatcher.java
+ljwx-platform-app/src/main/java/com/ljwx/platform/app/config/WebSocketConfig.java
+ljwx-platform-app/src/main/java/com/ljwx/platform/app/websocket/NotificationWebSocketHandler.java
+
+### Integration Tests
+ljwx-platform-app/src/test/java/com/ljwx/platform/app/BCryptVerifyTest.java
+ljwx-platform-app/src/test/java/com/ljwx/platform/app/MenuControllerIT.java
+ljwx-platform-app/src/test/java/com/ljwx/platform/app/DeptControllerIT.java
+ljwx-platform-app/src/test/java/com/ljwx/platform/app/ProfileControllerIT.java
+ljwx-platform-app/src/test/java/com/ljwx/platform/app/LoginLogControllerIT.java
+ljwx-platform-app/src/test/java/com/ljwx/platform/app/OnlineUserControllerIT.java
+ljwx-platform-app/src/test/java/com/ljwx/platform/app/MonitorControllerIT.java
 
 ## Frontend: Shared Package
 packages/shared/package.json
@@ -310,14 +381,21 @@ ljwx-platform-admin/src/api/log.ts
 ljwx-platform-admin/src/api/file.ts
 ljwx-platform-admin/src/api/notice.ts
 ljwx-platform-admin/src/api/job.ts
+ljwx-platform-admin/src/api/dept.ts
+ljwx-platform-admin/src/api/profile.ts
+ljwx-platform-admin/src/api/loginLog.ts
+ljwx-platform-admin/src/api/onlineUser.ts
+ljwx-platform-admin/src/api/tenantPackage.ts
+ljwx-platform-admin/src/api/monitor.ts
+ljwx-platform-admin/src/composables/usePermission.ts
+ljwx-platform-admin/src/composables/useTheme.ts
+ljwx-platform-admin/src/composables/useWebSocket.ts
 ljwx-platform-admin/src/layouts/DefaultLayout.vue
 ljwx-platform-admin/src/layouts/components/Sidebar.vue
 ljwx-platform-admin/src/layouts/components/Navbar.vue
 ljwx-platform-admin/src/layouts/components/Breadcrumb.vue
 ljwx-platform-admin/src/layouts/components/TagsView.vue
 ljwx-platform-admin/src/layouts/components/ThemeSwitch.vue
-ljwx-platform-admin/src/composables/usePermission.ts
-ljwx-platform-admin/src/composables/useTheme.ts
 ljwx-platform-admin/src/views/login/index.vue
 ljwx-platform-admin/src/views/dashboard/index.vue
 ljwx-platform-admin/src/views/system/user/index.vue
@@ -328,8 +406,15 @@ ljwx-platform-admin/src/views/system/config/index.vue
 ljwx-platform-admin/src/views/system/job/index.vue
 ljwx-platform-admin/src/views/system/file/index.vue
 ljwx-platform-admin/src/views/system/notice/index.vue
+ljwx-platform-admin/src/views/system/dept/index.vue
+ljwx-platform-admin/src/views/system/menu/index.vue
+ljwx-platform-admin/src/views/system/profile/index.vue
+ljwx-platform-admin/src/views/system/tenantPackage/index.vue
 ljwx-platform-admin/src/views/monitor/operlog/index.vue
 ljwx-platform-admin/src/views/monitor/loginlog/index.vue
+ljwx-platform-admin/src/views/monitor/loginLog/index.vue
+ljwx-platform-admin/src/views/monitor/onlineUser/index.vue
+ljwx-platform-admin/src/views/monitor/server/index.vue
 ljwx-platform-admin/src/styles/index.scss
 ljwx-platform-admin/src/styles/variables.scss
 

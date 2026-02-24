@@ -1,5 +1,6 @@
 package com.ljwx.platform.web.config;
 
+import com.ljwx.platform.web.interceptor.IdempotentInterceptor;
 import com.ljwx.platform.web.interceptor.RateLimitInterceptor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;
@@ -22,6 +23,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 public class WebMvcConfig implements WebMvcConfigurer {
 
     private final RateLimitInterceptor rateLimitInterceptor;
+    private final IdempotentInterceptor idempotentInterceptor;
 
     @Override
     public void addCorsMappings(CorsRegistry registry) {
@@ -36,6 +38,7 @@ public class WebMvcConfig implements WebMvcConfigurer {
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(rateLimitInterceptor).addPathPatterns("/api/**");
+        registry.addInterceptor(idempotentInterceptor).addPathPatterns("/api/**");
     }
 }
 

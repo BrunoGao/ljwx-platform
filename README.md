@@ -10,6 +10,14 @@ LJWX Platform 是一个生产就绪的多租户企业平台脚手架，提供：
 - **JWT 认证**：HS256 签名，Access Token 30 分钟，Refresh Token 7 天
 - **RBAC 权限**：`resource:action` 格式权限字符串，`@PreAuthorize` 注解保护每个接口
 - **审计追踪**：所有业务表自动记录 `created_by`、`updated_by`、`created_time`、`updated_time`
+- **菜单管理**：动态路由菜单，支持树形结构与权限绑定
+- **部门管理**：树形部门结构，数据权限（DataScope）按部门隔离
+- **个人中心**：用户信息修改、密码变更
+- **登录日志**：记录每次登录行为，支持分页查询
+- **在线用户**：实时查看在线用户列表，支持强制下线
+- **系统监控**：服务器 CPU/内存/JVM 信息实时采集
+- **接口限流**：`@RateLimit` 注解，基于令牌桶算法保护高频接口
+- **WebSocket**：实时通知推送，`NotificationWebSocketHandler`
 - **三端前端**：管理后台（Element Plus）、移动端（uni-app）、数据大屏（ECharts）
 
 ## 快速启动
@@ -46,7 +54,7 @@ java -jar ljwx-platform-app/target/ljwx-platform-app-1.0.0-SNAPSHOT.jar
 
 后端默认监听 `http://localhost:8080`。
 
-Flyway 会自动执行 `V001`–`V021` 迁移脚本，创建所有表并插入种子数据。
+Flyway 会自动执行 `V001`–`V028` 迁移脚本，创建所有表并插入种子数据。
 
 默认管理员账号：`admin` / `Admin@12345`
 
@@ -73,7 +81,7 @@ pnpm dev
 ### 6. 运行 Gate 检查
 
 ```bash
-bash scripts/gates/gate-all.sh 19
+bash scripts/gates/gate-all.sh 27
 ```
 
 ## 技术栈

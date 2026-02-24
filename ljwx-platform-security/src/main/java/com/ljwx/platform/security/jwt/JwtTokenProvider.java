@@ -12,6 +12,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.Date;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * JWT token provider — creates and validates HS256-signed tokens.
@@ -56,6 +57,7 @@ public class JwtTokenProvider {
                                long expirationSeconds) {
         Instant now = Instant.now();
         return Jwts.builder()
+                .id(UUID.randomUUID().toString())
                 .subject(String.valueOf(userId))
                 .claim("tenantId", tenantId)
                 .claim("username", username)
@@ -140,6 +142,13 @@ public class JwtTokenProvider {
             return (List<String>) list;
         }
         return List.of();
+    }
+
+    /**
+     * Extracts the {@code jti} (JWT ID) claim — unique per token, used for blacklisting.
+     */
+    public String getJti(Claims claims) {
+        return claims.getId();
     }
 
     // ─────────────────────────────── internal ──────────────────────────────────────
