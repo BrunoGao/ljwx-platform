@@ -62,8 +62,8 @@ is_completed() {
   awk -v p="## PHASE $phase" '
     $0 == p { found=1; next }
     found && /^## PHASE / { exit }
-    found && /Status: PASSED/ { print; exit }
-  ' "$MANIFEST" | grep -q "Status: PASSED"
+    found && /(Status|Gate): PASSED/ { print; exit }
+  ' "$MANIFEST" | grep -qE "(Status|Gate): PASSED"
 }
 
 phase_exists() {
