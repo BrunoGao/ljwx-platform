@@ -46,6 +46,8 @@ public interface SysUserMapper {
     /** 软删除用户的全部角色关联记录。 */
     void deleteUserRoles(Long userId);
 
+    void updatePassword(@Param("id") Long id, @Param("password") String password);
+
     void insertUserRole(@Param("id") Long id,
                         @Param("userId") Long userId,
                         @Param("roleId") Long roleId,

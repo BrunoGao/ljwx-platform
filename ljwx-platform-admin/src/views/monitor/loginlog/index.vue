@@ -5,7 +5,7 @@ import type {
   LoginLogQueryDTO,
   PageResult,
 } from '@ljwx/shared'
-import { getLoginLogList } from '@/api/log'
+import { getLoginLogList } from '@/api/loginLog'
 
 // ─── 列表状态 ────────────────────────────────────────────────
 const loading = ref(false)
@@ -22,9 +22,18 @@ const query = reactive<LoginLogQueryDTO>({
   endTime: undefined,
 })
 
+const timeRange = ref<[string, string] | null>(null)
+
 async function loadData(): Promise<void> {
   loading.value = true
   try {
+    if (timeRange.value) {
+      query.startTime = timeRange.value[0]
+      query.endTime = timeRange.value[1]
+    } else {
+      query.startTime = undefined
+      query.endTime = undefined
+    }
     const res: PageResult<LoginLogVO> = await getLoginLogList(query)
     tableData.value = res.rows
     total.value = res.total
@@ -44,6 +53,7 @@ function handleReset(): void {
   query.status = undefined
   query.startTime = undefined
   query.endTime = undefined
+  timeRange.value = null
   query.pageNum = 1
   loadData()
 }
@@ -81,22 +91,15 @@ onMounted(() => {
             <el-option label="失败" :value="0" />
           </el-select>
         </el-form-item>
-        <el-form-item label="开始时间">
+        <el-form-item label="登录时间">
           <el-date-picker
-            v-model="query.startTime"
-            type="datetime"
-            placeholder="开始时间"
-            value-format="YYYY-MM-DD HH:mm:ss"
-            style="width: 180px"
-          />
-        </el-form-item>
-        <el-form-item label="结束时间">
-          <el-date-picker
-            v-model="query.endTime"
-            type="datetime"
-            placeholder="结束时间"
-            value-format="YYYY-MM-DD HH:mm:ss"
-            style="width: 180px"
+            v-model="timeRange"
+            type="daterange"
+            range-separator="至"
+            start-placeholder="开始日期"
+            end-placeholder="结束日期"
+            value-format="YYYY-MM-DD"
+            style="width: 240px"
           />
         </el-form-item>
         <el-form-item>

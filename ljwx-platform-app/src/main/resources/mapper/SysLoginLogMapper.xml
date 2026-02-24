@@ -3,49 +3,29 @@
     "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.ljwx.platform.app.infra.mapper.SysLoginLogMapper">
 
-    <resultMap id="BaseResultMap" type="com.ljwx.platform.app.domain.entity.SysLoginLog">
+    <resultMap id="VOResultMap" type="com.ljwx.platform.app.domain.vo.LoginLogVO">
         <id     column="id"           property="id"/>
         <result column="username"     property="username"/>
-        <result column="ip"           property="ip"/>
-        <result column="location"     property="location"/>
-        <result column="browser"      property="browser"/>
-        <result column="os"           property="os"/>
+        <result column="ip_address"   property="ipAddress"/>
+        <result column="user_agent"   property="userAgent"/>
         <result column="status"       property="status"/>
-        <result column="msg"          property="msg"/>
-        <result column="tenant_id"    property="tenantId"/>
-        <result column="created_by"   property="createdBy"/>
-        <result column="created_time" property="createdTime"/>
-        <result column="updated_by"   property="updatedBy"/>
-        <result column="updated_time" property="updatedTime"/>
-        <result column="deleted"      property="deleted"/>
-        <result column="version"      property="version"/>
+        <result column="message"      property="message"/>
+        <result column="login_time"   property="loginTime"/>
     </resultMap>
-
-    <sql id="Base_Column_List">
-        id, username, ip, location, browser, os, status, msg,
-        tenant_id, created_by, created_time, updated_by, updated_time, deleted, version
-    </sql>
 
     <insert id="insert" parameterType="com.ljwx.platform.app.domain.entity.SysLoginLog">
         INSERT INTO sys_login_log (
-            id, username, ip, location, browser, os, status, msg,
-            tenant_id, created_by, created_time, updated_by, updated_time, deleted, version
+            id, username, ip_address, user_agent, status, message, login_time,
+            created_by, created_time, updated_by, updated_time
         ) VALUES (
-            #{id}, #{username}, #{ip}, #{location}, #{browser}, #{os}, #{status}, #{msg},
-            #{tenantId}, #{createdBy}, #{createdTime}, #{updatedBy}, #{updatedTime}, #{deleted}, #{version}
+            #{id}, #{username}, #{ipAddress}, #{userAgent}, #{status}, #{message}, #{loginTime},
+            #{createdBy}, #{createdTime}, #{updatedBy}, #{updatedTime}
         )
     </insert>
 
-    <select id="selectById" resultMap="BaseResultMap">
-        SELECT <include refid="Base_Column_List"/>
-        FROM sys_login_log
-        WHERE id = #{id}
-          AND deleted = FALSE
-    </select>
-
     <select id="selectList" parameterType="com.ljwx.platform.app.domain.dto.LoginLogQueryDTO"
-            resultMap="BaseResultMap">
-        SELECT <include refid="Base_Column_List"/>
+            resultMap="VOResultMap">
+        SELECT id, username, ip_address, user_agent, status, message, login_time
         FROM sys_login_log
         WHERE deleted = FALSE
         <if test="username != null and username != ''">
@@ -55,12 +35,12 @@
             AND status = #{status}
         </if>
         <if test="startTime != null and startTime != ''">
-            AND created_time &gt;= CAST(#{startTime} AS TIMESTAMP)
+            AND login_time &gt;= CAST(#{startTime} AS TIMESTAMPTZ)
         </if>
         <if test="endTime != null and endTime != ''">
-            AND created_time &lt; CAST(#{endTime} AS TIMESTAMP) + INTERVAL '1 day'
+            AND login_time &lt; CAST(#{endTime} AS TIMESTAMPTZ) + INTERVAL '1 day'
         </if>
-        ORDER BY created_time DESC
+        ORDER BY login_time DESC
         LIMIT #{pageSize} OFFSET #{offset}
     </select>
 
@@ -76,10 +56,10 @@
             AND status = #{status}
         </if>
         <if test="startTime != null and startTime != ''">
-            AND created_time &gt;= CAST(#{startTime} AS TIMESTAMP)
+            AND login_time &gt;= CAST(#{startTime} AS TIMESTAMPTZ)
         </if>
         <if test="endTime != null and endTime != ''">
-            AND created_time &lt; CAST(#{endTime} AS TIMESTAMP) + INTERVAL '1 day'
+            AND login_time &lt; CAST(#{endTime} AS TIMESTAMPTZ) + INTERVAL '1 day'
         </if>
     </select>
 

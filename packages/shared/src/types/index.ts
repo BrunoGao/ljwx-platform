@@ -50,4 +50,8 @@ export type {
   ScreenRealtimeVO,
   ScreenTrendItem,
   ScreenTrendVO,
+  MenuVO,
+  MenuTreeVO,
+  MenuCreateDTO,
+  MenuUpdateDTO,
 } from './common'

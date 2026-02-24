@@ -2,6 +2,7 @@ package com.ljwx.platform.app.infra.mapper;
 
 import com.ljwx.platform.app.domain.dto.LoginLogQueryDTO;
 import com.ljwx.platform.app.domain.entity.SysLoginLog;
+import com.ljwx.platform.app.domain.vo.LoginLogVO;
 import org.apache.ibatis.annotations.Mapper;
 
 import java.util.List;
@@ -15,9 +16,7 @@ public interface SysLoginLogMapper {
 
     int insert(SysLoginLog loginLog);
 
-    SysLoginLog selectById(Long id);
-
-    List<SysLoginLog> selectList(LoginLogQueryDTO query);
+    List<LoginLogVO> selectList(LoginLogQueryDTO query);
 
     long countList(LoginLogQueryDTO query);
 }

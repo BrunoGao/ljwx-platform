@@ -1,7 +1,10 @@
 package com.ljwx.platform.web.config;
 
+import com.ljwx.platform.web.interceptor.RateLimitInterceptor;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
+import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 /**
@@ -9,29 +12,17 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
  *
  * <p>Key settings:
  * <ul>
- *   <li>CORS — allows all origins with credentials for {@code /api/**} endpoints,
- *       supporting the Admin, Mobile, and Screen frontends running on different ports
- *       during development.</li>
+ *   <li>CORS — allows all origins with credentials for {@code /api/**} endpoints.</li>
+ *   <li>RateLimitInterceptor — enforces per-key rate limits on methods annotated
+ *       with {@link com.ljwx.platform.web.annotation.RateLimit}.</li>
  * </ul>
- *
- * <p>Note: Spring Security's CORS support takes precedence for authenticated
- * endpoints. This configurer covers the MVC layer (e.g., pre-flight OPTIONS
- * requests and public endpoints not handled by the security filter chain).
  */
 @Configuration
+@RequiredArgsConstructor
 public class WebMvcConfig implements WebMvcConfigurer {
 
-    /**
-     * Configures CORS for all {@code /api/**} paths.
-     *
-     * <ul>
-     *   <li>{@code allowedOriginPatterns("*")} — permits any origin while still
-     *       supporting {@code allowCredentials(true)}.</li>
-     *   <li>Allowed methods: GET, POST, PUT, DELETE, PATCH, OPTIONS.</li>
-     *   <li>Allowed headers: all.</li>
-     *   <li>Max age: 3600 seconds (1 hour) for preflight cache.</li>
-     * </ul>
-     */
+    private final RateLimitInterceptor rateLimitInterceptor;
+
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/api/**")
@@ -41,4 +32,10 @@ public class WebMvcConfig implements WebMvcConfigurer {
                 .allowCredentials(true)
                 .maxAge(3600);
     }
+
+    @Override
+    public void addInterceptors(InterceptorRegistry registry) {
+        registry.addInterceptor(rateLimitInterceptor).addPathPatterns("/api/**");
+    }
 }
+

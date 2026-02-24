@@ -1,0 +1,35 @@
+spring:
+  datasource:
+    url: jdbc:tc:postgresql:16.12-alpine:///ljwx_test
+    driver-class-name: org.testcontainers.jdbc.ContainerDatabaseDriver
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: false
+  quartz:
+    job-store-type: jdbc
+    jdbc:
+      initialize-schema: never
+    properties:
+      org.quartz:
+        scheduler:
+          instanceName: LjwxSchedulerTest
+          instanceId: AUTO
+        jobStore:
+          class: org.springframework.scheduling.quartz.LocalDataSourceJobStore
+          driverDelegateClass: org.quartz.impl.jdbcjobstore.PostgreSQLDelegate
+          tablePrefix: QRTZ_
+          isClustered: false
+          clusterCheckinInterval: 15000
+        threadPool:
+          threadCount: 2
+  cache:
+    type: caffeine
+    caffeine:
+      spec: maximumSize=500,expireAfterWrite=600s
+
+ljwx:
+  jwt:
+    secret: test-secret-key-for-integration-tests-256-bits-long
+    access-token-expiration: 1800
+    refresh-token-expiration: 604800

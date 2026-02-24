@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ljwx.platform.app.infra.mapper.SysNoticeUserMapper">
+
+    <resultMap id="BaseResultMap" type="com.ljwx.platform.app.domain.entity.SysNoticeUser">
+        <id     column="id"           property="id"/>
+        <result column="notice_id"    property="noticeId"/>
+        <result column="user_id"      property="userId"/>
+        <result column="read_time"    property="readTime"/>
+        <result column="tenant_id"    property="tenantId"/>
+        <result column="created_by"   property="createdBy"/>
+        <result column="created_time" property="createdTime"/>
+        <result column="updated_by"   property="updatedBy"/>
+        <result column="updated_time" property="updatedTime"/>
+        <result column="deleted"      property="deleted"/>
+        <result column="version"      property="version"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id, notice_id, user_id, read_time,
+        tenant_id, created_by, created_time, updated_by, updated_time, deleted, version
+    </sql>
+
+    <insert id="insert" parameterType="com.ljwx.platform.app.domain.entity.SysNoticeUser">
+        INSERT INTO sys_notice_user (
+            id, notice_id, user_id, read_time,
+            tenant_id, created_by, created_time, updated_by, updated_time, deleted, version
+        ) VALUES (
+            #{id}, #{noticeId}, #{userId}, #{readTime},
+            #{tenantId}, #{createdBy}, #{createdTime}, #{updatedBy}, #{updatedTime}, #{deleted}, #{version}
+        )
+    </insert>
+
+    <select id="selectByNoticeAndUser" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM sys_notice_user
+        WHERE notice_id = #{noticeId}
+          AND user_id   = #{userId}
+          AND deleted   = FALSE
+        LIMIT 1
+    </select>
+
+    <select id="countUnread" resultType="long">
+        SELECT COUNT(*)
+        FROM sys_notice_user
+        WHERE user_id   = #{userId}
+          AND read_time IS NULL
+          AND deleted   = FALSE
+    </select>
+
+    <update id="updateReadTime" parameterType="com.ljwx.platform.app.domain.entity.SysNoticeUser">
+        UPDATE sys_notice_user
+        SET read_time    = #{readTime},
+            updated_time = CURRENT_TIMESTAMP,
+            version      = version + 1
+        WHERE id      = #{id}
+          AND deleted = FALSE
+    </update>
+
+</mapper>

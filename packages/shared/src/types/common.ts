@@ -263,6 +263,92 @@ export interface NoticeUpdateDTO {
 }
 
 // ============================================================
+// Menu 菜单类型
+// ============================================================
+
+export interface MenuVO {
+  id: number
+  parentId: number
+  name: string
+  path: string
+  component: string
+  icon: string
+  sort: number
+  /** 菜单类型：0=目录 1=菜单 2=按钮 */
+  menuType: number
+  permission: string
+  /** 显示状态：1=显示 0=隐藏 */
+  visible: number
+  createdTime: string
+  updatedTime: string
+}
+
+export interface MenuTreeVO extends MenuVO {
+  children?: MenuTreeVO[]
+}
+
+export interface MenuCreateDTO {
+  parentId: number
+  name: string
+  path?: string
+  component?: string
+  icon?: string
+  sort?: number
+  menuType: number
+  permission?: string
+  visible?: number
+}
+
+export interface MenuUpdateDTO {
+  parentId?: number
+  name?: string
+  path?: string
+  component?: string
+  icon?: string
+  sort?: number
+  menuType?: number
+  permission?: string
+  visible?: number
+}
+
+// ============================================================
+// TenantPackage 租户套餐类型
+// ============================================================
+
+export interface TenantPackageVO {
+  id: number
+  name: string
+  /** 关联菜单 ID 列表（逗号分隔） */
+  menuIds: string
+  maxUsers: number
+  maxStorageMb: number
+  /** 状态：1-启用 0-停用 */
+  status: number
+  createdTime: string
+  updatedTime: string
+}
+
+export interface TenantPackageQueryDTO extends PageQuery {
+  name?: string
+  status?: number
+}
+
+export interface TenantPackageCreateDTO {
+  name: string
+  menuIds?: string
+  maxUsers?: number
+  maxStorageMb?: number
+}
+
+export interface TenantPackageUpdateDTO {
+  name?: string
+  menuIds?: string
+  maxUsers?: number
+  maxStorageMb?: number
+  status?: number
+}
+
+// ============================================================
 // Screen 大屏数据类型
 // ============================================================
 

@@ -132,9 +132,57 @@ This document records significant architectural and implementation decisions mad
 - Implemented widget components: NumberFlip, ScrollTable.
 - Home dashboard view integrating all components.
 
-## Phase 19 — Final Gate and Docs (2026-02-24)
+## Phase 20 — Menu Management and Dynamic Routes (planned)
 
-- Generated `FULL_MANIFEST.txt` listing all repository files.
-- Created ADR documents 001–005.
-- Created `README.md` with project overview, quick start, tech stack, and directory structure.
-- All gates passing: manifest, rules, compile, NFR.
+- Backend: `sys_menu` table (V022) with tree structure (parent_id, menu_type: directory/menu/button).
+- Seed data (V023): system management directory and all sub-menus mapped to existing RBAC permission strings.
+- API: `/api/v1/menus` CRUD + `/api/v1/menus/tree` returning nested tree.
+- Frontend: `src/stores/menu.ts` for menu tree state, `src/views/system/menu/index.vue` with el-table tree mode.
+- New permissions: `system:menu:list/detail/create/update/delete`.
+
+## Phase 21 — Department Management and Data Scope (planned)
+
+- Backend: `sys_dept` table (V024) with tree structure, seed default root department (V025).
+- API: `/api/v1/depts` CRUD + `/api/v1/depts/tree`.
+- `DataScopeInterceptor` in `ljwx-platform-data` module — appends `dept_id IN (...)` condition based on data_scope value passed via ThreadLocal (no security package import, DAG preserved).
+- Data scope levels: ALL / TENANT / DEPT_AND_CHILDREN / DEPT / SELF.
+- Frontend: `src/views/system/dept/index.vue` with el-tree display.
+
+## Phase 22 — Profile, Login Log and Online Users (planned)
+
+- Login log: `sys_login_log` table (V026), async write on login success/failure (reuses existing LogAsyncConfig thread pool).
+- Profile API: `GET/PUT /api/v1/profile`, `PUT /api/v1/profile/password` — authenticated but no @PreAuthorize (JWT auth sufficient).
+- Online users: Caffeine-backed token registry (key=jti, TTL=access token expiry). `DELETE /api/v1/online-users/{tokenId}` for force-kickout.
+- Password fields masked in logs: `***`.
+
+## Phase 23 — Admin Frontend Pages Batch 2 (planned)
+
+- New pages: dept tree management, menu tree management, personal profile center, login log list, online user list with force-kickout.
+- All pages follow existing style conventions from Phase 13.
+- API modules: `dept.ts`, `profile.ts`, `loginLog.ts`, `onlineUser.ts`.
+
+## Phase 24 — Tenant Package, Notice Read and Import/Export (planned)
+
+- Tenant package: `sys_tenant_package` table (V027), `sys_tenant` gains `package_id` FK. Defines menu set and resource quotas (max users, max storage MB).
+- Notice read status: `sys_notice_user` table (V028). `PUT /api/v1/notices/{id}/read` and `GET /api/v1/notices/unread-count`.
+- Import/Export: `GET /api/v1/users/export` and `POST /api/v1/users/import` using Apache POI or EasyExcel.
+
+## Phase 25 — System Monitor, Rate Limit and WebSocket (planned)
+
+- Monitor: `GET /api/v1/monitor/server|jvm|cache` using `ManagementFactory` — no extra dependencies.
+- Rate limit: `@RateLimit` annotation + `RateLimitInterceptor` in web module, Caffeine token bucket, SpEL key expressions.
+- WebSocket: `/ws/notifications` endpoint, JWT validation on connect, `userId → WebSocketSession` map for targeted push.
+- `useWebSocket.ts` composable in admin frontend with auto-reconnect.
+
+## Phase 26 — Integration Tests Phase 2 (planned)
+
+- Integration tests for all Phase 20–25 controllers using Testcontainers PostgreSQL.
+- Coverage: 401 unauthenticated, 403 unauthorized, full CRUD flow, parameter validation.
+- Reuses test infrastructure from Phase 18.
+
+## Phase 27 — Final Gate and Full Manifest v2 (planned)
+
+- Update `FULL_MANIFEST.txt` to include all Phase 20–27 files.
+- Update `README.md` with new feature descriptions.
+- All 6 gates must pass: manifest, rules, compile, integration, contract, NFR.
+

@@ -4,7 +4,11 @@ import com.ljwx.platform.app.domain.dto.NoticeCreateDTO;
 import com.ljwx.platform.app.domain.dto.NoticeQueryDTO;
 import com.ljwx.platform.app.domain.dto.NoticeUpdateDTO;
 import com.ljwx.platform.app.domain.entity.SysNotice;
+import com.ljwx.platform.app.domain.entity.SysNoticeUser;
 import com.ljwx.platform.app.infra.mapper.SysNoticeMapper;
+import com.ljwx.platform.app.infra.mapper.SysNoticeUserMapper;
+import com.ljwx.platform.core.context.CurrentTenantHolder;
+import com.ljwx.platform.core.context.CurrentUserHolder;
 import com.ljwx.platform.core.id.SnowflakeIdGenerator;
 import com.ljwx.platform.core.result.ErrorCode;
 import com.ljwx.platform.core.result.PageResult;
@@ -27,7 +31,10 @@ import java.util.List;
 public class NoticeAppService {
 
     private final SysNoticeMapper noticeMapper;
+    private final SysNoticeUserMapper noticeUserMapper;
     private final SnowflakeIdGenerator idGenerator;
+    private final CurrentTenantHolder tenantHolder;
+    private final CurrentUserHolder userHolder;
 
     /**
      * 分页查询通知列表。
@@ -101,5 +108,38 @@ public class NoticeAppService {
         }
 
         noticeMapper.updateById(existing);
+    }
+
+    /**
+     * 标记通知已读。若已有记录则更新 read_time，否则新建记录。
+     */
+    @Transactional
+    public void markRead(Long noticeId) {
+        Long userId = userHolder.getUserId();
+        if (userId == null) return;
+        SysNoticeUser existing = noticeUserMapper.selectByNoticeAndUser(noticeId, userId);
+        if (existing != null) {
+            if (existing.getReadTime() == null) {
+                existing.setReadTime(LocalDateTime.now());
+                noticeUserMapper.updateReadTime(existing);
+            }
+        } else {
+            SysNoticeUser nu = new SysNoticeUser();
+            nu.setId(idGenerator.nextId());
+            nu.setNoticeId(noticeId);
+            nu.setUserId(userId);
+            nu.setReadTime(LocalDateTime.now());
+            nu.setTenantId(tenantHolder.getTenantId());
+            noticeUserMapper.insert(nu);
+        }
+    }
+
+    /**
+     * 获取当前用户未读通知数。
+     */
+    public long getUnreadCount() {
+        Long userId = userHolder.getUserId();
+        if (userId == null) return 0L;
+        return noticeUserMapper.countUnread(userId);
     }
 }

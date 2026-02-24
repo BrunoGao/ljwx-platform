@@ -1,3 +1,120 @@
+## PHASE 24
+Title: Tenant Package Notice Read and Import Export
+Completed: 2026-02-24T23:00:00Z
+Files:
+  - ljwx-platform-app/src/main/resources/db/migration/V027__create_sys_tenant_package.sql
+  - ljwx-platform-app/src/main/resources/db/migration/V028__create_sys_notice_user.sql
+  - ljwx-platform-app/src/main/java/com/ljwx/platform/app/domain/entity/SysTenantPackage.java
+  - ljwx-platform-app/src/main/java/com/ljwx/platform/app/domain/entity/SysNoticeUser.java
+  - ljwx-platform-app/src/main/java/com/ljwx/platform/app/infra/mapper/SysTenantPackageMapper.java
+  - ljwx-platform-app/src/main/java/com/ljwx/platform/app/infra/mapper/SysNoticeUserMapper.java
+  - ljwx-platform-app/src/main/java/com/ljwx/platform/app/appservice/TenantPackageAppService.java
+  - ljwx-platform-app/src/main/java/com/ljwx/platform/app/controller/TenantPackageController.java
+  - ljwx-platform-app/src/main/java/com/ljwx/platform/app/domain/dto/TenantPackageCreateDTO.java
+  - ljwx-platform-app/src/main/java/com/ljwx/platform/app/domain/dto/TenantPackageUpdateDTO.java
+  - ljwx-platform-app/src/main/java/com/ljwx/platform/app/domain/vo/TenantPackageVO.java
+  - ljwx-platform-app/src/main/resources/mapper/SysTenantPackageMapper.xml
+  - ljwx-platform-app/src/main/resources/mapper/SysNoticeUserMapper.xml
+  - ljwx-platform-admin/src/api/tenantPackage.ts
+  - ljwx-platform-admin/src/views/system/tenantPackage/index.vue
+Gate: PASSED
+
+## PHASE 26
+Title: Integration Tests Phase 2
+Completed: 2026-02-24T22:00:00Z
+Files:
+  - ljwx-platform-app/src/test/java/com/ljwx/platform/app/MenuControllerIT.java
+  - ljwx-platform-app/src/test/java/com/ljwx/platform/app/DeptControllerIT.java
+  - ljwx-platform-app/src/test/java/com/ljwx/platform/app/ProfileControllerIT.java
+  - ljwx-platform-app/src/test/java/com/ljwx/platform/app/LoginLogControllerIT.java
+  - ljwx-platform-app/src/test/java/com/ljwx/platform/app/OnlineUserControllerIT.java
+  - ljwx-platform-app/src/test/java/com/ljwx/platform/app/MonitorControllerIT.java
+Gate: PASSED
+
+## PHASE 25
+Title: System Monitor API Rate Limit and WebSocket
+Completed: 2026-02-24T21:00:00Z
+Files:
+  - ljwx-platform-app/src/main/java/com/ljwx/platform/app/controller/MonitorController.java
+  - ljwx-platform-app/src/main/java/com/ljwx/platform/app/domain/vo/ServerInfoVO.java
+  - ljwx-platform-app/src/main/java/com/ljwx/platform/app/domain/vo/JvmInfoVO.java
+  - ljwx-platform-web/src/main/java/com/ljwx/platform/web/annotation/RateLimit.java
+  - ljwx-platform-web/src/main/java/com/ljwx/platform/web/interceptor/RateLimitInterceptor.java
+  - ljwx-platform-app/src/main/java/com/ljwx/platform/app/config/WebSocketConfig.java
+  - ljwx-platform-app/src/main/java/com/ljwx/platform/app/websocket/NotificationWebSocketHandler.java
+Gate: PASSED
+
+## PHASE 23
+Title: Admin Frontend Pages Batch 2
+Completed: 2026-02-24T20:00:00Z
+Files:
+  - ljwx-platform-admin/src/api/dept.ts
+  - ljwx-platform-admin/src/api/profile.ts
+  - ljwx-platform-admin/src/api/loginLog.ts
+  - ljwx-platform-admin/src/api/onlineUser.ts
+  - ljwx-platform-admin/src/views/system/dept/index.vue
+  - ljwx-platform-admin/src/views/system/menu/index.vue
+  - ljwx-platform-admin/src/views/system/profile/index.vue
+  - ljwx-platform-admin/src/views/monitor/loginLog/index.vue
+  - ljwx-platform-admin/src/views/monitor/onlineUser/index.vue
+Gate: PASSED
+
+## PHASE 22
+Title: Profile Login Log and Online Users
+Completed: 2026-02-24T15:23:30Z
+Files:
+  - ljwx-platform-app/src/main/resources/db/migration/V026__create_sys_login_log.sql
+  - ljwx-platform-app/src/main/java/com/ljwx/platform/app/domain/entity/SysLoginLog.java
+  - ljwx-platform-app/src/main/java/com/ljwx/platform/app/infra/mapper/SysLoginLogMapper.java
+  - ljwx-platform-app/src/main/java/com/ljwx/platform/app/appservice/LoginLogAppService.java
+  - ljwx-platform-app/src/main/java/com/ljwx/platform/app/controller/LoginLogController.java
+  - ljwx-platform-app/src/main/java/com/ljwx/platform/app/domain/vo/LoginLogVO.java
+  - ljwx-platform-app/src/main/resources/mapper/SysLoginLogMapper.xml
+  - ljwx-platform-app/src/main/java/com/ljwx/platform/app/controller/ProfileController.java
+  - ljwx-platform-app/src/main/java/com/ljwx/platform/app/domain/dto/ProfileUpdateDTO.java
+  - ljwx-platform-app/src/main/java/com/ljwx/platform/app/domain/dto/PasswordUpdateDTO.java
+  - ljwx-platform-app/src/main/java/com/ljwx/platform/app/appservice/ProfileAppService.java
+  - ljwx-platform-app/src/main/java/com/ljwx/platform/app/controller/OnlineUserController.java
+  - ljwx-platform-app/src/main/java/com/ljwx/platform/app/appservice/OnlineUserAppService.java
+Gate: PASSED
+
+## PHASE 21
+Title: Department Management and Data Scope
+Completed: 2026-02-24T18:30:00Z
+Files:
+  - ljwx-platform-app/src/main/resources/db/migration/V024__create_sys_dept.sql
+  - ljwx-platform-app/src/main/resources/db/migration/V025__seed_sys_dept.sql
+  - ljwx-platform-app/src/main/java/com/ljwx/platform/app/domain/entity/SysDept.java
+  - ljwx-platform-app/src/main/java/com/ljwx/platform/app/infra/mapper/SysDeptMapper.java
+  - ljwx-platform-app/src/main/java/com/ljwx/platform/app/appservice/DeptAppService.java
+  - ljwx-platform-app/src/main/java/com/ljwx/platform/app/controller/DeptController.java
+  - ljwx-platform-app/src/main/java/com/ljwx/platform/app/domain/dto/DeptCreateDTO.java
+  - ljwx-platform-app/src/main/java/com/ljwx/platform/app/domain/dto/DeptUpdateDTO.java
+  - ljwx-platform-app/src/main/java/com/ljwx/platform/app/domain/dto/DeptQueryDTO.java
+  - ljwx-platform-app/src/main/java/com/ljwx/platform/app/domain/vo/DeptVO.java
+  - ljwx-platform-app/src/main/java/com/ljwx/platform/app/domain/vo/DeptTreeVO.java
+  - ljwx-platform-app/src/main/resources/mapper/SysDeptMapper.xml
+  - ljwx-platform-data/src/main/java/com/ljwx/platform/data/context/DataScopeContext.java
+  - ljwx-platform-data/src/main/java/com/ljwx/platform/data/interceptor/DataScopeInterceptor.java
+Gate: PASSED
+
+## PHASE 20
+Title: Menu Management and Dynamic Routes
+Completed: 2026-02-24T18:00:00Z
+Files:
+  - ljwx-platform-app/src/main/resources/db/migration/V022__create_sys_menu.sql
+  - ljwx-platform-app/src/main/resources/db/migration/V023__seed_sys_menu.sql
+  - ljwx-platform-app/src/main/java/com/ljwx/platform/app/domain/entity/SysMenu.java
+  - ljwx-platform-app/src/main/java/com/ljwx/platform/app/infra/mapper/SysMenuMapper.java
+  - ljwx-platform-app/src/main/java/com/ljwx/platform/app/appservice/MenuAppService.java
+  - ljwx-platform-app/src/main/java/com/ljwx/platform/app/controller/MenuController.java
+  - ljwx-platform-app/src/main/java/com/ljwx/platform/app/domain/dto/MenuCreateDTO.java
+  - ljwx-platform-app/src/main/java/com/ljwx/platform/app/domain/dto/MenuUpdateDTO.java
+  - ljwx-platform-app/src/main/java/com/ljwx/platform/app/domain/vo/MenuVO.java
+  - ljwx-platform-app/src/main/java/com/ljwx/platform/app/domain/vo/MenuTreeVO.java
+  - ljwx-platform-app/src/main/resources/mapper/SysMenuMapper.xml
+Status: PASSED
+
 ## PHASE 19
 Title: Final Gate and Docs
 Completed: 2026-02-24T16:00:00Z

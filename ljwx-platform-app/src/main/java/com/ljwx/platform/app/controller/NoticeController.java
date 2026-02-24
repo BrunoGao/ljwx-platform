@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.DeleteMapping;
 
 /**
  * 系统通知/公告 Controller。
@@ -64,5 +65,24 @@ public class NoticeController {
         dto.setId(id);
         noticeAppService.updateNotice(dto);
         return Result.ok();
+    }
+
+    /**
+     * 标记通知已读。
+     */
+    @PreAuthorize("hasAuthority('system:notice:read')")
+    @PutMapping("/{id}/read")
+    public Result<Void> markRead(@PathVariable Long id) {
+        noticeAppService.markRead(id);
+        return Result.ok();
+    }
+
+    /**
+     * 获取当前用户未读通知数。
+     */
+    @PreAuthorize("hasAuthority('system:notice:list')")
+    @GetMapping("/unread-count")
+    public Result<Long> unreadCount() {
+        return Result.ok(noticeAppService.getUnreadCount());
     }
 }

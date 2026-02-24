@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ljwx.platform.app.infra.mapper.SysMenuMapper">
+
+    <resultMap id="BaseResultMap" type="com.ljwx.platform.app.domain.entity.SysMenu">
+        <id     column="id"           property="id"/>
+        <result column="parent_id"    property="parentId"/>
+        <result column="name"         property="name"/>
+        <result column="path"         property="path"/>
+        <result column="component"    property="component"/>
+        <result column="icon"         property="icon"/>
+        <result column="sort"         property="sort"/>
+        <result column="menu_type"    property="menuType"/>
+        <result column="permission"   property="permission"/>
+        <result column="visible"      property="visible"/>
+        <result column="tenant_id"    property="tenantId"/>
+        <result column="created_by"   property="createdBy"/>
+        <result column="created_time" property="createdTime"/>
+        <result column="updated_by"   property="updatedBy"/>
+        <result column="updated_time" property="updatedTime"/>
+        <result column="deleted"      property="deleted"/>
+        <result column="version"      property="version"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id, parent_id, name, path, component, icon, sort, menu_type, permission, visible,
+        tenant_id, created_by, created_time, updated_by, updated_time, deleted, version
+    </sql>
+
+    <!--
+      TenantLineInterceptor 自动追加 AND tenant_id = ? 到 WHERE 子句。
+    -->
+    <select id="selectAll" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM sys_menu
+        WHERE deleted = FALSE
+        ORDER BY sort ASC, id ASC
+    </select>
+
+    <select id="selectById" parameterType="long" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM sys_menu
+        WHERE id = #{id}
+          AND deleted = FALSE
+    </select>
+
+    <!--
+      INSERT 不含 deleted/version：依赖 DB DEFAULT（FALSE / 1）。
+      AuditFieldInterceptor 在 INSERT 前自动填充 createdBy/Time, updatedBy/Time。
+      tenantId 由 Service 层在调用前手动设置。
+    -->
+    <insert id="insert" parameterType="com.ljwx.platform.app.domain.entity.SysMenu">
+        INSERT INTO sys_menu (
+            id, parent_id, name, path, component, icon, sort, menu_type, permission, visible,
+            tenant_id, created_by, created_time, updated_by, updated_time
+        ) VALUES (
+            #{id}, #{parentId}, #{name}, #{path}, #{component}, #{icon}, #{sort}, #{menuType}, #{permission}, #{visible},
+            #{tenantId}, #{createdBy}, #{createdTime}, #{updatedBy}, #{updatedTime}
+        )
+    </insert>
+
+    <update id="updateById" parameterType="com.ljwx.platform.app.domain.entity.SysMenu">
+        UPDATE sys_menu
+        SET parent_id    = #{parentId},
+            name         = #{name},
+            path         = #{path},
+            component    = #{component},
+            icon         = #{icon},
+            sort         = #{sort},
+            menu_type    = #{menuType},
+            permission   = #{permission},
+            visible      = #{visible},
+            updated_by   = #{updatedBy},
+            updated_time = #{updatedTime},
+            version      = version + 1
+        WHERE id = #{id}
+          AND deleted = FALSE
+          AND version = #{version}
+    </update>
+
+    <update id="deleteById" parameterType="long">
+        UPDATE sys_menu SET deleted = TRUE WHERE id = #{id}
+    </update>
+
+</mapper>

@@ -13,10 +13,17 @@ import com.ljwx.platform.core.result.ErrorCode;
 import com.ljwx.platform.core.result.PageResult;
 import com.ljwx.platform.web.exception.BusinessException;
 import lombok.RequiredArgsConstructor;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -112,6 +119,69 @@ public class UserAppService {
     public void deleteUser(Long id) {
         userMapper.deleteById(id);
         userMapper.deleteUserRoles(id);
+    }
+
+    /**
+     * 查询所有用户（不分页，用于导出）。
+     */
+    public List<UserVO> listAllUsers(UserQueryDTO query) {
+        // 设置大 pageSize 以获取全量数据（导出场景）
+        query.setPageSize(10000);
+        query.setPageNum(1);
+        List<SysUser> users = userMapper.selectList(query);
+        return users.stream().map(this::toVO).collect(Collectors.toList());
+    }
+
+    /**
+     * 从 Excel 导入用户。
+     * 列顺序：用户名(0)、昵称(1)、邮箱(2)、手机号(3)、初始密码(4)
+     *
+     * @return 成功导入的行数
+     */
+    @Transactional
+    public int importUsers(MultipartFile file) throws IOException {
+        Long tenantId = tenantHolder.getTenantId();
+        int count = 0;
+        try (Workbook wb = WorkbookFactory.create(file.getInputStream())) {
+            Sheet sheet = wb.getSheetAt(0);
+            // 跳过表头行（第 0 行）
+            for (int i = 1; i <= sheet.getLastRowNum(); i++) {
+                Row row = sheet.getRow(i);
+                if (row == null) continue;
+                String username = getCellString(row, 0);
+                if (username == null || username.isBlank()) continue;
+                String nickname  = getCellString(row, 1);
+                String email     = getCellString(row, 2);
+                String phone     = getCellString(row, 3);
+                String password  = getCellString(row, 4);
+                if (password == null || password.isBlank()) {
+                    password = "Admin@12345";
+                }
+                long id = idGenerator.nextId();
+                SysUser user = new SysUser();
+                user.setId(id);
+                user.setTenantId(tenantId);
+                user.setUsername(username);
+                user.setPassword(passwordEncoder.encode(password));
+                user.setNickname(nickname != null ? nickname : username);
+                user.setEmail(email != null ? email : "");
+                user.setPhone(phone != null ? phone : "");
+                user.setStatus(1);
+                userMapper.insert(user);
+                count++;
+            }
+        }
+        return count;
+    }
+
+    private String getCellString(Row row, int col) {
+        var cell = row.getCell(col);
+        if (cell == null) return null;
+        return switch (cell.getCellType()) {
+            case STRING  -> cell.getStringCellValue().trim();
+            case NUMERIC -> String.valueOf((long) cell.getNumericCellValue());
+            default      -> null;
+        };
     }
 
     private UserVO toVO(SysUser user) {

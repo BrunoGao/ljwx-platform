@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ljwx.platform.app.infra.mapper.SysDeptMapper">
+
+    <resultMap id="BaseResultMap" type="com.ljwx.platform.app.domain.entity.SysDept">
+        <id     column="id"           property="id"/>
+        <result column="parent_id"    property="parentId"/>
+        <result column="name"         property="name"/>
+        <result column="sort"         property="sort"/>
+        <result column="leader"       property="leader"/>
+        <result column="phone"        property="phone"/>
+        <result column="email"        property="email"/>
+        <result column="status"       property="status"/>
+        <result column="tenant_id"    property="tenantId"/>
+        <result column="created_by"   property="createdBy"/>
+        <result column="created_time" property="createdTime"/>
+        <result column="updated_by"   property="updatedBy"/>
+        <result column="updated_time" property="updatedTime"/>
+        <result column="deleted"      property="deleted"/>
+        <result column="version"      property="version"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id, parent_id, name, sort, leader, phone, email, status,
+        tenant_id, created_by, created_time, updated_by, updated_time, deleted, version
+    </sql>
+
+    <insert id="insert" parameterType="com.ljwx.platform.app.domain.entity.SysDept">
+        INSERT INTO sys_dept (
+            id, parent_id, name, sort, leader, phone, email, status,
+            tenant_id, created_by, created_time, updated_by, updated_time
+        ) VALUES (
+            #{id}, #{parentId}, #{name}, #{sort}, #{leader}, #{phone}, #{email}, #{status},
+            #{tenantId}, #{createdBy}, #{createdTime}, #{updatedBy}, #{updatedTime}
+        )
+    </insert>
+
+    <update id="updateById" parameterType="com.ljwx.platform.app.domain.entity.SysDept">
+        UPDATE sys_dept
+        SET parent_id    = #{parentId},
+            name         = #{name},
+            sort         = #{sort},
+            leader       = #{leader},
+            phone        = #{phone},
+            email        = #{email},
+            status       = #{status},
+            updated_by   = #{updatedBy},
+            updated_time = #{updatedTime},
+            version      = version + 1
+        WHERE id = #{id}
+          AND deleted = FALSE
+          AND version = #{version}
+    </update>
+
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM sys_dept
+        WHERE id = #{id}
+          AND deleted = FALSE
+    </select>
+
+    <select id="selectList" parameterType="com.ljwx.platform.app.domain.dto.DeptQueryDTO"
+            resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM sys_dept
+        WHERE deleted = FALSE
+        <if test="name != null and name != ''">
+            AND name LIKE CONCAT('%', #{name}, '%')
+        </if>
+        <if test="status != null">
+            AND status = #{status}
+        </if>
+        ORDER BY sort ASC, created_time ASC
+    </select>
+
+    <select id="selectAll" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM sys_dept
+        WHERE deleted = FALSE
+        ORDER BY sort ASC, created_time ASC
+    </select>
+
+    <select id="countChildren" resultType="long">
+        SELECT COUNT(*)
+        FROM sys_dept
+        WHERE parent_id = #{parentId}
+          AND deleted = FALSE
+    </select>
+
+    <update id="deleteById">
+        UPDATE sys_dept SET deleted = TRUE WHERE id = #{id}
+    </update>
+
+</mapper>

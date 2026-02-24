@@ -67,7 +67,8 @@ fi
 # ── Run tests ──
 echo ""
 echo "[Integration] mvn verify"
-if mvn verify -f pom.xml -B 2>&1; then
+export TESTCONTAINERS_RYUK_DISABLED=true
+if mvn verify -f pom.xml -B -Dtestcontainers.ryuk.disabled=true 2>&1; then
   echo "  PASS: Integration tests passed"
 else
   echo "  FAIL: Integration tests failed"

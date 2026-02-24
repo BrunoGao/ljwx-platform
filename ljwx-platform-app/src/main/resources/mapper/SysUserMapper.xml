@@ -167,6 +167,15 @@
         UPDATE sys_user SET deleted = TRUE WHERE id = #{id}
     </update>
 
+    <update id="updatePassword">
+        UPDATE sys_user
+        SET password     = #{password},
+            updated_time = CURRENT_TIMESTAMP,
+            version      = version + 1
+        WHERE id = #{id}
+          AND deleted = FALSE
+    </update>
+
     <update id="deleteUserRoles" parameterType="long">
         UPDATE sys_user_role SET deleted = TRUE
         WHERE user_id = #{userId} AND deleted = FALSE

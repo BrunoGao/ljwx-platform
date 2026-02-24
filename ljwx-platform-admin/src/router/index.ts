@@ -143,6 +143,46 @@ const routes: RouteRecordRaw[] = [
           requiresAuth: true,
         },
       },
+      {
+        path: 'system/dept',
+        name: 'SystemDept',
+        component: () => import('@/views/system/dept/index.vue'),
+        meta: {
+          title: '部门管理',
+          icon: 'OfficeBuilding',
+          requiresAuth: true,
+        },
+      },
+      {
+        path: 'system/menu',
+        name: 'SystemMenu',
+        component: () => import('@/views/system/menu/index.vue'),
+        meta: {
+          title: '菜单管理',
+          icon: 'Menu',
+          requiresAuth: true,
+        },
+      },
+      {
+        path: 'system/profile',
+        name: 'SystemProfile',
+        component: () => import('@/views/system/profile/index.vue'),
+        meta: {
+          title: '个人中心',
+          icon: 'UserFilled',
+          requiresAuth: true,
+        },
+      },
+      {
+        path: 'monitor/online-user',
+        name: 'MonitorOnlineUser',
+        component: () => import('@/views/monitor/onlineUser/index.vue'),
+        meta: {
+          title: '在线用户',
+          icon: 'Monitor',
+          requiresAuth: true,
+        },
+      },
     ],
   },
   {

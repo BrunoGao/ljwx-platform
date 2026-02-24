@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ljwx.platform.app.infra.mapper.SysTenantPackageMapper">
+
+    <resultMap id="BaseResultMap" type="com.ljwx.platform.app.domain.entity.SysTenantPackage">
+        <id     column="id"             property="id"/>
+        <result column="name"           property="name"/>
+        <result column="menu_ids"       property="menuIds"/>
+        <result column="max_users"      property="maxUsers"/>
+        <result column="max_storage_mb" property="maxStorageMb"/>
+        <result column="status"         property="status"/>
+        <result column="tenant_id"      property="tenantId"/>
+        <result column="created_by"     property="createdBy"/>
+        <result column="created_time"   property="createdTime"/>
+        <result column="updated_by"     property="updatedBy"/>
+        <result column="updated_time"   property="updatedTime"/>
+        <result column="deleted"        property="deleted"/>
+        <result column="version"        property="version"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id, name, menu_ids, max_users, max_storage_mb, status,
+        tenant_id, created_by, created_time, updated_by, updated_time, deleted, version
+    </sql>
+
+    <select id="selectList" parameterType="com.ljwx.platform.app.domain.dto.TenantPackageQueryDTO"
+            resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM sys_tenant_package
+        WHERE deleted = FALSE
+        <if test="name != null and name != ''">
+            AND name LIKE CONCAT('%', #{name}, '%')
+        </if>
+        <if test="status != null">
+            AND status = #{status}
+        </if>
+        ORDER BY created_time DESC
+        LIMIT #{pageSize} OFFSET #{offset}
+    </select>
+
+    <select id="countList" parameterType="com.ljwx.platform.app.domain.dto.TenantPackageQueryDTO"
+            resultType="long">
+        SELECT COUNT(*)
+        FROM sys_tenant_package
+        WHERE deleted = FALSE
+        <if test="name != null and name != ''">
+            AND name LIKE CONCAT('%', #{name}, '%')
+        </if>
+        <if test="status != null">
+            AND status = #{status}
+        </if>
+    </select>
+
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM sys_tenant_package
+        WHERE id = #{id}
+          AND deleted = FALSE
+    </select>
+
+    <insert id="insert" parameterType="com.ljwx.platform.app.domain.entity.SysTenantPackage">
+        INSERT INTO sys_tenant_package (
+            id, name, menu_ids, max_users, max_storage_mb, status,
+            tenant_id, created_by, created_time, updated_by, updated_time
+        ) VALUES (
+            #{id}, #{name}, #{menuIds}, #{maxUsers}, #{maxStorageMb}, #{status},
+            #{tenantId}, #{createdBy}, #{createdTime}, #{updatedBy}, #{updatedTime}
+        )
+    </insert>
+
+    <update id="updateById" parameterType="com.ljwx.platform.app.domain.entity.SysTenantPackage">
+        UPDATE sys_tenant_package
+        SET name           = #{name},
+            menu_ids       = #{menuIds},
+            max_users      = #{maxUsers},
+            max_storage_mb = #{maxStorageMb},
+            status         = #{status},
+            updated_by     = #{updatedBy},
+            updated_time   = #{updatedTime},
+            version        = version + 1
+        WHERE id = #{id}
+          AND deleted = FALSE
+          AND version = #{version}
+    </update>
+
+    <update id="deleteById">
+        UPDATE sys_tenant_package SET deleted = TRUE WHERE id = #{id}
+    </update>
+
+</mapper>
