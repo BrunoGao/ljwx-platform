@@ -184,3 +184,10 @@ export function getUsers(params?: UserQueryDTO): Promise<PageResult<UserVO>> {
 ## Compact 指令
 
 When compacting, always preserve: 当前 Phase 编号及进度、已完成的文件清单、硬规则全文、版本锁定表全文、反模式清单。
+
+## GitHub 集成规范（DevEx）
+
+- Issue 必须使用模板创建（禁用空白 Issue）
+- PR 必须关联 Issue（`Closes #XX` 或 `Relates #XX`）
+- Commit message 建议格式：`feat|fix|docs(phase-XX): description`
+- Release tag 格式：`vX.Y.Z-phaseNN`

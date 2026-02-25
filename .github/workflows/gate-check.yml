@@ -1,0 +1,207 @@
+name: Gate Check
+
+on:
+  pull_request:
+    branches: [master, main, develop]
+  push:
+    branches: [master, main]
+  workflow_dispatch:
+    inputs:
+      phase:
+        description: "Phase number (optional, e.g. 24)"
+        required: false
+        type: string
+      ruleset:
+        description: "Ruleset"
+        required: false
+        default: "R01-R09"
+        type: string
+      report_path:
+        description: "Report path"
+        required: false
+        default: "docs/reports/"
+        type: string
+
+permissions:
+  contents: read
+  issues: write
+  repository-projects: write
+
+jobs:
+  gate:
+    name: Run Gate Suite
+    runs-on: ubuntu-latest
+    outputs:
+      status: ${{ steps.out.outputs.status }}
+      phase: ${{ steps.meta.outputs.phase }}
+      ruleset: ${{ steps.meta.outputs.ruleset }}
+      report_path: ${{ steps.meta.outputs.report_path }}
+      gate_key: ${{ steps.meta.outputs.gate_key }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install deps for gate scripts
+        run: |
+          set -euo pipefail
+          python3 -m pip install --quiet pyyaml
+
+      - name: Detect metadata
+        id: meta
+        shell: bash
+        run: |
+          set -euo pipefail
+          INPUT_PHASE='${{ github.event.inputs.phase }}'
+          if [[ -n "$INPUT_PHASE" ]]; then
+            PHASE="$INPUT_PHASE"
+          else
+            PHASE="$(grep -Eo 'Phase:[[:space:]]*[0-9]+' CLAUDE.md | head -n1 | grep -Eo '[0-9]+' || true)"
+            if [[ -z "$PHASE" ]]; then
+              PHASE="00"
+            fi
+          fi
+
+          RULESET='${{ github.event.inputs.ruleset || 'R01-R09' }}'
+          REPORT_PATH='${{ github.event.inputs.report_path || 'docs/reports/' }}'
+          GATE_KEY="${PHASE}:${RULESET}:${GITHUB_SHA}"
+
+          {
+            echo "phase=$PHASE"
+            echo "ruleset=$RULESET"
+            echo "report_path=$REPORT_PATH"
+            echo "gate_key=$GATE_KEY"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Run gate-all
+        id: gate
+        shell: bash
+        run: |
+          set +e
+          bash scripts/gates/gate-all.sh '${{ steps.meta.outputs.phase }}'
+          rc=$?
+          echo "rc=$rc" >> "$GITHUB_OUTPUT"
+          exit 0
+
+      - name: Set status output
+        id: out
+        run: |
+          if [[ '${{ steps.gate.outputs.rc }}' == '0' ]]; then
+            echo 'status=PASS' >> "$GITHUB_OUTPUT"
+          else
+            echo 'status=FAIL' >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Fail workflow when gate failed
+        if: steps.out.outputs.status == 'FAIL'
+        run: exit 1
+
+  gate_issue_sync:
+    name: Sync Gate Issue (push only)
+    needs: gate
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Upsert/close gate issue by Gate-Key
+        uses: actions/github-script@v7
+        env:
+          STATUS: ${{ needs.gate.outputs.status }}
+          PHASE: ${{ needs.gate.outputs.phase }}
+          RULESET: ${{ needs.gate.outputs.ruleset }}
+          REPORT_PATH: ${{ needs.gate.outputs.report_path }}
+          GATE_KEY: ${{ needs.gate.outputs.gate_key }}
+          PROJECT_V2_ID: ${{ vars.PROJECT_V2_ID }}
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const status = process.env.STATUS;
+            const phase = String(process.env.PHASE || '00').padStart(2, '0');
+            const ruleset = process.env.RULESET || 'R01-R09';
+            const reportPath = process.env.REPORT_PATH || 'docs/reports/';
+            const gateKey = process.env.GATE_KEY;
+            const projectId = process.env.PROJECT_V2_ID || '';
+
+            const marker = `<!-- gate-key:${gateKey} -->`;
+            const openIssues = await github.paginate(github.rest.issues.listForRepo, {
+              owner,
+              repo,
+              state: 'open',
+              per_page: 100
+            });
+            const existing = openIssues.find((i) => (i.body || '').includes(marker));
+
+            if (status === 'FAIL') {
+              const title = `Gate Failure [${gateKey}]`;
+              const body = [
+                marker,
+                `Gate-Key: ${gateKey}`,
+                `Phase: ${phase}`,
+                `Ruleset: ${ruleset}`,
+                `Commit: ${context.sha}`,
+                `Report: ${reportPath}`,
+                '',
+                'Checklist:',
+                '- [ ] Reproduce locally',
+                '- [ ] Implement fix',
+                '- [ ] Re-run gates',
+                '- [ ] Link closing PR'
+              ].join('\n');
+
+              let issueNumber;
+              if (existing) {
+                issueNumber = existing.number;
+                await github.rest.issues.createComment({
+                  owner,
+                  repo,
+                  issue_number: issueNumber,
+                  body: `Gate failed again for ${gateKey}.`
+                });
+              } else {
+                try {
+                  const created = await github.rest.issues.create({
+                    owner,
+                    repo,
+                    title,
+                    body,
+                    labels: ['gate:fail', 'type:gate-fix', `phase-${phase}`, 'priority:P0', 'workflow:gate']
+                  });
+                  issueNumber = created.data.number;
+                } catch (e) {
+                  const created = await github.rest.issues.create({ owner, repo, title, body });
+                  issueNumber = created.data.number;
+                }
+              }
+
+              if (projectId && issueNumber) {
+                try {
+                  const issueNode = await github.graphql(
+                    'query($owner:String!, $repo:String!, $number:Int!) { repository(owner:$owner,name:$repo){ issue(number:$number){ id } } }',
+                    { owner, repo, number: issueNumber }
+                  );
+                  const contentId = issueNode.repository.issue.id;
+                  await github.graphql(
+                    'mutation($project:ID!, $content:ID!) { addProjectV2ItemById(input:{projectId:$project, contentId:$content}) { item { id } } }',
+                    { project: projectId, content: contentId }
+                  );
+                } catch (e) {
+                  core.warning(`Failed to add issue #${issueNumber} to Project V2: ${e.message}`);
+                }
+              }
+              return;
+            }
+
+            if (status === 'PASS' && existing) {
+              await github.rest.issues.createComment({
+                owner,
+                repo,
+                issue_number: existing.number,
+                body: `Gate passed for ${gateKey}, closing issue.`
+              });
+              await github.rest.issues.update({
+                owner,
+                repo,
+                issue_number: existing.number,
+                state: 'closed',
+                labels: [...new Set([...(existing.labels || []).map(l => l.name), 'gate:pass'])]
+              });
+            }

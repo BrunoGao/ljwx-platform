@@ -1,0 +1,66 @@
+name: Feature Brief
+description: Submit a new feature brief aligned to Phase + Gate
+title: "[Feature] "
+labels:
+  - type:feature
+  - workflow:brief
+body:
+  - type: dropdown
+    id: phase
+    attributes:
+      label: Target Phase
+      options:
+        - phase-20
+        - phase-21
+        - phase-22
+        - phase-23
+        - phase-24
+        - phase-25
+        - phase-26
+        - phase-27
+    validations:
+      required: true
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      options:
+        - priority:P0
+        - priority:P1
+        - priority:P2
+    validations:
+      required: true
+  - type: textarea
+    id: objective
+    attributes:
+      label: Objective
+      description: What business value should be delivered?
+      placeholder: One-paragraph objective.
+    validations:
+      required: true
+  - type: textarea
+    id: user_stories
+    attributes:
+      label: User Stories
+      description: Use As a / I want / So that format.
+      value: |
+        - As a ..., I want ..., so that ...
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance Criteria
+      placeholder: |
+        - [ ] Criterion 1
+        - [ ] Criterion 2
+    validations:
+      required: true
+  - type: textarea
+    id: gate_alignment
+    attributes:
+      label: Gate Alignment
+      description: Link expected checks to R01-R09.
+      placeholder: "R01: ...; R02: ..."
+    validations:
+      required: false

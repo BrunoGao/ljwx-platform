@@ -1,0 +1,50 @@
+name: Bug Report
+description: Report reproducible defects
+title: "[Bug] "
+labels:
+  - type:bugfix
+  - workflow:coding
+body:
+  - type: input
+    id: summary
+    attributes:
+      label: Summary
+      placeholder: Short bug summary
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to Reproduce
+      placeholder: |
+        1. ...
+        2. ...
+        3. ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual Behavior
+    validations:
+      required: true
+  - type: input
+    id: phase
+    attributes:
+      label: Related Phase Label
+      description: "Example: phase-24"
+      placeholder: "phase-XX"
+    validations:
+      required: false
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Logs / Screenshots / Links
+    validations:
+      required: false

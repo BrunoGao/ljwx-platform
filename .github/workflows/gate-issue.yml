@@ -1,0 +1,132 @@
+name: Gate Issue Automation (Optional)
+
+on:
+  workflow_dispatch:
+    inputs:
+      status:
+        description: "Gate status"
+        required: true
+        type: choice
+        options:
+          - FAIL
+          - PASS
+      phase:
+        description: "Phase number (e.g. 24)"
+        required: true
+        type: string
+      ruleset:
+        description: "Ruleset identifier"
+        required: true
+        default: "R01-R09"
+        type: string
+      commit_sha:
+        description: "Commit SHA"
+        required: true
+        type: string
+      report_path:
+        description: "Report path"
+        required: false
+        default: "docs/reports/"
+        type: string
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  gate_issue:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Compute gate key
+        id: key
+        run: |
+          set -euo pipefail
+          GATE_KEY="${{ inputs.phase }}:${{ inputs.ruleset }}:${{ inputs.commit_sha }}"
+          echo "gate_key=$GATE_KEY" >> "$GITHUB_OUTPUT"
+
+      - name: Upsert or close gate issue by unique Gate-Key
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const status = '${{ inputs.status }}';
+            const phase = '${{ inputs.phase }}';
+            const ruleset = '${{ inputs.ruleset }}';
+            const commitSha = '${{ inputs.commit_sha }}';
+            const reportPath = '${{ inputs.report_path }}' || 'docs/reports/';
+            const gateKey = '${{ steps.key.outputs.gate_key }}';
+            const marker = `<!-- gate-key:${gateKey} -->`;
+
+            const issues = await github.paginate(github.rest.issues.listForRepo, {
+              owner,
+              repo,
+              state: 'open',
+              per_page: 100
+            });
+
+            const existing = issues.find((i) => (i.body || '').includes(marker));
+
+            if (status === 'FAIL') {
+              const title = `Gate Failure [${gateKey}]`;
+              const body = [
+                marker,
+                `Gate-Key: ${gateKey}`,
+                `Phase: ${phase}`,
+                `Ruleset: ${ruleset}`,
+                `Commit: ${commitSha}`,
+                `Report: ${reportPath}`,
+                '',
+                'Checklist:',
+                '- [ ] Reproduce locally',
+                '- [ ] Implement fix',
+                '- [ ] Re-run gates',
+                '- [ ] Link closing PR'
+              ].join('\n');
+
+              if (existing) {
+                await github.rest.issues.createComment({
+                  owner,
+                  repo,
+                  issue_number: existing.number,
+                  body: `Gate failed again for ${gateKey}.` 
+                });
+                core.info(`Existing gate issue found: #${existing.number}`);
+                return;
+              }
+
+              try {
+                const created = await github.rest.issues.create({
+                  owner,
+                  repo,
+                  title,
+                  body,
+                  labels: ['gate-failure', `phase-${String(phase).padStart(2, '0')}`, 'priority:P1']
+                });
+                core.info(`Created gate issue #${created.data.number}`);
+              } catch (e) {
+                core.warning(`Create with labels failed: ${e.message}. Retrying without labels.`);
+                const created = await github.rest.issues.create({ owner, repo, title, body });
+                core.info(`Created gate issue #${created.data.number} without labels`);
+              }
+              return;
+            }
+
+            if (status === 'PASS' && existing) {
+              await github.rest.issues.createComment({
+                owner,
+                repo,
+                issue_number: existing.number,
+                body: `Gate passed for ${gateKey}, closing issue.`
+              });
+              await github.rest.issues.update({
+                owner,
+                repo,
+                issue_number: existing.number,
+                state: 'closed'
+              });
+              core.info(`Closed gate issue #${existing.number}`);
+              return;
+            }
+
+            core.info('No action needed.');

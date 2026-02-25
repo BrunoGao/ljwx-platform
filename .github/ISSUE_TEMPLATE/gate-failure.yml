@@ -1,0 +1,64 @@
+name: Gate Failure
+description: Gate failure record for CI/manual upsert
+title: "[Gate Failure] "
+labels:
+  - gate:fail
+  - type:gate-fix
+  - workflow:gate
+body:
+  - type: input
+    id: gate_key
+    attributes:
+      label: Gate Key
+      description: "Unique key: <phase>:<ruleset>:<commit_sha>"
+      placeholder: "24:R01-R09:abcdef1234"
+    validations:
+      required: true
+  - type: input
+    id: phase
+    attributes:
+      label: Phase
+      placeholder: "24"
+    validations:
+      required: true
+  - type: input
+    id: ruleset
+    attributes:
+      label: Ruleset
+      placeholder: "R01-R09"
+    validations:
+      required: true
+  - type: input
+    id: commit_sha
+    attributes:
+      label: Commit SHA
+      placeholder: "abcdef1234567890"
+    validations:
+      required: true
+  - type: textarea
+    id: failed_checks
+    attributes:
+      label: Failed Checks
+      placeholder: |
+        - gate-rules
+        - gate-compile
+    validations:
+      required: true
+  - type: textarea
+    id: report_path
+    attributes:
+      label: Report Path
+      placeholder: docs/reports/
+    validations:
+      required: false
+  - type: textarea
+    id: checklist
+    attributes:
+      label: Recovery Checklist
+      value: |
+        - [ ] Reproduce locally
+        - [ ] Implement fix
+        - [ ] Re-run gates
+        - [ ] Link closing PR
+    validations:
+      required: false

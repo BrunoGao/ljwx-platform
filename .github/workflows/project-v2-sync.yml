@@ -1,0 +1,69 @@
+name: Project V2 Sync (Optional)
+
+on:
+  workflow_dispatch:
+    inputs:
+      project_id:
+        description: "Project V2 node ID"
+        required: true
+        type: string
+      item_id:
+        description: "Project item node ID"
+        required: true
+        type: string
+      field_id:
+        description: "Field node ID"
+        required: true
+        type: string
+      option_id:
+        description: "Single-select option node ID"
+        required: false
+        type: string
+      value_text:
+        description: "Text value"
+        required: false
+        type: string
+
+permissions:
+  contents: read
+  repository-projects: write
+
+jobs:
+  update_project_field:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate input
+        run: |
+          set -euo pipefail
+          if [[ -n "${{ inputs.option_id }}" && -n "${{ inputs.value_text }}" ]]; then
+            echo "Use either option_id or value_text" >&2
+            exit 1
+          fi
+          if [[ -z "${{ inputs.option_id }}" && -z "${{ inputs.value_text }}" ]]; then
+            echo "Either option_id or value_text is required" >&2
+            exit 1
+          fi
+
+      - name: Update Project V2 Field
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [[ -n "${{ inputs.option_id }}" ]]; then
+            gh api graphql \
+              -f query='mutation($project:ID!, $item:ID!, $field:ID!, $option:String!) { updateProjectV2ItemFieldValue(input:{projectId:$project,itemId:$item,fieldId:$field,value:{singleSelectOptionId:$option}}) { projectV2Item { id } } }' \
+              -f project='${{ inputs.project_id }}' \
+              -f item='${{ inputs.item_id }}' \
+              -f field='${{ inputs.field_id }}' \
+              -f option='${{ inputs.option_id }}'
+          else
+            gh api graphql \
+              -f query='mutation($project:ID!, $item:ID!, $field:ID!, $text:String!) { updateProjectV2ItemFieldValue(input:{projectId:$project,itemId:$item,fieldId:$field,value:{text:$text}}) { projectV2Item { id } } }' \
+              -f project='${{ inputs.project_id }}' \
+              -f item='${{ inputs.item_id }}' \
+              -f field='${{ inputs.field_id }}' \
+              -f text='${{ inputs.value_text }}'
+          fi

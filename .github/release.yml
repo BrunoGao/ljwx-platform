@@ -1,0 +1,21 @@
+changelog:
+  categories:
+    - title: "🚀 Features"
+      labels:
+        - "type:feature"
+    - title: "🐛 Bug Fixes"
+      labels:
+        - "type:bugfix"
+        - "type:gate-fix"
+    - title: "🔧 Refactors"
+      labels:
+        - "type:refactor"
+    - title: "✅ Tests"
+      labels:
+        - "type:test"
+    - title: "📝 Docs"
+      labels:
+        - "type:docs"
+  exclude:
+    labels:
+      - "workflow:brief"
