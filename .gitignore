@@ -34,3 +34,7 @@ surefire-reports/
 # ── OS ──
 .DS_Store
 Thumbs.db
+
+# ── Reports ──
+docs/reports/data/history/
+docs/reports/data/history/**

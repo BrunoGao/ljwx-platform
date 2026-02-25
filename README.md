@@ -181,6 +181,17 @@ ljwx-platform/
 
 启动后端后访问：`http://localhost:8080/swagger-ui.html`
 
+## Quality Dashboard
+
+- 本地预览：
+  - `bash scripts/gates/gate-all.sh 20`
+  - `python3 -m http.server 8080 -d docs/reports`
+  - 打开 `http://localhost:8080`
+- 线上地址（GitHub Pages）：
+  - `https://<org>.github.io/<repo>/`
+- 提交仪表盘数据（PR 模式，不直推主分支）：
+  - `bash scripts/deploy-dashboard.sh 20`
+
 ## GitHub Workflow 发布到本地 k3s（极简链路）
 
 业务仓内提供 workflow：`.github/workflows/release-to-deploy.yml`，流程为：

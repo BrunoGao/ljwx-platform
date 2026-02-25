@@ -1,0 +1,37 @@
+{
+  "phase": "20",
+  "status": "FAIL",
+  "timestamp": "2026-02-25T12:00:00Z",
+  "git": {
+    "commit": "samplecommit20",
+    "branch": "master"
+  },
+  "rules": [
+    {"id": "R01", "name": "Compile", "status": "PASS", "critical": 0, "warnings": 0, "message": "Compilation passed"},
+    {"id": "R02", "name": "Manifest", "status": "PASS", "critical": 0, "warnings": 0, "message": "Manifest validated"},
+    {"id": "R03", "name": "Rules", "status": "FAIL", "critical": 1, "warnings": 0, "message": "One critical rule violation"},
+    {"id": "R04", "name": "Flyway Governance", "status": "PASS", "critical": 0, "warnings": 0, "message": "Checksum lock clean"},
+    {"id": "R05", "name": "Integration", "status": "PASS", "critical": 0, "warnings": 1, "message": "Minor warning"},
+    {"id": "R06", "name": "Contract", "status": "PASS", "critical": 0, "warnings": 0, "message": "OpenAPI validated"},
+    {"id": "R07", "name": "NFR", "status": "PASS", "critical": 0, "warnings": 0, "message": "NFR checks passed"},
+    {"id": "R08", "name": "RTM", "status": "PASS", "critical": 0, "warnings": 0, "message": "RTM generated"}
+  ],
+  "summary": {
+    "total": 8,
+    "pass": 7,
+    "fail": 1,
+    "skip": 0,
+    "critical": 1,
+    "warnings": 1,
+    "pass_rate": 87.5
+  },
+  "violations": [
+    {
+      "rule": "R03",
+      "severity": "CRITICAL",
+      "file": "ljwx-platform-app/src/main/java/com/ljwx/platform/app/web/AuthController.java",
+      "line": 54,
+      "message": "Controller public method missing @PreAuthorize"
+    }
+  ]
+}

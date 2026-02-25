@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LJWX Quality Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root { --bg:#f4f7fb; --card:#fff; --ok:#1a7f37; --fail:#cf222e; --pending:#9a6700; --text:#1f2328; --muted:#57606a; }
+    body { margin:0; font-family: "Segoe UI", sans-serif; background: linear-gradient(180deg,#eef4ff,#f7f9fc); color:var(--text); }
+    .wrap { max-width: 1200px; margin: 24px auto; padding: 0 16px 40px; }
+    .row { display:grid; gap:16px; grid-template-columns: repeat(12,minmax(0,1fr)); }
+    .card { background:var(--card); border-radius:14px; box-shadow:0 8px 24px rgba(31,35,40,.08); padding:16px; }
+    .span-3{grid-column: span 3;} .span-4{grid-column: span 4;} .span-6{grid-column: span 6;} .span-8{grid-column: span 8;} .span-12{grid-column: span 12;}
+    .kpi { font-size:30px; font-weight:700; }
+    .label { color:var(--muted); font-size:13px; }
+    .status-pass{color:var(--ok);} .status-fail{color:var(--fail);} .status-pending{color:var(--pending);} 
+    #heatmap { display:grid; grid-template-columns: repeat(8,1fr); gap:8px; }
+    .cell { border-radius:10px; padding:10px; cursor:pointer; color:#fff; font-size:12px; min-height:54px; }
+    .PASS{background:var(--ok);} .FAIL{background:var(--fail);} .PENDING{background:#9a6700;}
+    table { width:100%; border-collapse: collapse; font-size:13px; }
+    th,td { border-bottom:1px solid #eaeef2; padding:8px; text-align:left; }
+    .hint { color:var(--muted); font-size:12px; }
+    @media (max-width: 900px){ .span-3,.span-4,.span-6,.span-8,.span-12{grid-column: span 12;} #heatmap{grid-template-columns:repeat(4,1fr);} }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>LJWX Quality Dashboard</h1>
+    <p id="meta" class="hint">加载中...</p>
+
+    <div class="row">
+      <div class="card span-3"><div class="label">PASS</div><div id="kPass" class="kpi status-pass">-</div></div>
+      <div class="card span-3"><div class="label">FAIL</div><div id="kFail" class="kpi status-fail">-</div></div>
+      <div class="card span-3"><div class="label">PENDING</div><div id="kPending" class="kpi status-pending">-</div></div>
+      <div class="card span-3"><div class="label">CRITICAL</div><div id="kCritical" class="kpi">-</div></div>
+
+      <div class="card span-8"><h3>Phase Heatmap</h3><div id="heatmap"></div></div>
+      <div class="card span-4"><h3>History</h3><canvas id="trend"></canvas></div>
+
+      <div class="card span-12">
+        <h3>RTM</h3>
+        <table id="rtmTable"><thead><tr><th>Phase</th><th>Endpoint</th><th>Method</th><th>Controller</th><th>Status</th></tr></thead><tbody></tbody></table>
+      </div>
+
+      <div class="card span-12">
+        <h3>Violations</h3>
+        <table id="violations"><thead><tr><th>Phase</th><th>Rule</th><th>Severity</th><th>Message</th></tr></thead><tbody></tbody></table>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const ownerFallback = 'BrunoGao';
+    const repoFallback = 'ljwx-platform';
+
+    function asClass(s){ return s === 'PASS' ? 'status-pass' : s === 'FAIL' ? 'status-fail' : 'status-pending'; }
+    function text(v){ return (v === null || v === undefined || v === '') ? '-' : String(v); }
+
+    async function load() {
+      let summary, rtm;
+      try {
+        summary = await fetch('./data/summary.json').then(r => r.json());
+      } catch (e) {
+        document.body.innerHTML = '<pre>加载 summary.json 失败。请使用: python3 -m http.server 8080 -d docs/reports</pre>';
+        return;
+      }
+
+      try {
+        rtm = await fetch('./data/rtm.json').then(r => r.json());
+      } catch (_) {
+        rtm = { matrix: [] };
+      }
+
+      const t = summary.totals || {};
+      document.getElementById('kPass').textContent = t.pass ?? 0;
+      document.getElementById('kFail').textContent = t.fail ?? 0;
+      document.getElementById('kPending').textContent = t.pending ?? 0;
+      document.getElementById('kCritical').textContent = t.critical ?? 0;
+
+      const owner = summary.repo?.owner || ownerFallback;
+      const repo = summary.repo?.name || repoFallback;
+      document.getElementById('meta').textContent = `${owner}/${repo} @ ${summary.repo?.branch || '-'} (${summary.repo?.commit || '-'}) generated ${summary.generated_at || '-'}`;
+
+      const heatmap = document.getElementById('heatmap');
+      const phases = summary.phases || [];
+      phases.forEach(p => {
+        const d = document.createElement('div');
+        d.className = `cell ${p.status || 'PENDING'}`;
+        d.innerHTML = `<strong>Phase ${p.phase}</strong><br>${p.status}<br>${p.pass_rate || 0}%`;
+        d.onclick = () => showPhaseViolations(owner, repo, p.phase);
+        heatmap.appendChild(d);
+      });
+
+      const hist = summary.history || [];
+      const ctx = document.getElementById('trend');
+      new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: hist.map(h => `${h.phase}@${(h.timestamp || '').slice(11,16)}`),
+          datasets: [{ label: 'Pass Rate', data: hist.map(h => h.pass_rate || 0), borderColor: '#1f6feb', tension: 0.2 }]
+        },
+        options: { scales: { y: { min: 0, max: 100 } } }
+      });
+
+      const tbody = document.querySelector('#rtmTable tbody');
+      (rtm.matrix || []).slice(0, 200).forEach(m => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${text(m.phase)}</td><td>${text(m.endpoint)}</td><td>${text(m.method)}</td><td>${text(m.controller)}</td><td class="${asClass(m.gate_status)}">${text(m.gate_status)}</td>`;
+        tbody.appendChild(tr);
+      });
+    }
+
+    async function showPhaseViolations(owner, repo, phase) {
+      const body = document.querySelector('#violations tbody');
+      body.innerHTML = '';
+      try {
+        const phaseJson = await fetch(`./data/phases/phase-${phase}.json`).then(r => r.json());
+        const list = phaseJson.violations || [];
+        if (!list.length) {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `<td>${phase}</td><td>-</td><td>-</td><td>No violations</td>`;
+          body.appendChild(tr);
+          return;
+        }
+
+        list.forEach(v => {
+          const tr = document.createElement('tr');
+          let fileCell = text(v.message);
+          if (v.file) {
+            const line = v.line || 1;
+            const url = `https://github.com/${owner}/${repo}/blob/master/${v.file}#L${line}`;
+            fileCell = `<a href="${url}" target="_blank" rel="noopener">${text(v.message)}</a>`;
+          }
+          tr.innerHTML = `<td>${phase}</td><td>${text(v.rule)}</td><td>${text(v.severity)}</td><td>${fileCell}</td>`;
+          body.appendChild(tr);
+        });
+      } catch (_) {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${phase}</td><td>-</td><td>-</td><td>phase-${phase}.json not found</td>`;
+        body.appendChild(tr);
+      }
+    }
+
+    load();
+  </script>
+</body>
+</html>

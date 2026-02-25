@@ -191,3 +191,15 @@ When compacting, always preserve: 当前 Phase 编号及进度、已完成的文
 - PR 必须关联 Issue（`Closes #XX` 或 `Relates #XX`）
 - Commit message 建议格式：`feat|fix|docs(phase-XX): description`
 - Release tag 格式：`vX.Y.Z-phaseNN`
+
+## Quality Dashboard & Gate System
+
+- Gate 以 `scripts/gates/gate-all.sh [phase]` 退出码为准：`0=PASS`，非 0 视为 FAIL。
+- 每次 gate 运行必须产出：
+  - `docs/reports/data/phases/phase-XX.json`
+  - `docs/reports/data/summary.json`
+  - `docs/reports/data/rtm.json`
+- 前端 phase（10-19）仅强制 `R01`，其余规则写入 `SKIP`。
+- `docs/reports/data/history/**` 仅用于本地历史快照，默认不纳入 Git。
+- Dashboard 页面为 `docs/reports/index.html`，本地预览：
+  - `python3 -m http.server 8080 -d docs/reports`

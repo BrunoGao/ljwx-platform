@@ -1,0 +1,326 @@
+{
+  "generated_at": "2026-02-25T14:33:24Z",
+  "repo": {
+    "owner": "BrunoGao",
+    "name": "ljwx-platform",
+    "branch": "master",
+    "commit": "2917122"
+  },
+  "totals": {
+    "pass": 1,
+    "fail": 0,
+    "pending": 31,
+    "critical": 0,
+    "warnings": 0
+  },
+  "phases": [
+    {
+      "phase": "00",
+      "status": "PASS",
+      "pass_rate": 100,
+      "critical": 0,
+      "warnings": 0,
+      "timestamp": "2026-02-25T14:33:24Z",
+      "git_commit": "2917122"
+    },
+    {
+      "phase": "01",
+      "status": "PENDING",
+      "pass_rate": 0,
+      "critical": 0,
+      "warnings": 0,
+      "timestamp": "",
+      "git_commit": ""
+    },
+    {
+      "phase": "02",
+      "status": "PENDING",
+      "pass_rate": 0,
+      "critical": 0,
+      "warnings": 0,
+      "timestamp": "",
+      "git_commit": ""
+    },
+    {
+      "phase": "03",
+      "status": "PENDING",
+      "pass_rate": 0,
+      "critical": 0,
+      "warnings": 0,
+      "timestamp": "",
+      "git_commit": ""
+    },
+    {
+      "phase": "04",
+      "status": "PENDING",
+      "pass_rate": 0,
+      "critical": 0,
+      "warnings": 0,
+      "timestamp": "",
+      "git_commit": ""
+    },
+    {
+      "phase": "05",
+      "status": "PENDING",
+      "pass_rate": 0,
+      "critical": 0,
+      "warnings": 0,
+      "timestamp": "",
+      "git_commit": ""
+    },
+    {
+      "phase": "06",
+      "status": "PENDING",
+      "pass_rate": 0,
+      "critical": 0,
+      "warnings": 0,
+      "timestamp": "",
+      "git_commit": ""
+    },
+    {
+      "phase": "07",
+      "status": "PENDING",
+      "pass_rate": 0,
+      "critical": 0,
+      "warnings": 0,
+      "timestamp": "",
+      "git_commit": ""
+    },
+    {
+      "phase": "08",
+      "status": "PENDING",
+      "pass_rate": 0,
+      "critical": 0,
+      "warnings": 0,
+      "timestamp": "",
+      "git_commit": ""
+    },
+    {
+      "phase": "09",
+      "status": "PENDING",
+      "pass_rate": 0,
+      "critical": 0,
+      "warnings": 0,
+      "timestamp": "",
+      "git_commit": ""
+    },
+    {
+      "phase": "10",
+      "status": "PENDING",
+      "pass_rate": 0,
+      "critical": 0,
+      "warnings": 0,
+      "timestamp": "",
+      "git_commit": ""
+    },
+    {
+      "phase": "11",
+      "status": "PENDING",
+      "pass_rate": 0,
+      "critical": 0,
+      "warnings": 0,
+      "timestamp": "",
+      "git_commit": ""
+    },
+    {
+      "phase": "12",
+      "status": "PENDING",
+      "pass_rate": 0,
+      "critical": 0,
+      "warnings": 0,
+      "timestamp": "",
+      "git_commit": ""
+    },
+    {
+      "phase": "13",
+      "status": "PENDING",
+      "pass_rate": 0,
+      "critical": 0,
+      "warnings": 0,
+      "timestamp": "",
+      "git_commit": ""
+    },
+    {
+      "phase": "14",
+      "status": "PENDING",
+      "pass_rate": 0,
+      "critical": 0,
+      "warnings": 0,
+      "timestamp": "",
+      "git_commit": ""
+    },
+    {
+      "phase": "15",
+      "status": "PENDING",
+      "pass_rate": 0,
+      "critical": 0,
+      "warnings": 0,
+      "timestamp": "",
+      "git_commit": ""
+    },
+    {
+      "phase": "16",
+      "status": "PENDING",
+      "pass_rate": 0,
+      "critical": 0,
+      "warnings": 0,
+      "timestamp": "",
+      "git_commit": ""
+    },
+    {
+      "phase": "17",
+      "status": "PENDING",
+      "pass_rate": 0,
+      "critical": 0,
+      "warnings": 0,
+      "timestamp": "",
+      "git_commit": ""
+    },
+    {
+      "phase": "18",
+      "status": "PENDING",
+      "pass_rate": 0,
+      "critical": 0,
+      "warnings": 0,
+      "timestamp": "",
+      "git_commit": ""
+    },
+    {
+      "phase": "19",
+      "status": "PENDING",
+      "pass_rate": 0,
+      "critical": 0,
+      "warnings": 0,
+      "timestamp": "",
+      "git_commit": ""
+    },
+    {
+      "phase": "20",
+      "status": "PENDING",
+      "pass_rate": 0,
+      "critical": 0,
+      "warnings": 0,
+      "timestamp": "",
+      "git_commit": ""
+    },
+    {
+      "phase": "21",
+      "status": "PENDING",
+      "pass_rate": 0,
+      "critical": 0,
+      "warnings": 0,
+      "timestamp": "",
+      "git_commit": ""
+    },
+    {
+      "phase": "22",
+      "status": "PENDING",
+      "pass_rate": 0,
+      "critical": 0,
+      "warnings": 0,
+      "timestamp": "",
+      "git_commit": ""
+    },
+    {
+      "phase": "23",
+      "status": "PENDING",
+      "pass_rate": 0,
+      "critical": 0,
+      "warnings": 0,
+      "timestamp": "",
+      "git_commit": ""
+    },
+    {
+      "phase": "24",
+      "status": "PENDING",
+      "pass_rate": 0,
+      "critical": 0,
+      "warnings": 0,
+      "timestamp": "",
+      "git_commit": ""
+    },
+    {
+      "phase": "25",
+      "status": "PENDING",
+      "pass_rate": 0,
+      "critical": 0,
+      "warnings": 0,
+      "timestamp": "",
+      "git_commit": ""
+    },
+    {
+      "phase": "26",
+      "status": "PENDING",
+      "pass_rate": 0,
+      "critical": 0,
+      "warnings": 0,
+      "timestamp": "",
+      "git_commit": ""
+    },
+    {
+      "phase": "27",
+      "status": "PENDING",
+      "pass_rate": 0,
+      "critical": 0,
+      "warnings": 0,
+      "timestamp": "",
+      "git_commit": ""
+    },
+    {
+      "phase": "28",
+      "status": "PENDING",
+      "pass_rate": 0,
+      "critical": 0,
+      "warnings": 0,
+      "timestamp": "",
+      "git_commit": ""
+    },
+    {
+      "phase": "29",
+      "status": "PENDING",
+      "pass_rate": 0,
+      "critical": 0,
+      "warnings": 0,
+      "timestamp": "",
+      "git_commit": ""
+    },
+    {
+      "phase": "30",
+      "status": "PENDING",
+      "pass_rate": 0,
+      "critical": 0,
+      "warnings": 0,
+      "timestamp": "",
+      "git_commit": ""
+    },
+    {
+      "phase": "31",
+      "status": "PENDING",
+      "pass_rate": 0,
+      "critical": 0,
+      "warnings": 0,
+      "timestamp": "",
+      "git_commit": ""
+    }
+  ],
+  "history": [
+    {
+      "timestamp": "2026-02-25T14:33:24Z",
+      "phase": "00",
+      "status": "PASS",
+      "pass_rate": 100,
+      "git_commit": "2917122",
+      "critical": 0,
+      "warnings": 0
+    },
+    {
+      "timestamp": "2026-02-25T14:33:11Z",
+      "phase": "00",
+      "status": "FAIL",
+      "pass_rate": 87.5,
+      "git_commit": "2917122",
+      "critical": 1,
+      "warnings": 0
+    }
+  ]
+}
