@@ -88,6 +88,7 @@ jobs:
         id: release
         env:
           DEPLOY_REPO_TOKEN: ${{ secrets.DEPLOY_REPO_TOKEN }}
+          DEPLOY_VALUES_FILE: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.deploy_values_file || 'apps/ljwx-platform/overlays/prod/kustomization.yaml' }}
         shell: bash
         run: |
           set -euo pipefail
@@ -126,8 +127,6 @@ jobs:
             fp.write(f"service_version={data['serviceVersion']}\n")
             fp.write(f"image_digest={data['imageDigest']}\n")
           PY
-        env:
-          DEPLOY_VALUES_FILE: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.deploy_values_file || 'apps/ljwx-platform/overlays/prod/kustomization.yaml' }}
 
       - name: Resolve verify settings
         id: cfg
