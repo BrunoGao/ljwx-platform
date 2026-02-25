@@ -97,7 +97,7 @@ jobs:
           mvn -B -ntp -q \
             -pl ljwx-platform-app \
             -am \
-            package \
+            install \
             -DskipTests
           mvn -B -ntp -q \
             -f ljwx-platform-app/pom.xml \
