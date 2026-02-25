@@ -2,7 +2,7 @@ name: Release To Deploy
 
 on:
   push:
-    branches: [main]
+    branches: [master, main]
   workflow_dispatch:
     inputs:
       service_name:
