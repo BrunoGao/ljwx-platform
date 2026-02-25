@@ -104,6 +104,20 @@ REST 路径：`/api/v1/xxx`
 5. 所有 Controller 方法有 `@PreAuthorize`
 6. 迁移 SQL 含 7 列审计字段且无 `IF NOT EXISTS`
 
+## Test Cases
+
+每个 Phase 必须定义可执行测试用例，并使用唯一 ID（示例：`TC-20-01`）。
+
+| TC ID | Endpoint | 权限 | 预期状态 | 关键断言 |
+|------|----------|------|---------|---------|
+| TC-NN-01 | GET /api/v1/xxx | `xxx:read` | 401 | 无 token 拒绝访问 |
+| TC-NN-02 | GET /api/v1/xxx | `xxx:read` | 403 | 无权限 token 被拒绝 |
+| TC-NN-03 | GET /api/v1/xxx | `xxx:read` | 200 | 仅返回当前租户数据 |
+| TC-NN-04 | POST /api/v1/xxx | `xxx:write` | 200 | 创建成功并返回 ID |
+| TC-NN-05 | PUT /api/v1/xxx/{id} | `xxx:write` | 200 | 更新成功，数据可见 |
+| TC-NN-06 | DELETE /api/v1/xxx/{id} | `xxx:delete` | 200 | 软删除后列表不可见 |
+| TC-NN-07 | POST /api/v1/xxx | `xxx:write` | 400 | 参数校验失败 |
+
 ## PHASE_MANIFEST.txt 记录格式
 
 ```

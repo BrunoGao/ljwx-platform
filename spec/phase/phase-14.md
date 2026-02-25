@@ -46,3 +46,18 @@ ljwx-platform-admin/src/composables/useTheme.ts
 3. 面包屑、标签页正常显示
 4. 主题切换（亮色/暗色）功能正常
 5. build 通过
+
+## Test Cases
+
+| TC ID | Endpoint | 权限 | 预期状态码 | 关键断言 |
+|------|----------|------|------------|---------|
+| TC-14-01 | GET /api/** | read | 401 | 无 token 返回 Unauthorized |
+| TC-14-02 | GET /api/** | read | 403 | 无权限 token 返回 Forbidden |
+| TC-14-03 | GET /api/** | read | 200 | 成功返回统一响应结构 |
+| TC-14-04 | POST /api/** | write | 400 | 参数校验错误返回 400 |
+| TC-14-05 | POST /api/** | write | 200 | 创建成功并返回 ID/结果 |
+| TC-14-06 | PUT /api/**/{id} | write | 200 | 更新成功且可再次查询 |
+| TC-14-07 | DELETE /api/**/{id} | delete | 200 | 删除后数据不可见（软删/过滤） |
+| TC-14-08 | GET /api/** | read | 200 | 仅可见当前租户数据 |
+| TC-14-09 | GET /api/** | read | 401 | 过期 token 被拒绝 |
+| TC-14-10 | GET /api/** | read | 401 | 非法 token 被拒绝 |

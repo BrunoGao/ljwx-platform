@@ -53,3 +53,18 @@ docs/adr/008-data-change-audit.md
 2. FULL_MANIFEST.txt 包含 Phase 28-31 所有新增文件
 3. README.md 反映最新功能列表
 4. 3 个新 ADR 文档存在且内容完整
+
+## Test Cases
+
+| TC ID | Endpoint | 权限 | 预期状态码 | 关键断言 |
+|------|----------|------|------------|---------|
+| TC-32-01 | GET /api/** | read | 401 | 无 token 返回 Unauthorized |
+| TC-32-02 | GET /api/** | read | 403 | 无权限 token 返回 Forbidden |
+| TC-32-03 | GET /api/** | read | 200 | 成功返回统一响应结构 |
+| TC-32-04 | POST /api/** | write | 400 | 参数校验错误返回 400 |
+| TC-32-05 | POST /api/** | write | 200 | 创建成功并返回 ID/结果 |
+| TC-32-06 | PUT /api/**/{id} | write | 200 | 更新成功且可再次查询 |
+| TC-32-07 | DELETE /api/**/{id} | delete | 200 | 删除后数据不可见（软删/过滤） |
+| TC-32-08 | GET /api/** | read | 200 | 仅可见当前租户数据 |
+| TC-32-09 | GET /api/** | read | 401 | 过期 token 被拒绝 |
+| TC-32-10 | GET /api/** | read | 401 | 非法 token 被拒绝 |

@@ -92,3 +92,18 @@ ljwx-platform-admin/src/composables/useWebSocket.ts
 2. RateLimitInterceptor 无 data 模块 import（DAG 合规）
 3. WebSocket 端点在 SecurityConfig 白名单中
 4. 编译通过，type-check 通过
+
+## Test Cases
+
+| TC ID | Endpoint | 权限 | 预期状态码 | 关键断言 |
+|------|----------|------|------------|---------|
+| TC-25-01 | GET /api/** | read | 401 | 无 token 返回 Unauthorized |
+| TC-25-02 | GET /api/** | read | 403 | 无权限 token 返回 Forbidden |
+| TC-25-03 | GET /api/** | read | 200 | 成功返回统一响应结构 |
+| TC-25-04 | POST /api/** | write | 400 | 参数校验错误返回 400 |
+| TC-25-05 | POST /api/** | write | 200 | 创建成功并返回 ID/结果 |
+| TC-25-06 | PUT /api/**/{id} | write | 200 | 更新成功且可再次查询 |
+| TC-25-07 | DELETE /api/**/{id} | delete | 200 | 删除后数据不可见（软删/过滤） |
+| TC-25-08 | GET /api/** | read | 200 | 仅可见当前租户数据 |
+| TC-25-09 | GET /api/** | read | 401 | 过期 token 被拒绝 |
+| TC-25-10 | GET /api/** | read | 401 | 非法 token 被拒绝 |

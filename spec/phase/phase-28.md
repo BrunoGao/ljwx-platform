@@ -123,3 +123,18 @@ ljwx-platform-security/src/main/java/com/ljwx/platform/security/config/SecurityC
 4. LoginLockoutService 连续 5 次失败后账户锁定
 5. @StrongPassword 对弱密码返回 400 校验错误
 6. 编译通过，无 data 模块 import 在 security/web 中
+
+## Test Cases
+
+| TC ID | Endpoint | 权限 | 预期状态码 | 关键断言 |
+|------|----------|------|------------|---------|
+| TC-28-01 | GET /api/** | read | 401 | 无 token 返回 Unauthorized |
+| TC-28-02 | GET /api/** | read | 403 | 无权限 token 返回 Forbidden |
+| TC-28-03 | GET /api/** | read | 200 | 成功返回统一响应结构 |
+| TC-28-04 | POST /api/** | write | 400 | 参数校验错误返回 400 |
+| TC-28-05 | POST /api/** | write | 200 | 创建成功并返回 ID/结果 |
+| TC-28-06 | PUT /api/**/{id} | write | 200 | 更新成功且可再次查询 |
+| TC-28-07 | DELETE /api/**/{id} | delete | 200 | 删除后数据不可见（软删/过滤） |
+| TC-28-08 | GET /api/** | read | 200 | 仅可见当前租户数据 |
+| TC-28-09 | GET /api/** | read | 401 | 过期 token 被拒绝 |
+| TC-28-10 | GET /api/** | read | 401 | 非法 token 被拒绝 |

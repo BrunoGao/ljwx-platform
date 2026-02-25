@@ -31,9 +31,9 @@ for i in $(seq 0 31); do
   phase="$(printf '%02d' "$i")"
   file="$PHASE_DIR/phase-$phase.json"
   if [[ -f "$file" ]]; then
-    item="$(jq -c '{phase, status, pass_rate: .summary.pass_rate, critical: .summary.critical, warnings: .summary.warnings, timestamp, git_commit: .git.commit}' "$file")"
+    item="$(jq -c '{phase, status, pass_rate: .summary.pass_rate, critical: .summary.critical, warnings: .summary.warnings, timestamp, git_commit: .git.commit, r09_status: ((.rules // []) | map(select(.id=="R09")) | .[0].status // "PENDING")}' "$file")"
   else
-    item="$(jq -nc --arg p "$phase" '{phase:$p,status:"PENDING",pass_rate:0,critical:0,warnings:0,timestamp:"",git_commit:""}')"
+    item="$(jq -nc --arg p "$phase" '{phase:$p,status:"PENDING",pass_rate:0,critical:0,warnings:0,timestamp:"",git_commit:"",r09_status:"PENDING"}')"
   fi
   jq --argjson item "$item" '. + [$item]' "$phases_tmp" >"$phases_tmp.next" && mv "$phases_tmp.next" "$phases_tmp"
 done

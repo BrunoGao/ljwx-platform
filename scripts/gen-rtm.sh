@@ -11,12 +11,54 @@ cd "$PROJECT_ROOT"
 
 OUT="docs/reports/data/rtm.json"
 PHASE_DIR="docs/reports/data/phases"
+TEST_ROOT="ljwx-platform-app/src/test/java"
 mkdir -p "$(dirname "$OUT")"
 
 matrix_tmp="$(mktemp)"
 missing_tmp="$(mktemp)"
 echo '[]' >"$matrix_tmp"
 echo '[]' >"$missing_tmp"
+
+escape_regex() {
+  echo "$1" | sed -E 's/[][(){}.+*^$|?\\]/\\&/g'
+}
+
+detect_test_file() {
+  local method="$1"
+  local endpoint="$2"
+  local method_lc
+  method_lc="$(echo "$method" | tr '[:upper:]' '[:lower:]')"
+  local method_fn=""
+  case "$method_lc" in
+    get) method_fn="performGet|get\\(" ;;
+    post) method_fn="performPost|post\\(" ;;
+    put) method_fn="performPut|put\\(" ;;
+    delete) method_fn="performDelete|delete\\(" ;;
+    patch) method_fn="patch\\(" ;;
+  esac
+  [[ -z "$method_fn" ]] && return 0
+
+  local endpoint_prefix="$endpoint"
+  endpoint_prefix="${endpoint_prefix%%\{*}"
+  [[ -z "$endpoint_prefix" ]] && endpoint_prefix="$endpoint"
+
+  if [[ ! -d "$TEST_ROOT" ]]; then
+    return 0
+  fi
+
+  local endpoint_re
+  endpoint_re="$(escape_regex "$endpoint_prefix")"
+  local hit
+  hit="$(grep -RIlE "$endpoint_re" "$TEST_ROOT" 2>/dev/null | while read -r f; do
+      if grep -Eq "$method_fn" "$f"; then
+        echo "$f"
+        break
+      fi
+    done)"
+  if [[ -n "$hit" ]]; then
+    echo "$hit"
+  fi
+}
 
 while IFS= read -r controller; do
   [[ -z "$controller" ]] && continue
@@ -47,6 +89,12 @@ while IFS= read -r controller; do
       fi
     done
 
+    test_file="$(detect_test_file "$method" "$endpoint")"
+    test_covered="false"
+    if [[ -n "$test_file" ]]; then
+      test_covered="true"
+    fi
+
     item="$(jq -nc \
       --arg phase "$phase" \
       --arg requirement_id "$req_id" \
@@ -54,7 +102,8 @@ while IFS= read -r controller; do
       --arg method "$method" \
       --arg controller "$controller" \
       --arg service "$service_guess" \
-      --arg test null \
+      --arg test "$test_file" \
+      --argjson test_covered "$test_covered" \
       --arg spec null \
       --arg gate_status "$gate_status" \
       '{
@@ -64,7 +113,8 @@ while IFS= read -r controller; do
         method: (if $method=="" then null else $method end),
         controller: $controller,
         service: (if $service=="null" then null else $service end),
-        test: null,
+        test: (if $test=="" then null else $test end),
+        test_covered: $test_covered,
         spec: null,
         gate_status: $gate_status
       }')"

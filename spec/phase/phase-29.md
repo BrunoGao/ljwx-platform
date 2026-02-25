@@ -130,3 +130,18 @@ ljwx-platform-admin/src/composables/useErrorMonitor.ts
 4. V029 含 7 列审计字段，无 IF NOT EXISTS
 5. FrontendErrorController POST 接口返回 200
 6. useErrorMonitor.ts 无 `any` 类型，type-check 通过
+
+## Test Cases
+
+| TC ID | Endpoint | 权限 | 预期状态码 | 关键断言 |
+|------|----------|------|------------|---------|
+| TC-29-01 | GET /api/** | read | 401 | 无 token 返回 Unauthorized |
+| TC-29-02 | GET /api/** | read | 403 | 无权限 token 返回 Forbidden |
+| TC-29-03 | GET /api/** | read | 200 | 成功返回统一响应结构 |
+| TC-29-04 | POST /api/** | write | 400 | 参数校验错误返回 400 |
+| TC-29-05 | POST /api/** | write | 200 | 创建成功并返回 ID/结果 |
+| TC-29-06 | PUT /api/**/{id} | write | 200 | 更新成功且可再次查询 |
+| TC-29-07 | DELETE /api/**/{id} | delete | 200 | 删除后数据不可见（软删/过滤） |
+| TC-29-08 | GET /api/** | read | 200 | 仅可见当前租户数据 |
+| TC-29-09 | GET /api/** | read | 401 | 过期 token 被拒绝 |
+| TC-29-10 | GET /api/** | read | 401 | 非法 token 被拒绝 |

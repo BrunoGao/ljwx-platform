@@ -38,6 +38,7 @@ PROFILE="backend"
 if ((10#$PHASE >= 10 && 10#$PHASE <= 19)); then
   PROFILE="frontend"
 fi
+SKIP_HEAVY_GATES="${SKIP_HEAVY_GATES:-false}"
 
 echo "╔══════════════════════════════════════════════════╗"
 echo "║            LJWX Gate — Full Check                ║"
@@ -75,6 +76,7 @@ run_rule() {
   local name="$2"
   local script="$3"
   local phase_aware="$4"
+  local heavy="${5:-false}"
 
   ((TOTAL++))
 
@@ -83,6 +85,15 @@ run_rule() {
     echo "  SKIP  frontend profile only enforces R01"
     ((SKIPPED++))
     write_rule_json "$id" "$name" "SKIP" 0 0 "frontend phase profile skip"
+    echo ""
+    return
+  fi
+
+  if [[ "$SKIP_HEAVY_GATES" == "true" && "$heavy" == "true" ]]; then
+    echo "── $id $name ──────────────────────────────────────"
+    echo "  SKIP  heavy gate skipped in batch mode"
+    ((SKIPPED++))
+    write_rule_json "$id" "$name" "SKIP" 0 0 "skipped by SKIP_HEAVY_GATES=true"
     echo ""
     return
   fi
@@ -126,8 +137,8 @@ run_rule "R01" "Compile" "scripts/gates/gate-compile.sh" "false"
 run_rule "R02" "Manifest" "scripts/gates/gate-manifest.sh" "true"
 run_rule "R03" "Rules" "scripts/gates/gate-rules.sh" "false"
 run_rule "R04" "Flyway Governance" "scripts/gates/gate-flyway-governance.sh" "false"
-run_rule "R05" "Integration" "scripts/gates/gate-integration.sh" "false"
-run_rule "R06" "Contract" "scripts/gates/gate-contract.sh" "false"
+run_rule "R05" "Integration" "scripts/gates/gate-integration.sh" "false" "true"
+run_rule "R06" "Contract" "scripts/gates/gate-contract.sh" "false" "true"
 run_rule "R07" "NFR" "scripts/gates/gate-nfr.sh" "false"
 
 # R08: RTM generation (post-summary traceability)
@@ -145,8 +156,13 @@ else
 fi
 echo ""
 
+run_rule "R09" "Tests" "scripts/gates/gate-test.sh" "true" "true"
+
 phase_report_file="$(bash scripts/gates/gate-report.sh "$PHASE" "$TMP_DIR" 2>/dev/null || true)"
 summary_file="$(bash scripts/gates/gate-summary.sh 2>/dev/null || true)"
+if [[ -x "scripts/reports/gen-test-report.sh" ]]; then
+  bash scripts/reports/gen-test-report.sh >/dev/null 2>&1 || true
+fi
 
 if [[ -z "$phase_report_file" || ! -f "$phase_report_file" ]]; then
   fallback="docs/reports/data/phases/phase-$PHASE.json"

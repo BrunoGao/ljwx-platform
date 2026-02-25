@@ -1,0 +1,33 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "required": ["generated_at", "summary", "tests"],
+  "properties": {
+    "generated_at": {"type": "string"},
+    "summary": {
+      "type": "object",
+      "required": ["total", "pass", "fail", "skip"],
+      "properties": {
+        "total": {"type": "integer", "minimum": 0},
+        "pass": {"type": "integer", "minimum": 0},
+        "fail": {"type": "integer", "minimum": 0},
+        "skip": {"type": "integer", "minimum": 0}
+      }
+    },
+    "tests": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["phase", "suite", "testcase", "status", "time_seconds", "message"],
+        "properties": {
+          "phase": {"type": ["string", "null"]},
+          "suite": {"type": "string"},
+          "testcase": {"type": "string"},
+          "status": {"type": "string", "enum": ["PASS", "FAIL", "ERROR", "SKIP"]},
+          "time_seconds": {"type": "number", "minimum": 0},
+          "message": {"type": "string"}
+        }
+      }
+    }
+  }
+}

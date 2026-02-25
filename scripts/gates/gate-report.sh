@@ -47,7 +47,30 @@ summary_json="$(jq -r '
 
 status="$(echo "$summary_json" | jq -r 'if .fail > 0 then "FAIL" elif .total == 0 then "PENDING" else "PASS" end')"
 
-violations="$(jq '[.[] | select(.status == "FAIL") | {rule: .id, severity: "CRITICAL", file: null, line: null, message: (.message // "Gate failed")}]' "$tmp_rules")"
+violations="$(jq '
+  [
+    .[] as $r
+    | if ($r.status == "FAIL") then
+        if (($r.violations // []) | length) > 0 then
+          ($r.violations[] | {
+            rule: (.rule // $r.id),
+            severity: (.severity // "CRITICAL"),
+            file: (.file // null),
+            line: (.line // null),
+            message: (.message // $r.message // "Gate failed")
+          })
+        else
+          {
+            rule: $r.id,
+            severity: "CRITICAL",
+            file: null,
+            line: null,
+            message: ($r.message // "Gate failed")
+          }
+        end
+      else empty end
+  ]
+' "$tmp_rules")"
 
 phase_json="$(jq -n \
   --arg phase "$PHASE" \

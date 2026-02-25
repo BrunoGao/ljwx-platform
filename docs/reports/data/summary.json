@@ -1,10 +1,10 @@
 {
-  "generated_at": "2026-02-25T15:31:27Z",
+  "generated_at": "2026-02-25T15:41:16Z",
   "repo": {
     "owner": "BrunoGao",
     "name": "ljwx-platform",
     "branch": "master",
-    "commit": "748007a"
+    "commit": "5da8be6"
   },
   "totals": {
     "pass": 24,
@@ -20,9 +20,9 @@
       "pass_rate": 100,
       "critical": 0,
       "warnings": 0,
-      "timestamp": "2026-02-25T14:33:24Z",
-      "git_commit": "2917122",
-      "r09_status": "PENDING"
+      "timestamp": "2026-02-25T15:41:14Z",
+      "git_commit": "5da8be6",
+      "r09_status": "PASS"
     },
     {
       "phase": "01",
@@ -336,6 +336,33 @@
     }
   ],
   "history": [
+    {
+      "timestamp": "2026-02-25T15:41:14Z",
+      "phase": "00",
+      "status": "PASS",
+      "pass_rate": 100,
+      "git_commit": "5da8be6",
+      "critical": 0,
+      "warnings": 0
+    },
+    {
+      "timestamp": "2026-02-25T15:37:26Z",
+      "phase": "00",
+      "status": "FAIL",
+      "pass_rate": 88.89,
+      "git_commit": "5da8be6",
+      "critical": 1,
+      "warnings": 0
+    },
+    {
+      "timestamp": "2026-02-25T15:35:06Z",
+      "phase": "00",
+      "status": "FAIL",
+      "pass_rate": 88.89,
+      "git_commit": "5da8be6",
+      "critical": 1,
+      "warnings": 0
+    },
     {
       "timestamp": "2026-02-25T15:30:29Z",
       "phase": "31",

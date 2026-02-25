@@ -8,6 +8,7 @@ on:
       - docs/reports/data/phases/**
       - docs/reports/data/summary.json
       - docs/reports/data/rtm.json
+      - docs/reports/data/tests.json
       - docs/reports/schema/**
 
 permissions:

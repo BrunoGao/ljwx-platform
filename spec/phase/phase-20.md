@@ -79,6 +79,26 @@ API：`/api/v1/menus`
 - MenuController 每个方法有 @PreAuthorize
 - 前端无 any，strict: true
 
+## Test Cases
+
+| TC ID | Endpoint | 权限 | 预期状态码 | 关键断言 |
+|------|----------|------|------------|---------|
+| TC-20-01 | GET /api/v1/menus | `system:menu:list` | 401 | 无 token 返回 Unauthorized |
+| TC-20-02 | GET /api/v1/menus | `system:menu:list` | 403 | 无权限 token 返回 Forbidden |
+| TC-20-03 | GET /api/v1/menus | `system:menu:list` | 200 | 返回数组结构 |
+| TC-20-04 | GET /api/v1/menus/tree | `system:menu:list` | 200 | 返回树形数组 |
+| TC-20-05 | GET /api/v1/menus/{id} | `system:menu:detail` | 404/4xx | 不存在 ID 返回业务错误 |
+| TC-20-06 | POST /api/v1/menus | `system:menu:create` | 400 | 缺少 `parentId` 校验失败 |
+| TC-20-07 | POST /api/v1/menus | `system:menu:create` | 400 | 缺少 `name` 校验失败 |
+| TC-20-08 | POST /api/v1/menus | `system:menu:create` | 400 | 缺少 `menuType` 校验失败 |
+| TC-20-09 | POST /api/v1/menus | `system:menu:create` | 200 | 创建成功并返回 menuId |
+| TC-20-10 | PUT /api/v1/menus/{id} | `system:menu:update` | 200 | 更新成功，名称/排序生效 |
+| TC-20-11 | DELETE /api/v1/menus/{id} | `system:menu:delete` | 200 | 删除成功后列表不再可见 |
+| TC-20-12 | GET /api/v1/menus | `system:menu:list` | 200 | tenant A 看不到 tenant B 菜单 |
+| TC-20-13 | GET /api/v1/menus | `system:menu:list` | 200 | tenant B 看不到 tenant A 菜单 |
+| TC-20-14 | GET /api/v1/menus/tree | `system:menu:list` | 200 | 根节点 `parentId=0` 出现在首层 |
+| TC-20-15 | POST /api/v1/menus | `system:menu:create` | 200 | 新建菜单 permission 字段持久化 |
+
 ## Phase-Local Manifest
 
 ```

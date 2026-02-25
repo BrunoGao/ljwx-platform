@@ -14,7 +14,7 @@ if [[ "$current_branch" != "$branch" ]]; then
   git checkout -b "$branch"
 fi
 
-git add docs/reports/data/phases docs/reports/data/summary.json docs/reports/data/rtm.json
+git add docs/reports/data/phases docs/reports/data/summary.json docs/reports/data/rtm.json docs/reports/data/tests.json
 if git diff --cached --quiet; then
   echo "No dashboard data changes to commit."
   exit 0

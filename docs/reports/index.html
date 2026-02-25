@@ -34,18 +34,30 @@
       <div class="card span-3"><div class="label">FAIL</div><div id="kFail" class="kpi status-fail">-</div></div>
       <div class="card span-3"><div class="label">PENDING</div><div id="kPending" class="kpi status-pending">-</div></div>
       <div class="card span-3"><div class="label">CRITICAL</div><div id="kCritical" class="kpi">-</div></div>
+      <div class="card span-12"><div class="label">Tests Pass Rate (R09)</div><div id="kTestsPassRate" class="kpi">-</div></div>
+      <div class="card span-4"><div class="label">Test Cases PASS</div><div id="kTestPass" class="kpi status-pass">-</div></div>
+      <div class="card span-4"><div class="label">Test Cases FAIL</div><div id="kTestFail" class="kpi status-fail">-</div></div>
+      <div class="card span-4"><div class="label">Test Cases SKIP</div><div id="kTestSkip" class="kpi status-pending">-</div></div>
 
       <div class="card span-8"><h3>Phase Heatmap</h3><div id="heatmap"></div></div>
       <div class="card span-4"><h3>History</h3><canvas id="trend"></canvas></div>
 
       <div class="card span-12">
         <h3>RTM</h3>
-        <table id="rtmTable"><thead><tr><th>Phase</th><th>Endpoint</th><th>Method</th><th>Controller</th><th>Status</th></tr></thead><tbody></tbody></table>
+        <table id="rtmTable"><thead><tr><th>Phase</th><th>Endpoint</th><th>Method</th><th>Controller</th><th>Test Covered</th><th>Status</th></tr></thead><tbody></tbody></table>
       </div>
 
       <div class="card span-12">
         <h3>Violations</h3>
         <table id="violations"><thead><tr><th>Phase</th><th>Rule</th><th>Severity</th><th>Message</th></tr></thead><tbody></tbody></table>
+      </div>
+
+      <div class="card span-12">
+        <h3>Full Test Report</h3>
+        <table id="testsTable">
+          <thead><tr><th>Phase</th><th>Suite</th><th>Test Case</th><th>Status</th><th>Time(s)</th><th>Message</th></tr></thead>
+          <tbody></tbody>
+        </table>
       </div>
     </div>
   </div>
@@ -58,7 +70,7 @@
     function text(v){ return (v === null || v === undefined || v === '') ? '-' : String(v); }
 
     async function load() {
-      let summary, rtm;
+      let summary, rtm, tests;
       try {
         summary = await fetch('./data/summary.json').then(r => r.json());
       } catch (e) {
@@ -72,11 +84,21 @@
         rtm = { matrix: [] };
       }
 
+      try {
+        tests = await fetch('./data/tests.json').then(r => r.json());
+      } catch (_) {
+        tests = { summary: { pass: 0, fail: 0, skip: 0 }, tests: [] };
+      }
+
       const t = summary.totals || {};
       document.getElementById('kPass').textContent = t.pass ?? 0;
       document.getElementById('kFail').textContent = t.fail ?? 0;
       document.getElementById('kPending').textContent = t.pending ?? 0;
       document.getElementById('kCritical').textContent = t.critical ?? 0;
+      document.getElementById('kTestsPassRate').textContent = `${computeR09PassRate(summary.phases || [])}%`;
+      document.getElementById('kTestPass').textContent = tests.summary?.pass ?? 0;
+      document.getElementById('kTestFail').textContent = tests.summary?.fail ?? 0;
+      document.getElementById('kTestSkip').textContent = tests.summary?.skip ?? 0;
 
       const owner = summary.repo?.owner || ownerFallback;
       const repo = summary.repo?.name || repoFallback;
@@ -106,9 +128,22 @@
       const tbody = document.querySelector('#rtmTable tbody');
       (rtm.matrix || []).slice(0, 200).forEach(m => {
         const tr = document.createElement('tr');
-        tr.innerHTML = `<td>${text(m.phase)}</td><td>${text(m.endpoint)}</td><td>${text(m.method)}</td><td>${text(m.controller)}</td><td class="${asClass(m.gate_status)}">${text(m.gate_status)}</td>`;
+        tr.innerHTML = `<td>${text(m.phase)}</td><td>${text(m.endpoint)}</td><td>${text(m.method)}</td><td>${text(m.controller)}</td><td>${m.test_covered ? 'true' : 'false'}</td><td class="${asClass(m.gate_status)}">${text(m.gate_status)}</td>`;
         tbody.appendChild(tr);
       });
+
+      const testsBody = document.querySelector('#testsTable tbody');
+      (tests.tests || []).slice(0, 1000).forEach(tc => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${text(tc.phase)}</td><td>${text(tc.suite)}</td><td>${text(tc.testcase)}</td><td class="${asClass(tc.status === 'ERROR' ? 'FAIL' : tc.status)}">${text(tc.status)}</td><td>${text(tc.time_seconds)}</td><td>${text(tc.message)}</td>`;
+        testsBody.appendChild(tr);
+      });
+    }
+
+    function computeR09PassRate(phases) {
+      const done = phases.filter(p => p.status && p.status !== 'PENDING');
+      if (!done.length) return 0;
+      return Math.round((done.filter(p => (p.r09_status || '').toUpperCase() === 'PASS').length * 10000 / done.length)) / 100;
     }
 
     async function showPhaseViolations(owner, repo, phase) {
