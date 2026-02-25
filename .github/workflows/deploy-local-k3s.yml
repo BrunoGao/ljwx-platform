@@ -1,0 +1,239 @@
+name: deploy-local-k3s
+
+on:
+  workflow_dispatch:
+    inputs:
+      deploy_repo:
+        description: "owner/repo of deploy repository"
+        required: false
+        default: "BrunoGaoSZ/ljwx-deploy"
+      deploy_values_file:
+        description: "Path of service release values YAML inside deploy repo"
+        required: false
+        default: "apps/ljwx-platform-app/release-values.yaml"
+      namespace:
+        description: "Kubernetes namespace"
+        required: false
+        default: "ljwx-platform"
+      deployment_name:
+        description: "Kubernetes deployment name"
+        required: false
+        default: "ljwx-platform-app"
+      argocd_namespace:
+        description: "Argo CD namespace"
+        required: false
+        default: "argocd"
+      argocd_application:
+        description: "Argo CD Application name"
+        required: false
+        default: "ljwx-platform-app"
+      verify_minutes:
+        description: "Verification timeout minutes"
+        required: false
+        default: "5"
+  workflow_run:
+    workflows: ["Release To Deploy"]
+    types: [completed]
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    if: ${{ github.event_name == 'workflow_dispatch' || (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success') }}
+    runs-on: [self-hosted, k3s-local]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install kubectl (no sudo)
+        shell: bash
+        run: |
+          set -euo pipefail
+          BIN_DIR="${RUNNER_TEMP}/bin"
+          mkdir -p "${BIN_DIR}"
+          if ! command -v kubectl >/dev/null 2>&1; then
+            curl -sSL -o "${BIN_DIR}/kubectl" "https://dl.k8s.io/release/$(curl -sSL https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+            chmod +x "${BIN_DIR}/kubectl"
+            echo "${BIN_DIR}" >> "${GITHUB_PATH}"
+          fi
+          kubectl version --client
+
+      - name: Configure kubeconfig
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -n "${{ secrets.KUBE_CONFIG_B64 }}" ]; then
+            KUBECONFIG_PATH="${RUNNER_TEMP}/kubeconfig"
+            echo "${{ secrets.KUBE_CONFIG_B64 }}" | base64 -d > "${KUBECONFIG_PATH}"
+            chmod 600 "${KUBECONFIG_PATH}"
+            echo "KUBECONFIG=${KUBECONFIG_PATH}" >> "${GITHUB_ENV}"
+            exit 0
+          fi
+          if [ -r "/etc/rancher/k3s/k3s.yaml" ]; then
+            echo "KUBECONFIG=/etc/rancher/k3s/k3s.yaml" >> "${GITHUB_ENV}"
+            exit 0
+          fi
+          echo "[FATAL] kubeconfig not found. Provide KUBE_CONFIG_B64 or make /etc/rancher/k3s/k3s.yaml readable."
+          exit 1
+
+      - name: Verify cluster access
+        shell: bash
+        run: |
+          set -euo pipefail
+          kubectl cluster-info
+          kubectl get nodes -o wide
+
+      - name: Resolve deploy metadata from ljwx-deploy
+        id: release
+        env:
+          DEPLOY_REPO_TOKEN: ${{ secrets.DEPLOY_REPO_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -z "${DEPLOY_REPO_TOKEN:-}" ]; then
+            echo "[FATAL] DEPLOY_REPO_TOKEN is required"
+            exit 1
+          fi
+
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            DEPLOY_REPO="${{ github.event.inputs.deploy_repo }}"
+            DEPLOY_VALUES_FILE="${{ github.event.inputs.deploy_values_file }}"
+          else
+            DEPLOY_REPO="BrunoGaoSZ/ljwx-deploy"
+            DEPLOY_VALUES_FILE="apps/ljwx-platform-app/release-values.yaml"
+          fi
+
+          git clone --depth=1 "https://x-access-token:${DEPLOY_REPO_TOKEN}@github.com/${DEPLOY_REPO}.git" deploy-repo
+
+          python3 - <<'PY'
+          import os
+          from pathlib import Path
+          import yaml
+
+          values_file = Path("deploy-repo") / os.environ["DEPLOY_VALUES_FILE"]
+          if not values_file.exists():
+            raise SystemExit(f"[FATAL] deploy values file not found: {values_file}")
+          data = yaml.safe_load(values_file.read_text()) or {}
+          for key in ("image", "deploymentId", "serviceVersion", "imageDigest"):
+            value = str(data.get(key, "")).strip()
+            if not value:
+              raise SystemExit(f"[FATAL] required field missing in deploy values: {key}")
+          output_path = Path(os.environ["GITHUB_OUTPUT"])
+          with output_path.open("a", encoding="utf-8") as fp:
+            fp.write(f"image={data['image']}\n")
+            fp.write(f"deployment_id={data['deploymentId']}\n")
+            fp.write(f"service_version={data['serviceVersion']}\n")
+            fp.write(f"image_digest={data['imageDigest']}\n")
+          PY
+        env:
+          DEPLOY_VALUES_FILE: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.deploy_values_file || 'apps/ljwx-platform-app/release-values.yaml' }}
+
+      - name: Resolve verify settings
+        id: cfg
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            NAMESPACE="${{ github.event.inputs.namespace }}"
+            DEPLOYMENT_NAME="${{ github.event.inputs.deployment_name }}"
+            ARGOCD_NAMESPACE="${{ github.event.inputs.argocd_namespace }}"
+            ARGOCD_APP="${{ github.event.inputs.argocd_application }}"
+            VERIFY_MINUTES="${{ github.event.inputs.verify_minutes }}"
+          else
+            NAMESPACE="ljwx-platform"
+            DEPLOYMENT_NAME="ljwx-platform-app"
+            ARGOCD_NAMESPACE="argocd"
+            ARGOCD_APP="ljwx-platform-app"
+            VERIFY_MINUTES="5"
+          fi
+          echo "namespace=${NAMESPACE}" >> "${GITHUB_OUTPUT}"
+          echo "deployment_name=${DEPLOYMENT_NAME}" >> "${GITHUB_OUTPUT}"
+          echo "argocd_namespace=${ARGOCD_NAMESPACE}" >> "${GITHUB_OUTPUT}"
+          echo "argocd_app=${ARGOCD_APP}" >> "${GITHUB_OUTPUT}"
+          echo "verify_minutes=${VERIFY_MINUTES}" >> "${GITHUB_OUTPUT}"
+
+      - name: Wait for Argo app synced/healthy
+        shell: bash
+        run: |
+          set -euo pipefail
+          ARGOCD_NAMESPACE="${{ steps.cfg.outputs.argocd_namespace }}"
+          ARGOCD_APP="${{ steps.cfg.outputs.argocd_app }}"
+          WAIT_SECONDS="$(( ${{ steps.cfg.outputs.verify_minutes }} * 60 ))"
+          START_TS="$(date +%s)"
+
+          while true; do
+            SYNC_STATUS="$(kubectl -n "${ARGOCD_NAMESPACE}" get applications.argoproj.io "${ARGOCD_APP}" -o jsonpath='{.status.sync.status}' 2>/dev/null || true)"
+            HEALTH_STATUS="$(kubectl -n "${ARGOCD_NAMESPACE}" get applications.argoproj.io "${ARGOCD_APP}" -o jsonpath='{.status.health.status}' 2>/dev/null || true)"
+            if [ "${SYNC_STATUS}" = "Synced" ] && [ "${HEALTH_STATUS}" = "Healthy" ]; then
+              echo "[INFO] Argo app ${ARGOCD_APP} is Synced/Healthy"
+              break
+            fi
+            NOW_TS="$(date +%s)"
+            if [ $((NOW_TS - START_TS)) -ge "${WAIT_SECONDS}" ]; then
+              echo "[FATAL] timeout waiting Argo app ${ARGOCD_APP}, last status sync=${SYNC_STATUS:-N/A} health=${HEALTH_STATUS:-N/A}"
+              exit 1
+            fi
+            sleep 10
+          done
+
+      - name: Verify rollout and deployment metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+          NAMESPACE="${{ steps.cfg.outputs.namespace }}"
+          DEPLOYMENT_NAME="${{ steps.cfg.outputs.deployment_name }}"
+          WAIT_MINUTES="${{ steps.cfg.outputs.verify_minutes }}"
+          kubectl -n "${NAMESPACE}" rollout status deployment/"${DEPLOYMENT_NAME}" --timeout="${WAIT_MINUTES}m"
+
+          ACTUAL_DEPLOYMENT_ID="$(
+            kubectl -n "${NAMESPACE}" get deployment "${DEPLOYMENT_NAME}" \
+              -o jsonpath='{.spec.template.spec.containers[0].env[?(@.name=="DEPLOYMENT_ID")].value}'
+          )"
+          EXPECTED_DEPLOYMENT_ID="${{ steps.release.outputs.deployment_id }}"
+          if [ "${ACTUAL_DEPLOYMENT_ID}" != "${EXPECTED_DEPLOYMENT_ID}" ]; then
+            echo "[FATAL] DEPLOYMENT_ID mismatch, expected=${EXPECTED_DEPLOYMENT_ID}, actual=${ACTUAL_DEPLOYMENT_ID}"
+            exit 1
+          fi
+
+      - name: Verify Prometheus target otel-agent-metrics
+        shell: bash
+        run: |
+          set -euo pipefail
+          PROM_NS="monitoring"
+          PROM_SVC="$(kubectl -n "${PROM_NS}" get svc -o jsonpath='{range .items[*]}{.metadata.name}{"\n"}{end}' | rg '^prometheus' | head -n1 || true)"
+          if [ -z "${PROM_SVC}" ]; then
+            echo "[FATAL] Prometheus service not found in namespace ${PROM_NS}"
+            exit 1
+          fi
+          kubectl -n "${PROM_NS}" port-forward "svc/${PROM_SVC}" 19090:9090 >/tmp/prom-port-forward.log 2>&1 &
+          PF_PID=$!
+          trap 'kill ${PF_PID} >/dev/null 2>&1 || true' EXIT
+          sleep 5
+          curl -fsS "http://127.0.0.1:19090/api/v1/targets?state=active" >/tmp/prom-targets.json
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          payload = json.loads(Path("/tmp/prom-targets.json").read_text(encoding="utf-8"))
+          active = payload.get("data", {}).get("activeTargets", [])
+          hit = any(
+              str(t.get("labels", {}).get("job", "")).strip() == "otel-agent-metrics"
+              and str(t.get("health", "")).lower() == "up"
+              for t in active
+          )
+          if not hit:
+              raise SystemExit("[FATAL] Prometheus target otel-agent-metrics is not UP")
+          print("[INFO] Prometheus target otel-agent-metrics is UP")
+          PY
+
+      - name: Summary
+        shell: bash
+        run: |
+          {
+            echo "## Local K3s Verification Result"
+            echo "- image: \`${{ steps.release.outputs.image }}\`"
+            echo "- deploymentId: \`${{ steps.release.outputs.deployment_id }}\`"
+            echo "- serviceVersion: \`${{ steps.release.outputs.service_version }}\`"
+            echo "- imageDigest: \`${{ steps.release.outputs.image_digest }}\`"
+          } >> "${GITHUB_STEP_SUMMARY}"

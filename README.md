@@ -181,6 +181,44 @@ ljwx-platform/
 
 启动后端后访问：`http://localhost:8080/swagger-ui.html`
 
+## GitHub Workflow 发布到本地 k3s（极简链路）
+
+业务仓内提供 workflow：`.github/workflows/release-to-deploy.yml`，流程为：
+
+1. 构建并推送服务镜像到 Harbor（默认 `harbor.eu.lingjingwanxiang.cn/ljwx-platform/ljwx-platform-app`），产出 `image`、`imageDigest`
+2. 生成 `serviceVersion=git_sha` 与 `deploymentId=sha_short-digest_short`
+3. 自动给 `ljwx-deploy` 提 PR，仅更新该服务 `release-values.yaml` 的 4 个字段：
+   `image`、`deploymentId`、`serviceVersion`、`imageDigest`
+
+硬规则校验脚本：`scripts/ci/validate-deploy-values.sh`
+
+- 缺失 `deploymentId/serviceVersion/imageDigest` 直接失败
+- 检测到 `OTEL_EXPORTER_OTLP_ENDPOINT` 变化直接失败
+- 检测到除 `image/deploymentId/serviceVersion/imageDigest` 之外的字段变化直接失败
+- 固定 OTLP endpoint：
+  `otel-collector-opentelemetry-collector.tracing.svc.cluster.local:4317`
+
+### 必要 Secrets
+
+- `DEPLOY_REPO_TOKEN`：可写 `ljwx-deploy` 的 GitHub Token
+- `HARBOR_USERNAME`：Harbor 用户名
+- `HARBOR_PASSWORD`：Harbor 密码
+
+### 手动触发推荐参数
+
+- `service_name`: `ljwx-platform-app`
+- `deploy_repo`: `BrunoGaoSZ/ljwx-deploy`
+- `deploy_values_file`: `apps/ljwx-platform-app/release-values.yaml`
+- `image_repo`: 留空时默认 `harbor.eu.lingjingwanxiang.cn/ljwx-platform/ljwx-platform-app`
+
+## 本地 k3s 验收 Workflow
+
+提供 `.github/workflows/deploy-local-k3s.yml`（参考 `ljwx-health`），支持在 self-hosted `k3s-local` runner 上做 5 分钟内验收：
+
+- Argo CD Application 达到 `Synced + Healthy`
+- 目标 Deployment rollout 完成，且 `DEPLOYMENT_ID` 与 release values 一致
+- Prometheus active targets 中 `otel-agent-metrics` 为 `UP`
+
 ## 硬规则摘要
 
 1. **DAG 依赖**：`core ← {security, data} ← web ← app`，security 和 data 互不依赖
