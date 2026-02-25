@@ -23,20 +23,6 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 
 /**
  * Spring Security configuration for the LJWX platform.
- *
- * <p>Key decisions:
- * <ul>
- *   <li>Stateless session — no HTTP session is ever created or used.</li>
- *   <li>CSRF disabled — safe for a stateless REST API protected by JWT bearer tokens.</li>
- *   <li>{@code /api/auth/login} and {@code /api/auth/refresh} are publicly accessible
- *       (no authentication required) so clients can obtain tokens.</li>
- *   <li>All other endpoints require authentication.</li>
- *   <li>Fine-grained access control is enforced per method via
- *       {@code @PreAuthorize("hasAuthority('resource:action')")}.</li>
- *   <li>BCrypt cost factor is 10 as required by the LJWX platform standard.</li>
- *   <li>AuthenticationEntryPoint returns 401 for unauthenticated requests.</li>
- *   <li>AccessDeniedHandler returns 403 for authenticated but unauthorized requests.</li>
- * </ul>
  */
 @Configuration
 @EnableWebSecurity
@@ -47,15 +33,6 @@ public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
-    /**
-     * Main security filter chain.
-     *
-     * <p>Public endpoints:
-     * <ul>
-     *   <li>{@code POST /api/auth/login} — obtains access + refresh tokens</li>
-     *   <li>{@code POST /api/auth/refresh} — exchanges a refresh token for a new access token</li>
-     * </ul>
-     */
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
@@ -65,6 +42,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/login", "/api/auth/refresh").permitAll()
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
+                        // Required for strict Kubernetes HTTP health probes.
+                        .requestMatchers("/actuator/health", "/actuator/health/**").permitAll()
                         .requestMatchers("/ws/**").permitAll()
                         .anyRequest().authenticated())
                 .exceptionHandling(ex -> ex
@@ -86,18 +65,13 @@ public class SecurityConfig {
         return http.build();
     }
 
-    /**
-     * Password encoder — BCrypt with cost factor 10 (LJWX platform standard).
-     */
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder(10);
     }
 
     /**
-     * XSS 过滤器注册 — order=1（最高优先级）。
-     * XssFilter 定义在 web 模块，此处通过类名引用避免 DAG 违规。
-     * 实际 Bean 由 web 模块的 @Component 提供，此处仅设置 order。
+     * XSS filter registration.
      */
     @Bean
     public FilterRegistrationBean<jakarta.servlet.Filter> xssFilterRegistration(
@@ -110,4 +84,3 @@ public class SecurityConfig {
         return registration;
     }
 }
-

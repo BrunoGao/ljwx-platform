@@ -68,6 +68,9 @@ management:
         include: health,info,flyway
   endpoint:
     health:
+      # Required for strict K8s probe endpoints: /actuator/health/liveness & /readiness
+      probes:
+        enabled: true
       show-details: when-authorized
 
 logging:

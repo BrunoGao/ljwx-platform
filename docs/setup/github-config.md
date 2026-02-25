@@ -89,3 +89,45 @@ If docs publishing is needed:
 - Source: `docs/` (or generated static site)
 - Protect the publish branch
 - Add a dedicated Pages deployment workflow only after content structure is stable
+
+## 8. Runtime Policy (Formal, no emergency defaults)
+
+### Database target
+
+Current production DB target is confirmed as infra PostgreSQL service:
+
+- `jdbc:postgresql://postgres-lb.infra.svc.cluster.local:5432/postgres`
+
+Policy:
+
+- Use infra PostgreSQL service endpoint managed by platform SRE.
+- Avoid localhost-style datasource defaults in deployment env for production.
+- Keep datasource values in Kubernetes Secret (`ljwx-platform-db`) only.
+
+### Health probes policy
+
+Formal probe policy is strict HTTP health probes (not temporary TCP fallback):
+
+- `liveness`: `/actuator/health/liveness`
+- `readiness`: `/actuator/health/readiness`
+
+Application requirements for strict probes:
+
+- Security must allow unauthenticated `/actuator/health/**`.
+- Spring Boot health probes must be enabled (`management.endpoint.health.probes.enabled=true`).
+
+### Flyway governance policy
+
+Do not disable Flyway validation in steady state.
+
+- Temporary env `SPRING_FLYWAY_VALIDATE_ON_MIGRATE=false` is emergency-only.
+- Migration files `V*.sql` are immutable once applied.
+- Gate check `scripts/gates/gate-flyway-governance.sh` enforces immutable checksums via `scripts/gates/flyway-checksums.lock`.
+
+### Emergency rollback cleanup checklist
+
+When new backend image containing strict probe compatibility is promoted:
+
+1. Remove `SPRING_FLYWAY_VALIDATE_ON_MIGRATE=false` from deploy manifests.
+2. Restore HTTP probe paths to `/actuator/health/liveness` and `/actuator/health/readiness`.
+3. Re-run `acceptance-local-k3s` and require `Synced/Healthy` before closing release.

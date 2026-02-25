@@ -53,6 +53,8 @@ run_gate() {
 run_gate "gate-manifest.sh" $PHASE_ARG
 # gate-rules: full-repo scan, no phase arg needed
 run_gate "gate-rules.sh"
+# flyway governance: immutable migration checksums
+run_gate "gate-flyway-governance.sh"
 # gate-compile: reads phase from CLAUDE.md
 run_gate "gate-compile.sh"
 # gate-integration: only runs if Docker available and tests exist
@@ -74,4 +76,3 @@ else
   echo "  GATE RESULT: PASSED"
   exit 0
 fi
-
