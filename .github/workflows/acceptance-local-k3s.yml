@@ -86,15 +86,6 @@ jobs:
           kubectl cluster-info
           kubectl get nodes -o wide
 
-      - name: Install PyYAML
-        shell: bash
-        run: |
-          set -euo pipefail
-          if ! python3 -m pip --version >/dev/null 2>&1; then
-            python3 -m ensurepip --upgrade
-          fi
-          python3 -m pip install --quiet pyyaml
-
       - name: Resolve deploy metadata from ljwx-deploy
         id: release
         env:
@@ -118,26 +109,32 @@ jobs:
 
           git clone --depth=1 "https://x-access-token:${DEPLOY_REPO_TOKEN}@github.com/${DEPLOY_REPO}.git" deploy-repo
 
-          python3 - <<'PY'
-          import os
-          from pathlib import Path
-          import yaml
+          VALUES_FILE="deploy-repo/${DEPLOY_VALUES_FILE}"
+          if [ ! -f "${VALUES_FILE}" ]; then
+            echo "[FATAL] deploy values file not found: ${VALUES_FILE}"
+            exit 1
+          fi
 
-          values_file = Path("deploy-repo") / os.environ["DEPLOY_VALUES_FILE"]
-          if not values_file.exists():
-            raise SystemExit(f"[FATAL] deploy values file not found: {values_file}")
-          data = yaml.safe_load(values_file.read_text()) or {}
-          for key in ("image", "deploymentId", "serviceVersion", "imageDigest"):
-            value = str(data.get(key, "")).strip()
-            if not value:
-              raise SystemExit(f"[FATAL] required field missing in deploy values: {key}")
-          output_path = Path(os.environ["GITHUB_OUTPUT"])
-          with output_path.open("a", encoding="utf-8") as fp:
-            fp.write(f"image={data['image']}\n")
-            fp.write(f"deployment_id={data['deploymentId']}\n")
-            fp.write(f"service_version={data['serviceVersion']}\n")
-            fp.write(f"image_digest={data['imageDigest']}\n")
-          PY
+          IMAGE="$(sed -n 's/^image:[[:space:]]*//p' "${VALUES_FILE}" | head -n1 | tr -d '"' | xargs || true)"
+          DEPLOYMENT_ID="$(sed -n 's/^deploymentId:[[:space:]]*//p' "${VALUES_FILE}" | head -n1 | tr -d '"' | xargs || true)"
+          SERVICE_VERSION="$(sed -n 's/^serviceVersion:[[:space:]]*//p' "${VALUES_FILE}" | head -n1 | tr -d '"' | xargs || true)"
+          IMAGE_DIGEST="$(sed -n 's/^imageDigest:[[:space:]]*//p' "${VALUES_FILE}" | head -n1 | tr -d '"' | xargs || true)"
+
+          if [ -z "${IMAGE}" ] || [ -z "${DEPLOYMENT_ID}" ] || [ -z "${SERVICE_VERSION}" ] || [ -z "${IMAGE_DIGEST}" ]; then
+            echo "[FATAL] required fields missing in ${VALUES_FILE}"
+            echo "image=${IMAGE}"
+            echo "deploymentId=${DEPLOYMENT_ID}"
+            echo "serviceVersion=${SERVICE_VERSION}"
+            echo "imageDigest=${IMAGE_DIGEST}"
+            exit 1
+          fi
+
+          {
+            echo "image=${IMAGE}"
+            echo "deployment_id=${DEPLOYMENT_ID}"
+            echo "service_version=${SERVICE_VERSION}"
+            echo "image_digest=${IMAGE_DIGEST}"
+          } >> "${GITHUB_OUTPUT}"
 
       - name: Resolve verify settings
         id: cfg
