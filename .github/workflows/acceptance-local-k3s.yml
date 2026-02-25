@@ -86,6 +86,12 @@ jobs:
           kubectl cluster-info
           kubectl get nodes -o wide
 
+      - name: Install PyYAML
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m pip install --quiet pyyaml
+
       - name: Resolve deploy metadata from ljwx-deploy
         id: release
         env:
