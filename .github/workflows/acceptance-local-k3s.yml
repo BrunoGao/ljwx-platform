@@ -52,12 +52,14 @@ jobs:
           set -euo pipefail
           BIN_DIR="${RUNNER_TEMP}/bin"
           mkdir -p "${BIN_DIR}"
+          KUBECTL_BIN="kubectl"
           if ! command -v kubectl >/dev/null 2>&1; then
             curl -sSL -o "${BIN_DIR}/kubectl" "https://dl.k8s.io/release/$(curl -sSL https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
             chmod +x "${BIN_DIR}/kubectl"
             echo "${BIN_DIR}" >> "${GITHUB_PATH}"
+            KUBECTL_BIN="${BIN_DIR}/kubectl"
           fi
-          kubectl version --client
+          "${KUBECTL_BIN}" version --client
 
       - name: Configure kubeconfig
         shell: bash
