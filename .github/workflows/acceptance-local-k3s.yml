@@ -1,4 +1,4 @@
-name: deploy-local-k3s
+name: acceptance-local-k3s
 
 on:
   workflow_dispatch:
@@ -39,7 +39,7 @@ permissions:
   contents: read
 
 jobs:
-  deploy:
+  acceptance:
     if: ${{ github.event_name == 'workflow_dispatch' || (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success') }}
     runs-on: [self-hosted, k3s-local]
     steps:

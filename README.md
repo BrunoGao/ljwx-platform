@@ -213,7 +213,7 @@ ljwx-platform/
 
 ## 本地 k3s 验收 Workflow
 
-提供 `.github/workflows/deploy-local-k3s.yml`（参考 `ljwx-health`），支持在 self-hosted `k3s-local` runner 上做 5 分钟内验收：
+提供 `.github/workflows/acceptance-local-k3s.yml`（参考 `ljwx-health`），支持在 self-hosted `k3s-local` runner 上做 5 分钟内验收：
 
 - Argo CD Application 达到 `Synced + Healthy`
 - 目标 Deployment rollout 完成，且 `DEPLOYMENT_ID` 与 release values 一致
