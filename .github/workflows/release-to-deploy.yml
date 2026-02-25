@@ -5,22 +5,14 @@ on:
     branches: [master, main]
   workflow_dispatch:
     inputs:
-      service_name:
-        description: "Service name in deploy repo"
-        required: false
-        default: "ljwx-platform"
       deploy_repo:
         description: "owner/repo of deploy repository"
         required: false
         default: "BrunoGaoSZ/ljwx-deploy"
-      deploy_values_file:
-        description: "Path of service release values YAML inside deploy repo"
+      overlay_file:
+        description: "Path of overlay kustomization inside deploy repo"
         required: false
         default: "apps/ljwx-platform/overlays/prod/kustomization.yaml"
-      image_repo:
-        description: "Container image repo, e.g. harbor.eu.lingjingwanxiang.cn/ljwx/ljwx-platform"
-        required: false
-        default: ""
 
 permissions:
   contents: read
@@ -29,14 +21,21 @@ concurrency:
   group: release-to-deploy-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  HARBOR_HOST: harbor.eu.lingjingwanxiang.cn
+  HARBOR_PROJECT: ljwx
+
 jobs:
-  release:
+  # ── Job 1: Build & push backend image (Spring Boot buildpacks) ──────────────
+  release-backend:
+    name: Release Backend
     runs-on: ubuntu-latest
-    env:
-      OTEL_ENDPOINT_FIXED: otel-collector-opentelemetry-collector.tracing.svc.cluster.local:4317
-      HARBOR_HOST: harbor.eu.lingjingwanxiang.cn
-      HARBOR_PROJECT: ljwx
-      IMAGE_NAME: ljwx-platform
+    timeout-minutes: 30
+    outputs:
+      image_name: ${{ steps.meta.outputs.image_name }}
+      image_ref: ${{ steps.meta.outputs.image_ref }}
+      image_tag: ${{ steps.meta.outputs.image_tag }}
+      image_digest: ${{ steps.release.outputs.image_digest }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -48,39 +47,17 @@ jobs:
           distribution: "temurin"
           cache: "maven"
 
-      - name: Install PyYAML
-        shell: bash
-        run: |
-          set -euo pipefail
-          python3 -m pip install --quiet pyyaml
-
-      - name: Resolve release metadata
+      - name: Resolve metadata
         id: meta
         shell: bash
         run: |
           set -euo pipefail
-          SERVICE_NAME="${{ github.event.inputs.service_name || 'ljwx-platform' }}"
-          DEPLOY_REPO="${{ github.event.inputs.deploy_repo || 'BrunoGaoSZ/ljwx-deploy' }}"
-          DEPLOY_VALUES_FILE="${{ github.event.inputs.deploy_values_file || 'apps/ljwx-platform/overlays/prod/kustomization.yaml' }}"
-          IMAGE_REPO_INPUT="${{ github.event.inputs.image_repo }}"
-          if [ -z "$IMAGE_REPO_INPUT" ]; then
-            IMAGE_REPO="${HARBOR_HOST}/${HARBOR_PROJECT}/${IMAGE_NAME}"
-          else
-            IMAGE_REPO="$IMAGE_REPO_INPUT"
-          fi
-          GIT_SHA="${GITHUB_SHA}"
-          SHA_SHORT="${GIT_SHA:0:7}"
-          IMAGE_TAG="${GIT_SHA}"
-          IMAGE_REF="${IMAGE_REPO}:${IMAGE_TAG}"
+          IMAGE_NAME="${HARBOR_HOST}/${HARBOR_PROJECT}/ljwx-platform"
+          IMAGE_TAG="${GITHUB_SHA}"
           {
-            echo "service_name=$SERVICE_NAME"
-            echo "deploy_repo=$DEPLOY_REPO"
-            echo "deploy_values_file=$DEPLOY_VALUES_FILE"
-            echo "git_sha=$GIT_SHA"
-            echo "sha_short=$SHA_SHORT"
-            echo "image_repo=$IMAGE_REPO"
-            echo "image_tag=$IMAGE_TAG"
-            echo "image_ref=$IMAGE_REF"
+            echo "image_name=${IMAGE_NAME}"
+            echo "image_ref=${IMAGE_NAME}:${IMAGE_TAG}"
+            echo "image_tag=${IMAGE_TAG}"
           } >> "$GITHUB_OUTPUT"
 
       - name: Login Harbor
@@ -107,92 +84,213 @@ jobs:
 
       - name: Push image
         shell: bash
-        run: |
-          set -euo pipefail
-          docker push "${{ steps.meta.outputs.image_ref }}"
+        run: docker push "${{ steps.meta.outputs.image_ref }}"
 
-      - name: Resolve digest and release_id
+      - name: Resolve digest
         id: release
         shell: bash
         run: |
           set -euo pipefail
           REPO_DIGEST="$(docker inspect --format='{{index .RepoDigests 0}}' "${{ steps.meta.outputs.image_ref }}")"
-          IMAGE_DIGEST="${REPO_DIGEST#*@}"
-          DIGEST_SHORT="${IMAGE_DIGEST#sha256:}"
-          DIGEST_SHORT="${DIGEST_SHORT:0:12}"
-          DEPLOYMENT_ID="${{ steps.meta.outputs.sha_short }}-${DIGEST_SHORT}"
-          SERVICE_VERSION="${{ steps.meta.outputs.git_sha }}"
+          echo "image_digest=${REPO_DIGEST#*@}" >> "$GITHUB_OUTPUT"
+
+  # ── Job 2: Build & push admin UI image (Dockerfile multi-stage) ────────────
+  release-admin-ui:
+    name: Release Admin UI
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    outputs:
+      image_name: ${{ steps.meta.outputs.image_name }}
+      image_ref: ${{ steps.meta.outputs.image_ref }}
+      image_tag: ${{ steps.meta.outputs.image_tag }}
+      image_digest: ${{ steps.build.outputs.digest }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Resolve metadata
+        id: meta
+        shell: bash
+        run: |
+          set -euo pipefail
+          IMAGE_NAME="${HARBOR_HOST}/${HARBOR_PROJECT}/ljwx-platform-admin-ui"
+          IMAGE_TAG="${GITHUB_SHA}"
           {
-            echo "image=${{ steps.meta.outputs.image_ref }}"
-            echo "image_digest=$IMAGE_DIGEST"
-            echo "deployment_id=$DEPLOYMENT_ID"
-            echo "service_version=$SERVICE_VERSION"
+            echo "image_name=${IMAGE_NAME}"
+            echo "image_ref=${IMAGE_NAME}:${IMAGE_TAG}"
+            echo "image_tag=${IMAGE_TAG}"
           } >> "$GITHUB_OUTPUT"
 
-      - name: Prepare deploy repo changes
+      - name: Login Harbor
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.HARBOR_HOST }}
+          username: ${{ secrets.HARBOR_USERNAME }}
+          password: ${{ secrets.HARBOR_PASSWORD }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        id: build
+        with:
+          context: .
+          file: ljwx-platform-admin/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.image_ref }}
+          cache-from: type=gha,scope=admin-ui
+          cache-to: type=gha,scope=admin-ui,mode=max
+
+  # ── Job 3: Build & push screen image (Dockerfile multi-stage) ──────────────
+  release-screen:
+    name: Release Screen
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    outputs:
+      image_name: ${{ steps.meta.outputs.image_name }}
+      image_ref: ${{ steps.meta.outputs.image_ref }}
+      image_tag: ${{ steps.meta.outputs.image_tag }}
+      image_digest: ${{ steps.build.outputs.digest }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Resolve metadata
+        id: meta
+        shell: bash
+        run: |
+          set -euo pipefail
+          IMAGE_NAME="${HARBOR_HOST}/${HARBOR_PROJECT}/ljwx-platform-screen"
+          IMAGE_TAG="${GITHUB_SHA}"
+          {
+            echo "image_name=${IMAGE_NAME}"
+            echo "image_ref=${IMAGE_NAME}:${IMAGE_TAG}"
+            echo "image_tag=${IMAGE_TAG}"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Login Harbor
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.HARBOR_HOST }}
+          username: ${{ secrets.HARBOR_USERNAME }}
+          password: ${{ secrets.HARBOR_PASSWORD }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        id: build
+        with:
+          context: .
+          file: ljwx-platform-screen/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.image_ref }}
+          cache-from: type=gha,scope=screen
+          cache-to: type=gha,scope=screen,mode=max
+
+  # ── Job 4: Single deploy PR updating all three images in the overlay ────────
+  deploy-pr:
+    name: Create Deploy PR
+    runs-on: ubuntu-latest
+    needs: [release-backend, release-admin-ui, release-screen]
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install PyYAML
+        shell: bash
+        run: python3 -m pip install --quiet pyyaml
+
+      - name: Resolve deploy config
+        id: cfg
+        shell: bash
+        run: |
+          set -euo pipefail
+          {
+            echo "deploy_repo=${{ github.event.inputs.deploy_repo || 'BrunoGaoSZ/ljwx-deploy' }}"
+            echo "overlay_file=${{ github.event.inputs.overlay_file || 'apps/ljwx-platform/overlays/prod/kustomization.yaml' }}"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Clone deploy repo
         env:
           DEPLOY_REPO_TOKEN: ${{ secrets.DEPLOY_REPO_TOKEN }}
-          DEPLOY_VALUES_FILE: ${{ steps.meta.outputs.deploy_values_file }}
-          IMAGE: ${{ steps.release.outputs.image }}
-          DEPLOYMENT_ID: ${{ steps.release.outputs.deployment_id }}
-          SERVICE_VERSION: ${{ steps.release.outputs.service_version }}
-          IMAGE_DIGEST: ${{ steps.release.outputs.image_digest }}
         shell: bash
         run: |
           set -euo pipefail
           if [ -z "${DEPLOY_REPO_TOKEN:-}" ]; then
-            echo "DEPLOY_REPO_TOKEN is required"
-            exit 1
+            echo "DEPLOY_REPO_TOKEN is required" && exit 1
           fi
-          git clone "https://x-access-token:${DEPLOY_REPO_TOKEN}@github.com/${{ steps.meta.outputs.deploy_repo }}.git" deploy-repo
-          cp "deploy-repo/${{ steps.meta.outputs.deploy_values_file }}" /tmp/values.before.yaml
+          git clone \
+            "https://x-access-token:${DEPLOY_REPO_TOKEN}@github.com/${{ steps.cfg.outputs.deploy_repo }}.git" \
+            deploy-repo
 
+      - name: Update overlay kustomization
+        env:
+          OVERLAY_FILE: ${{ steps.cfg.outputs.overlay_file }}
+          BACKEND_IMAGE_NAME: ${{ needs.release-backend.outputs.image_name }}
+          BACKEND_IMAGE_TAG: ${{ needs.release-backend.outputs.image_tag }}
+          ADMIN_UI_IMAGE_NAME: ${{ needs.release-admin-ui.outputs.image_name }}
+          ADMIN_UI_IMAGE_TAG: ${{ needs.release-admin-ui.outputs.image_tag }}
+          SCREEN_IMAGE_NAME: ${{ needs.release-screen.outputs.image_name }}
+          SCREEN_IMAGE_TAG: ${{ needs.release-screen.outputs.image_tag }}
+        shell: bash
+        run: |
+          set -euo pipefail
           python3 - <<'PY'
           import os
           from pathlib import Path
           import yaml
 
-          values_file = Path("deploy-repo") / os.environ["DEPLOY_VALUES_FILE"]
-          data = yaml.safe_load(values_file.read_text()) or {}
-          data["image"] = os.environ["IMAGE"]
-          data["deploymentId"] = os.environ["DEPLOYMENT_ID"]
-          data["serviceVersion"] = os.environ["SERVICE_VERSION"]
-          data["imageDigest"] = os.environ["IMAGE_DIGEST"]
-          values_file.write_text(yaml.safe_dump(data, sort_keys=False))
-          PY
+          overlay = Path("deploy-repo") / os.environ["OVERLAY_FILE"]
+          data = yaml.safe_load(overlay.read_text()) or {}
 
-      - name: Validate deploy values hard rules
-        shell: bash
-        run: |
-          set -euo pipefail
-          bash scripts/ci/validate-deploy-values.sh \
-            --file "deploy-repo/${{ steps.meta.outputs.deploy_values_file }}" \
-            --before "/tmp/values.before.yaml" \
-            --fixed-otel-endpoint "${OTEL_ENDPOINT_FIXED}"
+          updates = {
+              os.environ["BACKEND_IMAGE_NAME"]:  os.environ["BACKEND_IMAGE_TAG"],
+              os.environ["ADMIN_UI_IMAGE_NAME"]: os.environ["ADMIN_UI_IMAGE_TAG"],
+              os.environ["SCREEN_IMAGE_NAME"]:   os.environ["SCREEN_IMAGE_TAG"],
+          }
+
+          for img in data.get("images", []):
+              # Match by newName (the actual image pulled) or name
+              key = img.get("newName", img.get("name", ""))
+              if key in updates:
+                  img["newTag"] = updates[key]
+
+          overlay.write_text(yaml.safe_dump(data, sort_keys=False))
+          PY
 
       - name: Create deploy PR
         working-directory: deploy-repo
         env:
           GH_TOKEN: ${{ secrets.DEPLOY_REPO_TOKEN }}
+          GIT_SHA: ${{ github.sha }}
         shell: bash
         run: |
           set -euo pipefail
-          BRANCH="bot/release-${{ steps.meta.outputs.service_name }}-${GITHUB_RUN_ID}"
+          SHA_SHORT="${GIT_SHA:0:7}"
+          BRANCH="bot/release-ljwx-platform-${GITHUB_RUN_ID}"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git checkout -b "${BRANCH}"
-          git add "${{ steps.meta.outputs.deploy_values_file }}"
-          git commit -m "release(${{ steps.meta.outputs.service_name }}): ${{ steps.release.outputs.deployment_id }}"
+          git add "${{ steps.cfg.outputs.overlay_file }}"
+          git commit -m "release(ljwx-platform): ${SHA_SHORT}"
           git push origin "${BRANCH}"
           gh pr create \
-            --repo "${{ steps.meta.outputs.deploy_repo }}" \
-            --title "release(${{ steps.meta.outputs.service_name }}): ${{ steps.release.outputs.deployment_id }}" \
-            --body "Automated release PR from ${{ github.repository }}@${{ steps.meta.outputs.git_sha }}
+            --repo "${{ steps.cfg.outputs.deploy_repo }}" \
+            --title "release(ljwx-platform): ${SHA_SHORT}" \
+            --body "Automated release PR from ${{ github.repository }}@${GIT_SHA}
 
-          image: ${{ steps.release.outputs.image }}
-          deploymentId: ${{ steps.release.outputs.deployment_id }}
-          serviceVersion: ${{ steps.release.outputs.service_version }}
-          imageDigest: ${{ steps.release.outputs.image_digest }}
+          **Backend** \`${{ needs.release-backend.outputs.image_ref }}\`
+          digest: ${{ needs.release-backend.outputs.image_digest }}
+
+          **Admin UI** \`${{ needs.release-admin-ui.outputs.image_ref }}\`
+          digest: ${{ needs.release-admin-ui.outputs.image_digest }}
+
+          **Screen** \`${{ needs.release-screen.outputs.image_ref }}\`
+          digest: ${{ needs.release-screen.outputs.image_digest }}
           " \
             --base main \
             --head "${BRANCH}"

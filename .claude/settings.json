@@ -29,6 +29,8 @@
       "Read",
       "Edit",
       "Write",
+      "Glob",
+      "Bash(git -C /root/codes/ljwx-deploy *)",
       "Bash(mvn clean compile -f *)",
       "Bash(mvn test -f *)",
       "Bash(mvn verify -f *)",

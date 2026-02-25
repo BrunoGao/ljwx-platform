@@ -1,0 +1,31 @@
+# Java build artifacts
+**/target/
+**/.mvn/
+
+# Node artifacts (will be reinstalled inside container)
+**/node_modules/
+**/.pnpm-store/
+
+# Frontend build outputs (will be built inside container)
+**/dist/
+**/dist-ssr/
+
+# IDE / OS
+**/.idea/
+**/.vscode/
+**/*.iml
+**/.DS_Store
+
+# Logs
+logs/
+**/*.log
+
+# Git
+.git/
+.gitignore
+
+# Docs / spec (not needed in image)
+docs/
+spec/
+prompts/
+scripts/
