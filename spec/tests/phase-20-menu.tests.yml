@@ -1,0 +1,355 @@
+# Phase 20 — Menu 测试契约
+# 关联 Spec：spec/phase/phase-20.md
+# 测试类：MenuControllerTest.java
+
+phase: 20
+module: "menu"
+ac_ref: "spec/phase/phase-20.md"
+
+tests:
+
+  # ─── P0：安全测试 ───────────────────────────────────────────────
+  - id: TC-20-01
+    priority: P0
+    category: security
+    ac: AC-01
+    scenario: "无 Token 访问列表"
+    request:
+      method: GET
+      path: /api/v1/menus
+      auth: none
+    expect:
+      status: 401
+
+  - id: TC-20-02
+    priority: P0
+    category: security
+    ac: AC-02
+    scenario: "无权限访问列表（缺 system:menu:list）"
+    request:
+      method: GET
+      path: /api/v1/menus
+      auth: valid_token
+      missing_perm: "system:menu:list"
+    expect:
+      status: 403
+
+  - id: TC-20-03
+    priority: P0
+    category: security
+    ac: AC-02
+    scenario: "无权限创建（缺 system:menu:create）"
+    request:
+      method: POST
+      path: /api/v1/menus
+      auth: valid_token
+      missing_perm: "system:menu:create"
+    expect:
+      status: 403
+
+  - id: TC-20-04
+    priority: P0
+    category: security
+    ac: AC-02
+    scenario: "无权限更新（缺 system:menu:update）"
+    request:
+      method: PUT
+      path: /api/v1/menus/1
+      auth: valid_token
+      missing_perm: "system:menu:update"
+    expect:
+      status: 403
+
+  - id: TC-20-05
+    priority: P0
+    category: security
+    ac: AC-02
+    scenario: "无权限删除（缺 system:menu:delete）"
+    request:
+      method: DELETE
+      path: /api/v1/menus/1
+      auth: valid_token
+      missing_perm: "system:menu:delete"
+    expect:
+      status: 403
+
+  # ─── P0：CRUD 核心流程 ──────────────────────────────────────────
+  - id: TC-20-06
+    priority: P0
+    category: crud
+    ac: AC-03
+    scenario: "正常创建菜单"
+    request:
+      method: POST
+      path: /api/v1/menus
+      auth: full_perm_token
+      body:
+        parentId: 0
+        name: "系统管理"
+        path: "/system"
+        component: "Layout"
+        icon: "Setting"
+        sort: 1
+        menuType: 0
+        permission: ""
+        visible: 1
+    expect:
+      status: 200
+      body:
+        data: "${type: Long}"
+
+  - id: TC-20-07
+    priority: P0
+    category: crud
+    ac: AC-03
+    scenario: "正常查询平铺列表"
+    request:
+      method: GET
+      path: /api/v1/menus
+      auth: full_perm_token
+    expect:
+      status: 200
+      body:
+        data: "${type: List}"
+
+  - id: TC-20-08
+    priority: P0
+    category: crud
+    ac: AC-04
+    bl_ref: BL-20-05
+    scenario: "正常查询菜单树，根节点 parentId=0 在首层"
+    request:
+      method: GET
+      path: /api/v1/menus/tree
+      auth: full_perm_token
+    expect:
+      status: 200
+      assert: "response.data 为数组，首层元素 parentId=0，子节点在 children 字段"
+
+  - id: TC-20-09
+    priority: P0
+    category: crud
+    ac: AC-03
+    scenario: "正常查询菜单详情"
+    request:
+      method: GET
+      path: /api/v1/menus/{id}
+      auth: full_perm_token
+    expect:
+      status: 200
+      body:
+        data.id: "${not_null}"
+        data.name: "${not_null}"
+
+  - id: TC-20-10
+    priority: P0
+    category: crud
+    ac: AC-03
+    scenario: "正常更新菜单"
+    request:
+      method: PUT
+      path: /api/v1/menus/{id}
+      auth: full_perm_token
+      body:
+        name: "系统管理(改)"
+    expect:
+      status: 200
+
+  - id: TC-20-11
+    priority: P0
+    category: crud
+    ac: AC-05
+    scenario: "正常删除叶子菜单，删除后列表不可见"
+    setup:
+      create_leaf_menu: true
+    request:
+      method: DELETE
+      path: /api/v1/menus/{leaf_id}
+      auth: full_perm_token
+    expect:
+      status: 200
+      assert: "再次 GET /api/v1/menus，已删除菜单不在列表中"
+
+  # ─── P0：业务规则 ───────────────────────────────────────────────
+  - id: TC-20-12
+    priority: P0
+    category: business
+    ac: AC-05
+    bl_ref: BL-20-03
+    scenario: "软删除验证 — 数据库 deleted=TRUE"
+    setup:
+      create_record: true
+      delete_via_api: true
+    expect:
+      db_assert: "SELECT deleted FROM sys_menu WHERE id=? → TRUE"
+
+  - id: TC-20-13
+    priority: P0
+    category: business
+    ac: AC-03
+    bl_ref: BL-20-04
+    scenario: "租户隔离 — 租户 A 查询不返回租户 B 数据"
+    setup:
+      tenant_a_menu: true
+      tenant_b_menu: true
+    request:
+      method: GET
+      path: /api/v1/menus
+      auth: tenant_a_token
+    expect:
+      status: 200
+      assert: "response.data 中无 tenant_b 的菜单数据"
+
+  - id: TC-20-14
+    priority: P0
+    category: business
+    ac: AC-03
+    bl_ref: BL-20-04
+    scenario: "租户隔离 — 租户 B 查询不返回租户 A 数据"
+    setup:
+      tenant_a_menu: true
+      tenant_b_menu: true
+    request:
+      method: GET
+      path: /api/v1/menus
+      auth: tenant_b_token
+    expect:
+      status: 200
+      assert: "response.data 中无 tenant_a 的菜单数据"
+
+  - id: TC-20-15
+    priority: P0
+    category: business
+    ac: AC-05
+    bl_ref: BL-20-02
+    scenario: "删除含子菜单的父菜单 → 业务异常 400"
+    setup:
+      create_parent_with_child: true
+    request:
+      method: DELETE
+      path: /api/v1/menus/{parent_id}
+      auth: full_perm_token
+    expect:
+      status: 400
+      error_code: "MENU_HAS_CHILDREN"   # ErrorCode.MENU_HAS_CHILDREN(400002)
+
+  # ─── P1：参数校验 ───────────────────────────────────────────────
+  - id: TC-20-16
+    priority: P1
+    category: validation
+    scenario: "parentId 为 null → 400"
+    request:
+      method: POST
+      path: /api/v1/menus
+      auth: full_perm_token
+      body:
+        parentId: null
+        name: "测试"
+        menuType: 0
+    expect:
+      status: 400
+
+  - id: TC-20-17
+    priority: P1
+    category: validation
+    scenario: "name 为 null → 400"
+    request:
+      method: POST
+      path: /api/v1/menus
+      auth: full_perm_token
+      body:
+        parentId: 0
+        name: null
+        menuType: 0
+    expect:
+      status: 400
+
+  - id: TC-20-18
+    priority: P1
+    category: validation
+    scenario: "menuType 为 null → 400"
+    request:
+      method: POST
+      path: /api/v1/menus
+      auth: full_perm_token
+      body:
+        parentId: 0
+        name: "测试"
+        menuType: null
+    expect:
+      status: 400
+
+  - id: TC-20-19
+    priority: P1
+    category: crud
+    scenario: "查询不存在的菜单 → 404/业务异常"
+    request:
+      method: GET
+      path: /api/v1/menus/99999999999
+      auth: full_perm_token
+    expect:
+      status: 404
+
+  - id: TC-20-20
+    priority: P1
+    category: business
+    bl_ref: BL-20-01
+    scenario: "创建时 parentId 不存在 → 业务异常"
+    request:
+      method: POST
+      path: /api/v1/menus
+      auth: full_perm_token
+      body:
+        parentId: 99999999999
+        name: "测试"
+        menuType: 1
+    expect:
+      status: 400
+
+  - id: TC-20-21
+    priority: P1
+    category: crud
+    scenario: "创建菜单 permission 字段正确持久化"
+    request:
+      method: POST
+      path: /api/v1/menus
+      auth: full_perm_token
+      body:
+        parentId: 0
+        name: "用户管理"
+        menuType: 1
+        permission: "system:user:list"
+    expect:
+      status: 200
+      assert: "GET /api/v1/menus/{id} → data.permission='system:user:list'"
+
+  # ─── P2：边界 ───────────────────────────────────────────────────
+  - id: TC-20-22
+    priority: P2
+    category: validation
+    scenario: "name 超长（65字符）→ 400"
+    request:
+      method: POST
+      path: /api/v1/menus
+      auth: full_perm_token
+      body:
+        parentId: 0
+        name: "${length: 65}"
+        menuType: 0
+    expect:
+      status: 400
+
+# ─── AC → TC 映射 ──────────────────────────────────────────────────
+ac_tc_map:
+  AC-01: [TC-20-01]
+  AC-02: [TC-20-02, TC-20-03, TC-20-04, TC-20-05]
+  AC-03: [TC-20-06, TC-20-07, TC-20-09, TC-20-10, TC-20-13, TC-20-14]
+  AC-04: [TC-20-08]
+  AC-05: [TC-20-11, TC-20-12, TC-20-15]
+
+# ─── Gate R09 配置 ─────────────────────────────────────────────────
+gate_r09:
+  p0_required: true
+  p1_coverage_target: 0.7
+  p2_skip: true
+  test_class: "MenuControllerTest"

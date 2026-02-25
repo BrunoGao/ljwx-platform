@@ -2,6 +2,7 @@ package com.ljwx.platform.app.domain.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.Data;
 
 /**
@@ -16,6 +17,7 @@ public class MenuCreateDTO {
 
     /** 菜单名称 */
     @NotBlank(message = "菜单名称不能为空")
+    @Size(max = 64, message = "菜单名称不能超过 64 个字符")
     private String name;
 
     /** 路由路径 */

@@ -22,6 +22,8 @@ public enum ErrorCode {
 
     RESOURCE_NOT_FOUND(404001, "资源不存在"),
 
+    MENU_HAS_CHILDREN(400002, "菜单下存在子菜单，无法删除"),
+
     REPEAT_SUBMIT(409001, "重复提交，请稍后再试"),
 
     ACCOUNT_LOCKED(423001, "账号已锁定，请30分钟后重试"),

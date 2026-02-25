@@ -55,6 +55,12 @@ public class MenuAppService {
 
     @Transactional
     public Long createMenu(MenuCreateDTO dto) {
+        if (dto.getParentId() != 0L) {
+            SysMenu parent = menuMapper.selectById(dto.getParentId());
+            if (parent == null) {
+                throw new BusinessException(ErrorCode.RESOURCE_NOT_FOUND, "父菜单不存在");
+            }
+        }
         long id = idGenerator.nextId();
         SysMenu menu = new SysMenu();
         menu.setId(id);
@@ -93,6 +99,13 @@ public class MenuAppService {
 
     @Transactional
     public void deleteMenu(Long id) {
+        SysMenu menu = menuMapper.selectById(id);
+        if (menu == null) {
+            throw new BusinessException(ErrorCode.RESOURCE_NOT_FOUND, "菜单不存在");
+        }
+        if (menuMapper.countByParentId(id) > 0) {
+            throw new BusinessException(ErrorCode.MENU_HAS_CHILDREN);
+        }
         menuMapper.deleteById(id);
     }
 

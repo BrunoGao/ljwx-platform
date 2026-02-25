@@ -1,0 +1,264 @@
+# Phase {NN} — {module} 测试契约
+# 文件位置：spec/tests/phase-{NN}-{module}.tests.yml
+#
+# 用途：
+#   - 生成测试代码（喂给 Claude/Codex 生成 *ControllerTest.java）
+#   - Gate R09 覆盖率检查（P0 必须全部实现）
+#   - RTM 追溯（TC-ID → AC-ID → Gate 维度自动推导）
+#
+# 优先级：
+#   P0 — 阻断级，Gate 失败即 FAIL（必须生成对应测试方法）
+#   P1 — 重要，建议覆盖，Gate 计入覆盖率但不阻断
+#   P2 — 边界/压力，可选，不纳入 Gate 检查
+#
+# category 枚举：
+#   security | crud | business | validation | performance
+#
+# expect.status 支持：
+#   整数（如 200/400/401/403）或 "2xx" / "4xx" / "business_error"
+
+phase: {NN}
+module: "{module}"
+ac_ref: "spec/phase/phase-{NN}-{module}.md"  # 关联的 Phase Spec
+
+tests:
+
+  # ─── P0：安全测试 ───────────────────────────────────────────────
+  - id: TC-{NN}-01
+    priority: P0
+    category: security
+    ac: AC-01
+    scenario: "无 Token 访问列表"
+    request:
+      method: GET
+      path: /api/v1/{resource}
+      auth: none
+    expect:
+      status: 401
+
+  - id: TC-{NN}-02
+    priority: P0
+    category: security
+    ac: AC-02
+    scenario: "有 Token 但无权限访问列表"
+    request:
+      method: GET
+      path: /api/v1/{resource}
+      auth: valid_token
+      missing_perm: "{module}:{entity}:list"
+    expect:
+      status: 403
+
+  - id: TC-{NN}-03
+    priority: P0
+    category: security
+    ac: AC-02
+    scenario: "有 Token 但无权限创建"
+    request:
+      method: POST
+      path: /api/v1/{resource}
+      auth: valid_token
+      missing_perm: "{module}:{entity}:create"
+    expect:
+      status: 403
+
+  # ─── P0：CRUD 核心流程 ──────────────────────────────────────────
+  - id: TC-{NN}-04
+    priority: P0
+    category: crud
+    ac: AC-03
+    scenario: "正常创建"
+    request:
+      method: POST
+      path: /api/v1/{resource}
+      auth: valid_token_with_perm
+      body:
+        {field1}: "{示例值}"
+        {field2}: {示例值}
+    expect:
+      status: 200
+      body:
+        data: "${type: Long}"   # 返回雪花 ID
+
+  - id: TC-{NN}-05
+    priority: P0
+    category: crud
+    ac: AC-03
+    scenario: "正常查询列表"
+    request:
+      method: GET
+      path: /api/v1/{resource}
+      auth: valid_token_with_perm
+    expect:
+      status: 200
+      body:
+        data: "${type: List}"
+
+  - id: TC-{NN}-06
+    priority: P0
+    category: crud
+    ac: AC-03
+    scenario: "正常查询详情"
+    request:
+      method: GET
+      path: /api/v1/{resource}/{id}
+      auth: valid_token_with_perm
+    expect:
+      status: 200
+      body:
+        data.id: "${not_null}"
+
+  - id: TC-{NN}-07
+    priority: P0
+    category: crud
+    ac: AC-03
+    scenario: "正常更新"
+    request:
+      method: PUT
+      path: /api/v1/{resource}/{id}
+      auth: valid_token_with_perm
+      body:
+        {field1}: "{新值}"
+    expect:
+      status: 200
+
+  - id: TC-{NN}-08
+    priority: P0
+    category: crud
+    ac: AC-03
+    scenario: "正常删除"
+    request:
+      method: DELETE
+      path: /api/v1/{resource}/{id}
+      auth: valid_token_with_perm
+    expect:
+      status: 200
+
+  # ─── P0：业务规则 ───────────────────────────────────────────────
+  - id: TC-{NN}-09
+    priority: P0
+    category: business
+    ac: AC-04
+    bl_ref: BL-{NN}-04    # 对应 Phase Spec 中的业务规则编号
+    scenario: "租户隔离 — 租户 A 查询不返回租户 B 数据"
+    setup:
+      tenant_a_record: true
+      tenant_b_record: true
+    request:
+      method: GET
+      path: /api/v1/{resource}
+      auth: tenant_a_token
+    expect:
+      status: 200
+      assert: "response.data 中无 tenant_b 的数据"
+
+  - id: TC-{NN}-10
+    priority: P0
+    category: business
+    ac: AC-05
+    bl_ref: BL-{NN}-03
+    scenario: "软删除 — 删除后 API 查询不返回"
+    setup:
+      create_record: true
+      delete_record: true
+    request:
+      method: GET
+      path: /api/v1/{resource}
+      auth: valid_token_with_perm
+    expect:
+      status: 200
+      assert: "已删除记录不在 response.data 中"
+
+  - id: TC-{NN}-11
+    priority: P0
+    category: business
+    ac: AC-05
+    bl_ref: BL-{NN}-03
+    scenario: "软删除 — 数据库 deleted=TRUE"
+    setup:
+      create_record: true
+      delete_via_api: true
+    expect:
+      db_assert: "SELECT deleted FROM {table} WHERE id=? → TRUE"
+
+  # ─── P0：核心业务规则（替换为实际规则） ─────────────────────────
+  - id: TC-{NN}-12
+    priority: P0
+    category: business
+    ac: AC-{XX}
+    bl_ref: BL-{NN}-01
+    scenario: "{具体业务规则场景}"
+    request:
+      method: {METHOD}
+      path: /api/v1/{resource}/{condition}
+      auth: valid_token_with_perm
+    expect:
+      status: {status}
+      # 或 error_code: "BIZ_XXX"
+
+  # ─── P1：参数校验 ───────────────────────────────────────────────
+  - id: TC-{NN}-13
+    priority: P1
+    category: validation
+    scenario: "必填字段 {field} 为空"
+    request:
+      method: POST
+      path: /api/v1/{resource}
+      auth: valid_token_with_perm
+      body:
+        {field}: null
+    expect:
+      status: 400
+
+  - id: TC-{NN}-14
+    priority: P1
+    category: validation
+    scenario: "查询不存在的资源"
+    request:
+      method: GET
+      path: /api/v1/{resource}/99999999
+      auth: valid_token_with_perm
+    expect:
+      status: 404   # 或 business_error
+
+  # ─── P1：其他重要场景 ────────────────────────────────────────────
+  - id: TC-{NN}-15
+    priority: P1
+    category: crud
+    scenario: "{其他重要场景}"
+    request:
+      method: {METHOD}
+      path: /api/v1/{resource}
+      auth: valid_token_with_perm
+    expect:
+      status: 200
+
+  # ─── P2：边界 / 压力 ─────────────────────────────────────────────
+  - id: TC-{NN}-16
+    priority: P2
+    category: validation
+    scenario: "{field} 超长（边界值）"
+    request:
+      method: POST
+      path: /api/v1/{resource}
+      auth: valid_token_with_perm
+      body:
+        {field}: "${length: 65}"   # 超过 VARCHAR(64) 限制
+    expect:
+      status: 400
+
+# ─── AC → TC 映射（简表，Gate R09 用） ──────────────────────────────
+ac_tc_map:
+  AC-01: [TC-{NN}-01]
+  AC-02: [TC-{NN}-02, TC-{NN}-03]
+  AC-03: [TC-{NN}-04, TC-{NN}-05, TC-{NN}-06, TC-{NN}-07, TC-{NN}-08]
+  AC-04: [TC-{NN}-09]
+  AC-05: [TC-{NN}-10, TC-{NN}-11]
+  AC-{XX}: [TC-{NN}-12]
+
+# ─── Gate 关联（R09 读取此段决定检查项） ─────────────────────────────
+gate_r09:
+  p0_required: true          # P0 全部通过才能 PASS
+  p1_coverage_target: 0.7    # P1 覆盖率目标 70%
+  p2_skip: true              # P2 不纳入 Gate 检查
+  test_class: "{Entity}ControllerTest"  # 对应的测试类

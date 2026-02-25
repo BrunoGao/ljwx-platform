@@ -25,6 +25,9 @@ public interface SysMenuMapper {
     /** 按主键更新菜单（乐观锁 version 校验）。 */
     void updateById(SysMenu menu);
 
+    /** 统计指定父节点下的子菜单数（用于删除前校验）。 */
+    int countByParentId(Long parentId);
+
     /** 软删除菜单。 */
     void deleteById(Long id);
 }

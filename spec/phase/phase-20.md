@@ -30,264 +30,185 @@ scope:
 | 模块 | ljwx-platform-app (后端), ljwx-platform-admin (前端) |
 | Feature | F-020 (菜单管理) |
 | 前置依赖 | Phase 19 (部门管理) |
-| 预计文件数 | 14 |
+| 测试契约 | `spec/tests/phase-20-menu.tests.yml` |
 
 ## 读取清单
 
 - `CLAUDE.md`（自动加载）
+- `spec/04-database.md` — §sys_menu 表结构
 - `spec/03-api.md` — §Menus 路由
-- `spec/04-database.md` — sys_menu 表结构
-- `spec/01-constraints.md` — §TypeScript 约束、§审计字段
+- `spec/01-constraints.md` — §审计字段、§TypeScript 约束
 - `spec/08-output-rules.md`
 
-## 数据库设计
+---
 
-### 表结构
+## 数据库契约
+
+### 表结构：sys_menu
 
 | 列名 | 类型 | 约束 | 说明 |
 |------|------|------|------|
-| id | BIGINT | PK, NOT NULL | 主键 |
+| id | BIGINT | PK, NOT NULL | 主键（雪花 ID） |
 | parent_id | BIGINT | NOT NULL, DEFAULT 0, INDEX | 父节点 ID，0 = 根节点 |
 | name | VARCHAR(64) | NOT NULL | 菜单名称 |
 | path | VARCHAR(200) | NOT NULL, DEFAULT '' | 路由路径 |
 | component | VARCHAR(200) | NOT NULL, DEFAULT '' | 前端组件路径 |
 | icon | VARCHAR(100) | NOT NULL, DEFAULT '' | 图标 |
-| sort | INT | NOT NULL, DEFAULT 0, INDEX | 排序 |
-| menu_type | SMALLINT | NOT NULL, DEFAULT 0 | 菜单类型：0=目录 1=菜单 2=按钮 |
+| sort | INT | NOT NULL, DEFAULT 0 | 排序权重 |
+| menu_type | SMALLINT | NOT NULL, DEFAULT 0 | 0=目录 1=菜单 2=按钮 |
 | permission | VARCHAR(100) | NOT NULL, DEFAULT '' | 权限字符串 |
-| visible | SMALLINT | NOT NULL, DEFAULT 1 | 显示状态：1=显示 0=隐藏 |
-| tenant_id | BIGINT | NOT NULL, DEFAULT 0, INDEX | 租户 ID（框架自动填充） |
+| visible | SMALLINT | NOT NULL, DEFAULT 1 | 1=显示 0=隐藏 |
+| tenant_id | BIGINT | NOT NULL, DEFAULT 0, INDEX | 框架自动填充 |
 | created_by | BIGINT | NOT NULL, DEFAULT 0 | 创建人 |
 | created_time | TIMESTAMP | NOT NULL, DEFAULT CURRENT_TIMESTAMP | 创建时间 |
 | updated_by | BIGINT | NOT NULL, DEFAULT 0 | 更新人 |
 | updated_time | TIMESTAMP | NOT NULL, DEFAULT CURRENT_TIMESTAMP | 更新时间 |
-| deleted | BOOLEAN | NOT NULL, DEFAULT FALSE | 软删除标记 |
-| version | INT | NOT NULL, DEFAULT 1 | 乐观锁版本号 |
+| deleted | BOOLEAN | NOT NULL, DEFAULT FALSE | 软删除 |
+| version | INT | NOT NULL, DEFAULT 1 | 乐观锁 |
 
-### 索引
-
-- PRIMARY KEY (id)
-- INDEX idx_menu_tenant_parent (tenant_id, parent_id) WHERE deleted = FALSE
-- INDEX idx_menu_tenant_sort (tenant_id, sort) WHERE deleted = FALSE
+**索引**：`idx_menu_tenant_parent(tenant_id, parent_id)`、`idx_menu_tenant_sort(tenant_id, sort)`，条件 `WHERE deleted = FALSE`
 
 ### Flyway 文件
 
-- **V022__create_sys_menu.sql**: 创建 sys_menu 表及索引
-- **V023__seed_sys_menu.sql**: 插入系统管理目录及用户/角色/菜单/部门/字典/配置/日志/文件/公告子菜单，permission 对应已有 RBAC 字符串
-- 命名规则: Phase 编号对应 Flyway 版本号
-- 必须包含: 表创建、索引创建、注释
-- 禁止包含: `IF NOT EXISTS`
+| 文件 | 内容 |
+|------|------|
+| V022__create_sys_menu.sql | 建表 + 索引 |
+| V023__seed_sys_menu.sql | 插入系统管理目录及子菜单（user/role/menu/dept/dict/config/log/file/notice），permission 对应已有 RBAC 字符串 |
 
-## API 定义
+禁止：`IF NOT EXISTS`、建表文件中混 DML。
 
-### 端点列表
+---
+
+## API 契约
 
 | 方法 | 路径 | 权限标识 | 请求体 | 响应体 | 说明 |
 |------|------|----------|--------|--------|------|
-| GET | /api/v1/menus | system:menu:list | — | Result<List<MenuVO>> | 查询菜单列表（平铺） |
-| GET | /api/v1/menus/tree | system:menu:list | — | Result<List<MenuTreeVO>> | 查询菜单树（嵌套） |
-| GET | /api/v1/menus/{id} | system:menu:detail | — | Result<MenuVO> | 查询菜单详情 |
-| POST | /api/v1/menus | system:menu:create | MenuCreateDTO | Result<Long> | 创建菜单 |
-| PUT | /api/v1/menus/{id} | system:menu:update | MenuUpdateDTO | Result<Void> | 更新菜单 |
-| DELETE | /api/v1/menus/{id} | system:menu:delete | — | Result<Void> | 删除菜单（软删除） |
+| GET | /api/v1/menus | system:menu:list | — | Result<List\<MenuVO\>> | 平铺列表 |
+| GET | /api/v1/menus/tree | system:menu:list | — | Result<List\<MenuTreeVO\>> | 嵌套树 |
+| GET | /api/v1/menus/{id} | system:menu:detail | — | Result\<MenuVO\> | 详情 |
+| POST | /api/v1/menus | system:menu:create | MenuCreateDTO | Result\<Long\> | 创建 |
+| PUT | /api/v1/menus/{id} | system:menu:update | MenuUpdateDTO | Result\<Void\> | 更新 |
+| DELETE | /api/v1/menus/{id} | system:menu:delete | — | Result\<Void\> | 软删除 |
 
-### 通用约定
+---
 
-- 所有端点前缀: `/api/v1/`
-- 响应统一包装: `Result<T>`（code, message, data, traceId）
-- 认证: Bearer Token（Header: Authorization）
-- 未认证: 401，无权限: 403，参数错误: 400，业务异常: 500 + 业务错误码
+## DTO / VO 契约
 
-## 类设计
+### MenuCreateDTO（创建请求）
 
-### Entity
+| 字段 | 类型 | 校验 | 说明 |
+|------|------|------|------|
+| parentId | Long | @NotNull | 父节点 ID（0=根节点） |
+| name | String | @NotBlank, max=64 | 菜单名称 |
+| path | String | — | 路由路径 |
+| component | String | — | 前端组件路径 |
+| icon | String | — | 图标 |
+| sort | Integer | — | 排序（默认 0） |
+| menuType | Integer | @NotNull | 0=目录 1=菜单 2=按钮 |
+| permission | String | — | 权限字符串 |
+| visible | Integer | — | 1=显示 0=隐藏（默认 1） |
 
-```java
-// com.ljwx.platform.app.domain.entity.SysMenu
-@Data
-@EqualsAndHashCode(callSuper = true)
-public class SysMenu extends BaseEntity {
-    private Long id;
-    private Long parentId;        // 父节点 ID，0 = 根节点
-    private String name;          // 菜单名称
-    private String path;          // 路由路径
-    private String component;     // 前端组件路径
-    private String icon;          // 图标
-    private Integer sort;         // 排序
-    private Integer menuType;     // 菜单类型：0=目录 1=菜单 2=按钮
-    private String permission;    // 权限字符串
-    private Integer visible;      // 显示状态：1=显示 0=隐藏
+**禁止字段**：`id`、`tenantId`、`createdBy`、`createdTime`、`updatedBy`、`updatedTime`、`deleted`、`version`
 
-    // tenant_id, created_by, created_time, updated_by, updated_time, deleted, version
-    // 由 BaseEntity 和 MyBatis-Plus 自动填充，此处不声明
-}
+### MenuUpdateDTO（更新请求）
+
+与 MenuCreateDTO 相同字段，全部可选（Partial Update）。**禁止字段**同上。
+
+### MenuVO（平铺响应）
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| id | Long | 主键 |
+| parentId | Long | 父节点 |
+| name | String | 菜单名称 |
+| path | String | 路由路径 |
+| component | String | 组件路径 |
+| icon | String | 图标 |
+| sort | Integer | 排序 |
+| menuType | Integer | 菜单类型 |
+| permission | String | 权限字符串 |
+| visible | Integer | 显示状态 |
+| createdTime | LocalDateTime | 创建时间 |
+| updatedTime | LocalDateTime | 更新时间 |
+
+**禁止字段**：`tenantId`、`deleted`、`createdBy`、`updatedBy`、`version`
+
+### MenuTreeVO（树形响应）
+
+MenuVO 所有字段，去掉 `createdTime`/`updatedTime`，增加：
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| children | List\<MenuTreeVO\> | 子节点（内存构建） |
+
+---
+
+## 实体 / 服务契约
+
+```
+Entity  : SysMenu extends BaseEntity
+          业务字段见 DB 表结构，审计字段由 BaseEntity 继承，勿重复声明
+
+Mapper  : SysMenuMapper（自定义接口，不继承 BaseMapper）
+            @Mapper interface with：
+            - selectAll()             → 当前租户全量（TenantLineInterceptor 注入）
+            - selectById(Long)        → 单条，含 deleted=FALSE 过滤
+            - insert(SysMenu)         → 含审计字段
+            - updateById(SysMenu)     → 含乐观锁 version 校验
+            - countByParentId(Long)   → 子菜单数，用于删除前校验
+            - deleteById(Long)        → 软删除（deleted=TRUE）
+          配套 SysMenuMapper.xml（全量自定义 SQL）
+
+Service : MenuAppService（应用服务，非 IService）
+          方法: listMenus(), getMenuTree(), getMenu(id),
+                createMenu(dto), updateMenu(id, dto), deleteMenu(id)
 ```
 
-### DTO
+---
 
-```java
-// MenuCreateDTO — 创建请求
-// 字段: parentId(@NotNull), name(@NotBlank), path, component, icon,
-//       sort, menuType(@NotNull), permission, visible
-// 禁止包含: id, tenantId, createdBy, createdTime, updatedBy, updatedTime, deleted, version
+## 业务规则
 
-// MenuUpdateDTO — 更新请求
-// 字段: 同 CreateDTO，所有字段可选（Partial Update）
-// 禁止包含: id, tenantId, createdBy, createdTime, updatedBy, updatedTime, deleted, version
-```
+- **BL-20-01**：创建时 parentId ≠ 0 → 校验父菜单存在且属于当前租户，否则拒绝
+- **BL-20-02**：删除时 → 校验菜单下无子菜单，有则抛出 `BusinessException(MENU_HAS_CHILDREN)`
+- **BL-20-03**：软删除 → 调用 MyBatis-Plus `@TableLogic`，`deleted=TRUE`，后续查询自动过滤
+- **BL-20-04**：`tenant_id` 由 `TenantLineInterceptor` 自动注入，无需代码显式传递
+- **BL-20-05**：getMenuTree() → 内存构建树（parentId=0 为根节点），按 sort 升序排列
 
-### VO
+> 关于"内存建树 vs 递归 SQL"的取舍说明 → 见 `spec/adr/ADR-20-menu-tree.md`
 
-```java
-// MenuVO — 列表响应（平铺）
-// 字段: id, parentId, name, path, component, icon, sort, menuType,
-//       permission, visible, createdTime, updatedTime
-// 禁止包含: tenantId, deleted, createdBy, updatedBy, version
+---
 
-// MenuTreeVO — 树查询响应（嵌套）
-// 字段: id, parentId, name, path, component, icon, sort, menuType,
-//       permission, visible, children(List<MenuTreeVO>)
-// 禁止包含: tenantId, deleted, createdBy, updatedBy, createdTime, updatedTime, version
-```
+## 测试用例（摘要）
 
-### Mapper
+详细用例见 **`spec/tests/phase-20-menu.tests.yml`**。
 
-```java
-// SysMenuMapper extends BaseMapper<SysMenu>
-// SysMenuMapper.xml — 自定义 SQL（如需要）
-```
+P0 强制覆盖（Gate R09 检查）：
 
-### Service
+| ID | 场景 | P |
+|----|------|---|
+| TC-20-01 | 无 Token → 401 | P0 |
+| TC-20-02 | 无权限 → 403（list/create/update/delete 各一条） | P0 |
+| TC-20-03 | 正常 CRUD（create/list/tree/detail/update/delete） | P0 |
+| TC-20-04 | 租户隔离（A 查不到 B 的数据） | P0 |
+| TC-20-05 | 软删除（deleted=TRUE，查询不返回） | P0 |
+| TC-20-06 | 删除含子菜单的父菜单 → 业务异常 | P0 |
 
-```java
-// MenuAppService — 应用服务
-// 方法: listMenus(), getMenuTree(), getMenu(id), createMenu(dto),
-//       updateMenu(id, dto), deleteMenu(id)
-// 职责: CRUD + 树形构建（内存构建，不使用递归 SQL）
-```
-
-## 业务逻辑
-
-### 查询列表
-1. 调用 `menuMapper.selectAll()` 查询当前租户所有菜单（TenantLineInterceptor 自动注入 tenant_id 条件）
-2. 转换为 MenuVO 列表返回
-
-### 查询树
-1. 调用 `menuMapper.selectAll()` 查询当前租户所有菜单
-2. 转换为 MenuTreeVO 列表
-3. 在内存中构建树结构（parentId=0 为根节点，递归构建子节点）
-4. 按 sort 字段排序
-5. 返回树形结构
-
-### 查询详情
-1. 调用 `menuMapper.selectById(id)` 查询菜单
-2. 若不存在，抛出 BusinessException(ErrorCode.MENU_NOT_FOUND)
-3. 转换为 MenuVO 返回
-
-### 创建
-1. 校验 parentId 对应的父菜单存在且属于当前租户（parentId=0 时跳过）
-2. 生成雪花 ID
-3. 设置 tenantId（从 CurrentTenantHolder 获取）
-4. 保存到数据库
-5. 返回菜单 ID
-
-### 更新
-1. 校验菜单存在且属于当前租户
-2. 更新字段（仅更新 DTO 中非 null 的字段）
-3. 保存到数据库
-
-### 删除
-1. 校验菜单存在且属于当前租户
-2. 校验该菜单下无子菜单（有则拒绝删除，返回业务异常）
-3. 逻辑删除（MyBatis-Plus @TableLogic 自动处理，设置 deleted=TRUE）
-
-## 测试用例
-
-### 安全测试（Security）
-
-| ID | 场景 | 方法 | 期望 | 优先级 |
-|----|------|------|------|--------|
-| TC-20-01 | 未认证访问列表 | GET /api/v1/menus (无 Token) | 401 | P0 |
-| TC-20-02 | 无权限访问列表 | GET /api/v1/menus (无 system:menu:list) | 403 | P0 |
-| TC-20-03 | 无权限创建菜单 | POST /api/v1/menus (无 system:menu:create) | 403 | P0 |
-| TC-20-04 | 无权限更新菜单 | PUT /api/v1/menus/{id} (无 system:menu:update) | 403 | P0 |
-| TC-20-05 | 无权限删除菜单 | DELETE /api/v1/menus/{id} (无 system:menu:delete) | 403 | P0 |
-
-### CRUD 测试
-
-| ID | 场景 | 方法 | 期望 | 优先级 |
-|----|------|------|------|--------|
-| TC-20-06 | 正常查询列表 | GET /api/v1/menus | 200, 返回数组结构 | P0 |
-| TC-20-07 | 正常查询树 | GET /api/v1/menus/tree | 200, 返回树形数组 | P0 |
-| TC-20-08 | 正常查询详情 | GET /api/v1/menus/{id} | 200, 字段完整 | P0 |
-| TC-20-09 | 正常创建菜单 | POST /api/v1/menus | 200, 返回菜单 ID | P0 |
-| TC-20-10 | 正常更新菜单 | PUT /api/v1/menus/{id} | 200, 更新成功 | P0 |
-| TC-20-11 | 正常删除菜单 | DELETE /api/v1/menus/{id} | 200, 删除后列表不可见 | P0 |
-
-### 业务规则测试
-
-| ID | 场景 | 方法 | 期望 | 优先级 |
-|----|------|------|------|--------|
-| TC-20-12 | 租户隔离（租户 A） | 租户 A 查询，不返回租户 B 数据 | 仅返回租户 A 菜单 | P0 |
-| TC-20-13 | 租户隔离（租户 B） | 租户 B 查询，不返回租户 A 数据 | 仅返回租户 B 菜单 | P0 |
-| TC-20-14 | 树根节点验证 | GET /api/v1/menus/tree | 根节点 parentId=0 出现在首层 | P0 |
-| TC-20-15 | 软删除验证 | 删除后数据库 deleted=TRUE，API 查询不返回 | 符合预期 | P0 |
-| TC-20-16 | 删除有子菜单的菜单 | DELETE 含子菜单的父菜单 | 400/业务异常 | P0 |
-| TC-20-17 | 查询不存在的菜单 | GET /api/v1/menus/{不存在的id} | 404/业务异常 | P1 |
-| TC-20-18 | 创建菜单 permission 持久化 | POST 创建菜单，再查询 | permission 字段正确保存 | P1 |
-
-### 参数校验测试
-
-| ID | 场景 | 方法 | 期望 | 优先级 |
-|----|------|------|------|--------|
-| TC-20-19 | parentId 为空 | POST parentId=null | 400 | P1 |
-| TC-20-20 | name 为空 | POST name=null | 400 | P1 |
-| TC-20-21 | menuType 为空 | POST menuType=null | 400 | P1 |
-| TC-20-22 | name 超长 | POST name=65字符 | 400 | P2 |
-
-## 验收条件映射
-
-| 验收条件 | 来源 | 测试用例 | Gate 维度 |
-|---------|------|----------|----------|
-| AC-01 | F-020 | TC-20-01 | R05 |
-| AC-02 | F-020 | TC-20-02, TC-20-03, TC-20-04, TC-20-05 | R04, R05 |
-| AC-03 | F-020 | TC-20-09, TC-20-06 | R09 |
-| AC-04 | F-020 | TC-20-12, TC-20-13 | R03 |
-| AC-05 | F-020 | TC-20-11, TC-20-15 | R07, R09 |
-
-## 预期生成文件
-
-| 文件路径 | 类型 | Gate 关联 |
-|---------|------|----------|
-| db/migration/V022__create_sys_menu.sql | Migration | R02 |
-| db/migration/V023__seed_sys_menu.sql | Migration | R02 |
-| .../entity/SysMenu.java | Entity | R07 |
-| .../mapper/SysMenuMapper.java | Mapper | R06 |
-| .../mapper/xml/SysMenuMapper.xml | Mapper XML | R05 |
-| .../dto/MenuCreateDTO.java | DTO | R03 |
-| .../dto/MenuUpdateDTO.java | DTO | R03 |
-| .../vo/MenuVO.java | VO | R03 |
-| .../vo/MenuTreeVO.java | VO | R03 |
-| .../appservice/MenuAppService.java | Service | R06 |
-| .../controller/MenuController.java | Controller | R04 |
-| src/test/java/.../controller/MenuControllerTest.java | Test | R09 |
-| ljwx-platform-admin/src/api/menu.ts | Frontend API | — |
-| ljwx-platform-admin/src/stores/menu.ts | Frontend Store | — |
-| ljwx-platform-admin/src/views/system/menu/index.vue | Frontend View | — |
+---
 
 ## 验收条件
 
-1. V022 含 7 列审计字段，无 IF NOT EXISTS
-2. GET /api/v1/menus/tree 返回嵌套树结构
-3. MenuController 所有方法有 @PreAuthorize
-4. DTO 中不包含 tenantId、deleted、审计列
-5. 编译通过，type-check 通过
-6. 所有 P0 测试用例通过
+- **AC-01**：V022 含 7 列审计字段，无 `IF NOT EXISTS`
+- **AC-02**：所有 Controller 方法有 `@PreAuthorize("hasAuthority('system:menu:...')")`
+- **AC-03**：DTO 不含 `tenantId` 及其他禁止字段
+- **AC-04**：GET /api/v1/menus/tree 返回嵌套树，根节点 parentId=0 在首层
+- **AC-05**：软删除生效，`deleted=TRUE` 后 API 查询不返回
+- **AC-06**：编译通过，前端 `type-check` 通过，所有 P0 用例通过
+
+---
 
 ## 关键约束
 
-- sys_menu 含 7 列审计字段，无 IF NOT EXISTS
-- MenuController 每个方法有 @PreAuthorize
-- 前端无 any，strict: true
-- DTO 禁止包含 tenantId
-- 树形构建在内存中完成，不使用递归 SQL
+- 禁止：`IF NOT EXISTS` · `tenantId` in DTO · `any` in TypeScript
+- 权限格式：`hasAuthority('system:menu:{action}')` —— 无 ROLE_ 前缀
+- 树形构建：在内存中完成，禁止使用递归 SQL（见 ADR-20）
+- 前端版本号：仅 `~`（tilde），禁止 `^`（caret）

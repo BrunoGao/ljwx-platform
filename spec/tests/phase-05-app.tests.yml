@@ -1,0 +1,158 @@
+# Phase 05 — App Skeleton 测试契约
+# 关联 Spec：spec/phase/phase-05.md
+# 注意：本 Phase 无 HTTP 业务端点，测试以启动验证和 DB 断言为主
+
+phase: 5
+module: "app"
+ac_ref: "spec/phase/phase-05.md"
+
+tests:
+
+  # ─── P0：启动验证 ───────────────────────────────────────────────
+  - id: TC-05-01
+    priority: P0
+    category: startup
+    ac: AC-06
+    scenario: "Spring Boot 应用正常启动，无异常"
+    method: spring_context_load
+    expect:
+      no_exception: true
+
+  - id: TC-05-02
+    priority: P0
+    category: startup
+    ac: AC-02
+    scenario: "Flyway V001-V009 全部执行成功"
+    expect:
+      db_assert: "SELECT COUNT(*) FROM flyway_schema_history WHERE success=TRUE → 9"
+
+  - id: TC-05-03
+    priority: P0
+    category: startup
+    ac: AC-06
+    scenario: "健康检查端点正常"
+    request:
+      method: GET
+      path: /actuator/health
+      auth: none
+    expect:
+      status: 200
+      body:
+        status: "UP"
+
+  # ─── P0：数据库结构验证 ─────────────────────────────────────────
+  - id: TC-05-04
+    priority: P0
+    category: db_schema
+    ac: AC-03
+    bl_ref: BL-05-04
+    scenario: "sys_user 表含 7 列审计字段，均 NOT NULL"
+    expect:
+      db_assert: "sys_user 表存在 tenant_id, created_by, created_time, updated_by, updated_time, deleted, version 列，均 NOT NULL"
+
+  - id: TC-05-05
+    priority: P0
+    category: db_schema
+    ac: AC-03
+    bl_ref: BL-05-04
+    scenario: "sys_role 表含 7 列审计字段，均 NOT NULL"
+    expect:
+      db_assert: "sys_role 表结构同上"
+
+  - id: TC-05-06
+    priority: P0
+    category: db_schema
+    ac: AC-03
+    bl_ref: BL-05-04
+    scenario: "sys_permission 表含 7 列审计字段，均 NOT NULL"
+    expect:
+      db_assert: "sys_permission 表结构同上"
+
+  # ─── P0：种子数据验证 ───────────────────────────────────────────
+  - id: TC-05-07
+    priority: P0
+    category: seed_data
+    ac: AC-04
+    bl_ref: BL-05-02
+    scenario: "admin 用户密码为 BCrypt 哈希（非明文），长度 60 字符"
+    expect:
+      db_assert: "SELECT LENGTH(password) FROM sys_user WHERE username='admin' → 60"
+
+  - id: TC-05-08
+    priority: P0
+    category: seed_data
+    ac: AC-04
+    bl_ref: BL-05-02
+    scenario: "admin 密码 BCrypt cost=10（哈希前缀 $2a$10$）"
+    expect:
+      db_assert: "SELECT password FROM sys_user WHERE username='admin' LIKE '$2a$10$%'"
+
+  - id: TC-05-09
+    priority: P0
+    category: seed_data
+    ac: AC-05
+    bl_ref: BL-05-03
+    scenario: "sys_permission 种子数据完整（数量 ≥ RBAC 权限字符串数）"
+    expect:
+      db_assert: "SELECT COUNT(*) FROM sys_permission → 与 spec/01-constraints.md §RBAC 中权限数一致"
+
+  - id: TC-05-10
+    priority: P0
+    category: seed_data
+    ac: AC-05
+    scenario: "admin 用户已分配 admin 角色"
+    expect:
+      db_assert: "sys_user_role 表中 admin user_id 对应 admin role_id 存在"
+
+  # ─── P1：配置验证 ───────────────────────────────────────────────
+  - id: TC-05-11
+    priority: P1
+    category: config
+    scenario: "MyBatis Mapper 接口全部注册，无扫描异常"
+    method: spring_context_load
+    expect:
+      bean_exists: "SysMenuMapper, SysUserMapper（若已存在）"
+
+  - id: TC-05-12
+    priority: P1
+    category: config
+    scenario: "Quartz QRTZ_* 表已由 Flyway 或 Quartz 自动创建"
+    expect:
+      db_assert: "QRTZ_JOB_DETAILS 表存在"
+
+  - id: TC-05-13
+    priority: P1
+    category: startup
+    scenario: "Swagger UI 可访问"
+    request:
+      method: GET
+      path: /swagger-ui.html
+      auth: none
+    expect:
+      status: 200
+
+  # ─── P2：边界验证 ───────────────────────────────────────────────
+  - id: TC-05-14
+    priority: P2
+    category: config
+    scenario: "Caffeine 缓存管理器已初始化（Bean 存在）"
+    method: spring_context_load
+    expect:
+      bean_exists: "CacheManager"
+
+# ─── AC → TC 映射 ──────────────────────────────────────────────────
+ac_tc_map:
+  AC-01: []                                # pom.xml 由 Gate R01 静态检查，无运行时 TC
+  AC-02: [TC-05-02]
+  AC-03: [TC-05-04, TC-05-05, TC-05-06]
+  AC-04: [TC-05-07, TC-05-08]
+  AC-05: [TC-05-09, TC-05-10]
+  AC-06: [TC-05-01, TC-05-03]
+
+# ─── Gate R09 配置 ─────────────────────────────────────────────────
+gate_r09:
+  p0_required: true
+  p1_coverage_target: 0.6
+  p2_skip: true
+  test_class: "AppStartupTest"
+  note: "本 Phase 以 @SpringBootTest 集成测试为主，无单独 ControllerTest"

@@ -79,6 +79,13 @@
           AND version = #{version}
     </update>
 
+    <select id="countByParentId" parameterType="long" resultType="int">
+        SELECT COUNT(*)
+        FROM sys_menu
+        WHERE parent_id = #{parentId}
+          AND deleted = FALSE
+    </select>
+
     <update id="deleteById" parameterType="long">
         UPDATE sys_menu SET deleted = TRUE WHERE id = #{id}
     </update>
