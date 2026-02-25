@@ -8,7 +8,7 @@ on:
       service_name:
         description: "Service name in deploy repo"
         required: false
-        default: "ljwx-platform-app"
+        default: "ljwx-platform"
       deploy_repo:
         description: "owner/repo of deploy repository"
         required: false
@@ -16,9 +16,9 @@ on:
       deploy_values_file:
         description: "Path of service release values YAML inside deploy repo"
         required: false
-        default: "apps/ljwx-platform-app/release-values.yaml"
+        default: "apps/ljwx-platform/overlays/prod/kustomization.yaml"
       image_repo:
-        description: "Container image repo, e.g. harbor.eu.lingjingwanxiang.cn/ljwx-platform/ljwx-platform-app"
+        description: "Container image repo, e.g. harbor.eu.lingjingwanxiang.cn/ljwx/ljwx-platform"
         required: false
         default: ""
 
@@ -35,8 +35,8 @@ jobs:
     env:
       OTEL_ENDPOINT_FIXED: otel-collector-opentelemetry-collector.tracing.svc.cluster.local:4317
       HARBOR_HOST: harbor.eu.lingjingwanxiang.cn
-      HARBOR_PROJECT: ljwx-platform
-      IMAGE_NAME: ljwx-platform-app
+      HARBOR_PROJECT: ljwx
+      IMAGE_NAME: ljwx-platform
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -59,9 +59,9 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          SERVICE_NAME="${{ github.event.inputs.service_name || 'ljwx-platform-app' }}"
+          SERVICE_NAME="${{ github.event.inputs.service_name || 'ljwx-platform' }}"
           DEPLOY_REPO="${{ github.event.inputs.deploy_repo || 'BrunoGaoSZ/ljwx-deploy' }}"
-          DEPLOY_VALUES_FILE="${{ github.event.inputs.deploy_values_file || 'apps/ljwx-platform-app/release-values.yaml' }}"
+          DEPLOY_VALUES_FILE="${{ github.event.inputs.deploy_values_file || 'apps/ljwx-platform/overlays/prod/kustomization.yaml' }}"
           IMAGE_REPO_INPUT="${{ github.event.inputs.image_repo }}"
           if [ -z "$IMAGE_REPO_INPUT" ]; then
             IMAGE_REPO="${HARBOR_HOST}/${HARBOR_PROJECT}/${IMAGE_NAME}"

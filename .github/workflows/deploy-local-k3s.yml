@@ -10,7 +10,7 @@ on:
       deploy_values_file:
         description: "Path of service release values YAML inside deploy repo"
         required: false
-        default: "apps/ljwx-platform-app/release-values.yaml"
+        default: "apps/ljwx-platform/overlays/prod/kustomization.yaml"
       namespace:
         description: "Kubernetes namespace"
         required: false
@@ -18,7 +18,7 @@ on:
       deployment_name:
         description: "Kubernetes deployment name"
         required: false
-        default: "ljwx-platform-app"
+        default: "ljwx-platform"
       argocd_namespace:
         description: "Argo CD namespace"
         required: false
@@ -26,7 +26,7 @@ on:
       argocd_application:
         description: "Argo CD Application name"
         required: false
-        default: "ljwx-platform-app"
+        default: "ljwx-platform"
       verify_minutes:
         description: "Verification timeout minutes"
         required: false
@@ -101,7 +101,7 @@ jobs:
             DEPLOY_VALUES_FILE="${{ github.event.inputs.deploy_values_file }}"
           else
             DEPLOY_REPO="BrunoGaoSZ/ljwx-deploy"
-            DEPLOY_VALUES_FILE="apps/ljwx-platform-app/release-values.yaml"
+            DEPLOY_VALUES_FILE="apps/ljwx-platform/overlays/prod/kustomization.yaml"
           fi
 
           git clone --depth=1 "https://x-access-token:${DEPLOY_REPO_TOKEN}@github.com/${DEPLOY_REPO}.git" deploy-repo
@@ -127,7 +127,7 @@ jobs:
             fp.write(f"image_digest={data['imageDigest']}\n")
           PY
         env:
-          DEPLOY_VALUES_FILE: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.deploy_values_file || 'apps/ljwx-platform-app/release-values.yaml' }}
+          DEPLOY_VALUES_FILE: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.deploy_values_file || 'apps/ljwx-platform/overlays/prod/kustomization.yaml' }}
 
       - name: Resolve verify settings
         id: cfg
@@ -142,9 +142,9 @@ jobs:
             VERIFY_MINUTES="${{ github.event.inputs.verify_minutes }}"
           else
             NAMESPACE="ljwx-platform"
-            DEPLOYMENT_NAME="ljwx-platform-app"
+            DEPLOYMENT_NAME="ljwx-platform"
             ARGOCD_NAMESPACE="argocd"
-            ARGOCD_APP="ljwx-platform-app"
+            ARGOCD_APP="ljwx-platform"
             VERIFY_MINUTES="5"
           fi
           echo "namespace=${NAMESPACE}" >> "${GITHUB_OUTPUT}"

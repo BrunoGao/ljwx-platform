@@ -185,7 +185,7 @@ ljwx-platform/
 
 业务仓内提供 workflow：`.github/workflows/release-to-deploy.yml`，流程为：
 
-1. 构建并推送服务镜像到 Harbor（默认 `harbor.eu.lingjingwanxiang.cn/ljwx-platform/ljwx-platform-app`），产出 `image`、`imageDigest`
+1. 构建并推送服务镜像到 Harbor（默认 `harbor.eu.lingjingwanxiang.cn/ljwx/ljwx-platform`），产出 `image`、`imageDigest`
 2. 生成 `serviceVersion=git_sha` 与 `deploymentId=sha_short-digest_short`
 3. 自动给 `ljwx-deploy` 提 PR，仅更新该服务 `release-values.yaml` 的 4 个字段：
    `image`、`deploymentId`、`serviceVersion`、`imageDigest`
@@ -206,10 +206,10 @@ ljwx-platform/
 
 ### 手动触发推荐参数
 
-- `service_name`: `ljwx-platform-app`
+- `service_name`: `ljwx-platform`
 - `deploy_repo`: `BrunoGaoSZ/ljwx-deploy`
-- `deploy_values_file`: `apps/ljwx-platform-app/release-values.yaml`
-- `image_repo`: 留空时默认 `harbor.eu.lingjingwanxiang.cn/ljwx-platform/ljwx-platform-app`
+- `deploy_values_file`: `apps/ljwx-platform/overlays/prod/kustomization.yaml`
+- `image_repo`: 留空时默认 `harbor.eu.lingjingwanxiang.cn/ljwx/ljwx-platform`
 
 ## 本地 k3s 验收 Workflow
 
