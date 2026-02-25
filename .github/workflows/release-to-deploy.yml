@@ -94,7 +94,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          ./mvnw -q \
+          mvn -B -ntp -q \
             -pl ljwx-platform-app \
             -am \
             spring-boot:build-image \
