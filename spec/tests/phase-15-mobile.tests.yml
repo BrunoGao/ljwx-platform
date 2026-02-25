@@ -1,0 +1,61 @@
+# Phase 15 — Mobile Scaffold 测试契约
+phase: 15
+module: "mobile"
+ac_ref: "spec/phase/phase-15.md"
+
+tests:
+  - id: TC-15-01
+    priority: P0
+    category: config
+    ac: AC-01
+    scenario: "package.json 依赖全部用 ~"
+    expect:
+      file_assert: "ljwx-platform-mobile/package.json dependencies 使用 ~ 前缀"
+
+  - id: TC-15-02
+    priority: P0
+    category: config
+    ac: AC-02
+    scenario: ".env 使用 VITE_APP_BASE_API"
+    expect:
+      file_assert: "ljwx-platform-mobile/.env.development 包含 VITE_APP_BASE_API"
+
+  - id: TC-15-03
+    priority: P0
+    category: pages
+    ac: AC-03
+    scenario: "登录页面存在"
+    expect:
+      file_exists: "ljwx-platform-mobile/src/pages/login/index.vue"
+
+  - id: TC-15-04
+    priority: P0
+    category: pages
+    ac: AC-04
+    scenario: "tabBar 4 个页面存在"
+    expect:
+      files_exist:
+        - "ljwx-platform-mobile/src/pages/home/index.vue"
+        - "ljwx-platform-mobile/src/pages/work/index.vue"
+        - "ljwx-platform-mobile/src/pages/message/index.vue"
+        - "ljwx-platform-mobile/src/pages/mine/index.vue"
+
+  - id: TC-15-05
+    priority: P0
+    category: type_safety
+    ac: AC-05
+    scenario: "无 any 类型"
+    expect:
+      command: "cd ljwx-platform-mobile && pnpm run type-check"
+      exit_code: 0
+
+ac_tc_map:
+  AC-01: [TC-15-01]
+  AC-02: [TC-15-02]
+  AC-03: [TC-15-03]
+  AC-04: [TC-15-04]
+  AC-05: [TC-15-05]
+
+gate_r09:
+  p0_required: true
+  test_class: "MobileScaffoldTest"

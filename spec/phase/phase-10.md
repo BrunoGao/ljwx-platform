@@ -11,7 +11,15 @@ scope:
   - "scripts/tools/export-openapi.sh"
   - "docs/contracts/.gitkeep"
 ---
-# Phase 10: Index & Contract
+# Phase 10 — 索引与契约 (Index and Contract)
+
+| 项目 | 值 |
+|-----|---|
+| Phase | 10 |
+| 模块 | ljwx-platform-app |
+| Feature | F-010 (数据库索引与 API 契约) |
+| 前置依赖 | Phase 9 (Logs Notice and File) |
+| 测试契约 | `spec/tests/phase-10-index.tests.yml` |
 
 ## 读取清单
 
@@ -20,40 +28,105 @@ scope:
 - `spec/05-backend-config.md` — §springdoc 部分
 - `spec/08-output-rules.md`
 
-## 任务
+---
 
-V021（常用索引）、OpenAPI export 脚本、springdoc 配置验证。
+## 数据库契约
 
-## Phase-Local Manifest
+### V021__create_indexes.sql（索引）
 
+| 表名 | 索引名 | 列 | 类型 | 说明 |
+|------|--------|---|------|------|
+| sys_user | idx_user_tenant_username | tenant_id, username | BTREE | 租户+用户名查询 |
+| sys_user | idx_user_tenant_phone | tenant_id, phone | BTREE | 租户+手机号查询 |
+| sys_user | idx_user_created_time | created_time | BTREE | 创建时间排序 |
+| sys_role | idx_role_tenant | tenant_id | BTREE | 租户查询 |
+| sys_permission | idx_permission_tenant | tenant_id | BTREE | 租户查询 |
+| sys_menu | idx_menu_tenant_parent | tenant_id, parent_id | BTREE | 租户+父菜单查询 |
+| sys_dict_data | idx_dict_type | dict_type | BTREE | 字典类型查询 |
+| sys_operation_log | idx_log_tenant_time | tenant_id, created_time | BTREE | 租户+时间查询 |
+| sys_login_log | idx_login_tenant_time | tenant_id, login_time | BTREE | 租户+登录时间查询 |
+| sys_file | idx_file_tenant | tenant_id | BTREE | 租户查询 |
+
+**关键约束**：
+- 所有多租户表必须有 tenant_id 索引
+- 常用查询字段必须有索引
+- 时间字段用于排序的必须有索引
+
+---
+
+## OpenAPI 契约
+
+### export-openapi.sh（导出脚本）
+
+功能：
+1. 启动 Spring Boot 应用
+2. 等待应用就绪（健康检查）
+3. 调用 `/v3/api-docs` 导出 OpenAPI JSON
+4. 保存到 `docs/contracts/openapi.json`
+5. 关闭应用
+
+### springdoc 配置（application.yml）
+
+```yaml
+springdoc:
+  api-docs:
+    enabled: true
+    path: /v3/api-docs
+  swagger-ui:
+    enabled: true
+    path: /swagger-ui.html
+  group-configs:
+    - group: 'system'
+      paths-to-match: '/api/**'
 ```
-ljwx-platform-app/src/main/resources/db/migration/V021__create_indexes.sql
-scripts/tools/export-openapi.sh
-docs/contracts/.gitkeep
-```
+
+---
+
+## 业务规则
+
+- **BL-10-01**：所有包含 tenant_id 的表必须有 tenant_id 索引
+- **BL-10-02**：常用查询字段（username, phone, dict_type）必须有索引
+- **BL-10-03**：时间字段用于排序的（created_time, login_time）必须有索引
+- **BL-10-04**：复合索引遵循最左前缀原则（tenant_id 在前）
+- **BL-10-05**：export-openapi.sh 必须等待应用就绪后再导出
+- **BL-10-06**：OpenAPI JSON 必须包含所有 Controller 的端点定义
+
+---
+
+## 测试用例（摘要）
+
+详细用例见 **`spec/tests/phase-10-index.tests.yml`**。
+
+P0 强制覆盖：
+
+| ID | 场景 | P |
+|----|------|---|
+| TC-10-01 | sys_user 表有 tenant_id 索引 | P0 |
+| TC-10-02 | sys_operation_log 表有复合索引 | P0 |
+| TC-10-03 | export-openapi.sh 可执行 | P0 |
+| TC-10-04 | OpenAPI JSON 包含所有端点 | P0 |
+| TC-10-05 | Swagger UI 可访问 | P0 |
+| TC-10-06 | 索引提升查询性能 | P0 |
+
+---
 
 ## 验收条件
 
-1. V021 为常用字段创建索引（tenant_id、username、created_time 等）
-2. export-openapi.sh 可启动应用并导出 openapi.json
-3. springdoc 在 application.yml 中配置正确
-4. 编译通过
+- **AC-01**：V021 为常用字段创建索引（tenant_id、username、created_time 等）
+- **AC-02**：所有多租户表有 tenant_id 索引
+- **AC-03**：export-openapi.sh 可启动应用并导出 openapi.json
+- **AC-04**：springdoc 在 application.yml 中配置正确
+- **AC-05**：Swagger UI 可通过 /swagger-ui.html 访问
+- **AC-06**：`./mvnw compile -pl ljwx-platform-app` 通过
+
+---
+
+## 关键约束
+
+- 禁止：缺少 tenant_id 索引 · 复合索引顺序错误 · OpenAPI 导出失败
+- 索引命名规范：`idx_{table}_{columns}`
+- 复合索引遵循最左前缀原则
 
 ## 可 Bundle
 
 可与 Phase 9 一起执行。
-
-## Test Cases
-
-| TC ID | Endpoint | 权限 | 预期状态码 | 关键断言 |
-|------|----------|------|------------|---------|
-| TC-10-01 | GET /api/** | read | 401 | 无 token 返回 Unauthorized |
-| TC-10-02 | GET /api/** | read | 403 | 无权限 token 返回 Forbidden |
-| TC-10-03 | GET /api/** | read | 200 | 成功返回统一响应结构 |
-| TC-10-04 | POST /api/** | write | 400 | 参数校验错误返回 400 |
-| TC-10-05 | POST /api/** | write | 200 | 创建成功并返回 ID/结果 |
-| TC-10-06 | PUT /api/**/{id} | write | 200 | 更新成功且可再次查询 |
-| TC-10-07 | DELETE /api/**/{id} | delete | 200 | 删除后数据不可见（软删/过滤） |
-| TC-10-08 | GET /api/** | read | 200 | 仅可见当前租户数据 |
-| TC-10-09 | GET /api/** | read | 401 | 过期 token 被拒绝 |
-| TC-10-10 | GET /api/** | read | 401 | 非法 token 被拒绝 |

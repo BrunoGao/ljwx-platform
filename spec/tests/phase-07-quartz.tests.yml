@@ -1,0 +1,284 @@
+# Phase 07 — Quartz Integration 测试契约
+# 关联 Spec：spec/phase/phase-07.md
+
+phase: 7
+module: "quartz"
+ac_ref: "spec/phase/phase-07.md"
+
+tests:
+
+  # ─── P0：安全测试 ───────────────────────────────────────────────
+  - id: TC-07-01
+    priority: P0
+    category: security
+    scenario: "无 Token 访问 → 401"
+    request:
+      method: GET
+      path: /api/jobs
+      auth: none
+    expect:
+      status: 401
+      body:
+        code: 401001
+
+  - id: TC-07-02
+    priority: P0
+    category: security
+    scenario: "无权限 Token → 403"
+    request:
+      method: GET
+      path: /api/jobs
+      auth: token_without_permission
+    expect:
+      status: 403
+      body:
+        code: 403001
+
+  # ─── P0：CRUD 核心流程 ────────────────────────���─────────────────
+  - id: TC-07-03
+    priority: P0
+    category: crud
+    ac: AC-03
+    bl_ref: BL-07-04
+    scenario: "创建任务成功，jobGroup 自动设置"
+    request:
+      method: POST
+      path: /api/jobs
+      auth: token_with_system:job:create
+      body:
+        jobName: "测试任务"
+        beanName: "testJob"
+        methodName: "execute"
+        cronExpression: "0 0 1 * * ?"
+    expect:
+      status: 200
+      body:
+        code: 0
+        data: "{jobId}"
+      db_assert: "SELECT job_group FROM sys_job WHERE id={jobId} → 'TENANT_1'"
+
+  - id: TC-07-04
+    priority: P0
+    category: crud
+    scenario: "查询任务列表成功"
+    request:
+      method: GET
+      path: /api/jobs
+      auth: token_with_system:job:list
+    expect:
+      status: 200
+      body:
+        code: 0
+        data:
+          list: []
+          total: 0
+
+  - id: TC-07-05
+    priority: P0
+    category: crud
+    scenario: "查询任务详情成功"
+    request:
+      method: GET
+      path: /api/jobs/{jobId}
+      auth: token_with_system:job:detail
+    expect:
+      status: 200
+      body:
+        code: 0
+        data:
+          id: "{jobId}"
+          jobName: "测试任务"
+
+  - id: TC-07-06
+    priority: P0
+    category: crud
+    scenario: "更新任务成功"
+    request:
+      method: PUT
+      path: /api/jobs/{jobId}
+      auth: token_with_system:job:update
+      body:
+        jobName: "更新后的任务"
+        cronExpression: "0 0 2 * * ?"
+    expect:
+      status: 200
+      body:
+        code: 0
+
+  - id: TC-07-07
+    priority: P0
+    category: crud
+    scenario: "删除任务后软删除"
+    request:
+      method: DELETE
+      path: /api/jobs/{jobId}
+      auth: token_with_system:job:delete
+    expect:
+      status: 200
+      body:
+        code: 0
+      db_assert: "SELECT deleted FROM sys_job WHERE id={jobId} → TRUE"
+
+  # ─── P0：租户隔离 ───────────────────────────────────────────────
+  - id: TC-07-08
+    priority: P0
+    category: tenant_isolation
+    ac: AC-04
+    bl_ref: BL-07-03
+    scenario: "租户 A 查不到租户 B 的任务"
+    setup:
+      - create_job_for_tenant_A
+      - create_job_for_tenant_B
+    request:
+      method: GET
+      path: /api/jobs
+      auth: token_tenant_A
+    expect:
+      status: 200
+      body:
+        data:
+          list: "[仅包含租户 A 的任务]"
+
+  # ─── P0：任务操作 ───────────────────────────────────────────────
+  - id: TC-07-09
+    priority: P0
+    category: business
+    scenario: "立即执行任务成功"
+    request:
+      method: POST
+      path: /api/jobs/{jobId}/run
+      auth: token_with_system:job:run
+    expect:
+      status: 200
+      body:
+        code: 0
+
+  - id: TC-07-10
+    priority: P0
+    category: business
+    scenario: "暂停任务成功"
+    request:
+      method: POST
+      path: /api/jobs/{jobId}/pause
+      auth: token_with_system:job:pause
+    expect:
+      status: 200
+      body:
+        code: 0
+      db_assert: "SELECT status FROM sys_job WHERE id={jobId} → 0"
+
+  - id: TC-07-11
+    priority: P0
+    category: business
+    scenario: "恢复任务成功"
+    request:
+      method: POST
+      path: /api/jobs/{jobId}/resume
+      auth: token_with_system:job:resume
+    expect:
+      status: 200
+      body:
+        code: 0
+      db_assert: "SELECT status FROM sys_job WHERE id={jobId} → 1"
+
+  # ─── P0：参数校验 ───────────────────────────────────────────────
+  - id: TC-07-12
+    priority: P0
+    category: validation
+    ac: AC-05
+    bl_ref: BL-07-05
+    scenario: "无效 Cron 表达式 → 400"
+    request:
+      method: POST
+      path: /api/jobs
+      auth: token_with_system:job:create
+      body:
+        jobName: "测试任务"
+        beanName: "testJob"
+        methodName: "execute"
+        cronExpression: "invalid cron"
+    expect:
+      status: 400
+      body:
+        code: 400001
+
+  - id: TC-07-13
+    priority: P0
+    category: validation
+    scenario: "jobName 为空 → 400"
+    request:
+      method: POST
+      path: /api/jobs
+      auth: token_with_system:job:create
+      body:
+        jobName: ""
+        beanName: "testJob"
+        methodName: "execute"
+        cronExpression: "0 0 1 * * ?"
+    expect:
+      status: 400
+      body:
+        code: 400001
+
+  # ─── P1：数据库结构验证 ─────────────────────────────────────────
+  - id: TC-07-14
+    priority: P1
+    category: db_schema
+    ac: AC-01
+    bl_ref: BL-07-01
+    scenario: "V010 包含 Quartz 标准 10 张表"
+    expect:
+      db_assert: "表 qrtz_job_details, qrtz_triggers, qrtz_cron_triggers 等存在"
+
+  - id: TC-07-15
+    priority: P1
+    category: db_schema
+    ac: AC-01
+    bl_ref: BL-07-01
+    scenario: "Quartz 表无审计字段"
+    expect:
+      db_assert: "qrtz_job_details 表不包含 tenant_id, created_by 等列"
+
+  - id: TC-07-16
+    priority: P1
+    category: db_schema
+    ac: AC-02
+    bl_ref: BL-07-02
+    scenario: "sys_job 表包含 7 列审计字段"
+    expect:
+      db_assert: "sys_job 表包含 tenant_id, created_by, created_time, updated_by, updated_time, deleted, version"
+
+  # ─── P1：业务规则验证 ───────────────────────────────────────────
+  - id: TC-07-17
+    priority: P1
+    category: business
+    bl_ref: BL-07-03
+    scenario: "JobKey group 格式为 TENANT_{tenantId}"
+    expect:
+      code_check: "JobAppService 中 JobKey 构造使用 'TENANT_' + tenantId"
+
+  - id: TC-07-18
+    priority: P1
+    category: business
+    scenario: "任务执行失败不影响调度器"
+    setup:
+      - create_job_that_throws_exception
+    expect:
+      note: "任务抛出异常后，调度器仍正常运行，异常记录到日志"
+
+# ─── AC → TC 映射 ──────────────────────────────────────────────────
+ac_tc_map:
+  AC-01: [TC-07-14, TC-07-15]
+  AC-02: [TC-07-16]
+  AC-03: [TC-07-03]
+  AC-04: [TC-07-08, TC-07-17]
+  AC-05: [TC-07-12]
+  AC-06: []  # 编译检查由 Gate R01 覆盖
+
+# ─── Gate R09 配置 ─────────────────────────────────────────────────
+gate_r09:
+  p0_required: true
+  p1_coverage_target: 0.7
+  p2_skip: true
+  test_class: "JobControllerTest"
+  note: "本 Phase 包含 CRUD、租户隔离、任务操作、参数校验测试"

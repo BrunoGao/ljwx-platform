@@ -1,0 +1,164 @@
+# Phase 03 — Security Module 测试契约
+# 关联 Spec：spec/phase/phase-03.md
+
+phase: 3
+module: "security"
+ac_ref: "spec/phase/phase-03.md"
+
+tests:
+
+  # ─── P0：依赖验证 ───────────────────────────────────────────────
+  - id: TC-03-01
+    priority: P0
+    category: dependency
+    ac: AC-01
+    bl_ref: BL-03-01
+    scenario: "pom.xml 仅依赖 core，无 data"
+    method: pom_check
+    expect:
+      file: "ljwx-platform-security/pom.xml"
+      contains: "<artifactId>ljwx-platform-core</artifactId>"
+      not_contains: "<artifactId>ljwx-platform-data</artifactId>"
+
+  - id: TC-03-02
+    priority: P0
+    category: dependency
+    ac: AC-02
+    bl_ref: BL-03-01
+    scenario: "全部 import 无 com.ljwx.platform.data"
+    method: grep_check
+    expect:
+      command: "grep -r 'import com.ljwx.platform.data' ljwx-platform-security/src"
+      exit_code: 1
+
+  # ─── P0：接口实现验证 ───────────────────────────────────────────
+  - id: TC-03-03
+    priority: P0
+    category: implementation
+    ac: AC-03
+    bl_ref: BL-03-04
+    scenario: "SecurityContextUserHolder 实现 CurrentUserHolder"
+    method: class_implements_check
+    expect:
+      class: "com.ljwx.platform.security.context.SecurityContextUserHolder"
+      implements: "com.ljwx.platform.core.context.CurrentUserHolder"
+
+  - id: TC-03-04
+    priority: P0
+    category: implementation
+    ac: AC-04
+    bl_ref: BL-03-04
+    scenario: "SecurityContextTenantHolder 实现 CurrentTenantHolder"
+    method: class_implements_check
+    expect:
+      class: "com.ljwx.platform.security.context.SecurityContextTenantHolder"
+      implements: "com.ljwx.platform.core.context.CurrentTenantHolder"
+
+  # ─── P0：JWT 验证 ───────────────────────────────────────────────
+  - id: TC-03-05
+    priority: P0
+    category: jwt
+    ac: AC-05
+    scenario: "JwtTokenProvider 包含 generateAccessToken 方法"
+    method: class_method_check
+    expect:
+      class: "com.ljwx.platform.security.jwt.JwtTokenProvider"
+      methods:
+        - "generateAccessToken"
+        - "generateRefreshToken"
+        - "validateToken"
+
+  - id: TC-03-06
+    priority: P0
+    category: jwt
+    ac: AC-05
+    bl_ref: BL-03-03
+    scenario: "JwtProperties 包含 access-token-expiration 配置"
+    method: class_field_check
+    expect:
+      class: "com.ljwx.platform.security.jwt.JwtProperties"
+      fields:
+        - "accessTokenExpiration"
+        - "refreshTokenExpiration"
+        - "secret"
+
+  - id: TC-03-07
+    priority: P0
+    category: jwt
+    bl_ref: BL-03-02
+    scenario: "JWT authorities claim 无 ROLE_ 前缀"
+    method: code_pattern_check
+    expect:
+      class: "com.ljwx.platform.security.jwt.JwtTokenProvider"
+      not_contains: "ROLE_"
+      note: "权限字符串直接使用，不添加 ROLE_ 前缀"
+
+  # ─── P0：Security 配置验证 ──────────────────────────────────────
+  - id: TC-03-08
+    priority: P0
+    category: config
+    ac: AC-06
+    scenario: "SecurityConfig 允许 /api/auth/login 匿名访问"
+    method: config_check
+    expect:
+      class: "com.ljwx.platform.security.config.SecurityConfig"
+      contains: "permitAll()"
+      path: "/api/auth/login"
+
+  - id: TC-03-09
+    priority: P0
+    category: config
+    ac: AC-06
+    scenario: "SecurityConfig 允许 /api/auth/refresh 匿名访问"
+    method: config_check
+    expect:
+      class: "com.ljwx.platform.security.config.SecurityConfig"
+      contains: "permitAll()"
+      path: "/api/auth/refresh"
+
+  - id: TC-03-10
+    priority: P0
+    category: compile
+    ac: AC-07
+    scenario: "security 模块编译通过"
+    method: maven_compile
+    expect:
+      command: "./mvnw compile -pl ljwx-platform-security -q"
+      exit_code: 0
+
+  # ─── P1：过滤器验证 ─────────────────────────────────────────────
+  - id: TC-03-11
+    priority: P1
+    category: filter
+    scenario: "JwtAuthenticationFilter 继承 OncePerRequestFilter"
+    method: class_extends_check
+    expect:
+      class: "com.ljwx.platform.security.filter.JwtAuthenticationFilter"
+      extends: "OncePerRequestFilter"
+
+  - id: TC-03-12
+    priority: P1
+    category: filter
+    scenario: "JwtAuthenticationFilter 从 Authorization header 提取 token"
+    method: code_pattern_check
+    expect:
+      class: "com.ljwx.platform.security.filter.JwtAuthenticationFilter"
+      contains: "Authorization"
+
+# ─── AC → TC 映射 ──────────────────────────────────────────────────
+ac_tc_map:
+  AC-01: [TC-03-01]
+  AC-02: [TC-03-02]
+  AC-03: [TC-03-03]
+  AC-04: [TC-03-04]
+  AC-05: [TC-03-05, TC-03-06, TC-03-07]
+  AC-06: [TC-03-08, TC-03-09]
+  AC-07: [TC-03-10]
+
+# ─── Gate R09 配置 ─────────────────────────────────────────────────
+gate_r09:
+  p0_required: true
+  p1_coverage_target: 0.7
+  p2_skip: true
+  test_class: "SecurityModuleTest"
+  note: "本 Phase 以类结构和配置验证为主，JWT 功能在后续 Phase 集成测试"

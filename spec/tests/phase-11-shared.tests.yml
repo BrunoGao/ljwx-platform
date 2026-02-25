@@ -1,0 +1,163 @@
+# Phase 11 — Shared Package 测试契约
+# 关联 Spec：spec/phase/phase-11.md
+# 测试类：SharedPackageTest（静态检查为主）
+
+phase: 11
+module: "shared"
+ac_ref: "spec/phase/phase-11.md"
+
+tests:
+
+  # ─── P0：TypeScript 严格模式 ──────────────────────────────────────
+  - id: TC-11-01
+    priority: P0
+    category: config
+    ac: AC-01
+    bl_ref: BL-11-01
+    scenario: "tsconfig.json strict: true 生效"
+    expect:
+      file_assert: "packages/shared/tsconfig.json 包含 \"strict\": true"
+
+  - id: TC-11-02
+    priority: P0
+    category: type_safety
+    ac: AC-02
+    bl_ref: BL-11-01
+    scenario: "所有类型定义无 any，type-check 通过"
+    method: static_analysis
+    expect:
+      command: "cd packages/shared && pnpm run type-check"
+      exit_code: 0
+      no_any_type: true
+
+  # ─── P0：常量同步性 ──────────────────────────────────────────────
+  - id: TC-11-03
+    priority: P0
+    category: contract
+    ac: AC-03
+    bl_ref: BL-11-02
+    scenario: "ErrorCode 常量与 spec/03-api.md 一致"
+    method: static_analysis
+    expect:
+      assert: "packages/shared/src/constants/error-codes.ts 中的错误码与 spec/03-api.md §错误码表一致"
+
+  - id: TC-11-04
+    priority: P0
+    category: contract
+    ac: AC-04
+    bl_ref: BL-11-03
+    scenario: "Permission 常量与 spec/01-constraints.md §RBAC 一致"
+    method: static_analysis
+    expect:
+      assert: "packages/shared/src/constants/permissions.ts 中的权限字符串与 spec/01-constraints.md §RBAC 权限一致"
+
+  # ─── P0：DTO 字段约束 ────────────────────────────────────────────
+  - id: TC-11-05
+    priority: P0
+    category: contract
+    ac: AC-05
+    bl_ref: BL-11-04
+    scenario: "所有 DTO 不含 tenantId 等审计字段"
+    method: static_analysis
+    expect:
+      assert: "packages/shared/src/types/*.ts 中所有 *DTO 接口不包含 tenantId, createdBy, createdTime, updatedBy, updatedTime, deleted, version 字段"
+
+  # ─── P0：构建产物 ────────────────────────────────────────────────
+  - id: TC-11-06
+    priority: P0
+    category: build
+    ac: AC-06
+    bl_ref: BL-11-05
+    scenario: "构建产物包含 ESM + CJS + .d.ts"
+    method: build_check
+    expect:
+      command: "cd packages/shared && pnpm run build"
+      exit_code: 0
+      files_exist:
+        - "packages/shared/dist/index.js"
+        - "packages/shared/dist/index.cjs"
+        - "packages/shared/dist/index.d.ts"
+
+  # ─── P1：类型完整性 ──────────────────────────────────────────────
+  - id: TC-11-07
+    priority: P1
+    category: type_safety
+    scenario: "Result<T> 泛型类型正确"
+    method: static_analysis
+    expect:
+      assert: "packages/shared/src/types/api.ts 中 Result<T> 接口包含 code, message, data 字段"
+
+  - id: TC-11-08
+    priority: P1
+    category: type_safety
+    scenario: "PageResult<T> 泛型类型正确"
+    method: static_analysis
+    expect:
+      assert: "packages/shared/src/types/api.ts 中 PageResult<T> 接口包含 list, total 字段"
+
+  - id: TC-11-09
+    priority: P1
+    category: type_safety
+    scenario: "UserVO 包含必需字段"
+    method: static_analysis
+    expect:
+      assert: "packages/shared/src/types/user.ts 中 UserVO 包含 id, username, nickname, createdTime, updatedTime 字段"
+
+  - id: TC-11-10
+    priority: P1
+    category: type_safety
+    scenario: "UserCreateDTO 不含 id 字段"
+    method: static_analysis
+    expect:
+      assert: "packages/shared/src/types/user.ts 中 UserCreateDTO 不包含 id 字段"
+
+  # ─── P1：导出完整性 ──────────────────────────────────────────────
+  - id: TC-11-11
+    priority: P1
+    category: exports
+    scenario: "index.ts 导出所有类型"
+    method: static_analysis
+    expect:
+      assert: "packages/shared/src/index.ts 导出 types, constants, utils 模块"
+
+  - id: TC-11-12
+    priority: P1
+    category: exports
+    scenario: "package.json exports 字段配置正确"
+    method: static_analysis
+    expect:
+      file_assert: "packages/shared/package.json 包含 exports 字段，支持 import 和 require"
+
+  # ─── P2：版本约束 ────────────────────────────────────────────────
+  - id: TC-11-13
+    priority: P2
+    category: config
+    scenario: "devDependencies 仅用 ~ 前缀"
+    method: static_analysis
+    expect:
+      file_assert: "packages/shared/package.json devDependencies 中所有版本号使用 ~ 前缀，无 ^ 前缀"
+
+  - id: TC-11-14
+    priority: P2
+    category: build
+    scenario: "tsup 配置生成 sourcemap"
+    method: static_analysis
+    expect:
+      file_assert: "packages/shared/tsup.config.ts 配置 dts: true, clean: true"
+
+# ─── AC → TC 映射 ──────────────────────────────────────────────────
+ac_tc_map:
+  AC-01: [TC-11-01]
+  AC-02: [TC-11-02]
+  AC-03: [TC-11-03]
+  AC-04: [TC-11-04]
+  AC-05: [TC-11-05]
+  AC-06: [TC-11-06]
+
+# ─── Gate R09 配置 ─────────────────────────────────────────────────
+gate_r09:
+  p0_required: true
+  p1_coverage_target: 0.7
+  p2_skip: true
+  test_class: "SharedPackageTest"
+  note: "本 Phase 以静态检查为主，无运行时测试"

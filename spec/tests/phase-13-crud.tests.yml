@@ -1,0 +1,95 @@
+# Phase 13 — Admin CRUD Pages 测试契约
+# 关联 Spec：spec/phase/phase-13.md
+
+phase: 13
+module: "crud"
+ac_ref: "spec/phase/phase-13.md"
+
+tests:
+  - id: TC-13-01
+    priority: P0
+    category: files
+    ac: AC-01
+    scenario: "所有 API 文件存在"
+    expect:
+      files_exist:
+        - "ljwx-platform-admin/src/api/user.ts"
+        - "ljwx-platform-admin/src/api/role.ts"
+        - "ljwx-platform-admin/src/api/tenant.ts"
+        - "ljwx-platform-admin/src/api/dict.ts"
+        - "ljwx-platform-admin/src/api/config.ts"
+        - "ljwx-platform-admin/src/api/job.ts"
+        - "ljwx-platform-admin/src/api/log.ts"
+        - "ljwx-platform-admin/src/api/file.ts"
+        - "ljwx-platform-admin/src/api/notice.ts"
+
+  - id: TC-13-02
+    priority: P0
+    category: files
+    ac: AC-02
+    scenario: "所有页面文件存在"
+    expect:
+      files_exist:
+        - "ljwx-platform-admin/src/views/system/user/index.vue"
+        - "ljwx-platform-admin/src/views/system/role/index.vue"
+        - "ljwx-platform-admin/src/views/system/tenant/index.vue"
+        - "ljwx-platform-admin/src/views/system/dict/index.vue"
+        - "ljwx-platform-admin/src/views/system/config/index.vue"
+        - "ljwx-platform-admin/src/views/system/job/index.vue"
+        - "ljwx-platform-admin/src/views/monitor/operlog/index.vue"
+        - "ljwx-platform-admin/src/views/monitor/loginlog/index.vue"
+        - "ljwx-platform-admin/src/views/system/file/index.vue"
+        - "ljwx-platform-admin/src/views/system/notice/index.vue"
+
+  - id: TC-13-03
+    priority: P0
+    category: contract
+    ac: AC-03
+    bl_ref: BL-13-01
+    scenario: "API 路径与 spec/03-api.md 一致"
+    method: static_analysis
+    expect:
+      assert: "所有 API 文件中的请求路径与 spec/03-api.md 路由表一致"
+
+  - id: TC-13-04
+    priority: P0
+    category: type_safety
+    ac: AC-04
+    bl_ref: BL-13-02
+    scenario: "类型从 @ljwx/shared 导入"
+    method: static_analysis
+    expect:
+      assert: "所有 API 和页面文件从 @ljwx/shared 导入类型，无本地重复定义"
+
+  - id: TC-13-05
+    priority: P0
+    category: type_safety
+    ac: AC-05
+    bl_ref: BL-13-05
+    scenario: "type-check 通过"
+    expect:
+      command: "cd ljwx-platform-admin && pnpm run type-check"
+      exit_code: 0
+
+  - id: TC-13-06
+    priority: P0
+    category: build
+    ac: AC-06
+    scenario: "构建成功"
+    expect:
+      command: "cd ljwx-platform-admin && pnpm run build"
+      exit_code: 0
+
+ac_tc_map:
+  AC-01: [TC-13-01]
+  AC-02: [TC-13-02]
+  AC-03: [TC-13-03]
+  AC-04: [TC-13-04]
+  AC-05: [TC-13-05]
+  AC-06: [TC-13-06]
+
+gate_r09:
+  p0_required: true
+  p1_coverage_target: 0.7
+  p2_skip: true
+  test_class: "AdminCRUDTest"

@@ -1,0 +1,226 @@
+# Phase 12 — Admin Scaffold 测试契约
+# 关联 Spec：spec/phase/phase-12.md
+# 测试类：AdminScaffoldTest（静态检查 + 构建验证）
+
+phase: 12
+module: "admin"
+ac_ref: "spec/phase/phase-12.md"
+
+tests:
+
+  # ─── P0：依赖版本约束 ──────────────────────────────────────────────
+  - id: TC-12-01
+    priority: P0
+    category: config
+    ac: AC-01
+    bl_ref: BL-12-01
+    scenario: "package.json 所有依赖版本用 ~，无 ^"
+    method: static_analysis
+    expect:
+      file_assert: "ljwx-platform-admin/package.json dependencies 和 devDependencies 中所有版本号使用 ~ 前缀，无 ^ 前缀"
+
+  # ─── P0：环境变量 ────────────────────────────────────────────────
+  - id: TC-12-02
+    priority: P0
+    category: config
+    ac: AC-02
+    bl_ref: BL-12-02
+    scenario: ".env 文件使用 VITE_APP_BASE_API"
+    method: static_analysis
+    expect:
+      file_assert: "ljwx-platform-admin/.env.development 和 .env.production 包含 VITE_APP_BASE_API，不包含 VITE_API_BASE_URL"
+
+  # ─── P0：Vue Router 5 API ─────────────────────────────────────────
+  - id: TC-12-03
+    priority: P0
+    category: router
+    ac: AC-03
+    bl_ref: BL-12-03
+    scenario: "Router 使用 Vue Router 5 API"
+    method: static_analysis
+    expect:
+      file_assert: "ljwx-platform-admin/src/router/index.ts 使用 createRouter 和 createWebHistory"
+
+  - id: TC-12-04
+    priority: P0
+    category: router
+    ac: AC-03
+    scenario: "Router 包含登录和首页路由"
+    method: static_analysis
+    expect:
+      file_assert: "ljwx-platform-admin/src/router/index.ts 包含 /login 和 /dashboard 路由"
+
+  # ─── P0：User Store ──────────────────────────────────────────────
+  - id: TC-12-05
+    priority: P0
+    category: store
+    ac: AC-04
+    scenario: "User Store 包含 accessToken 和 refreshToken"
+    method: static_analysis
+    expect:
+      file_assert: "ljwx-platform-admin/src/stores/user.ts 包含 accessToken 和 refreshToken 状态"
+
+  - id: TC-12-06
+    priority: P0
+    category: store
+    ac: AC-04
+    scenario: "User Store 包含 loginAction 方法"
+    method: static_analysis
+    expect:
+      file_assert: "ljwx-platform-admin/src/stores/user.ts 包含 loginAction 方法"
+
+  - id: TC-12-07
+    priority: P0
+    category: store
+    ac: AC-04
+    scenario: "User Store 包含 logoutAction 方法"
+    method: static_analysis
+    expect:
+      file_assert: "ljwx-platform-admin/src/stores/user.ts 包含 logoutAction 方法"
+
+  - id: TC-12-08
+    priority: P0
+    category: store
+    ac: AC-04
+    scenario: "User Store 包含 refreshTokenAction 方法"
+    method: static_analysis
+    expect:
+      file_assert: "ljwx-platform-admin/src/stores/user.ts 包含 refreshTokenAction 方法"
+
+  # ─── P0：Axios 封装 ──────────────────────────────────────────────
+  - id: TC-12-09
+    priority: P0
+    category: api
+    ac: AC-05
+    bl_ref: BL-12-04
+    scenario: "Axios 封装使用 VITE_APP_BASE_API"
+    method: static_analysis
+    expect:
+      file_assert: "ljwx-platform-admin/src/api/request.ts 使用 import.meta.env.VITE_APP_BASE_API"
+
+  - id: TC-12-10
+    priority: P0
+    category: api
+    ac: AC-05
+    bl_ref: BL-12-04
+    scenario: "Axios 响应拦截器包含 401 处理逻辑"
+    method: static_analysis
+    expect:
+      file_assert: "ljwx-platform-admin/src/api/request.ts 响应拦截器包含 401 状态码处理"
+
+  - id: TC-12-11
+    priority: P0
+    category: api
+    ac: AC-05
+    bl_ref: BL-12-04
+    scenario: "Axios 401 处理包含刷新队列逻辑"
+    method: static_analysis
+    expect:
+      file_assert: "ljwx-platform-admin/src/api/request.ts 包含 isRefreshing 和 requestQueue 变量"
+
+  # ─── P0：构建验证 ────────────────────────────────────────────────
+  - id: TC-12-12
+    priority: P0
+    category: build
+    ac: AC-06
+    scenario: "Admin 构建成功"
+    method: build_check
+    expect:
+      command: "cd ljwx-platform-admin && pnpm run build"
+      exit_code: 0
+
+  # ─── P1：TypeScript 严格模式 ──────────────────────────────────────
+  - id: TC-12-13
+    priority: P1
+    category: type_safety
+    bl_ref: BL-12-05
+    scenario: "tsconfig.json strict: true"
+    method: static_analysis
+    expect:
+      file_assert: "ljwx-platform-admin/tsconfig.json 包含 \"strict\": true"
+
+  - id: TC-12-14
+    priority: P1
+    category: type_safety
+    bl_ref: BL-12-05
+    scenario: "type-check 通过"
+    method: static_analysis
+    expect:
+      command: "cd ljwx-platform-admin && pnpm run type-check"
+      exit_code: 0
+
+  # ─── P1：布局组件 ────────────────────────────────────────────────
+  - id: TC-12-15
+    priority: P1
+    category: layout
+    scenario: "DefaultLayout 组件存在"
+    method: static_analysis
+    expect:
+      file_exists: "ljwx-platform-admin/src/layouts/DefaultLayout.vue"
+
+  - id: TC-12-16
+    priority: P1
+    category: layout
+    scenario: "Sidebar 组件存在"
+    method: static_analysis
+    expect:
+      file_exists: "ljwx-platform-admin/src/layouts/components/Sidebar.vue"
+
+  - id: TC-12-17
+    priority: P1
+    category: layout
+    scenario: "Navbar 组件存在"
+    method: static_analysis
+    expect:
+      file_exists: "ljwx-platform-admin/src/layouts/components/Navbar.vue"
+
+  # ─── P1：页面组件 ────────────────────────────────────────────────
+  - id: TC-12-18
+    priority: P1
+    category: views
+    scenario: "登录页面存在"
+    method: static_analysis
+    expect:
+      file_exists: "ljwx-platform-admin/src/views/login/index.vue"
+
+  - id: TC-12-19
+    priority: P1
+    category: views
+    scenario: "首页存在"
+    method: static_analysis
+    expect:
+      file_exists: "ljwx-platform-admin/src/views/dashboard/index.vue"
+
+  # ─── P2：Vite 配置 ───────────────────────────────────────────────
+  - id: TC-12-20
+    priority: P2
+    category: config
+    scenario: "vite.config.ts 包含 AutoImport 插件"
+    method: static_analysis
+    expect:
+      file_assert: "ljwx-platform-admin/vite.config.ts 包含 unplugin-auto-import"
+
+  - id: TC-12-21
+    priority: P2
+    category: config
+    scenario: "vite.config.ts 包含 Components 插件"
+    method: static_analysis
+    expect:
+      file_assert: "ljwx-platform-admin/vite.config.ts 包含 unplugin-vue-components"
+
+# ─── AC → TC 映射 ──────────────────────────────────────────────────
+ac_tc_map:
+  AC-01: [TC-12-01]
+  AC-02: [TC-12-02]
+  AC-03: [TC-12-03, TC-12-04]
+  AC-04: [TC-12-05, TC-12-06, TC-12-07, TC-12-08]
+  AC-05: [TC-12-09, TC-12-10, TC-12-11]
+  AC-06: [TC-12-12]
+
+# ─── Gate R09 配置 ─────────────────────────────────────────────────
+gate_r09:
+  p0_required: true
+  p1_coverage_target: 0.7
+  p2_skip: true
+  test_class: "AdminScaffoldTest"
+  note: "本 Phase 以静态检查和构建验证为主"

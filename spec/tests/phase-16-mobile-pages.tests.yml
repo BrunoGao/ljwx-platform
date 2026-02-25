@@ -1,0 +1,43 @@
+# Phase 16 — Mobile Feature Pages 测试契约
+phase: 16
+module: "mobile-pages"
+ac_ref: "spec/phase/phase-16.md"
+
+tests:
+  - id: TC-16-01
+    priority: P0
+    category: pages
+    ac: AC-01
+    scenario: "所有 tabBar 页面有内容"
+    expect:
+      files_exist:
+        - "ljwx-platform-mobile/src/pages/work/index.vue"
+        - "ljwx-platform-mobile/src/pages/message/index.vue"
+        - "ljwx-platform-mobile/src/pages/mine/index.vue"
+
+  - id: TC-16-02
+    priority: P0
+    category: api
+    ac: AC-01
+    scenario: "API 文件存在"
+    expect:
+      files_exist:
+        - "ljwx-platform-mobile/src/api/notice.ts"
+        - "ljwx-platform-mobile/src/api/user.ts"
+
+  - id: TC-16-03
+    priority: P0
+    category: type_safety
+    ac: AC-02
+    scenario: "无 any 类型"
+    expect:
+      command: "cd ljwx-platform-mobile && pnpm run type-check"
+      exit_code: 0
+
+ac_tc_map:
+  AC-01: [TC-16-01, TC-16-02]
+  AC-02: [TC-16-03]
+
+gate_r09:
+  p0_required: true
+  test_class: "MobilePagesTest"

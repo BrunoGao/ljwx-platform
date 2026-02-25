@@ -9,7 +9,15 @@ bundle_with: [0]
 scope:
   - "ljwx-platform-core/**"
 ---
-# Phase 1: Core Module
+# Phase 1 — 核心模块 (Core Module)
+
+| 项目 | 值 |
+|-----|---|
+| Phase | 1 |
+| 模块 | ljwx-platform-core |
+| Feature | F-001 (核心基础类) |
+| 前置依赖 | Phase 0 (Skeleton) |
+| 测试契约 | `spec/tests/phase-01-core.tests.yml` |
 
 ## 读取清单
 
@@ -19,47 +27,114 @@ scope:
 - `spec/03-api.md` — §统一响应、§错误码
 - `spec/08-output-rules.md`
 
-## 任务
+---
 
-实现 ljwx-platform-core 模块：Result、ErrorCode、BaseEntity、SnowflakeIdGenerator、CurrentUserHolder 接口、CurrentTenantHolder 接口。
+## 类契约
 
-## Phase-Local Manifest
+### Result<T>（统一响应）
 
-```
-ljwx-platform-core/pom.xml
-ljwx-platform-core/src/main/java/com/ljwx/platform/core/result/Result.java
-ljwx-platform-core/src/main/java/com/ljwx/platform/core/result/ErrorCode.java
-ljwx-platform-core/src/main/java/com/ljwx/platform/core/result/PageResult.java
-ljwx-platform-core/src/main/java/com/ljwx/platform/core/id/SnowflakeIdGenerator.java
-ljwx-platform-core/src/main/java/com/ljwx/platform/core/entity/BaseEntity.java
-ljwx-platform-core/src/main/java/com/ljwx/platform/core/context/CurrentUserHolder.java
-ljwx-platform-core/src/main/java/com/ljwx/platform/core/context/CurrentTenantHolder.java
-```
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| code | Integer | 业务状态码（0=成功） |
+| message | String | 提示信息 |
+| data | T | 响应数据 |
+| traceId | String | 链路追踪 ID |
+
+静态方法：
+- `Result.ok()` / `Result.ok(T data)`
+- `Result.fail(ErrorCode)` / `Result.fail(String message)`
+
+### ErrorCode（错误码枚举）
+
+| 错误码 | HTTP状态 | 说明 |
+|--------|----------|------|
+| SUCCESS(0) | 200 | 成功 |
+| UNAUTHORIZED(401001) | 401 | 未认证 |
+| FORBIDDEN(403001) | 403 | 无权限 |
+| NOT_FOUND(404001) | 404 | 资源不存在 |
+| VALIDATION_ERROR(400001) | 400 | 参数校验失败 |
+| BUSINESS_ERROR(400002) | 400 | 业务异常 |
+| INTERNAL_ERROR(500001) | 500 | 系统内部错误 |
+
+### PageResult<T>（分页响应）
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| list | List<T> | 数据列表 |
+| total | Long | 总记录数 |
+
+### BaseEntity（审计字段基类）
+
+| 字段 | 类型 | 注解 | 说明 |
+|------|------|------|------|
+| id | Long | @TableId | 主键（雪花 ID） |
+| tenantId | Long | — | 租户 ID |
+| createdBy | Long | — | 创建人 |
+| createdTime | LocalDateTime | — | 创建时间 |
+| updatedBy | Long | — | 更新人 |
+| updatedTime | LocalDateTime | — | 更新时间 |
+| deleted | Boolean | @TableLogic | 软删除标记 |
+| version | Integer | @Version | 乐观锁版本号 |
+
+**禁止**：业务实体重复声明这 7 个字段
+
+### SnowflakeIdGenerator（雪花 ID 生成器）
+
+方法：`Long nextId()`
+
+### CurrentUserHolder（接口）
+
+方法：`Long getCurrentUserId()`
+
+### CurrentTenantHolder（接口）
+
+方法：`Long getCurrentTenantId()`
+
+---
+
+## 业务规则
+
+- **BL-01-01**：core 模块**零外部依赖**，仅依赖 JDK 和 Spring Boot Starter
+- **BL-01-02**：CurrentUserHolder 和 CurrentTenantHolder 是接口，实现类由 security 模块提供
+- **BL-01-03**：BaseEntity 的 7 个字段对应数据库审计字段，由 MyBatis Interceptor 自动填充
+- **BL-01-04**：ErrorCode 枚举值必须与 spec/03-api.md 中定义的错误码一致
+
+---
+
+## 测试用例（摘要）
+
+详细用例见 **`spec/tests/phase-01-core.tests.yml`**。
+
+P0 强制覆盖：
+
+| ID | 场景 | P |
+|----|------|---|
+| TC-01-01 | pom.xml 无其他 ljwx 模块依赖 | P0 |
+| TC-01-02 | Result 类包含 code/message/data/traceId | P0 |
+| TC-01-03 | ErrorCode 包含所有规定的错误码 | P0 |
+| TC-01-04 | BaseEntity 包含 7 个审计字段 | P0 |
+| TC-01-05 | CurrentUserHolder 和 CurrentTenantHolder 是接口 | P0 |
+| TC-01-06 | 编译通过 | P0 |
+
+---
 
 ## 验收条件
 
-1. `pom.xml` 无对其他 ljwx 模块的依赖
-2. Result 类包含 code、message、data、traceId 字段
-3. ErrorCode 枚举包含 spec/03-api.md 中定义的所有错误码
-4. BaseEntity 包含 7 个审计字段（匹配 spec/01-constraints.md）
-5. CurrentUserHolder 和 CurrentTenantHolder 是接口（非实现类）
-6. `./mvnw compile -pl ljwx-platform-core` 通过
+- **AC-01**：`pom.xml` 无对其他 ljwx 模块的依赖
+- **AC-02**：Result 类包含 code、message、data、traceId 字段
+- **AC-03**：ErrorCode 枚举包含 spec/03-api.md 中定义的所有错误码
+- **AC-04**：BaseEntity 包含 7 个审计字段（匹配 spec/01-constraints.md）
+- **AC-05**：CurrentUserHolder 和 CurrentTenantHolder 是接口（非实现类）
+- **AC-06**：`./mvnw compile -pl ljwx-platform-core` 通过
+
+---
+
+## 关键约束
+
+- 禁止：依赖其他 ljwx 模块 · BaseEntity 字段在业务实体中重复声明
+- core 模块是依赖树的根节点，必须保持零业务依赖
+- 所有接口必须有清晰的 Javadoc 注释
 
 ## 可 Bundle
 
 可与 Phase 0 一起执行。
-
-## Test Cases
-
-| TC ID | Endpoint | 权限 | 预期状态码 | 关键断言 |
-|------|----------|------|------------|---------|
-| TC-01-01 | GET /api/** | read | 401 | 无 token 返回 Unauthorized |
-| TC-01-02 | GET /api/** | read | 403 | 无权限 token 返回 Forbidden |
-| TC-01-03 | GET /api/** | read | 200 | 成功返回统一响应结构 |
-| TC-01-04 | POST /api/** | write | 400 | 参数校验错误返回 400 |
-| TC-01-05 | POST /api/** | write | 200 | 创建成功并返回 ID/结果 |
-| TC-01-06 | PUT /api/**/{id} | write | 200 | 更新成功且可再次查询 |
-| TC-01-07 | DELETE /api/**/{id} | delete | 200 | 删除后数据不可见（软删/过滤） |
-| TC-01-08 | GET /api/** | read | 200 | 仅可见当前租户数据 |
-| TC-01-09 | GET /api/** | read | 401 | 过期 token 被拒绝 |
-| TC-01-10 | GET /api/** | read | 401 | 非法 token 被拒绝 |

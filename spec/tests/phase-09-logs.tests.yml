@@ -1,0 +1,319 @@
+# Phase 09 — Logs Notice and File 测试契约
+# 关联 Spec：spec/phase/phase-09.md
+
+phase: 9
+module: "logs-file"
+ac_ref: "spec/phase/phase-09.md"
+
+tests:
+
+  # ─── P0：安全测试 ───────────────────────────────────────────────
+  - id: TC-09-01
+    priority: P0
+    category: security
+    scenario: "无 Token 访问日志 → 401"
+    request:
+      method: GET
+      path: /api/logs/operation
+      auth: none
+    expect:
+      status: 401
+
+  - id: TC-09-02
+    priority: P0
+    category: security
+    scenario: "无权限 Token 上传文件 → 403"
+    request:
+      method: POST
+      path: /api/files/upload
+      auth: token_without_permission
+    expect:
+      status: 403
+
+  # ─── P0：操作日志 ───────────────────────────────────────────────
+  - id: TC-09-03
+    priority: P0
+    category: crud
+    ac: AC-06
+    scenario: "查询操作日志列表成功"
+    request:
+      method: GET
+      path: /api/logs/operation
+      auth: token_with_system:log:list
+    expect:
+      status: 200
+      body:
+        code: 0
+        data:
+          list: []
+          total: 0
+
+  - id: TC-09-04
+    priority: P0
+    category: crud
+    scenario: "查询操作日志详情成功"
+    request:
+      method: GET
+      path: /api/logs/operation/{logId}
+      auth: token_with_system:log:detail
+    expect:
+      status: 200
+      body:
+        code: 0
+
+  - id: TC-09-05
+    priority: P0
+    category: crud
+    scenario: "删除操作日志成功"
+    request:
+      method: DELETE
+      path: /api/logs/operation/{logId}
+      auth: token_with_system:log:delete
+    expect:
+      status: 200
+      body:
+        code: 0
+
+  # ─── P0：日志脱敏 ───────────────────────────────────────────────
+  - id: TC-09-06
+    priority: P0
+    category: business
+    ac: AC-03
+    bl_ref: BL-09-03
+    scenario: "password 字段脱敏为 ***"
+    setup:
+      - trigger_operation_with_password_param
+    request:
+      method: GET
+      path: /api/logs/operation/{logId}
+      auth: token_with_system:log:detail
+    expect:
+      status: 200
+      body:
+        data:
+          requestParam: "{\"password\":\"***\"}"
+
+  - id: TC-09-07
+    priority: P0
+    category: business
+    ac: AC-03
+    bl_ref: BL-09-03
+    scenario: "phone 字段中间四位脱敏"
+    setup:
+      - trigger_operation_with_phone_13812345678
+    request:
+      method: GET
+      path: /api/logs/operation/{logId}
+      auth: token_with_system:log:detail
+    expect:
+      status: 200
+      body:
+        data:
+          requestParam: "{\"phone\":\"138****5678\"}"
+
+  - id: TC-09-08
+    priority: P0
+    category: business
+    ac: AC-03
+    bl_ref: BL-09-03
+    scenario: "idCard 字段中间段脱敏"
+    setup:
+      - trigger_operation_with_idCard
+    request:
+      method: GET
+      path: /api/logs/operation/{logId}
+      auth: token_with_system:log:detail
+    expect:
+      status: 200
+      body:
+        data:
+          requestParam: "{\"idCard\":\"110***********1234\"}"
+
+  # ─── P0：文件上传 ───────────────────────────────────────────────
+  - id: TC-09-09
+    priority: P0
+    category: crud
+    ac: AC-04
+    scenario: "上传文件成功"
+    request:
+      method: POST
+      path: /api/files/upload
+      auth: token_with_system:file:upload
+      body:
+        file: "test.jpg"
+        size: 1024000
+    expect:
+      status: 200
+      body:
+        code: 0
+        data:
+          id: "{fileId}"
+          filePath: "/uploads/{tenantId}/{yyyyMM}/{snowflakeId}.jpg"
+
+  - id: TC-09-10
+    priority: P0
+    category: validation
+    ac: AC-04
+    bl_ref: BL-09-05
+    scenario: "文件大小超过 50MB → 400"
+    request:
+      method: POST
+      path: /api/files/upload
+      auth: token_with_system:file:upload
+      body:
+        file: "large.jpg"
+        size: 52428801
+    expect:
+      status: 400
+      body:
+        code: 400001
+        message: "文件大小不能超过 50MB"
+
+  - id: TC-09-11
+    priority: P0
+    category: validation
+    ac: AC-04
+    bl_ref: BL-09-06
+    scenario: "非法扩展名 → 400"
+    request:
+      method: POST
+      path: /api/files/upload
+      auth: token_with_system:file:upload
+      body:
+        file: "test.exe"
+    expect:
+      status: 400
+      body:
+        code: 400001
+        message: "不支持的文件类型"
+
+  - id: TC-09-12
+    priority: P0
+    category: crud
+    scenario: "下载文件成功"
+    request:
+      method: GET
+      path: /api/files/{fileId}/download
+      auth: token_with_system:file:download
+    expect:
+      status: 200
+      headers:
+        Content-Type: "application/octet-stream"
+
+  # ─── P0：租户隔离 ───────────────────────────────────────────────
+  - id: TC-09-13
+    priority: P0
+    category: tenant_isolation
+    scenario: "租户 A 查不到租户 B 的日志"
+    setup:
+      - create_log_for_tenant_A
+      - create_log_for_tenant_B
+    request:
+      method: GET
+      path: /api/logs/operation
+      auth: token_tenant_A
+    expect:
+      status: 200
+      body:
+        data:
+          list: "[仅包含租户 A 的日志]"
+
+  - id: TC-09-14
+    priority: P0
+    category: tenant_isolation
+    ac: AC-05
+    bl_ref: BL-09-04
+    scenario: "文件路径包含 tenant_id"
+    request:
+      method: POST
+      path: /api/files/upload
+      auth: token_tenant_1
+      body:
+        file: "test.jpg"
+    expect:
+      status: 200
+      body:
+        data:
+          filePath: "/uploads/1/{yyyyMM}/{snowflakeId}.jpg"
+
+  # ─── P1：异步日志验证 ───────────────────────────────────────────
+  - id: TC-09-15
+    priority: P1
+    category: config
+    ac: AC-02
+    bl_ref: BL-09-01
+    scenario: "LogAsyncConfig 配置异步线程池"
+    method: bean_check
+    expect:
+      bean: "LogAsyncConfig"
+      properties:
+        corePoolSize: 2
+        maxPoolSize: 4
+        queueCapacity: 1024
+
+  - id: TC-09-16
+    priority: P1
+    category: business
+    bl_ref: BL-09-02
+    scenario: "日志体超过 4096 字节自动截断"
+    setup:
+      - trigger_operation_with_large_param
+    request:
+      method: GET
+      path: /api/logs/operation/{logId}
+      auth: token_with_system:log:detail
+    expect:
+      status: 200
+      body:
+        data:
+          requestParam: "[长度 = 4096]"
+
+  # ─── P1：通知 CRUD ──────────────────────────────────────────────
+  - id: TC-09-17
+    priority: P1
+    category: crud
+    scenario: "创建通知成功"
+    request:
+      method: POST
+      path: /api/notices
+      auth: token_with_system:notice:create
+      body:
+        noticeTitle: "系统维护通知"
+        noticeType: 1
+        noticeContent: "系统将于今晚维护"
+        status: 1
+    expect:
+      status: 200
+      body:
+        code: 0
+
+  - id: TC-09-18
+    priority: P1
+    category: crud
+    scenario: "查询通知列表成功"
+    request:
+      method: GET
+      path: /api/notices
+      auth: token_with_system:notice:list
+    expect:
+      status: 200
+      body:
+        code: 0
+
+# ─── AC → TC 映射 ──────────────────────────────────────────────────
+ac_tc_map:
+  AC-01: []  # 数据库结构由 Gate R08 验证
+  AC-02: [TC-09-15]
+  AC-03: [TC-09-06, TC-09-07, TC-09-08]
+  AC-04: [TC-09-09, TC-09-10, TC-09-11]
+  AC-05: [TC-09-14]
+  AC-06: [TC-09-03]
+  AC-07: []  # 编译检查由 Gate R01 覆盖
+
+# ─── Gate R09 配置 ─────────────────────────────────────────────────
+gate_r09:
+  p0_required: true
+  p1_coverage_target: 0.7
+  p2_skip: true
+  test_class: "LogsFileControllerTest"
+  note: "本 Phase 包含日志脱敏、文件上传、租户隔离、异步日志测试"

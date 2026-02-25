@@ -1,0 +1,215 @@
+# Phase 10 — Index and Contract 测试契约
+# 关联 Spec：spec/phase/phase-10.md
+
+phase: 10
+module: "index-contract"
+ac_ref: "spec/phase/phase-10.md"
+
+tests:
+
+  # ─── P0：数据库索引验证 ─────────────────────────────────────────
+  - id: TC-10-01
+    priority: P0
+    category: db_schema
+    ac: AC-01
+    bl_ref: BL-10-01
+    scenario: "sys_user 表有 tenant_id 索引"
+    expect:
+      db_assert: "索引 idx_user_tenant_username 存在于 sys_user 表"
+
+  - id: TC-10-02
+    priority: P0
+    category: db_schema
+    ac: AC-01
+    bl_ref: BL-10-02
+    scenario: "sys_user 表有 username 复合索引"
+    expect:
+      db_assert: "索引 idx_user_tenant_username 包含列 (tenant_id, username)"
+
+  - id: TC-10-03
+    priority: P0
+    category: db_schema
+    ac: AC-01
+    bl_ref: BL-10-03
+    scenario: "sys_user 表有 created_time 索引"
+    expect:
+      db_assert: "索引 idx_user_created_time 存在于 sys_user 表"
+
+  - id: TC-10-04
+    priority: P0
+    category: db_schema
+    ac: AC-02
+    bl_ref: BL-10-01
+    scenario: "sys_role 表有 tenant_id 索引"
+    expect:
+      db_assert: "索引 idx_role_tenant 存在于 sys_role 表"
+
+  - id: TC-10-05
+    priority: P0
+    category: db_schema
+    ac: AC-02
+    scenario: "sys_permission 表有 tenant_id 索引"
+    expect:
+      db_assert: "索引 idx_permission_tenant 存在于 sys_permission 表"
+
+  - id: TC-10-06
+    priority: P0
+    category: db_schema
+    ac: AC-01
+    bl_ref: BL-10-04
+    scenario: "sys_operation_log 表有复合索引（tenant_id 在前）"
+    expect:
+      db_assert: "索引 idx_log_tenant_time 包含列 (tenant_id, created_time)，顺序正确"
+
+  - id: TC-10-07
+    priority: P0
+    category: db_schema
+    ac: AC-01
+    scenario: "sys_dict_data 表有 dict_type 索引"
+    expect:
+      db_assert: "索引 idx_dict_type 存在于 sys_dict_data 表"
+
+  # ─── P0：OpenAPI 导出验证 ───────────────────────────────────────
+  - id: TC-10-08
+    priority: P0
+    category: contract
+    ac: AC-03
+    scenario: "export-openapi.sh 脚本可执行"
+    method: file_permission_check
+    expect:
+      file: "scripts/tools/export-openapi.sh"
+      executable: true
+
+  - id: TC-10-09
+    priority: P0
+    category: contract
+    ac: AC-03
+    bl_ref: BL-10-05
+    scenario: "export-openapi.sh 可启动应用并导出"
+    method: script_execution
+    expect:
+      command: "bash scripts/tools/export-openapi.sh"
+      exit_code: 0
+      output_file: "docs/contracts/openapi.json"
+
+  - id: TC-10-10
+    priority: P0
+    category: contract
+    ac: AC-03
+    bl_ref: BL-10-06
+    scenario: "OpenAPI JSON 包含所有 Controller 端点"
+    method: json_content_check
+    expect:
+      file: "docs/contracts/openapi.json"
+      contains_paths:
+        - "/api/users"
+        - "/api/roles"
+        - "/api/menus"
+        - "/api/dicts/types"
+        - "/api/configs"
+        - "/api/jobs"
+        - "/api/logs/operation"
+        - "/api/files/upload"
+        - "/api/notices"
+
+  # ─── P0：Swagger UI 验证 ────────────────────────────────────────
+  - id: TC-10-11
+    priority: P0
+    category: contract
+    ac: AC-05
+    scenario: "Swagger UI 可访问"
+    request:
+      method: GET
+      path: /swagger-ui.html
+      auth: none
+    expect:
+      status: 200
+
+  - id: TC-10-12
+    priority: P0
+    category: contract
+    ac: AC-04
+    scenario: "/v3/api-docs 端点可访问"
+    request:
+      method: GET
+      path: /v3/api-docs
+      auth: none
+    expect:
+      status: 200
+      body:
+        openapi: "3.0.1"
+
+  # ─── P1：索引性能验证 ───────────────────────────────────────────
+  - id: TC-10-13
+    priority: P1
+    category: performance
+    scenario: "tenant_id 索引提升查询性能"
+    method: query_performance_test
+    expect:
+      query: "SELECT * FROM sys_user WHERE tenant_id = 1"
+      uses_index: "idx_user_tenant_username"
+      note: "EXPLAIN 显示使用索引"
+
+  - id: TC-10-14
+    priority: P1
+    category: performance
+    scenario: "created_time 索引提升排序性能"
+    method: query_performance_test
+    expect:
+      query: "SELECT * FROM sys_user ORDER BY created_time DESC"
+      uses_index: "idx_user_created_time"
+
+  # ─── P1：springdoc 配置验证 ─────────────────────────────────────
+  - id: TC-10-15
+    priority: P1
+    category: config
+    ac: AC-04
+    scenario: "application.yml 包含 springdoc 配置"
+    method: file_content_check
+    expect:
+      file: "ljwx-platform-app/src/main/resources/application.yml"
+      contains_all:
+        - "springdoc:"
+        - "api-docs:"
+        - "swagger-ui:"
+
+  - id: TC-10-16
+    priority: P1
+    category: config
+    scenario: "springdoc 配置 api-docs path"
+    method: file_content_check
+    expect:
+      file: "ljwx-platform-app/src/main/resources/application.yml"
+      contains: "path: /v3/api-docs"
+
+  # ─── P1：索引命名规范验证 ───────────────────────────────────────
+  - id: TC-10-17
+    priority: P1
+    category: db_schema
+    scenario: "索引命名符合规范"
+    expect:
+      db_assert: "所有索引名称符合 idx_{table}_{columns} 格式"
+
+  - id: TC-10-18
+    priority: P1
+    category: db_schema
+    scenario: "复合索引顺序正确"
+    expect:
+      db_assert: "所有复合索引中 tenant_id 在第一位"
+
+# ─── AC → TC 映射 ──────────────────────────────────────────────────
+ac_tc_map:
+  AC-01: [TC-10-01, TC-10-02, TC-10-03, TC-10-06, TC-10-07]
+  AC-02: [TC-10-04, TC-10-05]
+  AC-03: [TC-10-08, TC-10-09, TC-10-10]
+  AC-04: [TC-10-12, TC-10-15, TC-10-16]
+  AC-05: [TC-10-11]
+  AC-06: []  # 编译检查由 Gate R01 覆盖
+
+# ─── Gate R09 配置 ─────────────────────────────────────────────────
+gate_r09:
+  p0_required: true
+  p1_coverage_target: 0.7
+  p2_skip: true
+  test_class: "IndexContractTest"
+  note: "本 Phase 包含数据库索引、OpenAPI 导出、Swagger UI 测试"

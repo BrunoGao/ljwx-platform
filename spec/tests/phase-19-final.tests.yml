@@ -1,0 +1,97 @@
+# Phase 19 — Final Gate and Docs 测试契约
+phase: 19
+module: "final"
+ac_ref: "spec/phase/phase-19.md"
+
+tests:
+  - id: TC-19-01
+    priority: P0
+    category: gate
+    ac: AC-01
+    scenario: "全量 Gate 校验通过"
+    expect:
+      command: "bash scripts/gates/gate-all.sh"
+      exit_code: 0
+
+  - id: TC-19-02
+    priority: P0
+    category: manifest
+    ac: AC-02
+    scenario: "FULL_MANIFEST.txt 存在"
+    expect:
+      file_exists: "FULL_MANIFEST.txt"
+
+  - id: TC-19-03
+    priority: P0
+    category: manifest
+    ac: AC-03
+    scenario: "gate-manifest.sh FULL 模式通过"
+    expect:
+      command: "bash scripts/gates/gate-manifest.sh FULL"
+      exit_code: 0
+
+  - id: TC-19-04
+    priority: P0
+    category: docs
+    ac: AC-04
+    scenario: "至少 4 个 ADR 文档存在"
+    expect:
+      files_exist:
+        - "docs/adr/001-module-dependency-dag.md"
+        - "docs/adr/002-audit-field-interceptor.md"
+        - "docs/adr/003-jwt-authorities-convention.md"
+        - "docs/adr/004-frontend-semver-tilde-only.md"
+
+  - id: TC-19-05
+    priority: P0
+    category: docs
+    ac: AC-05
+    scenario: "README.md 包含必需章节"
+    method: static_analysis
+    expect:
+      file_assert: "README.md 包含项目简介、技术栈、快速启动、目录结构章节"
+
+  - id: TC-19-06
+    priority: P1
+    category: version
+    scenario: "Java 版本验证"
+    expect:
+      command: "java -version 2>&1 | grep '21.0'"
+      exit_code: 0
+
+  - id: TC-19-07
+    priority: P1
+    category: version
+    scenario: "Spring Boot 版本验证"
+    expect:
+      command: "./mvnw dependency:tree | grep spring-boot | grep 3.5.11"
+      exit_code: 0
+
+  - id: TC-19-08
+    priority: P1
+    category: version
+    scenario: "Node.js 版本验证"
+    expect:
+      command: "node -v | grep 'v22.22'"
+      exit_code: 0
+
+  - id: TC-19-09
+    priority: P1
+    category: version
+    scenario: "pnpm 版本验证"
+    expect:
+      command: "pnpm -v | grep '10.30'"
+      exit_code: 0
+
+ac_tc_map:
+  AC-01: [TC-19-01]
+  AC-02: [TC-19-02]
+  AC-03: [TC-19-03]
+  AC-04: [TC-19-04]
+  AC-05: [TC-19-05]
+  AC-06: [TC-19-01]
+
+gate_r09:
+  p0_required: true
+  p1_coverage_target: 0.7
+  test_class: "FinalGateTest"

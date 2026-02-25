@@ -1,0 +1,194 @@
+# Phase 00 — Skeleton 测试契约
+# 关联 Spec：spec/phase/phase-00.md
+# 注意：本 Phase 无 HTTP 端点，测试以静态文件检查为主
+
+phase: 0
+module: "skeleton"
+ac_ref: "spec/phase/phase-00.md"
+
+tests:
+
+  # ─── P0：配置文件验证 ───────────────────────────────────────────
+  - id: TC-00-01
+    priority: P0
+    category: config
+    ac: AC-01
+    scenario: "pom.xml Java 版本 = 21"
+    method: file_content_check
+    expect:
+      file: "pom.xml"
+      contains: "<java.version>21</java.version>"
+
+  - id: TC-00-02
+    priority: P0
+    category: config
+    ac: AC-01
+    scenario: "pom.xml Spring Boot parent = 3.5.11"
+    method: file_content_check
+    expect:
+      file: "pom.xml"
+      contains: "<version>3.5.11</version>"
+      context: "spring-boot-starter-parent"
+
+  - id: TC-00-03
+    priority: P0
+    category: config
+    ac: AC-02
+    bl_ref: BL-00-01
+    scenario: "package.json 无 caret 版本号"
+    method: grep_check
+    expect:
+      command: "grep -RIn '\"\\^' package.json"
+      exit_code: 1
+      note: "exit_code=1 表示未找到，即通过"
+
+  - id: TC-00-04
+    priority: P0
+    category: config
+    ac: AC-02
+    scenario: "package.json packageManager = pnpm@10.30.1"
+    method: file_content_check
+    expect:
+      file: "package.json"
+      contains: "\"packageManager\": \"pnpm@10.30.1\""
+
+  - id: TC-00-05
+    priority: P0
+    category: config
+    ac: AC-03
+    scenario: ".nvmrc 内容 = 22.22.0"
+    method: file_content_check
+    expect:
+      file: ".nvmrc"
+      exact_content: "22.22.0"
+
+  - id: TC-00-06
+    priority: P0
+    category: config
+    ac: AC-04
+    bl_ref: BL-00-03
+    scenario: "docker-compose.yml 使用 postgres:16.12-alpine"
+    method: file_content_check
+    expect:
+      file: "docker-compose.yml"
+      contains: "image: postgres:16.12-alpine"
+
+  - id: TC-00-07
+    priority: P0
+    category: config
+    ac: AC-06
+    bl_ref: BL-00-02
+    scenario: ".env.example 使用 VITE_APP_BASE_API"
+    method: file_content_check
+    expect:
+      file: ".env.example"
+      contains: "VITE_APP_BASE_API="
+
+  - id: TC-00-08
+    priority: P0
+    category: config
+    ac: AC-06
+    bl_ref: BL-00-02
+    scenario: ".env.example 禁止 VITE_API_BASE_URL"
+    method: grep_check
+    expect:
+      command: "grep -RIn 'VITE_API_BASE_URL' .env.example"
+      exit_code: 1
+
+  # ─── P0：Gate 脚本验证 ──────────────────────────────────────────
+  - id: TC-00-09
+    priority: P0
+    category: ci
+    ac: AC-07
+    scenario: "gate-manifest.sh 包含审计字段检查"
+    method: file_content_check
+    expect:
+      file: "scripts/gates/gate-manifest.sh"
+      contains: "tenant_id"
+
+  - id: TC-00-10
+    priority: P0
+    category: ci
+    ac: AC-07
+    scenario: "gate-manifest.sh 包含 caret 检查"
+    method: file_content_check
+    expect:
+      file: "scripts/gates/gate-manifest.sh"
+      contains: "\\^"
+
+  - id: TC-00-11
+    priority: P0
+    category: ci
+    ac: AC-07
+    scenario: "gate-manifest.sh 包含 env 变量检查"
+    method: file_content_check
+    expect:
+      file: "scripts/gates/gate-manifest.sh"
+      contains: "VITE_APP_BASE_API"
+
+  # ─── P1：文件存在性验证 ─────────────────────────────────────────
+  - id: TC-00-12
+    priority: P1
+    category: structure
+    scenario: "Maven Wrapper 文件存在"
+    method: file_exists
+    expect:
+      files:
+        - ".mvn/wrapper/maven-wrapper.properties"
+        - ".mvn/wrapper/maven-wrapper.jar"
+
+  - id: TC-00-13
+    priority: P1
+    category: structure
+    scenario: "所有 gate 脚本存在"
+    method: file_exists
+    expect:
+      files:
+        - "scripts/gates/gate-all.sh"
+        - "scripts/gates/gate-compile.sh"
+        - "scripts/gates/gate-integration.sh"
+        - "scripts/gates/gate-contract.sh"
+        - "scripts/gates/gate-manifest.sh"
+        - "scripts/gates/gate-nfr.sh"
+
+  - id: TC-00-14
+    priority: P1
+    category: structure
+    scenario: ".gitignore 和 .editorconfig 存在"
+    method: file_exists
+    expect:
+      files:
+        - ".gitignore"
+        - ".editorconfig"
+
+  # ─── P2：边界验证 ───────────────────────────────────────────────
+  - id: TC-00-15
+    priority: P2
+    category: config
+    scenario: "pnpm-workspace.yaml 包含所有前端模块"
+    method: file_content_check
+    expect:
+      file: "pnpm-workspace.yaml"
+      contains_all:
+        - "ljwx-platform-admin"
+        - "ljwx-platform-mobile"
+        - "ljwx-platform-screen"
+        - "ljwx-platform-shared"
+
+# ─── AC → TC 映射 ──────────────────────────────────────────────────
+ac_tc_map:
+  AC-01: [TC-00-01, TC-00-02]
+  AC-02: [TC-00-03, TC-00-04]
+  AC-03: [TC-00-05]
+  AC-04: [TC-00-06]
+  AC-05: [TC-00-03]
+  AC-06: [TC-00-07, TC-00-08]
+  AC-07: [TC-00-09, TC-00-10, TC-00-11]
+
+# ─── Gate R09 配置 ─────────────────────────────────────────────────
+gate_r09:
+  p0_required: true
+  p1_coverage_target: 0.7
+  p2_skip: true
+  test_class: "SkeletonConfigTest"
+  note: "本 Phase 以静态文件检查为主，无运行时测试"

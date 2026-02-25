@@ -22,7 +22,15 @@ scope:
   - "scripts/acceptance/**"
   - "PHASE_MANIFEST.txt"
 ---
-# Phase 0: Skeleton
+# Phase 0 — 项目骨架 (Project Skeleton)
+
+| 项目 | 值 |
+|-----|---|
+| Phase | 0 |
+| 模块 | 根目录配置文件 + CI 脚本 |
+| Feature | F-000 (项目初始化) |
+| 前置依赖 | 无 |
+| 测试契约 | `spec/tests/phase-00-skeleton.tests.yml` |
 
 ## 读取清单
 
@@ -32,66 +40,157 @@ scope:
 - `spec/07-devops.md` — §Docker Compose、§CI Gate 脚本全部
 - `spec/08-output-rules.md` — 全文
 
-## 任务
+---
 
-创建项目骨架：所有配置文件和 CI 脚本。不包含任何 Java 源码或前端源码。
+## 配置文件契约
 
-## Phase-Local Manifest
+### pom.xml（根 POM）
+
+| 配置项 | 要求 |
+|--------|------|
+| groupId | com.ljwx.platform |
+| artifactId | ljwx-platform |
+| version | 1.0.0-SNAPSHOT |
+| packaging | pom |
+| parent | org.springframework.boot:spring-boot-starter-parent:3.5.11 |
+| java.version | 21 |
+| modules | core, security, data, web, app |
+
+### package.json（根）
+
+| 配置项 | 要求 |
+|--------|------|
+| name | ljwx-platform |
+| private | true |
+| packageManager | pnpm@10.30.1 |
+| workspaces | ["ljwx-platform-admin", "ljwx-platform-mobile", "ljwx-platform-screen", "ljwx-platform-shared"] |
+
+**禁止**：所有依赖版本号使用 `^`（caret），必须使用 `~`（tilde）
+
+### pnpm-workspace.yaml
+
+```yaml
+packages:
+  - 'ljwx-platform-admin'
+  - 'ljwx-platform-mobile'
+  - 'ljwx-platform-screen'
+  - 'ljwx-platform-shared'
+```
+
+### .nvmrc
 
 ```
-pom.xml
-.mvn/wrapper/maven-wrapper.properties
-pnpm-workspace.yaml
-package.json
-.npmrc
-.nvmrc
-docker-compose.yml
-.env.example
-.gitignore
-.editorconfig
-scripts/gates/gate-all.sh
-scripts/gates/gate-compile.sh
-scripts/gates/gate-integration.sh
-scripts/gates/gate-contract.sh
-scripts/gates/gate-manifest.sh
-scripts/gates/gate-nfr.sh
-scripts/tools/export-openapi.sh
-scripts/acceptance/smoke-test.sh
-PHASE_MANIFEST.txt
+22.22.0
 ```
+
+### .npmrc
+
+```
+shamefully-hoist=true
+strict-peer-dependencies=false
+```
+
+### docker-compose.yml
+
+| 服务 | 镜像 | 端口 | 说明 |
+|------|------|------|------|
+| postgres | postgres:16.12-alpine | 5432:5432 | PostgreSQL 数据库 |
+| prometheus | prom/prometheus:latest | 9090:9090 | 监控（可选） |
+
+### .env.example
+
+```bash
+# 后端
+DB_URL=jdbc:postgresql://localhost:5432/ljwx_platform
+DB_USERNAME=postgres
+DB_PASSWORD=postgres
+JWT_SECRET=your-secret-key-here
+
+# 前端（Admin）
+VITE_APP_BASE_API=http://localhost:8080
+```
+
+**禁止**：使用 `VITE_API_BASE_URL`（已废弃）
+
+---
+
+## CI 脚本契约
+
+### gate-all.sh
+
+调用所有 gate 脚本，任一失败则整体失败。
+
+### gate-compile.sh
+
+检查后端编译（`mvn compile`）和前端类型检查（`pnpm type-check`）。
+
+### gate-manifest.sh
+
+检查：
+- 7 列审计字段（tenant_id, created_by, created_time, updated_by, updated_time, deleted, version）
+- 禁止 `^` 版本号（caret）
+- 禁止 `VITE_API_BASE_URL`
+- 禁止 `IF NOT EXISTS` in Flyway SQL
+
+### gate-contract.sh
+
+检查 OpenAPI 契约一致性。
+
+### gate-integration.sh
+
+运行集成测试。
+
+### gate-nfr.sh
+
+检查非功能性需求（性能、安全）。
+
+---
+
+## 业务规则
+
+- **BL-00-01**：所有前端 package.json 版本号必须使用 `~`（tilde），禁止 `^`（caret）
+- **BL-00-02**：环境变量名称必须使用 `VITE_APP_BASE_API`，禁止 `VITE_API_BASE_URL`
+- **BL-00-03**：PostgreSQL 镜像版本锁定为 `16.12-alpine`
+- **BL-00-04**：Maven Wrapper 版本为 3.9.9
+
+---
+
+## 测试用例（摘要）
+
+详细用例见 **`spec/tests/phase-00-skeleton.tests.yml`**。
+
+P0 强制覆盖：
+
+| ID | 场景 | P |
+|----|------|---|
+| TC-00-01 | pom.xml Java 版本 = 21 | P0 |
+| TC-00-02 | package.json 无 caret 版本号 | P0 |
+| TC-00-03 | .nvmrc 内容 = 22.22.0 | P0 |
+| TC-00-04 | docker-compose.yml 使用 postgres:16.12-alpine | P0 |
+| TC-00-05 | .env.example 使用 VITE_APP_BASE_API | P0 |
+| TC-00-06 | gate-manifest.sh 包含审计字段检查 | P0 |
+
+---
 
 ## 验收条件
 
-1. `pom.xml` 中 Java source/target = 21，Spring Boot parent 版本来自 CLAUDE.md
-2. `package.json` 的 `packageManager` 字段与 CLAUDE.md 一致
-3. `.nvmrc` 内容与 CLAUDE.md 一致
-4. `docker-compose.yml` 使用 `postgres:16.12-alpine`
-5. 所有 `package.json` 中无 `^`
-6. `.env.example` 使用 `VITE_APP_BASE_API`，无 `VITE_API_BASE_URL`
-7. `gate-manifest.sh` 包含 7 列审计字段循环检查 + caret 全局扫描 + env 变量三端扫描
+- **AC-01**：`pom.xml` Java source/target = 21，Spring Boot parent = 3.5.11
+- **AC-02**：`package.json` packageManager = pnpm@10.30.1
+- **AC-03**：`.nvmrc` = 22.22.0
+- **AC-04**：`docker-compose.yml` 使用 postgres:16.12-alpine
+- **AC-05**：所有 package.json 无 `^` 版本号
+- **AC-06**：`.env.example` 使用 `VITE_APP_BASE_API`，无 `VITE_API_BASE_URL`
+- **AC-07**：`gate-manifest.sh` 包含 7 列审计字段检查 + caret 扫描 + env 变量检查
 
-## 验证命令
+---
 
-```bash
-grep -RIn '"\^' package.json || echo "OK: No caret in root"
-grep -RIn 'VITE_API_BASE_URL' .env.example && echo "FAIL" || echo "OK"
-```
+## 关键约束
+
+- 禁止：`^` 版本号 · `VITE_API_BASE_URL` · 非锁定的 Docker 镜像版本
+- Maven Wrapper 版本：3.9.9
+- Node.js 版本：22.22.0（.nvmrc）
+- pnpm 版本：10.30.1（packageManager 字段锁定）
 
 ## 可 Bundle
 
 可与 Phase 1 一起执行，但必须分开两个 Phase 块输出。
-
-## Test Cases
-
-| TC ID | Endpoint | 权限 | 预期状态码 | 关键断言 |
-|------|----------|------|------------|---------|
-| TC-00-01 | GET /api/** | read | 401 | 无 token 返回 Unauthorized |
-| TC-00-02 | GET /api/** | read | 403 | 无权限 token 返回 Forbidden |
-| TC-00-03 | GET /api/** | read | 200 | 成功返回统一响应结构 |
-| TC-00-04 | POST /api/** | write | 400 | 参数校验错误返回 400 |
-| TC-00-05 | POST /api/** | write | 200 | 创建成功并返回 ID/结果 |
-| TC-00-06 | PUT /api/**/{id} | write | 200 | 更新成功且可再次查询 |
-| TC-00-07 | DELETE /api/**/{id} | delete | 200 | 删除后数据不可见（软删/过滤） |
-| TC-00-08 | GET /api/** | read | 200 | 仅可见当前租户数据 |
-| TC-00-09 | GET /api/** | read | 401 | 过期 token 被拒绝 |
-| TC-00-10 | GET /api/** | read | 401 | 非法 token 被拒绝 |

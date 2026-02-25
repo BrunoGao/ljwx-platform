@@ -1,0 +1,202 @@
+# Phase 06 — AI Context Docs 测试契约
+# 关联 Spec：spec/phase/phase-06.md
+# 注意：本 Phase 无 HTTP 端点，测试以文档完整性检查为主
+
+phase: 6
+module: "docs"
+ac_ref: "spec/phase/phase-06.md"
+
+tests:
+
+  # ─── P0：CLAUDE.md 完整性验证 ────────────────────────────────────
+  - id: TC-06-01
+    priority: P0
+    category: docs
+    ac: AC-01
+    scenario: "CLAUDE.md 包含 14 条硬规则"
+    method: file_content_check
+    expect:
+      file: "CLAUDE.md"
+      contains_all:
+        - "## 硬规则"
+        - "1. **DAG 依赖**"
+        - "14. **BCrypt**"
+      note: "硬规则编号 1-14 必须完整"
+
+  - id: TC-06-02
+    priority: P0
+    category: docs
+    ac: AC-02
+    bl_ref: BL-06-01
+    scenario: "CLAUDE.md 包含版本锁定表"
+    method: file_content_check
+    expect:
+      file: "CLAUDE.md"
+      contains_all:
+        - "## 版本锁定"
+        - "SINGLE SOURCE OF TRUTH"
+        - "| Java JDK | 21"
+        - "| Spring Boot | 3.5.11"
+        - "| Vue | ~3.5.28"
+
+  - id: TC-06-03
+    priority: P0
+    category: docs
+    ac: AC-03
+    bl_ref: BL-06-02
+    scenario: "CLAUDE.md Current Phase 与 PHASE_MANIFEST.txt 同步"
+    method: sync_check
+    expect:
+      note: "需要脚本验证两个文件的 Phase 编号一致"
+
+  - id: TC-06-04
+    priority: P0
+    category: docs
+    ac: AC-01
+    scenario: "CLAUDE.md 包含工作流程章节"
+    method: file_content_check
+    expect:
+      file: "CLAUDE.md"
+      contains_all:
+        - "## 工作流程"
+        - "### 首次启动（Preflight）"
+        - "### 常规 Phase 执行"
+
+  - id: TC-06-05
+    priority: P0
+    category: docs
+    ac: AC-01
+    scenario: "CLAUDE.md 包含代码风格参考"
+    method: file_content_check
+    expect:
+      file: "CLAUDE.md"
+      contains_all:
+        - "## 代码风格参考"
+        - "### Controller（后端）"
+        - "### Vue 组件（前端）"
+
+  - id: TC-06-06
+    priority: P0
+    category: docs
+    ac: AC-01
+    scenario: "CLAUDE.md 包含反模式清单"
+    method: file_content_check
+    expect:
+      file: "CLAUDE.md"
+      contains_all:
+        - "## 反模式"
+        - "❌"
+
+  # ─── P0：spec.md 验证 ───────────────────────────────────────────
+  - id: TC-06-07
+    priority: P0
+    category: docs
+    ac: AC-04
+    bl_ref: BL-06-03
+    scenario: "spec.md 是 stub，指向主文档"
+    method: file_content_check
+    expect:
+      file: "spec.md"
+      contains_all:
+        - "CLAUDE.md"
+        - "spec/INDEX.md"
+      not_contains: "详细规格"
+      note: "spec.md 应该是 stub，不包含实质内容"
+
+  - id: TC-06-08
+    priority: P0
+    category: docs
+    ac: AC-04
+    scenario: "spec.md 文件大小 < 2KB"
+    method: file_size_check
+    expect:
+      file: "spec.md"
+      max_size: 2048
+      note: "stub 文件应该很小"
+
+  # ─── P0：spec/INDEX.md 验证 ─────────────────────────────────────
+  - id: TC-06-09
+    priority: P0
+    category: docs
+    ac: AC-05
+    bl_ref: BL-06-04
+    scenario: "spec/INDEX.md 包含文档索引表"
+    method: file_content_check
+    expect:
+      file: "spec/INDEX.md"
+      contains_all:
+        - "## 文档索引"
+        - "spec/01-constraints.md"
+        - "spec/02-architecture.md"
+        - "spec/03-api.md"
+        - "spec/04-database.md"
+
+  - id: TC-06-10
+    priority: P0
+    category: docs
+    ac: AC-05
+    scenario: "spec/INDEX.md 包含防漂移规则"
+    method: file_content_check
+    expect:
+      file: "spec/INDEX.md"
+      contains: "防漂移"
+
+  # ─── P1：详细内容验证 ───────────────────────────────────────────
+  - id: TC-06-11
+    priority: P1
+    category: docs
+    scenario: "CLAUDE.md 包含 Compact 指令"
+    method: file_content_check
+    expect:
+      file: "CLAUDE.md"
+      contains: "## Compact 指令"
+
+  - id: TC-06-12
+    priority: P1
+    category: docs
+    scenario: "CLAUDE.md 包含 Maven 坐标"
+    method: file_content_check
+    expect:
+      file: "CLAUDE.md"
+      contains_all:
+        - "### Maven 坐标"
+        - "com.ljwx.platform"
+
+  - id: TC-06-13
+    priority: P1
+    category: docs
+    scenario: "spec/INDEX.md 包含 Phase 导航"
+    method: file_content_check
+    expect:
+      file: "spec/INDEX.md"
+      contains_all:
+        - "Phase 0"
+        - "Phase 1"
+
+  # ─── P2：格式验证 ───────────────────────────────────────────────
+  - id: TC-06-14
+    priority: P2
+    category: docs
+    scenario: "CLAUDE.md 使用 Markdown 格式"
+    method: file_format_check
+    expect:
+      file: "CLAUDE.md"
+      format: "markdown"
+      valid_headers: true
+
+# ─── AC → TC 映射 ──────────────────────────────────────────────────
+ac_tc_map:
+  AC-01: [TC-06-01, TC-06-04, TC-06-05, TC-06-06]
+  AC-02: [TC-06-02]
+  AC-03: [TC-06-03]
+  AC-04: [TC-06-07, TC-06-08]
+  AC-05: [TC-06-09, TC-06-10]
+  AC-06: [TC-06-05, TC-06-06]
+
+# ─── Gate R09 配置 ─────────────────────────────────────────────────
+gate_r09:
+  p0_required: true
+  p1_coverage_target: 0.7
+  p2_skip: true
+  test_class: "DocsIntegrityTest"
+  note: "本 Phase 以文档完整性检查为主，无运行时测试"

@@ -1,0 +1,357 @@
+# Phase 08 — Dict and Config 测试契约
+# 关联 Spec：spec/phase/phase-08.md
+
+phase: 8
+module: "dict-config"
+ac_ref: "spec/phase/phase-08.md"
+
+tests:
+
+  # ─── P0：安全测试 ───────────────────────────────────────────────
+  - id: TC-08-01
+    priority: P0
+    category: security
+    scenario: "无 Token 访问字典 → 401"
+    request:
+      method: GET
+      path: /api/dicts/types
+      auth: none
+    expect:
+      status: 401
+      body:
+        code: 401001
+
+  - id: TC-08-02
+    priority: P0
+    category: security
+    scenario: "无权限 Token 访问配置 → 403"
+    request:
+      method: GET
+      path: /api/configs
+      auth: token_without_permission
+    expect:
+      status: 403
+      body:
+        code: 403001
+
+  # ─── P0：字典 CRUD ──────────────────────────────────────────────
+  - id: TC-08-03
+    priority: P0
+    category: crud
+    ac: AC-03
+    scenario: "创建字典类型成功"
+    request:
+      method: POST
+      path: /api/dicts/types
+      auth: token_with_system:dict:create
+      body:
+        dictName: "用户状态"
+        dictType: "user_status"
+        status: 1
+    expect:
+      status: 200
+      body:
+        code: 0
+        data: "{dictTypeId}"
+
+  - id: TC-08-04
+    priority: P0
+    category: crud
+    scenario: "创建字典数据成功"
+    request:
+      method: POST
+      path: /api/dicts/data
+      auth: token_with_system:dict:create
+      body:
+        dictType: "user_status"
+        dictLabel: "正常"
+        dictValue: "1"
+        dictSort: 1
+        status: 1
+    expect:
+      status: 200
+      body:
+        code: 0
+
+  - id: TC-08-05
+    priority: P0
+    category: crud
+    scenario: "根据类型查询字典数据"
+    request:
+      method: GET
+      path: /api/dicts/data/user_status
+      auth: token_with_system:dict:list
+    expect:
+      status: 200
+      body:
+        code: 0
+        data:
+          - dictLabel: "正常"
+            dictValue: "1"
+
+  - id: TC-08-06
+    priority: P0
+    category: crud
+    scenario: "更新字典类型成功"
+    request:
+      method: PUT
+      path: /api/dicts/types/{dictTypeId}
+      auth: token_with_system:dict:update
+      body:
+        dictName: "用户状态（更新）"
+    expect:
+      status: 200
+      body:
+        code: 0
+
+  - id: TC-08-07
+    priority: P0
+    category: crud
+    scenario: "删除字典类型后软删除"
+    request:
+      method: DELETE
+      path: /api/dicts/types/{dictTypeId}
+      auth: token_with_system:dict:delete
+    expect:
+      status: 200
+      body:
+        code: 0
+      db_assert: "SELECT deleted FROM sys_dict_type WHERE id={dictTypeId} → TRUE"
+
+  # ─── P0：配置 CRUD ──────────────────────────────────────────────
+  - id: TC-08-08
+    priority: P0
+    category: crud
+    ac: AC-03
+    scenario: "创建配置成功"
+    request:
+      method: POST
+      path: /api/configs
+      auth: token_with_system:config:create
+      body:
+        configName: "系统名称"
+        configKey: "sys.name"
+        configValue: "LJWX Platform"
+        configType: 0
+    expect:
+      status: 200
+      body:
+        code: 0
+        data: "{configId}"
+
+  - id: TC-08-09
+    priority: P0
+    category: crud
+    scenario: "根据 key 查询配置"
+    request:
+      method: GET
+      path: /api/configs/key/sys.name
+      auth: token_with_system:config:detail
+    expect:
+      status: 200
+      body:
+        code: 0
+        data:
+          configKey: "sys.name"
+          configValue: "LJWX Platform"
+
+  - id: TC-08-10
+    priority: P0
+    category: crud
+    scenario: "更新配置成功"
+    request:
+      method: PUT
+      path: /api/configs/{configId}
+      auth: token_with_system:config:update
+      body:
+        configValue: "LJWX Platform v2"
+    expect:
+      status: 200
+      body:
+        code: 0
+
+  # ─── P0：租户隔离 ───────────────────────────────────────────────
+  - id: TC-08-11
+    priority: P0
+    category: tenant_isolation
+    scenario: "租户 A 查不到租户 B 的字典"
+    setup:
+      - create_dict_for_tenant_A
+      - create_dict_for_tenant_B
+    request:
+      method: GET
+      path: /api/dicts/types
+      auth: token_tenant_A
+    expect:
+      status: 200
+      body:
+        data:
+          list: "[仅包含租户 A 的字典]"
+
+  # ─── P0：缓存验证 ───────────────────────────────────────────────
+  - id: TC-08-12
+    priority: P0
+    category: cache
+    ac: AC-02
+    bl_ref: BL-08-01
+    scenario: "缓存生效验证"
+    setup:
+      - create_config
+      - query_config_first_time
+    request:
+      method: GET
+      path: /api/configs/key/sys.name
+      auth: token_with_system:config:detail
+    expect:
+      note: "第二次查询应从缓存返回，无数据库查询"
+
+  - id: TC-08-13
+    priority: P0
+    category: cache
+    ac: AC-02
+    bl_ref: BL-08-06
+    scenario: "刷新缓存成功"
+    request:
+      method: POST
+      path: /api/configs/refresh
+      auth: token_with_system:config:refresh
+    expect:
+      status: 200
+      body:
+        code: 0
+      note: "缓存清空后，下次查询重新加载"
+
+  # ─── P0：参数校验 ───────────────────────────────────────────────
+  - id: TC-08-14
+    priority: P0
+    category: validation
+    ac: AC-04
+    bl_ref: BL-08-03
+    scenario: "重复 dictType → 400"
+    setup:
+      - create_dict_type_with_type_user_status
+    request:
+      method: POST
+      path: /api/dicts/types
+      auth: token_with_system:dict:create
+      body:
+        dictName: "用户状态2"
+        dictType: "user_status"
+        status: 1
+    expect:
+      status: 400
+      body:
+        code: 400002
+
+  - id: TC-08-15
+    priority: P0
+    category: validation
+    ac: AC-04
+    bl_ref: BL-08-03
+    scenario: "重复 configKey → 400"
+    setup:
+      - create_config_with_key_sys_name
+    request:
+      method: POST
+      path: /api/configs
+      auth: token_with_system:config:create
+      body:
+        configName: "系统名称2"
+        configKey: "sys.name"
+        configValue: "Test"
+        configType: 1
+    expect:
+      status: 400
+      body:
+        code: 400002
+
+  # ─── P1：业务规则验证 ───────────────────────────────────────────
+  - id: TC-08-16
+    priority: P1
+    category: business
+    bl_ref: BL-08-04
+    scenario: "删除字典类型时级联删除字典数据"
+    setup:
+      - create_dict_type
+      - create_dict_data_under_type
+    request:
+      method: DELETE
+      path: /api/dicts/types/{dictTypeId}
+      auth: token_with_system:dict:delete
+    expect:
+      status: 200
+      db_assert: "SELECT COUNT(*) FROM sys_dict_data WHERE dict_type='user_status' AND deleted=FALSE → 0"
+
+  - id: TC-08-17
+    priority: P1
+    category: business
+    bl_ref: BL-08-05
+    scenario: "系统配置（configType=0）不允许删除"
+    setup:
+      - create_system_config
+    request:
+      method: DELETE
+      path: /api/configs/{configId}
+      auth: token_with_system:config:delete
+    expect:
+      status: 400
+      body:
+        code: 400002
+        message: "系统配置不允许删除"
+
+  - id: TC-08-18
+    priority: P1
+    category: business
+    scenario: "业务配置（configType=1）允许删除"
+    setup:
+      - create_business_config
+    request:
+      method: DELETE
+      path: /api/configs/{configId}
+      auth: token_with_system:config:delete
+    expect:
+      status: 200
+      body:
+        code: 0
+
+  # ─── P1：数据库结构验证 ─────────────────────────────────────────
+  - id: TC-08-19
+    priority: P1
+    category: db_schema
+    ac: AC-01
+    scenario: "sys_dict_type 表包含 7 列审计字段"
+    expect:
+      db_assert: "sys_dict_type 表包含 tenant_id, created_by, created_time, updated_by, updated_time, deleted, version"
+
+  - id: TC-08-20
+    priority: P1
+    category: db_schema
+    ac: AC-04
+    scenario: "dict_type 有 UNIQUE 约束"
+    expect:
+      db_assert: "sys_dict_type 表 dict_type 列有 UNIQUE 约束"
+
+  - id: TC-08-21
+    priority: P1
+    category: db_schema
+    ac: AC-04
+    scenario: "config_key 有 UNIQUE 约束"
+    expect:
+      db_assert: "sys_config 表 config_key 列有 UNIQUE 约束"
+
+# ─── AC → TC 映射 ──────────────────────────────────────────────────
+ac_tc_map:
+  AC-01: [TC-08-19]
+  AC-02: [TC-08-12, TC-08-13]
+  AC-03: [TC-08-03, TC-08-08]
+  AC-04: [TC-08-14, TC-08-15, TC-08-20, TC-08-21]
+  AC-05: []  # 缓存 TTL 由配置文件验证
+  AC-06: []  # 编译检查由 Gate R01 覆盖
+
+# ─── Gate R09 配置 ─────────────────────────────────────────────────
+gate_r09:
+  p0_required: true
+  p1_coverage_target: 0.7
+  p2_skip: true
+  test_class: "DictConfigControllerTest"
+  note: "本 Phase 包含 CRUD、租户隔离、缓存、参数校验、业务规则测试"

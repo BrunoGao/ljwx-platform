@@ -1,0 +1,80 @@
+# Phase 14 — Admin Permission 测试契约
+phase: 14
+module: "permission"
+ac_ref: "spec/phase/phase-14.md"
+
+tests:
+  - id: TC-14-01
+    priority: P0
+    category: files
+    ac: AC-01
+    scenario: "权限相关文件存在"
+    expect:
+      files_exist:
+        - "ljwx-platform-admin/src/router/guards.ts"
+        - "ljwx-platform-admin/src/stores/permission.ts"
+        - "ljwx-platform-admin/src/composables/usePermission.ts"
+
+  - id: TC-14-02
+    priority: P0
+    category: permission
+    ac: AC-01
+    scenario: "permission store 包含 generateRoutes 方法"
+    method: static_analysis
+    expect:
+      file_assert: "ljwx-platform-admin/src/stores/permission.ts 包含 generateRoutes 方法"
+
+  - id: TC-14-03
+    priority: P0
+    category: permission
+    ac: AC-01
+    scenario: "router guards 包含权限检查逻辑"
+    method: static_analysis
+    expect:
+      file_assert: "ljwx-platform-admin/src/router/guards.ts 包含权限检查和动态路由添加逻辑"
+
+  - id: TC-14-04
+    priority: P0
+    category: ui
+    ac: AC-03
+    scenario: "面包屑组件存在"
+    expect:
+      file_exists: "ljwx-platform-admin/src/layouts/components/Breadcrumb.vue"
+
+  - id: TC-14-05
+    priority: P0
+    category: ui
+    ac: AC-03
+    scenario: "标签页组件存在"
+    expect:
+      file_exists: "ljwx-platform-admin/src/layouts/components/TagsView.vue"
+
+  - id: TC-14-06
+    priority: P0
+    category: ui
+    ac: AC-04
+    scenario: "主题切换功能存在"
+    expect:
+      files_exist:
+        - "ljwx-platform-admin/src/composables/useTheme.ts"
+        - "ljwx-platform-admin/src/layouts/components/ThemeSwitch.vue"
+
+  - id: TC-14-07
+    priority: P0
+    category: build
+    ac: AC-05
+    scenario: "构建成功"
+    expect:
+      command: "cd ljwx-platform-admin && pnpm run build"
+      exit_code: 0
+
+ac_tc_map:
+  AC-01: [TC-14-01, TC-14-02, TC-14-03]
+  AC-02: [TC-14-03]
+  AC-03: [TC-14-04, TC-14-05]
+  AC-04: [TC-14-06]
+  AC-05: [TC-14-07]
+
+gate_r09:
+  p0_required: true
+  test_class: "AdminPermissionTest"

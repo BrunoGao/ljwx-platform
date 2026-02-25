@@ -1,6 +1,6 @@
 ---
 phase: 17
-title: "Screen Scaffold"
+title: "Screen Scaffold (数据大屏骨架)"
 targets:
   backend: false
   frontend: true
@@ -9,7 +9,15 @@ bundle_with: [18]
 scope:
   - "ljwx-platform-screen/**"
 ---
-# Phase 17: Screen Scaffold
+# Phase 17 — 数据大屏骨架 (Screen Scaffold)
+
+| 项目 | 值 |
+|-----|---|
+| Phase | 17 |
+| 模块 | ljwx-platform-screen (Vue 3 数据大屏) |
+| Feature | F-017 (Screen 基础架构) |
+| 前置依赖 | Phase 11 (Shared Package) |
+| 测试契约 | `spec/tests/phase-17-screen.tests.yml` |
 
 ## 读取清单
 
@@ -18,56 +26,106 @@ scope:
 - `spec/01-constraints.md` — §TypeScript 约束
 - `spec/08-output-rules.md`
 
-## 任务
+---
 
-Vue 3 + ECharts + DataV 骨架：暗色主题注册、自适应缩放 composable、基础布局。
+## 架构契约
 
-## Phase-Local Manifest
+### 技术栈
+
+- Vue ~3.5.28
+- Vite ~7.3.1
+- TypeScript ~5.9.3
+- ECharts ~6.0.0
+- @kjgl77/datav-vue3 ~1.7.4
+
+### 目录结构
 
 ```
-ljwx-platform-screen/package.json
-ljwx-platform-screen/vite.config.ts
-ljwx-platform-screen/tsconfig.json
-ljwx-platform-screen/.env.development
-ljwx-platform-screen/.env.production
-ljwx-platform-screen/index.html
-ljwx-platform-screen/src/main.ts
-ljwx-platform-screen/src/App.vue
-ljwx-platform-screen/src/router/index.ts
-ljwx-platform-screen/src/composables/useScreenAdapt.ts
-ljwx-platform-screen/src/utils/echarts-setup.ts
-ljwx-platform-screen/src/utils/echarts-dark-theme.ts
-ljwx-platform-screen/src/layouts/ScreenLayout.vue
-ljwx-platform-screen/src/views/home/index.vue
-ljwx-platform-screen/src/api/request.ts
-ljwx-platform-screen/src/api/screen.ts
-ljwx-platform-screen/src/styles/index.scss
+ljwx-platform-screen/
+├── package.json
+├── vite.config.ts
+├── tsconfig.json
+├── .env.development
+├── .env.production
+├── index.html
+├── src/
+│   ├── main.ts
+│   ├── App.vue
+│   ├── router/index.ts
+│   ├── composables/
+│   │   └── useScreenAdapt.ts
+│   ├── utils/
+│   │   ├── echarts-setup.ts
+│   │   └── echarts-dark-theme.ts
+│   ├── layouts/
+│   │   └── ScreenLayout.vue
+│   ├── views/
+│   │   └── home/index.vue
+│   ├── api/
+│   │   ├── request.ts
+│   │   └── screen.ts
+│   └── styles/
+│       └── index.scss
 ```
+
+### ECharts 暗色主题注册
+
+**utils/echarts-setup.ts**
+
+```typescript
+import * as echarts from 'echarts'
+import darkTheme from './echarts-dark-theme'
+
+echarts.registerTheme('dark', darkTheme)
+
+export default echarts
+```
+
+### 自适应缩放
+
+**composables/useScreenAdapt.ts**
+
+```typescript
+import { ref, onMounted, onUnmounted } from 'vue'
+
+export function useScreenAdapt(designWidth = 1920, designHeight = 1080) {
+  const scale = ref(1)
+
+  function calcScale() {
+    const width = window.innerWidth
+    const height = window.innerHeight
+    const scaleX = width / designWidth
+    const scaleY = height / designHeight
+    scale.value = Math.min(scaleX, scaleY)
+  }
+
+  onMounted(() => {
+    calcScale()
+    window.addEventListener('resize', calcScale)
+  })
+
+  onUnmounted(() => {
+    window.removeEventListener('resize', calcScale)
+  })
+
+  return { scale }
+}
+```
+
+---
 
 ## 验收条件
 
-1. package.json 依赖全部用 `~`，无 `^`
-2. .env 使用 `VITE_APP_BASE_API`
-3. 暗色主题已注册
-4. 自适应缩放 composable 正确（设计宽度 1920×1080）
-5. 无 `any`
-6. build 通过
+- **AC-01**：package.json 依赖全部用 `~`，无 `^`
+- **AC-02**：.env 使用 `VITE_APP_BASE_API`
+- **AC-03**：暗色主题已注册
+- **AC-04**：自适应缩放 composable 正确（设计宽度 1920×1080）
+- **AC-05**：无 `any` 类型
+- **AC-06**：`pnpm run build` 通过
 
-## 可 Bundle
+---
 
-可与 Phase 18 一起执行。
+## 关键约束
 
-## Test Cases
-
-| TC ID | Endpoint | 权限 | 预期状态码 | 关键断言 |
-|------|----------|------|------------|---------|
-| TC-17-01 | GET /api/** | read | 401 | 无 token 返回 Unauthorized |
-| TC-17-02 | GET /api/** | read | 403 | 无权限 token 返回 Forbidden |
-| TC-17-03 | GET /api/** | read | 200 | 成功返回统一响应结构 |
-| TC-17-04 | POST /api/** | write | 400 | 参数校验错误返回 400 |
-| TC-17-05 | POST /api/** | write | 200 | 创建成功并返回 ID/结果 |
-| TC-17-06 | PUT /api/**/{id} | write | 200 | 更新成功且可再次查询 |
-| TC-17-07 | DELETE /api/**/{id} | delete | 200 | 删除后数据不可见（软删/过滤） |
-| TC-17-08 | GET /api/** | read | 200 | 仅可见当前租户数据 |
-| TC-17-09 | GET /api/** | read | 401 | 过期 token 被拒绝 |
-| TC-17-10 | GET /api/** | read | 401 | 非法 token 被拒绝 |
+- 禁止：`^` 版本前缀 · `any` 类型
+- 必须：`~` 版本前缀 · ECharts 暗色主题 · 自适应缩放

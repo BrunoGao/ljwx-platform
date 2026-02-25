@@ -1,0 +1,202 @@
+# Phase 01 — Core Module 测试契约
+# 关联 Spec：spec/phase/phase-01.md
+# 注意：本 Phase 无 HTTP 端点，测试以编译和类结构验证为主
+
+phase: 1
+module: "core"
+ac_ref: "spec/phase/phase-01.md"
+
+tests:
+
+  # ─── P0：依赖验证 ───────────────────────────────────────────────
+  - id: TC-01-01
+    priority: P0
+    category: dependency
+    ac: AC-01
+    bl_ref: BL-01-01
+    scenario: "pom.xml 无其他 ljwx 模块依赖"
+    method: pom_check
+    expect:
+      file: "ljwx-platform-core/pom.xml"
+      not_contains: "<artifactId>ljwx-platform-"
+      note: "core 模块不应依赖任何其他 ljwx 模块"
+
+  # ─── P0：类结构验证 ─────────────────────────────────────────────
+  - id: TC-01-02
+    priority: P0
+    category: structure
+    ac: AC-02
+    scenario: "Result 类包含必需字段"
+    method: class_field_check
+    expect:
+      class: "com.ljwx.platform.core.result.Result"
+      fields:
+        - "code: Integer"
+        - "message: String"
+        - "data: T"
+        - "traceId: String"
+
+  - id: TC-01-03
+    priority: P0
+    category: structure
+    ac: AC-02
+    scenario: "Result 类包含静态工厂方法"
+    method: class_method_check
+    expect:
+      class: "com.ljwx.platform.core.result.Result"
+      methods:
+        - "ok()"
+        - "ok(T)"
+        - "fail(ErrorCode)"
+        - "fail(String)"
+
+  - id: TC-01-04
+    priority: P0
+    category: structure
+    ac: AC-03
+    bl_ref: BL-01-04
+    scenario: "ErrorCode 包含 SUCCESS(0)"
+    method: enum_value_check
+    expect:
+      enum: "com.ljwx.platform.core.result.ErrorCode"
+      contains: "SUCCESS(0, 200, \"成功\")"
+
+  - id: TC-01-05
+    priority: P0
+    category: structure
+    ac: AC-03
+    scenario: "ErrorCode 包含 UNAUTHORIZED(401001)"
+    method: enum_value_check
+    expect:
+      enum: "com.ljwx.platform.core.result.ErrorCode"
+      contains: "UNAUTHORIZED(401001, 401"
+
+  - id: TC-01-06
+    priority: P0
+    category: structure
+    ac: AC-03
+    scenario: "ErrorCode 包含 FORBIDDEN(403001)"
+    method: enum_value_check
+    expect:
+      enum: "com.ljwx.platform.core.result.ErrorCode"
+      contains: "FORBIDDEN(403001, 403"
+
+  - id: TC-01-07
+    priority: P0
+    category: structure
+    ac: AC-04
+    bl_ref: BL-01-03
+    scenario: "BaseEntity 包含 7 个审计字段"
+    method: class_field_check
+    expect:
+      class: "com.ljwx.platform.core.entity.BaseEntity"
+      fields:
+        - "id: Long"
+        - "tenantId: Long"
+        - "createdBy: Long"
+        - "createdTime: LocalDateTime"
+        - "updatedBy: Long"
+        - "updatedTime: LocalDateTime"
+        - "deleted: Boolean"
+        - "version: Integer"
+
+  - id: TC-01-08
+    priority: P0
+    category: structure
+    ac: AC-05
+    bl_ref: BL-01-02
+    scenario: "CurrentUserHolder 是接口"
+    method: class_type_check
+    expect:
+      class: "com.ljwx.platform.core.context.CurrentUserHolder"
+      type: "interface"
+
+  - id: TC-01-09
+    priority: P0
+    category: structure
+    ac: AC-05
+    bl_ref: BL-01-02
+    scenario: "CurrentTenantHolder 是接口"
+    method: class_type_check
+    expect:
+      class: "com.ljwx.platform.core.context.CurrentTenantHolder"
+      type: "interface"
+
+  - id: TC-01-10
+    priority: P0
+    category: compile
+    ac: AC-06
+    scenario: "core 模块编译通过"
+    method: maven_compile
+    expect:
+      command: "./mvnw compile -pl ljwx-platform-core -q"
+      exit_code: 0
+
+  # ─── P1：详细验证 ───────────────────────────────────────────────
+  - id: TC-01-11
+    priority: P1
+    category: structure
+    scenario: "PageResult 类包含 list 和 total 字段"
+    method: class_field_check
+    expect:
+      class: "com.ljwx.platform.core.result.PageResult"
+      fields:
+        - "list: List<T>"
+        - "total: Long"
+
+  - id: TC-01-12
+    priority: P1
+    category: structure
+    scenario: "SnowflakeIdGenerator 包含 nextId 方法"
+    method: class_method_check
+    expect:
+      class: "com.ljwx.platform.core.id.SnowflakeIdGenerator"
+      methods:
+        - "nextId(): Long"
+
+  - id: TC-01-13
+    priority: P1
+    category: structure
+    scenario: "BaseEntity 包含 @TableId 注解"
+    method: annotation_check
+    expect:
+      class: "com.ljwx.platform.core.entity.BaseEntity"
+      field: "id"
+      annotation: "@TableId"
+
+  - id: TC-01-14
+    priority: P1
+    category: structure
+    scenario: "BaseEntity 包含 @TableLogic 注解"
+    method: annotation_check
+    expect:
+      class: "com.ljwx.platform.core.entity.BaseEntity"
+      field: "deleted"
+      annotation: "@TableLogic"
+
+  - id: TC-01-15
+    priority: P1
+    category: structure
+    scenario: "BaseEntity 包含 @Version 注解"
+    method: annotation_check
+    expect:
+      class: "com.ljwx.platform.core.entity.BaseEntity"
+      field: "version"
+      annotation: "@Version"
+
+# ─── AC → TC 映射 ──────────────────────────────────────────────────
+ac_tc_map:
+  AC-01: [TC-01-01]
+  AC-02: [TC-01-02, TC-01-03]
+  AC-03: [TC-01-04, TC-01-05, TC-01-06]
+  AC-04: [TC-01-07]
+  AC-05: [TC-01-08, TC-01-09]
+  AC-06: [TC-01-10]
+
+# ─── Gate R09 配置 ─────────────────────────────────────────────────
+gate_r09:
+  p0_required: true
+  p1_coverage_target: 0.7
+  p2_skip: true
+  test_class: "CoreModuleTest"
+  note: "本 Phase 以类结构和编译验证为主，无运行时测试"

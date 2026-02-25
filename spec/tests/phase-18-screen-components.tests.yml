@@ -1,0 +1,71 @@
+# Phase 18 — Screen Components 测试契约
+phase: 18
+module: "screen-components"
+ac_ref: "spec/phase/phase-18.md"
+
+tests:
+  - id: TC-18-01
+    priority: P0
+    category: components
+    ac: AC-01
+    scenario: "≥13 个图表组件存在"
+    expect:
+      files_exist:
+        - "ljwx-platform-screen/src/components/charts/BarChart.vue"
+        - "ljwx-platform-screen/src/components/charts/LineChart.vue"
+        - "ljwx-platform-screen/src/components/charts/PieChart.vue"
+        - "ljwx-platform-screen/src/components/charts/RadarChart.vue"
+        - "ljwx-platform-screen/src/components/charts/GaugeChart.vue"
+        - "ljwx-platform-screen/src/components/charts/ScatterChart.vue"
+        - "ljwx-platform-screen/src/components/charts/MapChart.vue"
+        - "ljwx-platform-screen/src/components/charts/FunnelChart.vue"
+        - "ljwx-platform-screen/src/components/charts/HeatmapChart.vue"
+        - "ljwx-platform-screen/src/components/charts/TreemapChart.vue"
+        - "ljwx-platform-screen/src/components/charts/SankeyChart.vue"
+        - "ljwx-platform-screen/src/components/charts/WaterBallChart.vue"
+        - "ljwx-platform-screen/src/components/charts/RingChart.vue"
+
+  - id: TC-18-02
+    priority: P0
+    category: type_safety
+    ac: AC-02
+    scenario: "组件使用 typed props，无 any"
+    method: static_analysis
+    expect:
+      assert: "所有图表组件使用 defineProps<Props>()，无 any 类型"
+
+  - id: TC-18-03
+    priority: P0
+    category: layout
+    ac: AC-03
+    scenario: "大屏首页布局完整"
+    expect:
+      file_exists: "ljwx-platform-screen/src/views/home/index.vue"
+
+  - id: TC-18-04
+    priority: P0
+    category: api
+    ac: AC-04
+    scenario: "数据对接 screen API"
+    expect:
+      file_exists: "ljwx-platform-screen/src/api/screen.ts"
+
+  - id: TC-18-05
+    priority: P0
+    category: build
+    ac: AC-05
+    scenario: "构建成功"
+    expect:
+      command: "cd ljwx-platform-screen && pnpm run build"
+      exit_code: 0
+
+ac_tc_map:
+  AC-01: [TC-18-01]
+  AC-02: [TC-18-02]
+  AC-03: [TC-18-03]
+  AC-04: [TC-18-04]
+  AC-05: [TC-18-05]
+
+gate_r09:
+  p0_required: true
+  test_class: "ScreenComponentsTest"

@@ -1,0 +1,140 @@
+# Phase 02 — Data Module 测试契约
+# 关联 Spec：spec/phase/phase-02.md
+
+phase: 2
+module: "data"
+ac_ref: "spec/phase/phase-02.md"
+
+tests:
+
+  # ─── P0：依赖验证 ───────────────────────────────────────────────
+  - id: TC-02-01
+    priority: P0
+    category: dependency
+    ac: AC-01
+    bl_ref: BL-02-01
+    scenario: "pom.xml 仅依赖 core，无 security"
+    method: pom_check
+    expect:
+      file: "ljwx-platform-data/pom.xml"
+      contains: "<artifactId>ljwx-platform-core</artifactId>"
+      not_contains: "<artifactId>ljwx-platform-security</artifactId>"
+
+  - id: TC-02-02
+    priority: P0
+    category: dependency
+    ac: AC-02
+    bl_ref: BL-02-01
+    scenario: "全部 import 无 com.ljwx.platform.security"
+    method: grep_check
+    expect:
+      command: "grep -r 'import com.ljwx.platform.security' ljwx-platform-data/src"
+      exit_code: 1
+
+  # ─── P0：拦截器验证 ─────────────────────────────────────────────
+  - id: TC-02-03
+    priority: P0
+    category: interceptor
+    ac: AC-03
+    bl_ref: BL-02-04
+    scenario: "AuditFieldInterceptor 实现 Interceptor 接口"
+    method: class_implements_check
+    expect:
+      class: "com.ljwx.platform.data.interceptor.AuditFieldInterceptor"
+      implements: "org.apache.ibatis.plugin.Interceptor"
+
+  - id: TC-02-04
+    priority: P0
+    category: interceptor
+    ac: AC-03
+    scenario: "AuditFieldInterceptor 包含 @Intercepts 注解"
+    method: annotation_check
+    expect:
+      class: "com.ljwx.platform.data.interceptor.AuditFieldInterceptor"
+      annotation: "@Intercepts"
+
+  - id: TC-02-05
+    priority: P0
+    category: interceptor
+    ac: AC-04
+    bl_ref: BL-02-03
+    scenario: "TenantLineInterceptor 实现 Interceptor 接口"
+    method: class_implements_check
+    expect:
+      class: "com.ljwx.platform.data.interceptor.TenantLineInterceptor"
+      implements: "org.apache.ibatis.plugin.Interceptor"
+
+  - id: TC-02-06
+    priority: P0
+    category: interceptor
+    ac: AC-04
+    scenario: "TenantLineInterceptor 包含 @Intercepts 注解"
+    method: annotation_check
+    expect:
+      class: "com.ljwx.platform.data.interceptor.TenantLineInterceptor"
+      annotation: "@Intercepts"
+
+  - id: TC-02-07
+    priority: P0
+    category: interceptor
+    bl_ref: BL-02-02
+    scenario: "AuditFieldInterceptor 使用 CurrentUserHolder 接口"
+    method: dependency_check
+    expect:
+      class: "com.ljwx.platform.data.interceptor.AuditFieldInterceptor"
+      uses: "com.ljwx.platform.core.context.CurrentUserHolder"
+
+  - id: TC-02-08
+    priority: P0
+    category: interceptor
+    bl_ref: BL-02-02
+    scenario: "TenantLineInterceptor 使用 CurrentTenantHolder 接口"
+    method: dependency_check
+    expect:
+      class: "com.ljwx.platform.data.interceptor.TenantLineInterceptor"
+      uses: "com.ljwx.platform.core.context.CurrentTenantHolder"
+
+  - id: TC-02-09
+    priority: P0
+    category: compile
+    ac: AC-05
+    scenario: "data 模块编译通过"
+    method: maven_compile
+    expect:
+      command: "./mvnw compile -pl ljwx-platform-data -q"
+      exit_code: 0
+
+  # ─── P1：配置验证 ───────────────────────────────────────────────
+  - id: TC-02-10
+    priority: P1
+    category: config
+    scenario: "MyBatisConfig 注册 AuditFieldInterceptor"
+    method: bean_registration_check
+    expect:
+      class: "com.ljwx.platform.data.config.MyBatisConfig"
+      registers: "AuditFieldInterceptor"
+
+  - id: TC-02-11
+    priority: P1
+    category: config
+    scenario: "MyBatisConfig 注册 TenantLineInterceptor"
+    method: bean_registration_check
+    expect:
+      class: "com.ljwx.platform.data.config.MyBatisConfig"
+      registers: "TenantLineInterceptor"
+
+# ─── AC → TC 映射 ──────────────────────────────────────────────────
+ac_tc_map:
+  AC-01: [TC-02-01]
+  AC-02: [TC-02-02]
+  AC-03: [TC-02-03, TC-02-04, TC-02-07]
+  AC-04: [TC-02-05, TC-02-06, TC-02-08]
+  AC-05: [TC-02-09]
+
+# ─── Gate R09 配置 ─────────────────────────────────────────────────
+gate_r09:
+  p0_required: true
+  p1_coverage_target: 0.7
+  p2_skip: true
+  test_class: "DataModuleTest"
+  note: "本 Phase 以拦截器结构验证为主，运行时行为在后续 Phase 集成测试"
