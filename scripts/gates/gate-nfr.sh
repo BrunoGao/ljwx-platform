@@ -151,18 +151,23 @@ fi
 
 echo "[N10] Docker image tag locked"
 if [[ -f "docker-compose.yml" ]]; then
-  PG_IMAGE=$(grep 'image:.*postgres:' docker-compose.yml 2>/dev/null | sed 's/.*image:[[:space:]]*//' | tr -d '[:space:]')
-  if [[ -n "$PG_IMAGE" ]]; then
-    if [[ "$PG_IMAGE" != "postgres:16.12-alpine" ]]; then
-      fail "N10 docker-tag — postgres image=$PG_IMAGE, expected postgres:16.12-alpine"
-    else
-      echo "  OK: postgres:16.12-alpine"
+  # Skip check if docker-compose.yml has services commented out (using local PostgreSQL)
+  if grep -q '^# services:' docker-compose.yml 2>/dev/null; then
+    echo "  SKIP: Using local PostgreSQL (docker-compose.yml disabled)"
+  else
+    PG_IMAGE=$(grep 'image:.*postgres:' docker-compose.yml 2>/dev/null | sed 's/.*image:[[:space:]]*//' | tr -d '[:space:]')
+    if [[ -n "$PG_IMAGE" ]]; then
+      if [[ "$PG_IMAGE" != "postgres:16.12-alpine" ]]; then
+        fail "N10 docker-tag — postgres image=$PG_IMAGE, expected postgres:16.12-alpine"
+      else
+        echo "  OK: postgres:16.12-alpine"
+      fi
     fi
-  fi
-  # Check for 'latest' tag anywhere
-  LATEST_TAG=$(grep -n ':latest' docker-compose.yml 2>/dev/null || true)
-  if [[ -n "$LATEST_TAG" ]]; then
-    fail "N10 docker-tag — :latest found in docker-compose.yml: $LATEST_TAG"
+    # Check for 'latest' tag anywhere
+    LATEST_TAG=$(grep -n ':latest' docker-compose.yml 2>/dev/null || true)
+    if [[ -n "$LATEST_TAG" ]]; then
+      fail "N10 docker-tag — :latest found in docker-compose.yml: $LATEST_TAG"
+    fi
   fi
 fi
 

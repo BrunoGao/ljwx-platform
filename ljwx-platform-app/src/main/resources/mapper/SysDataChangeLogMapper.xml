@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ljwx.platform.app.infra.mapper.SysDataChangeLogMapper">
+
+    <resultMap id="BaseResultMap" type="com.ljwx.platform.app.domain.entity.SysDataChangeLog">
+        <id     column="id"            property="id"          />
+        <result column="table_name"    property="tableName"   />
+        <result column="record_id"     property="recordId"    />
+        <result column="field_name"    property="fieldName"   />
+        <result column="old_value"     property="oldValue"    />
+        <result column="new_value"     property="newValue"    />
+        <result column="operate_type"  property="operateType" />
+        <result column="tenant_id"     property="tenantId"    />
+        <result column="created_by"    property="createdBy"   />
+        <result column="created_time"  property="createdTime" />
+        <result column="updated_by"    property="updatedBy"   />
+        <result column="updated_time"  property="updatedTime" />
+        <result column="deleted"       property="deleted"     />
+        <result column="version"       property="version"     />
+    </resultMap>
+
+    <insert id="insert" parameterType="com.ljwx.platform.app.domain.entity.SysDataChangeLog">
+        INSERT INTO sys_data_change_log (
+            id, table_name, record_id, field_name, old_value, new_value, operate_type,
+            tenant_id, created_by, created_time, updated_by, updated_time, deleted, version
+        ) VALUES (
+            #{id}, #{tableName}, #{recordId}, #{fieldName}, #{oldValue}, #{newValue}, #{operateType},
+            #{tenantId}, #{createdBy}, #{createdTime}, #{updatedBy}, #{updatedTime}, #{deleted}, #{version}
+        )
+    </insert>
+
+    <insert id="batchInsert">
+        INSERT INTO sys_data_change_log (
+            id, table_name, record_id, field_name, old_value, new_value, operate_type,
+            tenant_id, created_by, created_time, updated_by, updated_time, deleted, version
+        ) VALUES
+        <foreach collection="logs" item="log" separator=",">
+            (
+                #{log.id}, #{log.tableName}, #{log.recordId}, #{log.fieldName},
+                #{log.oldValue}, #{log.newValue}, #{log.operateType},
+                #{log.tenantId}, #{log.createdBy}, #{log.createdTime},
+                #{log.updatedBy}, #{log.updatedTime}, #{log.deleted}, #{log.version}
+            )
+        </foreach>
+    </insert>
+
+    <select id="selectList" resultMap="BaseResultMap">
+        SELECT * FROM sys_data_change_log
+        WHERE deleted = FALSE
+        <if test="tableName != null and tableName != ''">
+            AND table_name = #{tableName}
+        </if>
+        <if test="recordId != null">
+            AND record_id = #{recordId}
+        </if>
+        <if test="startTime != null">
+            AND created_time &gt;= #{startTime}
+        </if>
+        <if test="endTime != null">
+            AND created_time &lt;= #{endTime}
+        </if>
+        ORDER BY created_time DESC
+    </select>
+
+    <select id="count" resultType="long">
+        SELECT COUNT(*) FROM sys_data_change_log
+        WHERE deleted = FALSE
+        <if test="tableName != null and tableName != ''">
+            AND table_name = #{tableName}
+        </if>
+        <if test="recordId != null">
+            AND record_id = #{recordId}
+        </if>
+        <if test="startTime != null">
+            AND created_time &gt;= #{startTime}
+        </if>
+        <if test="endTime != null">
+            AND created_time &lt;= #{endTime}
+        </if>
+    </select>
+
+</mapper>

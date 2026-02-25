@@ -71,13 +71,45 @@ public class SlowApiAspect {
     }
 
     private String extractPath(MethodSignature signature) {
-        RequestMapping classMapping = signature.getDeclaringType().getAnnotation(RequestMapping.class);
-        RequestMapping methodMapping = signature.getMethod().getAnnotation(RequestMapping.class);
+        String classPath = "";
+        String methodPath = "";
 
-        String classPath = (classMapping != null && classMapping.value().length > 0)
-                ? classMapping.value()[0] : "";
-        String methodPath = (methodMapping != null && methodMapping.value().length > 0)
-                ? methodMapping.value()[0] : "";
+        // Extract class-level @RequestMapping using reflection
+        try {
+            for (var annotation : signature.getDeclaringType().getAnnotations()) {
+                if (annotation.annotationType().getSimpleName().equals("RequestMapping")) {
+                    var valueMethod = annotation.annotationType().getMethod("value");
+                    Object result = valueMethod.invoke(annotation);
+                    if (result instanceof String[]) {
+                        String[] values = (String[]) result;
+                        if (values.length > 0) {
+                            classPath = values[0];
+                            break;
+                        }
+                    }
+                }
+            }
+        } catch (Exception ignored) {
+            // Ignore reflection errors
+        }
+
+        // Extract method-level mapping (could be @RequestMapping, @GetMapping, @PostMapping, etc.)
+        var method = signature.getMethod();
+        for (var annotation : method.getAnnotations()) {
+            String annotationName = annotation.annotationType().getSimpleName();
+            if (annotationName.endsWith("Mapping")) {
+                try {
+                    var valueMethod = annotation.annotationType().getMethod("value");
+                    String[] values = (String[]) valueMethod.invoke(annotation);
+                    if (values.length > 0) {
+                        methodPath = values[0];
+                        break;
+                    }
+                } catch (Exception ignored) {
+                    // Ignore reflection errors
+                }
+            }
+        }
 
         return classPath + methodPath;
     }

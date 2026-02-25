@@ -1,4 +1,4 @@
--- V029: 创建前端错误监控表
+-- V031: 创建前端错误监控表
 CREATE TABLE sys_frontend_error (
     id              BIGINT          NOT NULL,
     error_message   VARCHAR(1000)   NOT NULL,

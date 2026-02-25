@@ -49,10 +49,12 @@ fi
 if [[ ! -f "$OPENAPI_OUTPUT" ]]; then
   echo "  Attempting runtime OpenAPI generation"
 
-  # Ensure DB is up
-  if [[ -f "docker-compose.yml" ]]; then
-    docker compose -f docker-compose.yml up -d 2>/dev/null
-    sleep 3
+  # Ensure DB is up (using local PostgreSQL)
+  echo "  Checking local PostgreSQL connection"
+  if command -v psql > /dev/null 2>&1; then
+    if ! psql -U postgres -d ljwx_platform -c "SELECT 1" > /dev/null 2>&1; then
+      echo "  WARNING: Cannot connect to local PostgreSQL"
+    fi
   fi
 
   # Build and start app in background

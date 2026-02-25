@@ -485,6 +485,35 @@ Files:
   - ljwx-platform-core/src/main/java/com/ljwx/platform/core/context/CurrentTenantHolder.java
 Status: PASSED
 
+## PHASE 30
+Title: Data Change Audit and Log Cleanup Job
+Completed: 2026-02-25T00:00:00Z
+Files:
+  - ljwx-platform-app/src/main/resources/db/migration/V030__create_sys_data_change_log.sql
+  - ljwx-platform-app/src/main/java/com/ljwx/platform/app/domain/entity/SysDataChangeLog.java
+  - ljwx-platform-app/src/main/java/com/ljwx/platform/app/infra/mapper/SysDataChangeLogMapper.java
+  - ljwx-platform-app/src/main/resources/mapper/SysDataChangeLogMapper.xml
+  - ljwx-platform-data/src/main/java/com/ljwx/platform/data/annotation/AuditChange.java
+  - ljwx-platform-data/src/main/java/com/ljwx/platform/data/interceptor/DataChangeInterceptor.java
+  - ljwx-platform-app/src/main/java/com/ljwx/platform/app/controller/DataChangeLogController.java
+  - ljwx-platform-app/src/main/java/com/ljwx/platform/app/appservice/DataChangeLogAppService.java
+  - ljwx-platform-app/src/main/java/com/ljwx/platform/app/domain/vo/DataChangeLogVO.java
+  - ljwx-platform-app/src/main/java/com/ljwx/platform/app/infra/quartz/LogCleanupJob.java
+Gate: PASSED
+
+## PHASE 31
+Title: Frontend Permission Directive and Enhancement
+Completed: 2026-02-25T00:30:00Z
+Files:
+  - ljwx-platform-admin/src/directives/permission.ts
+  - ljwx-platform-admin/src/directives/index.ts
+  - ljwx-platform-admin/src/main.ts
+  - ljwx-platform-admin/src/composables/usePermission.ts
+  - ljwx-platform-admin/src/views/monitor/dataChangeLog/index.vue
+  - ljwx-platform-admin/src/api/dataChangeLog.ts
+  - ljwx-platform-admin/src/router/index.ts
+Gate: PASSED
+
 ## PHASE 0
 Status: PASSED
 

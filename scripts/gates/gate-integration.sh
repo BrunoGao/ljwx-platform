@@ -47,21 +47,18 @@ if ! docker info > /dev/null 2>&1; then
   exit 0
 fi
 
-# ── Check: docker-compose up for test DB ──
-if [[ -f "docker-compose.yml" ]]; then
-  echo "[Integration] Ensuring PostgreSQL is running"
-  docker compose -f docker-compose.yml up -d 2>&1
-  # Wait for DB to be ready
-  for i in $(seq 1 30); do
-    if docker compose -f docker-compose.yml exec -T postgres pg_isready -U ljwx > /dev/null 2>&1; then
-      echo "  PostgreSQL ready"
-      break
-    fi
-    if [[ $i -eq 30 ]]; then
-      echo "  WARN: PostgreSQL not ready after 30s, tests may fail"
-    fi
-    sleep 1
-  done
+# ── Check: PostgreSQL availability ──
+# Note: Using local PostgreSQL, not Docker
+echo "[Integration] Checking local PostgreSQL connection"
+if command -v psql > /dev/null 2>&1; then
+  if psql -U postgres -d ljwx_platform -c "SELECT 1" > /dev/null 2>&1; then
+    echo "  PostgreSQL ready (local instance)"
+  else
+    echo "  WARNING: Cannot connect to local PostgreSQL at localhost:5432"
+    echo "  Make sure PostgreSQL is running and database 'ljwx_platform' exists"
+  fi
+else
+  echo "  WARNING: psql not found, skipping PostgreSQL check"
 fi
 
 # ── Run tests ──

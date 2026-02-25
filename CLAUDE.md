@@ -21,10 +21,10 @@
 
 ## Current Phase
 
-Phase: 28 (Security Hardening) — PASSED, Phase 29 next
+Phase: 31 (Frontend Permission Directive and Enhancement) — PASSED
 
-已完成: Phase 0-28 PASSED
-待执行: Phase 29 → 30 → 31 → 32
+已完成: Phase 0-31 PASSED
+待执行: Phase 32+
 
 ## 硬规则（违反任何一篇为 FAIL）
 

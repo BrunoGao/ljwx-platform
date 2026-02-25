@@ -27,8 +27,25 @@ export function usePermission() {
     return authorities.some((auth) => userStore.hasAuthority(auth))
   }
 
+  /**
+   * Returns true if the current user has ALL of the given permissions.
+   * Alias for hasPermission for clarity.
+   */
+  function hasAllPermissions(permissions: string[]): boolean {
+    return permissions.every((auth) => userStore.hasAuthority(auth))
+  }
+
+  /**
+   * Returns true if the current user has the specified role.
+   */
+  function hasRole(role: string): boolean {
+    return userStore.userInfo?.roles?.includes(role) ?? false
+  }
+
   return {
     hasPermission,
     hasAnyPermission,
+    hasAllPermissions,
+    hasRole,
   }
 }

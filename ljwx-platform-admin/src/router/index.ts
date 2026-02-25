@@ -183,6 +183,17 @@ const routes: RouteRecordRaw[] = [
           requiresAuth: true,
         },
       },
+      {
+        path: 'monitor/data-change-log',
+        name: 'DataChangeLog',
+        component: () => import('@/views/monitor/dataChangeLog/index.vue'),
+        meta: {
+          title: '数据变更日志',
+          icon: 'Document',
+          requiresAuth: true,
+          authority: 'system:audit:list',
+        },
+      },
     ],
   },
   {

@@ -25,6 +25,11 @@
 #   25    系统监控 + API 限流 + WebSocket
 #   26    集成测试（Phase 20-25 新功能）
 #   27    最终 Gate + 全量 Manifest v2
+#   28    安全加固（XSS / 幂等 / Token 黑名单 / 登录锁定）
+#   29    可观测性（TraceId / 结构化日志 / 慢 API / 前端错误监控）
+#   30    数据变更审计 + 日志清理
+#   31    前端增强（v-permission / 数据变更日志页面）
+#   32    Final Gate v3
 # ═══════════════════════════════════════════════════════════
 set -euo pipefail
 
@@ -36,7 +41,7 @@ export CLAUDE_PROJECT_DIR="$PROJECT_ROOT"
 FROM_PHASE=0
 ONLY_PHASE=""
 DRY_RUN=false
-TOTAL_PHASES=28   # Phase 0–27
+TOTAL_PHASES=32   # Phase 0–31
 
 while [[ $# -gt 0 ]]; do
   case "$1" in

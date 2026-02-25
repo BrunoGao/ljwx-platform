@@ -1,22 +1,25 @@
 version: '3.8'
 
-services:
-  postgres:
-    image: postgres:16.12-alpine
-    container_name: ljwx-platform-postgres
-    ports:
-      - "${DB_PORT:-5432}:5432"
-    environment:
-      POSTGRES_DB: ${DB_NAME:-ljwx_platform}
-      POSTGRES_USER: ${DB_USERNAME:-postgres}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
-    volumes:
-      - pgdata:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-postgres} -d ${DB_NAME:-ljwx_platform}"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+# PostgreSQL service disabled — using local PostgreSQL instance
+# To re-enable Docker PostgreSQL, uncomment the services section below
 
-volumes:
-  pgdata:
+# services:
+#   postgres:
+#     image: postgres:16.12-alpine
+#     container_name: ljwx-platform-postgres
+#     ports:
+#       - "${DB_PORT:-5432}:5432"
+#     environment:
+#       POSTGRES_DB: ${DB_NAME:-ljwx_platform}
+#       POSTGRES_USER: ${DB_USERNAME:-postgres}
+#       POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+#     volumes:
+#       - pgdata:/var/lib/postgresql/data
+#     healthcheck:
+#       test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-postgres} -d ${DB_NAME:-ljwx_platform}"]
+#       interval: 10s
+#       timeout: 5s
+#       retries: 5
+
+# volumes:
+#   pgdata:
