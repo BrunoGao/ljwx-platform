@@ -1,0 +1,93 @@
+{
+  "phase": "13",
+  "status": "FAIL",
+  "timestamp": "2026-02-25T15:31:25Z",
+  "git": {
+    "commit": "748007a",
+    "branch": "master"
+  },
+  "rules": [
+    {
+      "id": "R01",
+      "name": "Compile",
+      "status": "FAIL",
+      "critical": 1,
+      "warnings": 0,
+      "message": "backfilled from batch log"
+    },
+    {
+      "id": "R02",
+      "name": "Manifest",
+      "status": "SKIP",
+      "critical": 0,
+      "warnings": 0,
+      "message": "backfilled"
+    },
+    {
+      "id": "R03",
+      "name": "Rules",
+      "status": "SKIP",
+      "critical": 0,
+      "warnings": 0,
+      "message": "backfilled"
+    },
+    {
+      "id": "R04",
+      "name": "Flyway Governance",
+      "status": "SKIP",
+      "critical": 0,
+      "warnings": 0,
+      "message": "backfilled"
+    },
+    {
+      "id": "R05",
+      "name": "Integration",
+      "status": "SKIP",
+      "critical": 0,
+      "warnings": 0,
+      "message": "batch mode"
+    },
+    {
+      "id": "R06",
+      "name": "Contract",
+      "status": "SKIP",
+      "critical": 0,
+      "warnings": 0,
+      "message": "batch mode"
+    },
+    {
+      "id": "R07",
+      "name": "NFR",
+      "status": "SKIP",
+      "critical": 0,
+      "warnings": 0,
+      "message": "backfilled"
+    },
+    {
+      "id": "R08",
+      "name": "RTM",
+      "status": "SKIP",
+      "critical": 0,
+      "warnings": 0,
+      "message": "backfilled"
+    }
+  ],
+  "summary": {
+    "total": 8,
+    "pass": 0,
+    "fail": 1,
+    "skip": 7,
+    "critical": 1,
+    "warnings": 0,
+    "pass_rate": 0
+  },
+  "violations": [
+    {
+      "rule": "BATCH",
+      "severity": "CRITICAL",
+      "file": null,
+      "line": null,
+      "message": "phase backfilled from batch status"
+    }
+  ]
+}

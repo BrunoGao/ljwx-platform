@@ -1,16 +1,16 @@
 {
-  "generated_at": "2026-02-25T14:33:24Z",
+  "generated_at": "2026-02-25T15:31:27Z",
   "repo": {
     "owner": "BrunoGao",
     "name": "ljwx-platform",
     "branch": "master",
-    "commit": "2917122"
+    "commit": "748007a"
   },
   "totals": {
-    "pass": 1,
-    "fail": 0,
-    "pending": 31,
-    "critical": 0,
+    "pass": 24,
+    "fail": 8,
+    "pending": 0,
+    "critical": 8,
     "warnings": 0
   },
   "phases": [
@@ -21,289 +21,645 @@
       "critical": 0,
       "warnings": 0,
       "timestamp": "2026-02-25T14:33:24Z",
-      "git_commit": "2917122"
+      "git_commit": "2917122",
+      "r09_status": "PENDING"
     },
     {
       "phase": "01",
-      "status": "PENDING",
-      "pass_rate": 0,
+      "status": "PASS",
+      "pass_rate": 100,
       "critical": 0,
       "warnings": 0,
-      "timestamp": "",
-      "git_commit": ""
+      "timestamp": "2026-02-25T15:31:25Z",
+      "git_commit": "748007a",
+      "r09_status": "PENDING"
     },
     {
       "phase": "02",
-      "status": "PENDING",
-      "pass_rate": 0,
+      "status": "PASS",
+      "pass_rate": 100,
       "critical": 0,
       "warnings": 0,
-      "timestamp": "",
-      "git_commit": ""
+      "timestamp": "2026-02-25T15:31:25Z",
+      "git_commit": "748007a",
+      "r09_status": "PENDING"
     },
     {
       "phase": "03",
-      "status": "PENDING",
-      "pass_rate": 0,
+      "status": "PASS",
+      "pass_rate": 100,
       "critical": 0,
       "warnings": 0,
-      "timestamp": "",
-      "git_commit": ""
+      "timestamp": "2026-02-25T15:31:25Z",
+      "git_commit": "748007a",
+      "r09_status": "PENDING"
     },
     {
       "phase": "04",
-      "status": "PENDING",
-      "pass_rate": 0,
+      "status": "PASS",
+      "pass_rate": 100,
       "critical": 0,
       "warnings": 0,
-      "timestamp": "",
-      "git_commit": ""
+      "timestamp": "2026-02-25T15:31:25Z",
+      "git_commit": "748007a",
+      "r09_status": "PENDING"
     },
     {
       "phase": "05",
-      "status": "PENDING",
-      "pass_rate": 0,
+      "status": "PASS",
+      "pass_rate": 100,
       "critical": 0,
       "warnings": 0,
-      "timestamp": "",
-      "git_commit": ""
+      "timestamp": "2026-02-25T15:31:25Z",
+      "git_commit": "748007a",
+      "r09_status": "PENDING"
     },
     {
       "phase": "06",
-      "status": "PENDING",
-      "pass_rate": 0,
+      "status": "PASS",
+      "pass_rate": 100,
       "critical": 0,
       "warnings": 0,
-      "timestamp": "",
-      "git_commit": ""
+      "timestamp": "2026-02-25T15:31:25Z",
+      "git_commit": "748007a",
+      "r09_status": "PENDING"
     },
     {
       "phase": "07",
-      "status": "PENDING",
-      "pass_rate": 0,
+      "status": "PASS",
+      "pass_rate": 100,
       "critical": 0,
       "warnings": 0,
-      "timestamp": "",
-      "git_commit": ""
+      "timestamp": "2026-02-25T15:31:25Z",
+      "git_commit": "748007a",
+      "r09_status": "PENDING"
     },
     {
       "phase": "08",
-      "status": "PENDING",
+      "status": "FAIL",
       "pass_rate": 0,
-      "critical": 0,
+      "critical": 1,
       "warnings": 0,
-      "timestamp": "",
-      "git_commit": ""
+      "timestamp": "2026-02-25T15:31:25Z",
+      "git_commit": "748007a",
+      "r09_status": "PENDING"
     },
     {
       "phase": "09",
-      "status": "PENDING",
+      "status": "FAIL",
       "pass_rate": 0,
-      "critical": 0,
+      "critical": 1,
       "warnings": 0,
-      "timestamp": "",
-      "git_commit": ""
+      "timestamp": "2026-02-25T15:31:25Z",
+      "git_commit": "748007a",
+      "r09_status": "PENDING"
     },
     {
       "phase": "10",
-      "status": "PENDING",
-      "pass_rate": 0,
+      "status": "PASS",
+      "pass_rate": 100,
       "critical": 0,
       "warnings": 0,
-      "timestamp": "",
-      "git_commit": ""
+      "timestamp": "2026-02-25T15:31:25Z",
+      "git_commit": "748007a",
+      "r09_status": "PENDING"
     },
     {
       "phase": "11",
-      "status": "PENDING",
-      "pass_rate": 0,
+      "status": "PASS",
+      "pass_rate": 100,
       "critical": 0,
       "warnings": 0,
-      "timestamp": "",
-      "git_commit": ""
+      "timestamp": "2026-02-25T15:31:25Z",
+      "git_commit": "748007a",
+      "r09_status": "PENDING"
     },
     {
       "phase": "12",
-      "status": "PENDING",
-      "pass_rate": 0,
+      "status": "PASS",
+      "pass_rate": 100,
       "critical": 0,
       "warnings": 0,
-      "timestamp": "",
-      "git_commit": ""
+      "timestamp": "2026-02-25T15:31:25Z",
+      "git_commit": "748007a",
+      "r09_status": "PENDING"
     },
     {
       "phase": "13",
-      "status": "PENDING",
+      "status": "FAIL",
       "pass_rate": 0,
-      "critical": 0,
+      "critical": 1,
       "warnings": 0,
-      "timestamp": "",
-      "git_commit": ""
+      "timestamp": "2026-02-25T15:31:25Z",
+      "git_commit": "748007a",
+      "r09_status": "PENDING"
     },
     {
       "phase": "14",
-      "status": "PENDING",
-      "pass_rate": 0,
+      "status": "PASS",
+      "pass_rate": 100,
       "critical": 0,
       "warnings": 0,
-      "timestamp": "",
-      "git_commit": ""
+      "timestamp": "2026-02-25T15:31:25Z",
+      "git_commit": "748007a",
+      "r09_status": "PENDING"
     },
     {
       "phase": "15",
-      "status": "PENDING",
-      "pass_rate": 0,
+      "status": "PASS",
+      "pass_rate": 100,
       "critical": 0,
       "warnings": 0,
-      "timestamp": "",
-      "git_commit": ""
+      "timestamp": "2026-02-25T15:31:25Z",
+      "git_commit": "748007a",
+      "r09_status": "PENDING"
     },
     {
       "phase": "16",
-      "status": "PENDING",
-      "pass_rate": 0,
+      "status": "PASS",
+      "pass_rate": 100,
       "critical": 0,
       "warnings": 0,
-      "timestamp": "",
-      "git_commit": ""
+      "timestamp": "2026-02-25T15:31:25Z",
+      "git_commit": "748007a",
+      "r09_status": "PENDING"
     },
     {
       "phase": "17",
-      "status": "PENDING",
-      "pass_rate": 0,
+      "status": "PASS",
+      "pass_rate": 100,
       "critical": 0,
       "warnings": 0,
-      "timestamp": "",
-      "git_commit": ""
+      "timestamp": "2026-02-25T15:31:25Z",
+      "git_commit": "748007a",
+      "r09_status": "PENDING"
     },
     {
       "phase": "18",
-      "status": "PENDING",
-      "pass_rate": 0,
+      "status": "PASS",
+      "pass_rate": 100,
       "critical": 0,
       "warnings": 0,
-      "timestamp": "",
-      "git_commit": ""
+      "timestamp": "2026-02-25T15:31:25Z",
+      "git_commit": "748007a",
+      "r09_status": "PENDING"
     },
     {
       "phase": "19",
-      "status": "PENDING",
-      "pass_rate": 0,
+      "status": "PASS",
+      "pass_rate": 100,
       "critical": 0,
       "warnings": 0,
-      "timestamp": "",
-      "git_commit": ""
+      "timestamp": "2026-02-25T15:31:25Z",
+      "git_commit": "748007a",
+      "r09_status": "PENDING"
     },
     {
       "phase": "20",
-      "status": "PENDING",
-      "pass_rate": 0,
+      "status": "PASS",
+      "pass_rate": 100,
       "critical": 0,
       "warnings": 0,
-      "timestamp": "",
-      "git_commit": ""
+      "timestamp": "2026-02-25T15:31:25Z",
+      "git_commit": "748007a",
+      "r09_status": "PENDING"
     },
     {
       "phase": "21",
-      "status": "PENDING",
-      "pass_rate": 0,
+      "status": "PASS",
+      "pass_rate": 100,
       "critical": 0,
       "warnings": 0,
-      "timestamp": "",
-      "git_commit": ""
+      "timestamp": "2026-02-25T15:31:25Z",
+      "git_commit": "748007a",
+      "r09_status": "PENDING"
     },
     {
       "phase": "22",
-      "status": "PENDING",
-      "pass_rate": 0,
+      "status": "PASS",
+      "pass_rate": 100,
       "critical": 0,
       "warnings": 0,
-      "timestamp": "",
-      "git_commit": ""
+      "timestamp": "2026-02-25T15:31:25Z",
+      "git_commit": "748007a",
+      "r09_status": "PENDING"
     },
     {
       "phase": "23",
-      "status": "PENDING",
+      "status": "FAIL",
       "pass_rate": 0,
-      "critical": 0,
+      "critical": 1,
       "warnings": 0,
-      "timestamp": "",
-      "git_commit": ""
+      "timestamp": "2026-02-25T15:31:25Z",
+      "git_commit": "748007a",
+      "r09_status": "PENDING"
     },
     {
       "phase": "24",
-      "status": "PENDING",
-      "pass_rate": 0,
+      "status": "PASS",
+      "pass_rate": 100,
       "critical": 0,
       "warnings": 0,
-      "timestamp": "",
-      "git_commit": ""
+      "timestamp": "2026-02-25T15:31:25Z",
+      "git_commit": "748007a",
+      "r09_status": "PENDING"
     },
     {
       "phase": "25",
-      "status": "PENDING",
-      "pass_rate": 0,
+      "status": "PASS",
+      "pass_rate": 100,
       "critical": 0,
       "warnings": 0,
-      "timestamp": "",
-      "git_commit": ""
+      "timestamp": "2026-02-25T15:31:25Z",
+      "git_commit": "748007a",
+      "r09_status": "PENDING"
     },
     {
       "phase": "26",
-      "status": "PENDING",
-      "pass_rate": 0,
+      "status": "PASS",
+      "pass_rate": 100,
       "critical": 0,
       "warnings": 0,
-      "timestamp": "",
-      "git_commit": ""
+      "timestamp": "2026-02-25T15:31:25Z",
+      "git_commit": "748007a",
+      "r09_status": "PENDING"
     },
     {
       "phase": "27",
-      "status": "PENDING",
-      "pass_rate": 0,
+      "status": "PASS",
+      "pass_rate": 100,
       "critical": 0,
       "warnings": 0,
-      "timestamp": "",
-      "git_commit": ""
+      "timestamp": "2026-02-25T15:31:25Z",
+      "git_commit": "748007a",
+      "r09_status": "PENDING"
     },
     {
       "phase": "28",
-      "status": "PENDING",
+      "status": "FAIL",
       "pass_rate": 0,
-      "critical": 0,
+      "critical": 1,
       "warnings": 0,
-      "timestamp": "",
-      "git_commit": ""
+      "timestamp": "2026-02-25T15:31:25Z",
+      "git_commit": "748007a",
+      "r09_status": "PENDING"
     },
     {
       "phase": "29",
-      "status": "PENDING",
+      "status": "FAIL",
       "pass_rate": 0,
-      "critical": 0,
+      "critical": 1,
       "warnings": 0,
-      "timestamp": "",
-      "git_commit": ""
+      "timestamp": "2026-02-25T15:31:25Z",
+      "git_commit": "748007a",
+      "r09_status": "PENDING"
     },
     {
       "phase": "30",
-      "status": "PENDING",
-      "pass_rate": 0,
-      "critical": 0,
+      "status": "FAIL",
+      "pass_rate": 55.56,
+      "critical": 1,
       "warnings": 0,
-      "timestamp": "",
-      "git_commit": ""
+      "timestamp": "2026-02-25T15:29:46Z",
+      "git_commit": "748007a",
+      "r09_status": "SKIP"
     },
     {
       "phase": "31",
-      "status": "PENDING",
-      "pass_rate": 0,
-      "critical": 0,
+      "status": "FAIL",
+      "pass_rate": 55.56,
+      "critical": 1,
       "warnings": 0,
-      "timestamp": "",
-      "git_commit": ""
+      "timestamp": "2026-02-25T15:30:29Z",
+      "git_commit": "748007a",
+      "r09_status": "SKIP"
     }
   ],
   "history": [
+    {
+      "timestamp": "2026-02-25T15:30:29Z",
+      "phase": "31",
+      "status": "FAIL",
+      "pass_rate": 55.56,
+      "git_commit": "748007a",
+      "critical": 1,
+      "warnings": 0
+    },
+    {
+      "timestamp": "2026-02-25T15:29:46Z",
+      "phase": "30",
+      "status": "FAIL",
+      "pass_rate": 55.56,
+      "git_commit": "748007a",
+      "critical": 1,
+      "warnings": 0
+    },
+    {
+      "timestamp": "2026-02-25T15:29:00Z",
+      "phase": "29",
+      "status": "FAIL",
+      "pass_rate": 55.56,
+      "git_commit": "748007a",
+      "critical": 1,
+      "warnings": 0
+    },
+    {
+      "timestamp": "2026-02-25T15:27:58Z",
+      "phase": "28",
+      "status": "FAIL",
+      "pass_rate": 55.56,
+      "git_commit": "748007a",
+      "critical": 1,
+      "warnings": 0
+    },
+    {
+      "timestamp": "2026-02-25T15:27:03Z",
+      "phase": "27",
+      "status": "PASS",
+      "pass_rate": 66.67,
+      "git_commit": "748007a",
+      "critical": 0,
+      "warnings": 0
+    },
+    {
+      "timestamp": "2026-02-25T15:26:11Z",
+      "phase": "26",
+      "status": "PASS",
+      "pass_rate": 66.67,
+      "git_commit": "748007a",
+      "critical": 0,
+      "warnings": 0
+    },
+    {
+      "timestamp": "2026-02-25T15:25:28Z",
+      "phase": "25",
+      "status": "PASS",
+      "pass_rate": 66.67,
+      "git_commit": "748007a",
+      "critical": 0,
+      "warnings": 0
+    },
+    {
+      "timestamp": "2026-02-25T15:24:45Z",
+      "phase": "24",
+      "status": "PASS",
+      "pass_rate": 66.67,
+      "git_commit": "748007a",
+      "critical": 0,
+      "warnings": 0
+    },
+    {
+      "timestamp": "2026-02-25T15:24:04Z",
+      "phase": "23",
+      "status": "FAIL",
+      "pass_rate": 55.56,
+      "git_commit": "748007a",
+      "critical": 1,
+      "warnings": 0
+    },
+    {
+      "timestamp": "2026-02-25T15:23:24Z",
+      "phase": "22",
+      "status": "PASS",
+      "pass_rate": 66.67,
+      "git_commit": "748007a",
+      "critical": 0,
+      "warnings": 0
+    },
+    {
+      "timestamp": "2026-02-25T15:22:45Z",
+      "phase": "21",
+      "status": "PASS",
+      "pass_rate": 66.67,
+      "git_commit": "748007a",
+      "critical": 0,
+      "warnings": 0
+    },
+    {
+      "timestamp": "2026-02-25T15:22:04Z",
+      "phase": "20",
+      "status": "PASS",
+      "pass_rate": 66.67,
+      "git_commit": "748007a",
+      "critical": 0,
+      "warnings": 0
+    },
+    {
+      "timestamp": "2026-02-25T15:21:22Z",
+      "phase": "19",
+      "status": "PASS",
+      "pass_rate": 22.22,
+      "git_commit": "748007a",
+      "critical": 0,
+      "warnings": 0
+    },
+    {
+      "timestamp": "2026-02-25T15:20:51Z",
+      "phase": "18",
+      "status": "PASS",
+      "pass_rate": 22.22,
+      "git_commit": "748007a",
+      "critical": 0,
+      "warnings": 0
+    },
+    {
+      "timestamp": "2026-02-25T15:20:05Z",
+      "phase": "17",
+      "status": "PASS",
+      "pass_rate": 22.22,
+      "git_commit": "748007a",
+      "critical": 0,
+      "warnings": 0
+    },
+    {
+      "timestamp": "2026-02-25T15:19:22Z",
+      "phase": "16",
+      "status": "PASS",
+      "pass_rate": 22.22,
+      "git_commit": "748007a",
+      "critical": 0,
+      "warnings": 0
+    },
+    {
+      "timestamp": "2026-02-25T15:18:37Z",
+      "phase": "15",
+      "status": "PASS",
+      "pass_rate": 22.22,
+      "git_commit": "748007a",
+      "critical": 0,
+      "warnings": 0
+    },
+    {
+      "timestamp": "2026-02-25T15:17:52Z",
+      "phase": "14",
+      "status": "PASS",
+      "pass_rate": 22.22,
+      "git_commit": "748007a",
+      "critical": 0,
+      "warnings": 0
+    },
+    {
+      "timestamp": "2026-02-25T15:17:09Z",
+      "phase": "13",
+      "status": "FAIL",
+      "pass_rate": 11.11,
+      "git_commit": "748007a",
+      "critical": 1,
+      "warnings": 0
+    },
+    {
+      "timestamp": "2026-02-25T15:16:27Z",
+      "phase": "12",
+      "status": "PASS",
+      "pass_rate": 22.22,
+      "git_commit": "748007a",
+      "critical": 0,
+      "warnings": 0
+    },
+    {
+      "timestamp": "2026-02-25T15:15:49Z",
+      "phase": "11",
+      "status": "PASS",
+      "pass_rate": 22.22,
+      "git_commit": "748007a",
+      "critical": 0,
+      "warnings": 0
+    },
+    {
+      "timestamp": "2026-02-25T15:15:11Z",
+      "phase": "10",
+      "status": "PASS",
+      "pass_rate": 25,
+      "git_commit": "748007a",
+      "critical": 0,
+      "warnings": 0
+    },
+    {
+      "timestamp": "2026-02-25T15:14:35Z",
+      "phase": "09",
+      "status": "FAIL",
+      "pass_rate": 62.5,
+      "git_commit": "748007a",
+      "critical": 1,
+      "warnings": 0
+    },
+    {
+      "timestamp": "2026-02-25T15:13:52Z",
+      "phase": "08",
+      "status": "FAIL",
+      "pass_rate": 62.5,
+      "git_commit": "748007a",
+      "critical": 1,
+      "warnings": 0
+    },
+    {
+      "timestamp": "2026-02-25T15:13:10Z",
+      "phase": "07",
+      "status": "PASS",
+      "pass_rate": 75,
+      "git_commit": "748007a",
+      "critical": 0,
+      "warnings": 0
+    },
+    {
+      "timestamp": "2026-02-25T15:12:29Z",
+      "phase": "06",
+      "status": "PASS",
+      "pass_rate": 75,
+      "git_commit": "748007a",
+      "critical": 0,
+      "warnings": 0
+    },
+    {
+      "timestamp": "2026-02-25T15:11:48Z",
+      "phase": "05",
+      "status": "PASS",
+      "pass_rate": 75,
+      "git_commit": "748007a",
+      "critical": 0,
+      "warnings": 0
+    },
+    {
+      "timestamp": "2026-02-25T15:11:09Z",
+      "phase": "04",
+      "status": "PASS",
+      "pass_rate": 75,
+      "git_commit": "748007a",
+      "critical": 0,
+      "warnings": 0
+    },
+    {
+      "timestamp": "2026-02-25T15:10:27Z",
+      "phase": "03",
+      "status": "PASS",
+      "pass_rate": 75,
+      "git_commit": "748007a",
+      "critical": 0,
+      "warnings": 0
+    },
+    {
+      "timestamp": "2026-02-25T15:09:46Z",
+      "phase": "02",
+      "status": "PASS",
+      "pass_rate": 75,
+      "git_commit": "748007a",
+      "critical": 0,
+      "warnings": 0
+    },
+    {
+      "timestamp": "2026-02-25T15:09:09Z",
+      "phase": "01",
+      "status": "PASS",
+      "pass_rate": 75,
+      "git_commit": "748007a",
+      "critical": 0,
+      "warnings": 0
+    },
+    {
+      "timestamp": "2026-02-25T15:08:28Z",
+      "phase": "00",
+      "status": "PASS",
+      "pass_rate": 75,
+      "git_commit": "748007a",
+      "critical": 0,
+      "warnings": 0
+    },
+    {
+      "timestamp": "2026-02-25T14:52:33Z",
+      "phase": "01",
+      "status": "PASS",
+      "pass_rate": 100,
+      "git_commit": "748007a",
+      "critical": 0,
+      "warnings": 0
+    },
+    {
+      "timestamp": "2026-02-25T14:49:29Z",
+      "phase": "01",
+      "status": "PASS",
+      "pass_rate": 100,
+      "git_commit": "748007a",
+      "critical": 0,
+      "warnings": 0
+    },
+    {
+      "timestamp": "2026-02-25T14:49:03Z",
+      "phase": "00",
+      "status": "PASS",
+      "pass_rate": 100,
+      "git_commit": "748007a",
+      "critical": 0,
+      "warnings": 0
+    },
+    {
+      "timestamp": "2026-02-25T14:46:07Z",
+      "phase": "00",
+      "status": "PASS",
+      "pass_rate": 100,
+      "git_commit": "748007a",
+      "critical": 0,
+      "warnings": 0
+    },
     {
       "timestamp": "2026-02-25T14:33:24Z",
       "phase": "00",

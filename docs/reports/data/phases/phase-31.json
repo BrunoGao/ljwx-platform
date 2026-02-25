@@ -1,0 +1,101 @@
+{
+  "phase": "31",
+  "status": "FAIL",
+  "timestamp": "2026-02-25T15:30:29Z",
+  "git": {
+    "commit": "748007a",
+    "branch": "master"
+  },
+  "rules": [
+    {
+      "id": "R01",
+      "name": "Compile",
+      "status": "PASS",
+      "critical": 0,
+      "warnings": 0,
+      "message": "passed"
+    },
+    {
+      "id": "R02",
+      "name": "Manifest",
+      "status": "FAIL",
+      "critical": 1,
+      "warnings": 0,
+      "message": "failed"
+    },
+    {
+      "id": "R03",
+      "name": "Rules",
+      "status": "PASS",
+      "critical": 0,
+      "warnings": 0,
+      "message": "passed"
+    },
+    {
+      "id": "R04",
+      "name": "Flyway Governance",
+      "status": "PASS",
+      "critical": 0,
+      "warnings": 0,
+      "message": "passed"
+    },
+    {
+      "id": "R05",
+      "name": "Integration",
+      "status": "SKIP",
+      "critical": 0,
+      "warnings": 0,
+      "message": "skipped by SKIP_HEAVY_GATES=true"
+    },
+    {
+      "id": "R06",
+      "name": "Contract",
+      "status": "SKIP",
+      "critical": 0,
+      "warnings": 0,
+      "message": "skipped by SKIP_HEAVY_GATES=true"
+    },
+    {
+      "id": "R07",
+      "name": "NFR",
+      "status": "PASS",
+      "critical": 0,
+      "warnings": 0,
+      "message": "passed"
+    },
+    {
+      "id": "R08",
+      "name": "RTM",
+      "status": "PASS",
+      "critical": 0,
+      "warnings": 0,
+      "message": "rtm generated"
+    },
+    {
+      "id": "R09",
+      "name": "Tests",
+      "status": "SKIP",
+      "critical": 0,
+      "warnings": 0,
+      "message": "skipped by SKIP_HEAVY_GATES=true"
+    }
+  ],
+  "summary": {
+    "total": 9,
+    "pass": 5,
+    "fail": 1,
+    "skip": 3,
+    "critical": 1,
+    "warnings": 0,
+    "pass_rate": 55.56
+  },
+  "violations": [
+    {
+      "rule": "R02",
+      "severity": "CRITICAL",
+      "file": null,
+      "line": null,
+      "message": "failed"
+    }
+  ]
+}
