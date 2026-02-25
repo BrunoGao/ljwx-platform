@@ -90,6 +90,9 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          if ! python3 -m pip --version >/dev/null 2>&1; then
+            python3 -m ensurepip --upgrade
+          fi
           python3 -m pip install --quiet pyyaml
 
       - name: Resolve deploy metadata from ljwx-deploy
