@@ -219,7 +219,7 @@ jobs:
         run: |
           set -euo pipefail
           PROM_NS="monitoring"
-          PROM_SVC="$(kubectl -n "${PROM_NS}" get svc -o jsonpath='{range .items[*]}{.metadata.name}{"\n"}{end}' | rg '^prometheus' | head -n1 || true)"
+          PROM_SVC="$(kubectl -n "${PROM_NS}" get svc -o jsonpath='{range .items[*]}{.metadata.name}{"\n"}{end}' | grep '^prometheus' | head -n1 || true)"
           if [ -z "${PROM_SVC}" ]; then
             echo "[FATAL] Prometheus service not found in namespace ${PROM_NS}"
             exit 1
