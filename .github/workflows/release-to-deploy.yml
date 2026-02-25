@@ -97,6 +97,10 @@ jobs:
           mvn -B -ntp -q \
             -pl ljwx-platform-app \
             -am \
+            package \
+            -DskipTests
+          mvn -B -ntp -q \
+            -f ljwx-platform-app/pom.xml \
             spring-boot:build-image \
             -DskipTests \
             -Dspring-boot.build-image.imageName="${{ steps.meta.outputs.image_ref }}"
