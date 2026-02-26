@@ -80,14 +80,14 @@ scope:
 
 | 方法 | 路径 | 权限 | 说明 |
 |------|------|------|------|
-| GET | /api/jobs | system:job:list | 分页查询任务 |
-| GET | /api/jobs/{id} | system:job:detail | 查询任务详情 |
-| POST | /api/jobs | system:job:create | 创建任务 |
-| PUT | /api/jobs/{id} | system:job:update | 更新任务 |
-| DELETE | /api/jobs/{id} | system:job:delete | 删除任务 |
-| POST | /api/jobs/{id}/run | system:job:run | 立即执行任务 |
-| POST | /api/jobs/{id}/pause | system:job:pause | 暂停任务 |
-| POST | /api/jobs/{id}/resume | system:job:resume | 恢复任务 |
+| GET | /api/v1/jobs | system:job:list | 分页查询任务 |
+| GET | /api/v1/jobs/{id} | system:job:detail | 查询任务详情 |
+| POST | /api/v1/jobs | system:job:create | 创建任务 |
+| PUT | /api/v1/jobs/{id} | system:job:update | 更新任务 |
+| DELETE | /api/v1/jobs/{id} | system:job:delete | 删除任务 |
+| POST | /api/v1/jobs/{id}/run | system:job:run | 立即执行任务 |
+| POST | /api/v1/jobs/{id}/pause | system:job:pause | 暂停任务 |
+| POST | /api/v1/jobs/{id}/resume | system:job:resume | 恢复任务 |
 
 ---
 

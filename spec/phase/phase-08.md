@@ -10,8 +10,6 @@ scope:
   - "ljwx-platform-app/src/main/resources/db/migration/V012__create_sys_dict_type.sql"
   - "ljwx-platform-app/src/main/resources/db/migration/V013__create_sys_dict_data.sql"
   - "ljwx-platform-app/src/main/resources/db/migration/V014__create_sys_config.sql"
-  - "ljwx-platform-app/src/main/resources/db/migration/V019__seed_dict_data.sql"
-  - "ljwx-platform-app/src/main/resources/db/migration/V020__seed_config_data.sql"
   - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/controller/DictController.java"
   - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/controller/ConfigController.java"
   - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/appservice/DictAppService.java"
@@ -41,7 +39,7 @@ scope:
 - `CLAUDE.md`（自动加载）
 - `spec/01-constraints.md` — §缓存策略、§审计字段
 - `spec/03-api.md` — §Dicts 路由、§Configs 路由
-- `spec/04-database.md` — V012 ~ V014、V019 ~ V020
+- `spec/04-database.md` — V012 ~ V014
 - `spec/08-output-rules.md`
 
 ---
@@ -94,27 +92,27 @@ scope:
 
 | 方法 | 路径 | 权限 | 说明 |
 |------|------|------|------|
-| GET | /api/dicts/types | system:dict:list | 查询字典类型列表 |
-| GET | /api/dicts/types/{id} | system:dict:detail | 查询字典类型详情 |
-| POST | /api/dicts/types | system:dict:create | 创建字典类型 |
-| PUT | /api/dicts/types/{id} | system:dict:update | 更新字典类型 |
-| DELETE | /api/dicts/types/{id} | system:dict:delete | 删除字典类型 |
-| GET | /api/dicts/data/{dictType} | system:dict:list | 根据类型查询字典数据 |
-| POST | /api/dicts/data | system:dict:create | 创建字典数据 |
-| PUT | /api/dicts/data/{id} | system:dict:update | 更新字典数据 |
-| DELETE | /api/dicts/data/{id} | system:dict:delete | 删除字典数据 |
+| GET | /api/v1/dicts/types | system:dict:list | 查询字典类型列表 |
+| GET | /api/v1/dicts/types/{id} | system:dict:detail | 查询字典类型详情 |
+| POST | /api/v1/dicts/types | system:dict:create | 创建字典类型 |
+| PUT | /api/v1/dicts/types/{id} | system:dict:update | 更新字典类型 |
+| DELETE | /api/v1/dicts/types/{id} | system:dict:delete | 删除字典类型 |
+| GET | /api/v1/dicts/data/{dictType} | system:dict:list | 根据类型查询字典数据 |
+| POST | /api/v1/dicts/data | system:dict:create | 创建字典数据 |
+| PUT | /api/v1/dicts/data/{id} | system:dict:update | 更新字典数据 |
+| DELETE | /api/v1/dicts/data/{id} | system:dict:delete | 删除字典数据 |
 
 ### ConfigController
 
 | 方法 | 路径 | 权限 | 说明 |
 |------|------|------|------|
-| GET | /api/configs | system:config:list | 查询配置列表 |
-| GET | /api/configs/{id} | system:config:detail | 查询配置详情 |
-| GET | /api/configs/key/{configKey} | system:config:detail | 根据 key 查询配置 |
-| POST | /api/configs | system:config:create | 创建配置 |
-| PUT | /api/configs/{id} | system:config:update | 更新配置 |
-| DELETE | /api/configs/{id} | system:config:delete | 删除配置 |
-| POST | /api/configs/refresh | system:config:refresh | 刷新缓存 |
+| GET | /api/v1/configs | system:config:list | 查询配置列表 |
+| GET | /api/v1/configs/{id} | system:config:detail | 查询配置详情 |
+| GET | /api/v1/configs/key/{configKey} | system:config:detail | 根据 key 查询配置 |
+| POST | /api/v1/configs | system:config:create | 创建配置 |
+| PUT | /api/v1/configs/{id} | system:config:update | 更新配置 |
+| DELETE | /api/v1/configs/{id} | system:config:delete | 删除配置 |
+| POST | /api/v1/configs/refresh | system:config:refresh | 刷新缓存 |
 
 ---
 

@@ -29,7 +29,7 @@ scope:
 | Phase | 20 |
 | 模块 | ljwx-platform-app (后端), ljwx-platform-admin (前端) |
 | Feature | F-020 (菜单管理) |
-| 前置依赖 | Phase 19 (部门管理) |
+| 前置依赖 | Phase 19 (Interim Gate and Docs) |
 | 测试契约 | `spec/tests/phase-20-menu.tests.yml` |
 
 ## 读取清单

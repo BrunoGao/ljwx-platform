@@ -207,7 +207,7 @@ P0 强制覆盖（Gate R09 检查）：
 ## 验收条件
 
 - **AC-01**：所有 API 文件（user/role/tenant/dict/config/job/log/file/notice）存在且有完整类型定义
-- **AC-02**：所有页面���件存在且支持 CRUD 操作
+- **AC-02**：所有页面组件存在且支持 CRUD 操作
 - **AC-03**：所有 API 请求路径与 `spec/03-api.md` 一致
 - **AC-04**：所有类型从 `@ljwx/shared` 导入，无本地重复定义
 - **AC-05**：`pnpm run type-check` 通过，无 `any` 类型

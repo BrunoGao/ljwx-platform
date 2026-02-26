@@ -11,6 +11,8 @@ scope:
   - "ljwx-platform-app/src/main/resources/db/migration/V016__create_sys_login_log.sql"
   - "ljwx-platform-app/src/main/resources/db/migration/V017__create_sys_file.sql"
   - "ljwx-platform-app/src/main/resources/db/migration/V018__create_sys_notice.sql"
+  - "ljwx-platform-app/src/main/resources/db/migration/V019__seed_dict_data.sql"
+  - "ljwx-platform-app/src/main/resources/db/migration/V020__seed_config_data.sql"
   - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/controller/OperationLogController.java"
   - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/controller/LoginLogController.java"
   - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/controller/FileController.java"
@@ -47,7 +49,7 @@ scope:
 - `CLAUDE.md`（自动加载）
 - `spec/01-constraints.md` — §操作日志、§文件管理、§审计字段、§日志脱敏
 - `spec/03-api.md` — §Logs、§Files、§Notices 路由
-- `spec/04-database.md` — V015 ~ V018
+- `spec/04-database.md` — V015 ~ V020
 - `spec/08-output-rules.md`
 
 ---
@@ -63,7 +65,7 @@ scope:
 | business_type | SMALLINT | NOT NULL | 业务类型（0=其他, 1=新增, 2=修改, 3=删除） |
 | method | VARCHAR(200) | NOT NULL | 方法名 |
 | request_method | VARCHAR(10) | NOT NULL | 请求方式（GET/POST/PUT/DELETE） |
-| operator_type | SMALLINT | NOT NULL | 操作类别（0=其他, 1=后台��户, 2=手机端用户） |
+| operator_type | SMALLINT | NOT NULL | 操作类别（0=其他, 1=后台用户, 2=手机端用户） |
 | operator_name | VARCHAR(50) | NULL | 操作人员 |
 | request_url | VARCHAR(500) | NULL | 请求 URL |
 | request_ip | VARCHAR(50) | NULL | 请求 IP |
@@ -120,19 +122,19 @@ scope:
 
 | 方法 | 路径 | 权限 | 说明 |
 |------|------|------|------|
-| GET | /api/logs/operation | system:log:list | 查询操作日志列表 |
-| GET | /api/logs/operation/{id} | system:log:detail | 查询操作日志详情 |
-| DELETE | /api/logs/operation/{id} | system:log:delete | 删除操作日志 |
-| DELETE | /api/logs/operation/clean | system:log:clean | 清空操作日志 |
+| GET | /api/v1/logs/operation | system:log:list | 查询操作日志列表 |
+| GET | /api/v1/logs/operation/{id} | system:log:detail | 查询操作日志详情 |
+| DELETE | /api/v1/logs/operation/{id} | system:log:delete | 删除操作日志 |
+| DELETE | /api/v1/logs/operation/clean | system:log:clean | 清空操作日志 |
 
 ### FileController
 
 | 方法 | 路径 | 权限 | 说明 |
 |------|------|------|------|
-| POST | /api/files/upload | system:file:upload | 上传文件 |
-| GET | /api/files/{id}/download | system:file:download | 下载文件 |
-| GET | /api/files | system:file:list | 查询文件列表 |
-| DELETE | /api/files/{id} | system:file:delete | 删除文件 |
+| POST | /api/v1/files/upload | system:file:upload | 上传文件 |
+| GET | /api/v1/files/{id}/download | system:file:download | 下载文件 |
+| GET | /api/v1/files | system:file:list | 查询文件列表 |
+| DELETE | /api/v1/files/{id} | system:file:delete | 删除文件 |
 
 ---
 

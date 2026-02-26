@@ -1,6 +1,6 @@
 ---
 phase: 19
-title: "Final Gate and Docs (最终验收与文档)"
+title: "Interim Gate and Docs (阶段性验收与文档)"
 targets:
   backend: false
   frontend: false
@@ -11,13 +11,15 @@ scope:
   - "docs/adr/**"
   - "README.md"
 ---
-# Phase 19 — 最终验收与文档 (Final Gate & Docs)
+# Phase 19 — 阶段性验收与文档 (Interim Gate & Docs)
+
+> **注意**：本 Phase 是 Phase 0–18 的**阶段性**验收检查点，并非项目终态。后续仍有 Phase 20–32 功能阶段。真正的最终验收在 Phase 32。
 
 | 项目 | 值 |
 |-----|---|
 | Phase | 19 |
-| 模块 | 全仓库 |
-| Feature | F-019 (最终验收、文档) |
+| 模块 | 全仓库（Phase 0–18 范围） |
+| Feature | F-019 (阶段性验收、文档) |
 | 前置依赖 | Phase 18 (Screen Components) |
 | 测试契约 | `spec/tests/phase-19-final.tests.yml` |
 
