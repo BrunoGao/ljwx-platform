@@ -1,92 +1,221 @@
-# LJWX Platform — 架构概览
+# 架构
 
-## 系统定位
+> 版本号以 `CLAUDE.md` 的「版本锁定」为准。
 
-企业级多租户 SaaS 平台脚手架。支持管理后台（Admin）、移动端（uni-app Mobile）、数据大屏（Screen）三端接入。
+## 仓库结构（实施现状）
 
-## 后端架构
-
-### 模块 DAG
-
+```text
+ljwx-platform/
+├── CLAUDE.md
+├── spec.md
+├── spec/
+├── .claude/
+├── .github/
+├── pom.xml
+├── .mvn/wrapper/
+├── package.json
+├── pnpm-workspace.yaml
+├── .npmrc
+├── .nvmrc
+├── docker-compose.yml
+├── .env.example
+├── README.md
+├── PHASE_MANIFEST.txt
+├── FULL_MANIFEST.txt
+│
+├── ljwx-platform-core/
+│   ├── pom.xml
+│   └── src/main/java/com/ljwx/platform/core/
+│       ├── context/
+│       ├── entity/
+│       ├── id/
+│       └── result/
+│
+├── ljwx-platform-security/
+│   ├── pom.xml
+│   └── src/main/java/com/ljwx/platform/security/
+│       ├── blacklist/
+│       ├── config/
+│       ├── context/
+│       ├── filter/
+│       └── jwt/
+│
+├── ljwx-platform-data/
+│   ├── pom.xml
+│   └── src/main/java/com/ljwx/platform/data/
+│       ├── annotation/
+│       ├── config/
+│       ├── context/
+│       └── interceptor/
+│
+├── ljwx-platform-web/
+│   ├── pom.xml
+│   └── src/main/java/com/ljwx/platform/web/
+│       ├── advice/
+│       ├── annotation/
+│       ├── aop/
+│       ├── config/
+│       ├── exception/
+│       ├── filter/
+│       ├── interceptor/
+│       └── validator/
+│
+├── ljwx-platform-app/
+│   ├── pom.xml
+│   ├── src/main/java/com/ljwx/platform/app/
+│   │   ├── appservice/
+│   │   ├── config/
+│   │   ├── controller/
+│   │   ├── domain/
+│   │   │   ├── dto/
+│   │   │   ├── entity/
+│   │   │   └── vo/
+│   │   ├── infra/
+│   │   │   ├── config/
+│   │   │   ├── mapper/
+│   │   │   └── quartz/
+│   │   ├── websocket/
+│   │   └── LjwxPlatformApplication.java
+│   └── src/main/resources/
+│       ├── application.yml
+│       ├── db/migration/
+│       └── mapper/
+│
+├── packages/
+│   └── shared/
+│       ├── package.json
+│       ├── tsconfig.json
+│       ├── tsup.config.ts
+│       └── src/
+│           ├── constants/
+│           ├── types/
+│           └── utils/
+│
+├── ljwx-platform-admin/
+│   ├── package.json
+│   ├── vite.config.ts
+│   └── src/
+│       ├── api/
+│       ├── composables/
+│       ├── directives/
+│       ├── layouts/
+│       ├── router/
+│       ├── stores/
+│       ├── styles/
+│       └── views/
+│
+├── ljwx-platform-mobile/
+│   ├── package.json
+│   ├── manifest.json
+│   ├── pages.json
+│   └── src/
+│       ├── api/
+│       ├── pages/
+│       └── stores/
+│
+├── ljwx-platform-screen/
+│   ├── package.json
+│   ├── vite.config.ts
+│   └── src/
+│       ├── api/
+│       ├── components/
+│       ├── composables/
+│       ├── layouts/
+│       ├── router/
+│       ├── styles/
+│       ├── utils/
+│       └── views/
+│
+├── docs/
+│   ├── adr/
+│   ├── contracts/
+│   ├── reports/
+│   └── setup/
+│
+├── scripts/
+│   ├── acceptance/
+│   ├── ci/
+│   ├── gates/
+│   ├── github/
+│   ├── hooks/
+│   ├── lib/
+│   ├── preflight/
+│   ├── reports/
+│   ├── review/
+│   ├── spec/
+│   └── tools/
+└── prompts/
 ```
-ljwx-platform-core
-    ↑           ↑
-ljwx-platform-security   ljwx-platform-data
-    ↑           ↑
-ljwx-platform-web
-    ↑
-ljwx-platform-app   ← Spring Boot 启动入口
+
+## 后端模块依赖图（DAG）
+
+```text
+      ┌──────────────────────┐
+      │  ljwx-platform-core  │
+      └─────────▲────────────┘
+                │
+      ┌─────────┴──────────┐
+      │                    │
+┌─────┴────────────┐  ┌────┴─────────────┐
+│ ljwx-platform-   │  │ ljwx-platform-   │
+│ security         │  │ data             │
+└─────▲────────────┘  └────▲─────────────┘
+      │                    │
+      └─────────┬──────────┘
+                │
+      ┌─────────┴──────────┐
+      │ ljwx-platform-web  │  (depends on security + data)
+      └─────────▲──────────┘
+                │
+      ┌─────────┴──────────┐
+      │ ljwx-platform-app  │  (depends on web + data)
+      └────────────────────┘
 ```
 
-约束：
-- `core` 不依赖任何其他模块
-- `security` 和 `data` 仅依赖 `core`，互不依赖
-- `web` 依赖 `security` 和 `data`
-- `app` 是唯一的可运行模块
+## Maven 直接依赖（以各模块 `pom.xml` 为准）
 
-### 关键组件
+| 模块 | 内部模块直接依赖 |
+|------|------------------|
+| `ljwx-platform-core` | 无 |
+| `ljwx-platform-security` | `ljwx-platform-core` |
+| `ljwx-platform-data` | `ljwx-platform-core` |
+| `ljwx-platform-web` | `ljwx-platform-security`, `ljwx-platform-data` |
+| `ljwx-platform-app` | `ljwx-platform-web`, `ljwx-platform-data` |
 
-| 组件 | 职责 |
-|------|------|
-| TenantLineInterceptor | MyBatis-Plus 拦截器，自动在所有 SQL 注入 `tenant_id` WHERE 条件 |
-| SecurityConfig | Spring Security 配置，JWT 过滤链 |
-| JwtTokenFilter | 解析 JWT，填充 SecurityContext（含 tenantId） |
-| BaseEntity | 含 7 列审计字段的 MyBatis-Plus 基类 |
-| Result<T> | 统一 REST 响应包装器 |
+说明：
+- `data` 与 `security` 仍互不依赖。
+- `web` 已包含对 `data` 的直接依赖（当前实现）。
+- `app` 是可运行入口，聚合 `web` 与 `data`，并承载 Flyway、Quartz、WebSocket、OpenAPI 等集成能力。
 
-### 多租户策略
+## Core 契约接口（跨模块边界）
 
-- **方式**：应用层过滤（每张业务表含 `tenant_id` 列）
-- **注入点**：TenantLineInterceptor 自动读取 SecurityContext 中的 tenantId
-- **禁止**：Service 层手动 `setTenantId()`；DTO/请求参数携带 tenantId
+```java
+public interface CurrentUserHolder {
+    Long getUserId();
+    String getUsername();
+}
 
-## 前端架构
-
-```
-src/
-├── api/          # Axios 封装 + 各模块 API 函数
-├── components/   # 全局公共组件
-├── layouts/      # 布局（BasicLayout、BlankLayout）
-├── router/       # Vue Router 5，手动路由定义
-│   └── modules/  # 按模块拆分的路由文件
-├── stores/       # Pinia 状态管理
-├── views/        # 页面组件（按模块组织）
-└── types/        # TypeScript 类型定义
+public interface CurrentTenantHolder {
+    Long getTenantId();
+}
 ```
 
-### 关键约束
+运行时关系：
+- `data` 模块拦截器依赖上述接口（来自 `core`）。
+- `security` 模块提供接口实现并接入 Spring 上下文。
 
-- 只用 `<script setup lang="ts">`，禁止 Options API
-- Vue Router 5 Composition API（`useRoute()`、`useRouter()`）
-- 所有 API 调用通过 `src/api/*.ts`，禁止组件内直接 fetch
-- 环境变量只用 `VITE_APP_BASE_API`
+## 前端架构（Workspace）
 
-## 数据库
+- Workspace 由 `pnpm-workspace.yaml` 管理。
+- `packages/shared` 提供跨端类型、常量、工具。
+- 业务前端包含 3 个应用：
+  - `ljwx-platform-admin`（管理后台）
+  - `ljwx-platform-mobile`（uni-app 移动端）
+  - `ljwx-platform-screen`（数据大屏）
 
-- PostgreSQL 16
-- Flyway 版本化迁移（文件命名：`V{phase}_{seq}__{description}.sql`）
-- 每张业务表包含 7 列审计字段
+## API 分层与命名
 
-## API 设计
+- 认证接口：`/api/auth/*`
+- 业务接口：`/api/v1/*`
+- 权限命名：`system:{resource}:{action}`
 
-- REST 风格，统一前缀 `/api/v1/`
-- 响应体统一用 `Result<T>` 包装
-- 认证：JWT Bearer Token
-- 授权：Spring Security `@PreAuthorize("hasAuthority('resource:action')")`
-- 分页：Spring `Pageable` 参数 + `PageResult<T>` 响应
-
-## 开发环境
-
-```bash
-# 启动数据库
-docker compose -f docker-compose.yml up -d
-
-# 后端编译
-mvn clean compile -f pom.xml -q
-
-# 前端依赖安装
-cd ljwx-platform-admin && pnpm install
-
-# 前端类型检查
-cd ljwx-platform-admin && pnpm run type-check
-```
