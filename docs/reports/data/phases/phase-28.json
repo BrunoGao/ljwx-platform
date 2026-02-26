@@ -1,93 +1,93 @@
 {
   "phase": "28",
-  "status": "FAIL",
-  "timestamp": "2026-02-25T15:31:25Z",
+  "status": "PASS",
+  "timestamp": "2026-02-26T07:05:17Z",
   "git": {
-    "commit": "748007a",
+    "commit": "e04765b",
     "branch": "master"
   },
   "rules": [
     {
       "id": "R01",
       "name": "Compile",
-      "status": "FAIL",
-      "critical": 1,
+      "status": "PASS",
+      "critical": 0,
       "warnings": 0,
-      "message": "backfilled from batch log"
+      "message": "passed"
     },
     {
       "id": "R02",
       "name": "Manifest",
-      "status": "SKIP",
+      "status": "PASS",
       "critical": 0,
       "warnings": 0,
-      "message": "backfilled"
+      "message": "passed"
     },
     {
       "id": "R03",
       "name": "Rules",
-      "status": "SKIP",
+      "status": "PASS",
       "critical": 0,
       "warnings": 0,
-      "message": "backfilled"
+      "message": "passed"
     },
     {
       "id": "R04",
       "name": "Flyway Governance",
-      "status": "SKIP",
+      "status": "PASS",
       "critical": 0,
       "warnings": 0,
-      "message": "backfilled"
+      "message": "passed"
     },
     {
       "id": "R05",
       "name": "Integration",
-      "status": "SKIP",
+      "status": "PASS",
       "critical": 0,
       "warnings": 0,
-      "message": "batch mode"
+      "message": "passed"
     },
     {
       "id": "R06",
       "name": "Contract",
-      "status": "SKIP",
+      "status": "PASS",
       "critical": 0,
       "warnings": 0,
-      "message": "batch mode"
+      "message": "passed"
     },
     {
       "id": "R07",
       "name": "NFR",
-      "status": "SKIP",
+      "status": "PASS",
       "critical": 0,
       "warnings": 0,
-      "message": "backfilled"
+      "message": "passed"
     },
     {
       "id": "R08",
       "name": "RTM",
-      "status": "SKIP",
+      "status": "PASS",
       "critical": 0,
       "warnings": 0,
-      "message": "backfilled"
+      "message": "rtm generated"
+    },
+    {
+      "id": "R09",
+      "name": "Tests",
+      "status": "PASS",
+      "critical": 0,
+      "warnings": 0,
+      "message": "passed"
     }
   ],
   "summary": {
-    "total": 8,
-    "pass": 0,
-    "fail": 1,
-    "skip": 7,
-    "critical": 1,
+    "total": 9,
+    "pass": 9,
+    "fail": 0,
+    "skip": 0,
+    "critical": 0,
     "warnings": 0,
-    "pass_rate": 0
+    "pass_rate": 100
   },
-  "violations": [
-    {
-      "rule": "BATCH",
-      "severity": "CRITICAL",
-      "file": null,
-      "line": null,
-      "message": "phase backfilled from batch status"
-    }
-  ]
+  "violations": []
 }

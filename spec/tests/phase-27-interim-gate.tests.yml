@@ -1,0 +1,42 @@
+# Phase 27 — Interim Gate & Full Manifest v2 测试契约
+# 关联 Spec：spec/phase/phase-27.md
+# 本 Phase 为文档整理 Phase，无业务代码，无后端接口
+
+phase: 27
+module: "interim-gate"
+ac_ref: "spec/phase/phase-27.md"
+gate_r09: N/A
+
+note: >
+  Phase 27 为阶段性文档整理（doc-only phase），不生成任何业务代码。
+  验证方式：bash scripts/gates/gate-all.sh 27 全部 PASS。
+  以下为验收条件对应的检查项，非自动化测试用例。
+
+tests:
+
+  - id: TC-27-01
+    priority: P0
+    category: gate
+    scenario: "gate-all.sh 27 全量检查通过（R01~R08 全部 PASS）"
+    expect:
+      note: "退出码 0，无 FAIL 规则"
+
+  - id: TC-27-02
+    priority: P0
+    category: manifest
+    scenario: "FULL_MANIFEST.txt 包含 Phase 20-27 所有新增文件路径"
+    expect:
+      note: "文件存在且内容完整"
+
+  - id: TC-27-03
+    priority: P0
+    category: docs
+    scenario: "README.md 包含最新功能说明（菜单管理、部门管理、个人中心等）"
+    expect:
+      note: "手工检查 README.md"
+
+# ─── AC → TC 映射 ──────────────────────────────────────────────────
+ac_tc_map:
+  AC-01: [TC-27-01]
+  AC-02: [TC-27-02]
+  AC-03: [TC-27-03]

@@ -36,6 +36,7 @@ class DictConfigApiTest extends BaseIntegrationTest {
         assertThat(id).isPositive();
 
         var update = performPut("/api/dicts/" + id, Map.of(
+                "id", id,
                 "dictName", "IT Dict Updated",
                 "dictType", "it_dict_" + suffix,
                 "version", 1
@@ -62,6 +63,7 @@ class DictConfigApiTest extends BaseIntegrationTest {
         assertThat(id).isPositive();
 
         var update = performPut("/api/configs/" + id, Map.of(
+                "id", id,
                 "configName", "IT Config Updated",
                 "configKey", key,
                 "configValue", "v2",

@@ -1,19 +1,19 @@
 {
   "phase": "13",
-  "status": "FAIL",
-  "timestamp": "2026-02-25T15:31:25Z",
+  "status": "PASS",
+  "timestamp": "2026-02-26T05:26:34Z",
   "git": {
-    "commit": "748007a",
+    "commit": "e04765b",
     "branch": "master"
   },
   "rules": [
     {
       "id": "R01",
       "name": "Compile",
-      "status": "FAIL",
-      "critical": 1,
+      "status": "PASS",
+      "critical": 0,
       "warnings": 0,
-      "message": "backfilled from batch log"
+      "message": "passed"
     },
     {
       "id": "R02",
@@ -21,7 +21,7 @@
       "status": "SKIP",
       "critical": 0,
       "warnings": 0,
-      "message": "backfilled"
+      "message": "frontend phase profile skip"
     },
     {
       "id": "R03",
@@ -29,7 +29,7 @@
       "status": "SKIP",
       "critical": 0,
       "warnings": 0,
-      "message": "backfilled"
+      "message": "frontend phase profile skip"
     },
     {
       "id": "R04",
@@ -37,7 +37,7 @@
       "status": "SKIP",
       "critical": 0,
       "warnings": 0,
-      "message": "backfilled"
+      "message": "frontend phase profile skip"
     },
     {
       "id": "R05",
@@ -45,7 +45,7 @@
       "status": "SKIP",
       "critical": 0,
       "warnings": 0,
-      "message": "batch mode"
+      "message": "frontend phase profile skip"
     },
     {
       "id": "R06",
@@ -53,7 +53,7 @@
       "status": "SKIP",
       "critical": 0,
       "warnings": 0,
-      "message": "batch mode"
+      "message": "frontend phase profile skip"
     },
     {
       "id": "R07",
@@ -61,33 +61,33 @@
       "status": "SKIP",
       "critical": 0,
       "warnings": 0,
-      "message": "backfilled"
+      "message": "frontend phase profile skip"
     },
     {
       "id": "R08",
       "name": "RTM",
+      "status": "PASS",
+      "critical": 0,
+      "warnings": 0,
+      "message": "rtm generated"
+    },
+    {
+      "id": "R09",
+      "name": "Tests",
       "status": "SKIP",
       "critical": 0,
       "warnings": 0,
-      "message": "backfilled"
+      "message": "frontend phase profile skip"
     }
   ],
   "summary": {
-    "total": 8,
-    "pass": 0,
-    "fail": 1,
+    "total": 9,
+    "pass": 2,
+    "fail": 0,
     "skip": 7,
-    "critical": 1,
+    "critical": 0,
     "warnings": 0,
-    "pass_rate": 0
+    "pass_rate": 22.22
   },
-  "violations": [
-    {
-      "rule": "BATCH",
-      "severity": "CRITICAL",
-      "file": null,
-      "line": null,
-      "message": "phase backfilled from batch status"
-    }
-  ]
+  "violations": []
 }

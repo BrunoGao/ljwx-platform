@@ -27,7 +27,7 @@ if [[ -z "$CURRENT_PHASE" ]]; then
   exit 0
 fi
 
-PHASE_PADDED=$(printf '%02d' "$CURRENT_PHASE")
+PHASE_PADDED=$(printf '%02d' "$((10#$CURRENT_PHASE))")
 PHASE_BRIEF="spec/phase/phase-${PHASE_PADDED}.md"
 
 # ── Check 1: Phase Brief file exists ──

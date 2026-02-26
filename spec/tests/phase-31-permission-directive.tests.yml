@@ -1,0 +1,84 @@
+# Phase 31 — Frontend Permission Directive & Enhancement 测试契约
+# 关联 Spec：spec/phase/phase-31.md
+# 本 Phase 为纯前端 Phase，验证方式：pnpm run type-check 通过
+
+phase: 31
+module: "permission-directive"
+ac_ref: "spec/phase/phase-31.md"
+gate_r09: N/A
+
+note: >
+  Phase 31 为纯前端 Phase（Vue 3 / TypeScript）。
+  后端 Gate R09 不适用。验证方式为 TypeScript 类型检查（pnpm run type-check）
+  及前端代码规则检查（Gate R03）。
+
+tests:
+
+  # ─── TypeScript 类型检查 ──────────────────────────────────────────
+  - id: TC-31-01
+    priority: P0
+    category: type_check
+    scenario: "pnpm run type-check 通过，无 TypeScript 错误"
+    expect:
+      gate: R01
+      note: "ljwx-platform-admin type-check 退出码 0"
+
+  # ─── v-permission 指令 ───────────────────────────────────────────
+  - id: TC-31-02
+    priority: P0
+    category: directive
+    scenario: "directives/permission.ts 无 any 类型，导出 vPermission 指令"
+    expect:
+      note: "TypeScript 类型检查 + grep 'any' → 0 matches"
+
+  - id: TC-31-03
+    priority: P0
+    category: directive
+    scenario: "directives/index.ts 正确注册 vPermission 指令"
+    expect:
+      note: "文件存在且导出完整"
+
+  - id: TC-31-04
+    priority: P0
+    category: integration
+    scenario: "main.ts 中全局注册指令"
+    expect:
+      note: "main.ts import 并 app.use(directives)"
+
+  # ─── usePermission 组合式函数 ────────────────────────────────────
+  - id: TC-31-05
+    priority: P0
+    category: composable
+    scenario: "composables/usePermission.ts 无 any，导出 hasPermission / hasRole"
+    expect:
+      note: "TypeScript 类型检查通过"
+
+  # ─── 数据变更日志前端页面 ─────────────────────────────────────────
+  - id: TC-31-06
+    priority: P0
+    category: no_any
+    scenario: "api/dataChangeLog.ts 无 any 类型"
+    expect:
+      note: "grep 'any' src/api/dataChangeLog.ts → 0 matches"
+
+  - id: TC-31-07
+    priority: P1
+    category: routing
+    scenario: "router/index.ts 包含 /monitor/data-change-log 路由"
+    expect:
+      note: "手工检查路由注册"
+
+  - id: TC-31-08
+    priority: P1
+    category: ui
+    scenario: "views/monitor/dataChangeLog/index.vue 页面正常渲染（手工）"
+    expect:
+      note: "浏览器手工验证，非自动化"
+
+# ─── AC → TC 映射 ──────────────────────────────────────────────────
+ac_tc_map:
+  AC-01: [TC-31-01]
+  AC-02: [TC-31-02, TC-31-03, TC-31-04]
+  AC-03: [TC-31-05]
+  AC-04: [TC-31-06, TC-31-07]
+  AC-05: [TC-31-08]
