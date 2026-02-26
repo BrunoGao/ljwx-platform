@@ -310,13 +310,20 @@ if [[ -z "$ISSUE_NUMBER" ]]; then
   if [[ "$DRY_RUN" == "true" ]]; then
     ISSUE_NUMBER="(new)"
   else
-    ISSUE_NUMBER="$(gh issue create \
+    issue_url=""
+    if ! issue_url="$(gh issue create \
       --repo "${OWNER}/${REPO}" \
       --title "$TITLE" \
       --label "type:test" \
       --label "priority:P1" \
       --label "workflow:review" \
-      --body "$(create_issue_body)")"
+      --body "$(create_issue_body)" 2>/dev/null)"; then
+      issue_url="$(gh issue create \
+        --repo "${OWNER}/${REPO}" \
+        --title "$TITLE" \
+        --body "$(create_issue_body)")"
+    fi
+    ISSUE_NUMBER="$(sed -E 's#.*/([0-9]+)$#\1#' <<<"$issue_url")"
     ISSUE_NUMBER="$(sed -E 's#.*/([0-9]+)$#\1#' <<<"$ISSUE_NUMBER")"
   fi
 fi
