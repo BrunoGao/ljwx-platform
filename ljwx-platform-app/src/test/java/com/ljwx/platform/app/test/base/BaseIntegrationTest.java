@@ -3,6 +3,7 @@ package com.ljwx.platform.app.test.base;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.ljwx.platform.app.LjwxPlatformApplication;
 import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -14,9 +15,8 @@ import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.annotation.Transactional;
+import org.testcontainers.DockerClientFactory;
 import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
@@ -29,26 +29,48 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
  *
  * <p>Uses PostgreSQL Testcontainers to stay aligned with production SQL and Flyway dialect.
  */
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@SpringBootTest(
+        classes = LjwxPlatformApplication.class,
+        webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT
+)
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
-@Testcontainers(disabledWithoutDocker = true)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @Transactional
 public abstract class BaseIntegrationTest {
 
-    @Container
-    static final PostgreSQLContainer<?> POSTGRES = new PostgreSQLContainer<>("postgres:16.12-alpine")
-            .withDatabaseName("ljwx_test")
-            .withUsername("ljwx")
-            .withPassword("ljwx");
+    static final PostgreSQLContainer<?> POSTGRES = createAndStartPostgresContainer();
+
+    private static PostgreSQLContainer<?> createAndStartPostgresContainer() {
+        try {
+            if (DockerClientFactory.instance().isDockerAvailable()) {
+                PostgreSQLContainer<?> container = new PostgreSQLContainer<>("postgres:16.12-alpine")
+                        .withDatabaseName("ljwx_test")
+                        .withUsername("ljwx")
+                        .withPassword("ljwx");
+                container.start();
+                return container;
+            }
+        } catch (RuntimeException ignored) {
+            // Fallback to local postgres when docker is unavailable.
+        }
+        return null;
+    }
 
     @DynamicPropertySource
     static void registerDatasource(DynamicPropertyRegistry registry) {
-        registry.add("spring.datasource.url", POSTGRES::getJdbcUrl);
-        registry.add("spring.datasource.username", POSTGRES::getUsername);
-        registry.add("spring.datasource.password", POSTGRES::getPassword);
-        registry.add("spring.datasource.driver-class-name", POSTGRES::getDriverClassName);
+        if (POSTGRES != null) {
+            registry.add("spring.datasource.url", POSTGRES::getJdbcUrl);
+            registry.add("spring.datasource.username", POSTGRES::getUsername);
+            registry.add("spring.datasource.password", POSTGRES::getPassword);
+            registry.add("spring.datasource.driver-class-name", POSTGRES::getDriverClassName);
+            return;
+        }
+
+        registry.add("spring.datasource.url", () -> "jdbc:postgresql://127.0.0.1:5432/ljwx_platform");
+        registry.add("spring.datasource.username", () -> "postgres");
+        registry.add("spring.datasource.password", () -> "postgres");
+        registry.add("spring.datasource.driver-class-name", () -> "org.postgresql.Driver");
     }
 
     @Autowired
