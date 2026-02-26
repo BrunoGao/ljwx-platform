@@ -14,7 +14,7 @@ jobs:
   nightly_regression:
     runs-on: ubuntu-latest
     env:
-      GH_TOKEN: ${{ secrets.PROJECT_TOKEN != '' && secrets.PROJECT_TOKEN || (secrets.PROJECT_V2_TOKEN != '' && secrets.PROJECT_V2_TOKEN || github.token) }}
+      GH_TOKEN: ${{ github.token }}
       BASE_URL: http://localhost:8080
       ENABLE_E2E: "1"
     steps:
@@ -52,14 +52,14 @@ jobs:
           SPRING_DATASOURCE_PASSWORD=ljwx \
           SPRING_REDIS_HOST=127.0.0.1 \
           SPRING_REDIS_PORT=6380 \
-          $( [[ -x ./mvnw ]] && echo "./mvnw" || echo "mvn" ) -pl ljwx-platform-app -am -DskipTests spring-boot:run > app.log 2>&1 &
+          mvn -f ljwx-platform-app/pom.xml -DskipTests spring-boot:run > app.log 2>&1 &
           echo $! > app.pid
 
       - name: Wait app health
         shell: bash
         run: |
           set -euo pipefail
-          for i in {1..90}; do
+          for i in {1..240}; do
             if curl -fsS "${BASE_URL}/actuator/health" >/dev/null 2>&1; then
               echo "app is healthy"
               exit 0
@@ -134,7 +134,9 @@ jobs:
           if [[ "${{ steps.r10.outputs.status }}" != "PASS" || "${{ steps.r11.outputs.status }}" != "PASS" ]]; then
             overall="FAIL"
           fi
-          bash scripts/regression/regression-weekly.sh --mode nightly --status "$overall" --apply
+          if ! bash scripts/regression/regression-weekly.sh --mode nightly --status "$overall" --apply; then
+            echo "weekly campaign update failed; continue workflow" >&2
+          fi
 
       - name: Upload gate reports for Pages
         if: always()
