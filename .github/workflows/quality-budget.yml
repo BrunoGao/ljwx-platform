@@ -1,0 +1,28 @@
+name: Quality Budget
+
+on:
+  pull_request:
+    branches: [master, main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  quality-budget:
+    name: quality-budget
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate ratchet budget
+        run: |
+          set -euo pipefail
+          bash scripts/quality/ratchet.sh
+
+      - name: Emit ratchet JSON
+        if: always()
+        run: |
+          set -euo pipefail
+          bash scripts/quality/ratchet.sh --json || true

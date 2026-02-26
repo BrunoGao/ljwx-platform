@@ -119,6 +119,9 @@ jobs:
 
       - name: Run gate suite
         shell: bash
+        env:
+          CHANGED_FILES_FILE: changed_files.txt
+          R09_STRATIFIED: ${{ github.event_name == 'pull_request' || github.event_name == 'merge_group' }}
         run: |
           set -euo pipefail
           phase="${{ steps.phase.outputs.phase }}"

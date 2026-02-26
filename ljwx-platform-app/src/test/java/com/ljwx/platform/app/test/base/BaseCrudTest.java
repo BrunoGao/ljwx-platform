@@ -22,6 +22,10 @@ public abstract class BaseCrudTest extends BaseIntegrationTest {
 
     protected abstract String listPermission();
 
+    protected String detailPermission() {
+        return listPermission();
+    }
+
     protected abstract String createPermission();
 
     protected abstract String updatePermission();
@@ -70,7 +74,14 @@ public abstract class BaseCrudTest extends BaseIntegrationTest {
         long id = created.path(idFieldName()).asLong();
         assertThat(id).isPositive();
 
-        MvcResult getResult = performGet(basePath() + "/" + id, listOnlyToken());
+        MvcResult getResult = performGet(
+                basePath() + "/" + id,
+                tokenHelper.generateToken(
+                        1L,
+                        "admin",
+                        1L,
+                        java.util.List.of(detailPermission()),
+                        1800L));
         assertThat(getResult.getResponse().getStatus()).isEqualTo(200);
 
         MvcResult updateResult = performPut(basePath() + "/" + id, updateJson(), admin);
