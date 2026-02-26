@@ -137,3 +137,25 @@ Value resolution priority:
 1. Project admin runs bootstrap once and commits `.github/projectv2/project.json`
 2. CI/developers use `project-sync-issue.sh` for day-to-day updates
 3. Re-run bootstrap whenever Project field or option definitions change
+
+## Enable GitHub Actions Auto Sync
+
+This repo includes workflow: `.github/workflows/project-v2-issue-sync.yml`.
+
+Trigger behavior:
+
+- Automatic: on `issues` events (`opened/edited/reopened/labeled/unlabeled`)
+- Manual: `workflow_dispatch` with optional overrides
+
+Required repository secrets:
+
+- `PROJECT_V2_ID`: your Project V2 Node ID (`PVT_...`)
+- `PROJECT_V2_TOKEN` (recommended): token with Project write permission
+  - If not set, workflow falls back to `GITHUB_TOKEN` (may be insufficient for org projects)
+
+Quick setup checklist:
+
+1. Add `PROJECT_V2_ID` and `PROJECT_V2_TOKEN` in repo settings
+2. Optionally commit `.github/projectv2/project.json` via bootstrap
+3. Open or edit any issue, then verify workflow `Project V2 Issue Sync` ran successfully
+4. Confirm issue appears in Project and Phase/Workflow/Priority fields are updated
