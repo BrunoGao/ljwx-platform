@@ -4,8 +4,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ljwx.platform.app.LjwxPlatformApplication;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -41,34 +39,22 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 @Transactional
 public abstract class BaseIntegrationTest {
 
-    static final PostgreSQLContainer<?> POSTGRES = createPostgresContainer();
+    static final PostgreSQLContainer<?> POSTGRES = createAndStartPostgresContainer();
 
-    private static PostgreSQLContainer<?> createPostgresContainer() {
+    private static PostgreSQLContainer<?> createAndStartPostgresContainer() {
         try {
             if (DockerClientFactory.instance().isDockerAvailable()) {
-                return new PostgreSQLContainer<>("postgres:16.12-alpine")
+                PostgreSQLContainer<?> container = new PostgreSQLContainer<>("postgres:16.12-alpine")
                         .withDatabaseName("ljwx_test")
                         .withUsername("ljwx")
                         .withPassword("ljwx");
+                container.start();
+                return container;
             }
         } catch (RuntimeException ignored) {
             // Fallback to local postgres when docker is unavailable.
         }
         return null;
-    }
-
-    @BeforeAll
-    void startPostgresIfNeeded() {
-        if (POSTGRES != null && !POSTGRES.isRunning()) {
-            POSTGRES.start();
-        }
-    }
-
-    @AfterAll
-    void stopPostgresIfNeeded() {
-        if (POSTGRES != null && POSTGRES.isRunning()) {
-            POSTGRES.stop();
-        }
     }
 
     @DynamicPropertySource

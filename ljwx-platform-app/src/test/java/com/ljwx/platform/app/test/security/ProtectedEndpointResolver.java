@@ -2,6 +2,7 @@ package com.ljwx.platform.app.test.security;
 
 import org.springframework.core.annotation.AnnotatedElementUtils;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.method.HandlerMethod;
@@ -21,7 +22,9 @@ public class ProtectedEndpointResolver {
 
     private final RequestMappingHandlerMapping handlerMapping;
 
-    public ProtectedEndpointResolver(RequestMappingHandlerMapping handlerMapping) {
+    public ProtectedEndpointResolver(
+            @Qualifier("requestMappingHandlerMapping") RequestMappingHandlerMapping handlerMapping
+    ) {
         this.handlerMapping = handlerMapping;
     }
 
