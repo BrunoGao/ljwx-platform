@@ -8,6 +8,8 @@ PHASE_INPUT="${1:-}"
 TMP_DIR="/tmp/ljwx-gate-results"
 OUT_JSON="$TMP_DIR/R09.json"
 mkdir -p "$TMP_DIR"
+R09_STRATIFIED="${R09_STRATIFIED:-false}"
+CHANGED_FILES_FILE="${CHANGED_FILES_FILE:-}"
 
 normalize_phase() {
   local p="$1"
@@ -92,24 +94,77 @@ else
 fi
 
 CONTRACT_PROTOCOL_DIR="$MODULE/src/test/java/com/ljwx/platform/contract/protocol"
+CONTRACT_DOMAIN_DIR="$MODULE/src/test/java/com/ljwx/platform/contract/domain"
 declare -a TEST_DIRS=()
+declare -A TEST_DIR_SET=()
 
-if [[ -d "$CONTRACT_PROTOCOL_DIR" ]]; then
-  TEST_DIRS+=("$CONTRACT_PROTOCOL_DIR")
-fi
+add_test_dir() {
+  local d="$1"
+  [[ -d "$d" ]] || return 0
+  if [[ -z "${TEST_DIR_SET[$d]+x}" ]]; then
+    TEST_DIRS+=("$d")
+    TEST_DIR_SET["$d"]=1
+  fi
+}
 
-if ls -d $PKG_DIR_GLOB >/dev/null 2>&1; then
-  while IFS= read -r d; do
-    [[ -n "$d" ]] && TEST_DIRS+=("$d")
-  done < <(ls -d $PKG_DIR_GLOB 2>/dev/null)
-else
-  if [[ ! -d "$CONTRACT_PROTOCOL_DIR" ]]; then
-    if phase_done "$PHASE"; then
-      write_json "FAIL" 1 0 "phase $PHASE is marked done but no phase test package found"
-      exit 1
+extract_phase_hits_from_changed_files() {
+  local src_file="$1"
+  [[ -f "$src_file" ]] || return 0
+  awk '
+    {
+      if (match($0, /phase-([0-9]{1,2})\.md/, m)) {
+        printf "%02d\n", m[1]
+      } else if (match($0, /phase([0-9]{2})\//, m)) {
+        printf "%02d\n", m[1]
+      }
+    }
+  ' "$src_file" | sort -u
+}
+
+has_shared_change() {
+  local src_file="$1"
+  [[ -f "$src_file" ]] || return 1
+  grep -Eq '^(pom.xml|scripts/|ljwx-platform-(core|security|web|data)/|ljwx-platform-app/src/main/java/)' "$src_file"
+}
+
+add_test_dir "$CONTRACT_PROTOCOL_DIR"
+
+if [[ "$R09_STRATIFIED" == "true" ]]; then
+  # Layering strategy:
+  # 1) Always run protocol contracts.
+  # 2) Run domain contracts when shared modules changed.
+  # 3) Run affected phase tests inferred from changed files or detected phase.
+  if [[ -n "$CHANGED_FILES_FILE" && -f "$CHANGED_FILES_FILE" ]]; then
+    if has_shared_change "$CHANGED_FILES_FILE"; then
+      add_test_dir "$CONTRACT_DOMAIN_DIR"
     fi
-    write_json "SKIP" 0 0 "phase test package not found"
+    while IFS= read -r ph; do
+      add_test_dir "$MODULE/src/test/java/com/ljwx/platform/phase${ph}"
+    done < <(extract_phase_hits_from_changed_files "$CHANGED_FILES_FILE")
+  fi
+
+  if [[ "$PHASE" != "all" ]]; then
+    add_test_dir "$MODULE/src/test/java/com/ljwx/platform/phase${PHASE}"
+  fi
+
+  if [[ "${#TEST_DIRS[@]}" -eq 0 ]]; then
+    write_json "SKIP" 0 0 "stratified mode: no runnable test directories found"
     exit 0
+  fi
+else
+  if ls -d $PKG_DIR_GLOB >/dev/null 2>&1; then
+    while IFS= read -r d; do
+      add_test_dir "$d"
+    done < <(ls -d $PKG_DIR_GLOB 2>/dev/null)
+  else
+    if [[ ! -d "$CONTRACT_PROTOCOL_DIR" ]]; then
+      if phase_done "$PHASE"; then
+        write_json "FAIL" 1 0 "phase $PHASE is marked done but no phase test package found"
+        exit 1
+      fi
+      write_json "SKIP" 0 0 "phase test package not found"
+      exit 0
+    fi
   fi
 fi
 
