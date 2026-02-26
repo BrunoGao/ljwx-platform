@@ -1,5 +1,6 @@
 package com.ljwx.platform.data.interceptor;
 
+import com.ljwx.platform.core.context.CurrentTenantHolder;
 import com.ljwx.platform.core.context.CurrentUserHolder;
 import com.ljwx.platform.core.entity.BaseEntity;
 import lombok.RequiredArgsConstructor;
@@ -14,6 +15,7 @@ import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
+import java.util.Map;
 import java.util.Properties;
 
 /**
@@ -51,22 +53,32 @@ public class AuditFieldInterceptor implements Interceptor {
      */
     private final ObjectProvider<CurrentUserHolder> userHolderProvider;
 
+    /**
+     * Optional provider for the current-tenant context.
+     * Used to inject {@code tenantId} on INSERT.
+     */
+    private final ObjectProvider<CurrentTenantHolder> tenantHolderProvider;
+
     @Override
     public Object intercept(Invocation invocation) throws Throwable {
         MappedStatement ms        = (MappedStatement) invocation.getArgs()[0];
         Object          parameter = invocation.getArgs()[1];
         SqlCommandType  sqlType   = ms.getSqlCommandType();
 
-        if (parameter instanceof BaseEntity entity) {
+        BaseEntity entity = extractBaseEntity(parameter);
+        if (entity != null) {
             LocalDateTime now    = LocalDateTime.now();
             Long          userId = resolveUserId();
 
             if (sqlType == SqlCommandType.INSERT) {
                 // Only set if not already provided by the caller
+                if (entity.getTenantId()    == null) { entity.setTenantId(resolveTenantId()); }
                 if (entity.getCreatedBy()   == null) { entity.setCreatedBy(userId);   }
                 if (entity.getCreatedTime() == null) { entity.setCreatedTime(now);    }
                 if (entity.getUpdatedBy()   == null) { entity.setUpdatedBy(userId);   }
                 if (entity.getUpdatedTime() == null) { entity.setUpdatedTime(now);    }
+                if (entity.getDeleted()     == null) { entity.setDeleted(Boolean.FALSE); }
+                if (entity.getVersion()     == null) { entity.setVersion(1); }
             } else if (sqlType == SqlCommandType.UPDATE) {
                 // Always refresh on UPDATE
                 entity.setUpdatedBy(userId);
@@ -75,6 +87,20 @@ public class AuditFieldInterceptor implements Interceptor {
         }
 
         return invocation.proceed();
+    }
+
+    private BaseEntity extractBaseEntity(Object parameter) {
+        if (parameter instanceof BaseEntity entity) {
+            return entity;
+        }
+        if (parameter instanceof Map<?, ?> map) {
+            for (Object value : map.values()) {
+                if (value instanceof BaseEntity entity) {
+                    return entity;
+                }
+            }
+        }
+        return null;
     }
 
     /**
@@ -92,6 +118,24 @@ public class AuditFieldInterceptor implements Interceptor {
             // Context not available — safe to ignore (e.g., startup, batch jobs)
         }
         return 0L;
+    }
+
+    /**
+     * Resolves the current tenant ID from the security context.
+     * Returns {@code 1L} as a safe fallback when no tenant context is present
+     * (matches the default system tenant used in test/batch scenarios).
+     */
+    private Long resolveTenantId() {
+        try {
+            CurrentTenantHolder holder = tenantHolderProvider.getIfAvailable();
+            if (holder != null) {
+                Long id = holder.getTenantId();
+                return id != null ? id : 1L;
+            }
+        } catch (Exception ignored) {
+            // Context not available — safe to ignore
+        }
+        return 1L;
     }
 
     @Override

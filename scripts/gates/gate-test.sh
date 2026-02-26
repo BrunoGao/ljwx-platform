@@ -73,6 +73,18 @@ if [[ -z "$MODULE" ]]; then
   exit 0
 fi
 
+# Skip R09 for frontend-only phases (targets.backend: false in phase spec)
+if [[ "$PHASE" != "all" ]]; then
+  PHASE_BRIEF="spec/phase/phase-${PHASE}.md"
+  if [[ -f "$PHASE_BRIEF" ]]; then
+    backend_target="$(sed -n '/^targets:/,/^[a-z]/p' "$PHASE_BRIEF" | grep 'backend:' | head -1 | sed 's/.*backend:[[:space:]]*//')"
+    if [[ "$backend_target" == "false" ]]; then
+      write_json "SKIP" 0 0 "frontend-only phase (targets.backend: false) — R09 not applicable"
+      exit 0
+    fi
+  fi
+fi
+
 if [[ "$PHASE" == "all" ]]; then
   PKG_DIR_GLOB="$MODULE/src/test/java/com/ljwx/platform/phase*"
 else

@@ -1,0 +1,72 @@
+# Phase 32 — Final Gate & Full Manifest v3 测试契约
+# 关联 Spec：spec/phase/phase-32.md
+# 本 Phase 为文档整理 Phase，无业务代码，无后端接口
+
+phase: 32
+module: "final-gate"
+ac_ref: "spec/phase/phase-32.md"
+gate_r09: N/A
+
+note: >
+  Phase 32 为最终文档整理 Phase（doc-only），不生成任何业务代码。
+  验证方式：bash scripts/gates/gate-all.sh 32 全部 PASS，退出码为 0。
+  以下为验收条件对应的检查项。
+
+tests:
+
+  - id: TC-32-01
+    priority: P0
+    category: gate
+    scenario: "gate-all.sh 32 全量检查通过（R01~R09 全部 PASS 或 SKIP）"
+    expect:
+      note: "退出码 0，无 FAIL 规则"
+
+  - id: TC-32-02
+    priority: P0
+    category: manifest
+    scenario: "FULL_MANIFEST.txt 包含 Phase 28–31 所有新增文件路径"
+    expect:
+      note: "文件存在且内容完整"
+
+  - id: TC-32-03
+    priority: P0
+    category: docs
+    scenario: "README.md 包含安全加固、可观测性、数据变更审计、前端权限指令功能说明"
+    expect:
+      note: "手工检查 README.md"
+
+  - id: TC-32-04
+    priority: P0
+    category: adr
+    scenario: "docs/adr/006-security-hardening.md 存在"
+    expect:
+      note: "文件存在"
+
+  - id: TC-32-05
+    priority: P0
+    category: adr
+    scenario: "docs/adr/007-observability.md 存在"
+    expect:
+      note: "文件存在"
+
+  - id: TC-32-06
+    priority: P0
+    category: adr
+    scenario: "docs/adr/008-data-change-audit.md 存在"
+    expect:
+      note: "文件存在"
+
+  - id: TC-32-07
+    priority: P0
+    category: claude_md
+    scenario: "CLAUDE.md Current Phase 更新为 Phase 32 PASSED, ALL PHASES COMPLETE"
+    expect:
+      note: "手工检查 CLAUDE.md"
+
+# ─── AC → TC 映射 ──────────────────────────────────────────────────
+ac_tc_map:
+  AC-01: [TC-32-01]
+  AC-02: [TC-32-02]
+  AC-03: [TC-32-03]
+  AC-04: [TC-32-04, TC-32-05, TC-32-06]
+  AC-05: [TC-32-07]

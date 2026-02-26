@@ -1,9 +1,9 @@
 {
   "phase": "31",
-  "status": "FAIL",
-  "timestamp": "2026-02-25T15:30:29Z",
+  "status": "PASS",
+  "timestamp": "2026-02-26T05:44:13Z",
   "git": {
-    "commit": "748007a",
+    "commit": "e04765b",
     "branch": "master"
   },
   "rules": [
@@ -18,10 +18,10 @@
     {
       "id": "R02",
       "name": "Manifest",
-      "status": "FAIL",
-      "critical": 1,
+      "status": "PASS",
+      "critical": 0,
       "warnings": 0,
-      "message": "failed"
+      "message": "passed"
     },
     {
       "id": "R03",
@@ -42,18 +42,18 @@
     {
       "id": "R05",
       "name": "Integration",
-      "status": "SKIP",
+      "status": "PASS",
       "critical": 0,
       "warnings": 0,
-      "message": "skipped by SKIP_HEAVY_GATES=true"
+      "message": "passed"
     },
     {
       "id": "R06",
       "name": "Contract",
-      "status": "SKIP",
+      "status": "PASS",
       "critical": 0,
       "warnings": 0,
-      "message": "skipped by SKIP_HEAVY_GATES=true"
+      "message": "passed"
     },
     {
       "id": "R07",
@@ -74,28 +74,20 @@
     {
       "id": "R09",
       "name": "Tests",
-      "status": "SKIP",
+      "status": "PASS",
       "critical": 0,
       "warnings": 0,
-      "message": "skipped by SKIP_HEAVY_GATES=true"
+      "message": "passed"
     }
   ],
   "summary": {
     "total": 9,
-    "pass": 5,
-    "fail": 1,
-    "skip": 3,
-    "critical": 1,
+    "pass": 9,
+    "fail": 0,
+    "skip": 0,
+    "critical": 0,
     "warnings": 0,
-    "pass_rate": 55.56
+    "pass_rate": 100
   },
-  "violations": [
-    {
-      "rule": "R02",
-      "severity": "CRITICAL",
-      "file": null,
-      "line": null,
-      "message": "failed"
-    }
-  ]
+  "violations": []
 }

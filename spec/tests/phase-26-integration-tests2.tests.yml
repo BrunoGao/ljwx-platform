@@ -1,0 +1,269 @@
+# Phase 26 — Integration Tests Phase 2 测试契约
+# 关联 Spec：spec/phase/phase-26.md
+# 本 Phase 即为测试实现，以下为覆盖契约（非另立测试）
+
+phase: 26
+module: "integration-tests2"
+ac_ref: "spec/phase/phase-26.md"
+
+note: >
+  Phase 26 本身即为集成测试实现（MenuControllerIT、DeptControllerIT 等）。
+  以下契约描述各 IT 类必须覆盖的场景，验证方式：mvn test -f pom.xml 全部通过。
+
+tests:
+
+  # ─── MenuControllerIT ───────────────────────────────────────────
+  - id: TC-26-01
+    priority: P0
+    category: security
+    scenario: "GET /api/v1/menus — 未认证返回 401"
+    test_class: "MenuControllerIT"
+    expect:
+      status: 401
+
+  - id: TC-26-02
+    priority: P0
+    category: security
+    scenario: "GET /api/v1/menus — 无权限返回 403"
+    test_class: "MenuControllerIT"
+    expect:
+      status: 403
+
+  - id: TC-26-03
+    priority: P0
+    category: crud
+    scenario: "POST /api/v1/menus — 创建成功"
+    test_class: "MenuControllerIT"
+    expect:
+      status: 200
+      body:
+        data: "${type: Long}"
+
+  - id: TC-26-04
+    priority: P0
+    category: crud
+    scenario: "GET /api/v1/menus/tree — 返回树形结构"
+    test_class: "MenuControllerIT"
+    expect:
+      status: 200
+
+  - id: TC-26-05
+    priority: P0
+    category: crud
+    scenario: "PUT /api/v1/menus/{id} — 更新成功"
+    test_class: "MenuControllerIT"
+    expect:
+      status: 200
+
+  - id: TC-26-06
+    priority: P0
+    category: crud
+    scenario: "DELETE /api/v1/menus/{id} — 软删除成功"
+    test_class: "MenuControllerIT"
+    expect:
+      status: 200
+
+  # ─── DeptControllerIT ───────────────────────────────────────────
+  - id: TC-26-07
+    priority: P0
+    category: security
+    scenario: "GET /api/v1/depts — 未认证返回 401"
+    test_class: "DeptControllerIT"
+    expect:
+      status: 401
+
+  - id: TC-26-08
+    priority: P0
+    category: crud
+    scenario: "POST /api/v1/depts — 创建成功"
+    test_class: "DeptControllerIT"
+    expect:
+      status: 200
+
+  - id: TC-26-09
+    priority: P0
+    category: crud
+    scenario: "GET /api/v1/depts/tree — 返回树形结构"
+    test_class: "DeptControllerIT"
+    expect:
+      status: 200
+
+  - id: TC-26-10
+    priority: P0
+    category: validation
+    scenario: "POST /api/v1/depts — 缺少必填字段返回 400"
+    test_class: "DeptControllerIT"
+    expect:
+      status: 400
+
+  - id: TC-26-11
+    priority: P0
+    category: crud
+    scenario: "PUT /api/v1/depts/{id} — 更新成功"
+    test_class: "DeptControllerIT"
+    expect:
+      status: 200
+
+  - id: TC-26-12
+    priority: P0
+    category: crud
+    scenario: "DELETE /api/v1/depts/{id} — 删除成功"
+    test_class: "DeptControllerIT"
+    expect:
+      status: 200
+
+  # ─── ProfileControllerIT ────────────────────────────────────────
+  - id: TC-26-13
+    priority: P0
+    category: security
+    scenario: "GET /api/v1/profile — 未认证返回 401"
+    test_class: "ProfileControllerIT"
+    expect:
+      status: 401
+
+  - id: TC-26-14
+    priority: P0
+    category: crud
+    scenario: "GET /api/v1/profile — 已认证返回个人信息"
+    test_class: "ProfileControllerIT"
+    expect:
+      status: 200
+
+  - id: TC-26-15
+    priority: P0
+    category: crud
+    scenario: "PUT /api/v1/profile — 更新成功"
+    test_class: "ProfileControllerIT"
+    expect:
+      status: 200
+
+  - id: TC-26-16
+    priority: P0
+    category: business
+    scenario: "PUT /api/v1/profile/password — 旧密码错误返回 400"
+    test_class: "ProfileControllerIT"
+    expect:
+      status: 400
+
+  # ─── LoginLogControllerIT ───────────────────────────────────────
+  - id: TC-26-17
+    priority: P0
+    category: security
+    scenario: "GET /api/v1/login-logs — 未认证返回 401"
+    test_class: "LoginLogControllerIT"
+    expect:
+      status: 401
+
+  - id: TC-26-18
+    priority: P0
+    category: business
+    scenario: "登录后自动写入登录日志，日志列表非空"
+    test_class: "LoginLogControllerIT"
+    expect:
+      status: 200
+      assert: "response.data.list.size > 0"
+
+  - id: TC-26-19
+    priority: P0
+    category: security
+    scenario: "GET /api/v1/login-logs — 无权限返回 403"
+    test_class: "LoginLogControllerIT"
+    expect:
+      status: 403
+
+  - id: TC-26-20
+    priority: P0
+    category: validation
+    scenario: "GET /api/v1/login-logs — 分页参数校验"
+    test_class: "LoginLogControllerIT"
+    expect:
+      status: 200
+
+  # ─── OnlineUserControllerIT ─────────────────────────────────────
+  - id: TC-26-21
+    priority: P0
+    category: security
+    scenario: "GET /api/v1/online-users — 未认证返回 401"
+    test_class: "OnlineUserControllerIT"
+    expect:
+      status: 401
+
+  - id: TC-26-22
+    priority: P0
+    category: crud
+    scenario: "GET /api/v1/online-users — 返回在线用户列表"
+    test_class: "OnlineUserControllerIT"
+    expect:
+      status: 200
+
+  - id: TC-26-23
+    priority: P0
+    category: business
+    scenario: "DELETE /api/v1/online-users/{tokenId} — 强制下线后原 token 返回 401"
+    test_class: "OnlineUserControllerIT"
+    expect:
+      assert: "强制下线后原 token 访问返回 401"
+
+  - id: TC-26-24
+    priority: P0
+    category: security
+    scenario: "DELETE /api/v1/online-users/{tokenId} — 无权限返回 403"
+    test_class: "OnlineUserControllerIT"
+    expect:
+      status: 403
+
+  # ─── MonitorControllerIT ────────────────────────────────────────
+  - id: TC-26-25
+    priority: P0
+    category: security
+    scenario: "GET /api/v1/monitor/server — 未认证返回 401"
+    test_class: "MonitorControllerIT"
+    expect:
+      status: 401
+
+  - id: TC-26-26
+    priority: P0
+    category: crud
+    scenario: "GET /api/v1/monitor/server — data 非空"
+    test_class: "MonitorControllerIT"
+    expect:
+      status: 200
+      assert: "response.data != null"
+
+  - id: TC-26-27
+    priority: P0
+    category: crud
+    scenario: "GET /api/v1/monitor/jvm — 正常返回"
+    test_class: "MonitorControllerIT"
+    expect:
+      status: 200
+
+  - id: TC-26-28
+    priority: P0
+    category: crud
+    scenario: "GET /api/v1/monitor/cache — 正常返回"
+    test_class: "MonitorControllerIT"
+    expect:
+      status: 200
+
+# ─── AC → TC 映射 ──────────────────────────────────────────────────
+ac_tc_map:
+  AC-01: [TC-26-01, TC-26-07, TC-26-13, TC-26-17, TC-26-21, TC-26-25]  # 401
+  AC-02: [TC-26-02, TC-26-19, TC-26-24]  # 403
+  AC-03: [TC-26-03, TC-26-04, TC-26-05, TC-26-06, TC-26-08, TC-26-09, TC-26-11, TC-26-12, TC-26-14, TC-26-15]  # 核心 CRUD
+  AC-04: [TC-26-10, TC-26-16]  # 参数校验
+  AC-05: [TC-26-18, TC-26-23, TC-26-26, TC-26-27, TC-26-28]  # 业务逻辑
+
+# ─── Gate R09 配置 ─────────────────────────────────────────────────
+gate_r09:
+  p0_required: true
+  p1_coverage_target: 0.8
+  p2_skip: true
+  test_classes:
+    - "MenuControllerIT"
+    - "DeptControllerIT"
+    - "ProfileControllerIT"
+    - "LoginLogControllerIT"
+    - "OnlineUserControllerIT"
+    - "MonitorControllerIT"
+  note: "本 Phase 即为测试实现，每类 IT 最少 4 个测试方法，总计 ≥ 28 个"

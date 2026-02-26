@@ -14,7 +14,7 @@ scope:
   - "ljwx-platform-admin/src/views/system/dept/index.vue"
   - "ljwx-platform-admin/src/views/system/menu/index.vue"
   - "ljwx-platform-admin/src/views/system/profile/index.vue"
-  - "ljwx-platform-admin/src/views/monitor/loginLog/index.vue"
+  - "ljwx-platform-admin/src/views/monitor/loginlog/index.vue"
   - "ljwx-platform-admin/src/views/monitor/onlineUser/index.vue"
 ---
 # Phase 23 — Admin Frontend Pages Batch 2

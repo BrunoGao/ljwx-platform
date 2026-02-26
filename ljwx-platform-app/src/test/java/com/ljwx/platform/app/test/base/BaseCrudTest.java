@@ -62,7 +62,7 @@ public abstract class BaseCrudTest extends BaseIntegrationTest {
     }
 
     @Test
-    void createReadUpdateDeleteHappyPath() throws Exception {
+    protected void createReadUpdateDeleteHappyPath() throws Exception {
         String admin = fullPermissionToken();
 
         JsonNode created = readJson(performPost(basePath(), createJson(), admin));

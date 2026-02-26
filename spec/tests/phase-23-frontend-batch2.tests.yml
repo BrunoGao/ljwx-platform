@@ -1,0 +1,75 @@
+# Phase 23 — Admin Frontend Pages Batch 2 测试契约
+# 关联 Spec：spec/phase/phase-23.md
+# 验证方式：pnpm run type-check 通过，无 TypeScript any
+
+phase: 23
+module: "frontend-batch2"
+ac_ref: "spec/phase/phase-23.md"
+gate_r09: N/A
+
+note: >
+  Phase 23 为纯前端 Phase（Vue 3 / TypeScript），无后端 Controller。
+  后端 Gate R09 不适用。验证方式为 TypeScript 类型检查（pnpm run type-check）。
+  详细手工验证用例列于下方，由 Gate R01（编译）+ R03（Rules）保障。
+
+tests:
+
+  # ─── TypeScript 类型检查 ──────────────────────────────────────────
+  - id: TC-23-01
+    priority: P0
+    category: type_check
+    scenario: "pnpm run type-check 通过，无 TypeScript 错误"
+    expect:
+      gate: R01
+      note: "ljwx-platform-admin 前端编译无 TS error"
+
+  # ─── API 层类型安全 ───────────────────────────────────────────────
+  - id: TC-23-02
+    priority: P0
+    category: no_any
+    scenario: "api/dept.ts 无 any 类型"
+    expect:
+      note: "grep 'any' src/api/dept.ts → 0 matches"
+
+  - id: TC-23-03
+    priority: P0
+    category: no_any
+    scenario: "api/profile.ts 无 any 类型"
+    expect:
+      note: "grep 'any' src/api/profile.ts → 0 matches"
+
+  - id: TC-23-04
+    priority: P0
+    category: no_any
+    scenario: "api/loginLog.ts 无 any 类型"
+    expect:
+      note: "grep 'any' src/api/loginLog.ts → 0 matches"
+
+  - id: TC-23-05
+    priority: P0
+    category: no_any
+    scenario: "api/onlineUser.ts 无 any 类型"
+    expect:
+      note: "grep 'any' src/api/onlineUser.ts → 0 matches"
+
+  # ─── 路由注册验证 ─────────────────────────────────────────────────
+  - id: TC-23-06
+    priority: P1
+    category: routing
+    scenario: "dept / menu / profile / loginLog / onlineUser 路由已注册"
+    expect:
+      note: "手工检查 router/index.ts 包含对应 path"
+
+  # ─── 视图组件渲染验证 ─────────────────────────────────────────────
+  - id: TC-23-07
+    priority: P1
+    category: ui
+    scenario: "views/system/dept/index.vue 页面正常渲染（手工）"
+    expect:
+      note: "浏览器手工验证，非自动化"
+
+# ─── AC → TC 映射 ──────────────────────────────────────────────────
+ac_tc_map:
+  AC-01: [TC-23-01]
+  AC-02: [TC-23-02, TC-23-03, TC-23-04, TC-23-05]
+  AC-03: [TC-23-06]

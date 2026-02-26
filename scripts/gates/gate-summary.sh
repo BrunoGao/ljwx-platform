@@ -27,7 +27,7 @@ fi
 phases_tmp="$(mktemp)"
 echo '[]' >"$phases_tmp"
 
-for i in $(seq 0 31); do
+for i in $(seq 0 32); do
   phase="$(printf '%02d' "$i")"
   file="$PHASE_DIR/phase-$phase.json"
   if [[ -f "$file" ]]; then
