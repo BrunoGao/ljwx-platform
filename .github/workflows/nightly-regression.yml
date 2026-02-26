@@ -52,7 +52,7 @@ jobs:
           SPRING_DATASOURCE_PASSWORD=ljwx \
           SPRING_REDIS_HOST=127.0.0.1 \
           SPRING_REDIS_PORT=6380 \
-          ./mvnw -pl ljwx-platform-app -am -DskipTests spring-boot:run > app.log 2>&1 &
+          $( [[ -x ./mvnw ]] && echo "./mvnw" || echo "mvn" ) -pl ljwx-platform-app -am -DskipTests spring-boot:run > app.log 2>&1 &
           echo $! > app.pid
 
       - name: Wait app health
