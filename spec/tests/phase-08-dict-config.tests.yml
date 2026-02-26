@@ -51,7 +51,7 @@ tests:
     expect:
       status: 200
       body:
-        code: 0
+        code: 200
         data: "{dictTypeId}"
 
   - id: TC-08-04
@@ -71,7 +71,7 @@ tests:
     expect:
       status: 200
       body:
-        code: 0
+        code: 200
 
   - id: TC-08-05
     priority: P0
@@ -84,7 +84,7 @@ tests:
     expect:
       status: 200
       body:
-        code: 0
+        code: 200
         data:
           - dictLabel: "正常"
             dictValue: "1"
@@ -102,7 +102,7 @@ tests:
     expect:
       status: 200
       body:
-        code: 0
+        code: 200
 
   - id: TC-08-07
     priority: P0
@@ -115,7 +115,7 @@ tests:
     expect:
       status: 200
       body:
-        code: 0
+        code: 200
       db_assert: "SELECT deleted FROM sys_dict_type WHERE id={dictTypeId} → TRUE"
 
   # ─── P0：配置 CRUD ──────────────────────────────────────────────
@@ -136,7 +136,7 @@ tests:
     expect:
       status: 200
       body:
-        code: 0
+        code: 200
         data: "{configId}"
 
   - id: TC-08-09
@@ -150,7 +150,7 @@ tests:
     expect:
       status: 200
       body:
-        code: 0
+        code: 200
         data:
           configKey: "sys.name"
           configValue: "LJWX Platform"
@@ -168,7 +168,7 @@ tests:
     expect:
       status: 200
       body:
-        code: 0
+        code: 200
 
   # ─── P0：租户隔离 ───────────────────────────────────────────────
   - id: TC-08-11
@@ -218,7 +218,7 @@ tests:
     expect:
       status: 200
       body:
-        code: 0
+        code: 200
       note: "缓存清空后，下次查询重新加载"
 
   # ─── P0：参数校验 ───────────────────────────────────────────────
@@ -312,7 +312,7 @@ tests:
     expect:
       status: 200
       body:
-        code: 0
+        code: 200
 
   # ─── P1：数据库结构验证 ─────────────────────────────────────────
   - id: TC-08-19

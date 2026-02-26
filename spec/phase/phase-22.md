@@ -27,7 +27,7 @@ scope:
 |-----|---|
 | Phase | 22 |
 | 模块 | ljwx-platform-app（后端 only） |
-| Feature | 登录日志（V026）/ 个人中心 / 在线用户管理 |
+| Feature | 登录日志增强（V026）/ 个人中心 / 在线用户管理 |
 | 前置依赖 | Phase 21 (Department Management) |
 | 测试契约 | `spec/tests/phase-22-profile.tests.yml` |
 
@@ -70,9 +70,9 @@ scope:
 
 | 文件 | 内容 |
 |------|------|
-| `V026__create_sys_login_log.sql` | 建表 + 索引（idx_login_log_tenant_time(tenant_id, login_time)） |
+| `V026__create_sys_login_log.sql` | **ALTER 现有表**：新增 `ip_address`、`user_agent`、`login_time`、`message` 列 |
 
-禁止：`IF NOT EXISTS`、建表文件中混 DML。
+禁止：`IF NOT EXISTS`、在迁移文件中混入无关 DML。
 
 ---
 
@@ -171,7 +171,7 @@ P0 强制覆盖（Gate R09 检查）：
 
 ## 验收条件
 
-- **AC-01**：V026 含 7 列审计字段，无 `IF NOT EXISTS`
+- **AC-01**：V026 为 ALTER 迁移（非建表），且无 `IF NOT EXISTS`
 - **AC-02**：LoginLogController 有 `@PreAuthorize("hasAuthority('system:log:login:list')")`；OnlineUserController 方法各有对应权限注解
 - **AC-03**：ProfileController GET/PUT 方法无 `@PreAuthorize`，SecurityConfig 对 `/api/v1/profile/**` 配置 `authenticated()`
 - **AC-04**：登录日志异步写入（@Async + LogAsyncConfig 线程池），不阻塞登录响应

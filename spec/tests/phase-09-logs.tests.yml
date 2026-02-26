@@ -43,7 +43,7 @@ tests:
     expect:
       status: 200
       body:
-        code: 0
+        code: 200
         data:
           list: []
           total: 0
@@ -59,7 +59,7 @@ tests:
     expect:
       status: 200
       body:
-        code: 0
+        code: 200
 
   - id: TC-09-05
     priority: P0
@@ -72,7 +72,7 @@ tests:
     expect:
       status: 200
       body:
-        code: 0
+        code: 200
 
   # ─── P0：日志脱敏 ───────────────────────────────────────────────
   - id: TC-09-06
@@ -145,7 +145,7 @@ tests:
     expect:
       status: 200
       body:
-        code: 0
+        code: 200
         data:
           id: "{fileId}"
           filePath: "/uploads/{tenantId}/{yyyyMM}/{snowflakeId}.jpg"
@@ -285,7 +285,7 @@ tests:
     expect:
       status: 200
       body:
-        code: 0
+        code: 200
 
   - id: TC-09-18
     priority: P1
@@ -298,7 +298,7 @@ tests:
     expect:
       status: 200
       body:
-        code: 0
+        code: 200
 
 # ─── AC → TC 映射 ──────────────────────────────────────────────────
 ac_tc_map:

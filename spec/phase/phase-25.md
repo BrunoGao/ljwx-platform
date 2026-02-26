@@ -7,6 +7,7 @@ targets:
 depends_on: [24]
 bundle_with: []
 scope:
+  - "ljwx-platform-app/src/main/resources/db/migration/V029__seed_phase26_permissions.sql"
   - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/controller/MonitorController.java"
   - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/domain/vo/ServerInfoVO.java"
   - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/domain/vo/JvmInfoVO.java"
@@ -34,8 +35,15 @@ scope:
 
 - `CLAUDE.md`（自动加载）
 - `spec/03-api.md` — §Monitor 路由
+- `spec/04-database.md` — V029 权限种子
 - `spec/01-constraints.md` — §DAG 依赖
 - `spec/08-output-rules.md`
+
+## Flyway 契约
+
+| 文件 | 说明 |
+|------|------|
+| `V029__seed_phase26_permissions.sql` | 补齐 Phase 21-25 相关权限种子并赋权给 admin（dept / monitor / online / login-log / tenant-package / user import-export / notice read） |
 
 ## API 契约
 
@@ -100,11 +108,12 @@ scope:
 - RateLimitInterceptor 禁止 import data 模块任何类（DAG 合规）
 - WebSocket 端点 `/ws/**` 加入 SecurityConfig 白名单
 - 监控数据采集仅用 `java.lang.management.ManagementFactory` 与 `java.io.File`，无额外依赖
-- 无新增数据库迁移
+- 包含 V029 权限种子迁移，禁止 `IF NOT EXISTS`
 
 ## 验收条件
 
 1. MonitorController 三个方法均有 `@PreAuthorize`
 2. RateLimitInterceptor 无 data 模块 import（DAG 合规）
 3. WebSocket 端点 `/ws/**` 在 SecurityConfig 白名单中
-4. 编译通过，type-check 通过
+4. V029 权限种子迁移已纳入并通过校验
+5. 编译通过，type-check 通过

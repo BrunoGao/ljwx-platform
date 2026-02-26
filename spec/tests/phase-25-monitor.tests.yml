@@ -97,7 +97,7 @@ tests:
     expect:
       status: 200
       body:
-        code: 0
+        code: 200
         data.cpuUsage: "${type: Number}"
         data.memUsage: "${type: Number}"
         data.diskTotal: "${type: Number}"
@@ -114,7 +114,7 @@ tests:
     expect:
       status: 200
       body:
-        code: 0
+        code: 200
         data.heapUsed: "${type: Number}"
         data.heapMax: "${type: Number}"
 
@@ -130,7 +130,7 @@ tests:
     expect:
       status: 200
       body:
-        code: 0
+        code: 200
         data: "${not_null}"
 
   # ─── P0：RateLimit 限流 ──────────────────────────────────────────

@@ -62,7 +62,7 @@ scope:
 |-------|------|------|
 | TC-28-01 | 请求参数含 `<script>alert(1)</script>` | XssFilter 转义，接口正常返回 200，param 值已转义 |
 | TC-28-02 | @Idempotent 端点 10 秒内重复提交 | 第 2 次返回 400，code=REPEAT_SUBMIT |
-| TC-28-03 | POST /api/v1/auth/logout → 再用原 token 请求 | 401，token 已失效 |
+| TC-28-03 | POST /api/auth/logout → 再用原 token 请求 | 401，token 已失效 |
 | TC-28-04 | 同账号连续 5 次密码错误 | 第 6 次返回 400，code=ACCOUNT_LOCKED |
 | TC-28-05 | POST /api/v1/users，password="abc" | 400，@StrongPassword 校验失败 |
 | TC-28-06 | POST /api/v1/users，password="Admin@12345" | 200，强密码校验通过 |

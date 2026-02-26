@@ -95,7 +95,7 @@ onMounted(initChart)
 - **AC-01**：≥ 13 个图表组件
 - **AC-02**：每个组件接收 typed props，无 `any`
 - **AC-03**：大屏首页布局完整，使用 DataV 边框装饰
-- **AC-04**：数据对接 `/api/screen/*` 接口
+- **AC-04**：数据对接 `/api/v1/screen/*` 接口
 - **AC-05**：`pnpm run build` 通过
 
 ---

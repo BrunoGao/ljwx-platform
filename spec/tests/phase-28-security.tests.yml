@@ -128,7 +128,7 @@ tests:
     steps:
       - request:
           method: POST
-          path: /api/v1/auth/logout
+          path: /api/auth/logout
           auth: user_token
         expect:
           status: 200
@@ -151,7 +151,7 @@ tests:
     steps:
       - request:
           method: POST
-          path: /api/v1/auth/logout
+          path: /api/auth/logout
           auth: access_token
         expect:
           status: 200
@@ -263,7 +263,7 @@ tests:
     scenario: "无 Token 调用登出接口 → 401"
     request:
       method: POST
-      path: /api/v1/auth/logout
+      path: /api/auth/logout
       auth: none
     expect:
       status: 401

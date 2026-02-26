@@ -26,8 +26,11 @@
 | 400001 | 参数校验失败 |
 | 401001 | Token 无效 |
 | 401002 | Token 过期 |
+| 400002 | 菜单存在子节点（不可删除） |
 | 403001 | 租户拒绝 |
 | 403002 | 权限不足 |
+| 409001 | 重复提交 |
+| 423001 | 账号锁定 |
 | 404001 | 资源不存在 |
 | 500001 | 系统内部错误 |
 
@@ -161,6 +164,71 @@
 | POST | /api/v1/depts | system:dept:create | 创建部门 |
 | PUT | /api/v1/depts/{id} | system:dept:update | 更新部门 |
 | DELETE | /api/v1/depts/{id} | system:dept:delete | 删除部门（软删） |
+
+### Profile
+
+| 方法 | 路径 | 权限 | 说明 |
+|------|------|------|------|
+| GET | /api/v1/profile | 已认证（authenticated） | 当前用户信息 |
+| PUT | /api/v1/profile | 已认证（authenticated） | 修改个人信息 |
+| PUT | /api/v1/profile/password | 已认证（authenticated） | 修改密码 |
+
+### LoginLog
+
+| 方法 | 路径 | 权限 | 说明 |
+|------|------|------|------|
+| GET | /api/v1/login-logs | system:log:login:list | 登录日志分页查询 |
+
+### OnlineUsers
+
+| 方法 | 路径 | 权限 | 说明 |
+|------|------|------|------|
+| GET | /api/v1/online-users | system:online:list | 在线用户列表 |
+| DELETE | /api/v1/online-users/{tokenId} | system:online:kickout | 强制下线 |
+
+### TenantPackage
+
+| 方法 | 路径 | 权限 | 说明 |
+|------|------|------|------|
+| GET | /api/v1/tenant-packages | system:tenant-package:list | 套餐列表 |
+| GET | /api/v1/tenant-packages/{id} | system:tenant-package:detail | 套餐详情 |
+| POST | /api/v1/tenant-packages | system:tenant-package:create | 创建套餐 |
+| PUT | /api/v1/tenant-packages/{id} | system:tenant-package:update | 更新套餐 |
+| DELETE | /api/v1/tenant-packages/{id} | system:tenant-package:delete | 删除套餐（软删） |
+
+### Notice Extensions
+
+| 方法 | 路径 | 权限 | 说明 |
+|------|------|------|------|
+| PUT | /api/v1/notices/{id}/read | system:notice:read | 标记通知已读（幂等） |
+| GET | /api/v1/notices/unread-count | system:notice:list | 查询未读数量 |
+
+### User Import/Export
+
+| 方法 | 路径 | 权限 | 说明 |
+|------|------|------|------|
+| GET | /api/v1/users/export | system:user:export | 导出 Excel |
+| POST | /api/v1/users/import | system:user:import | 导入 Excel |
+
+### Monitor
+
+| 方法 | 路径 | 权限 | 说明 |
+|------|------|------|------|
+| GET | /api/v1/monitor/server | system:monitor:server | 服务器监控 |
+| GET | /api/v1/monitor/jvm | system:monitor:jvm | JVM 监控 |
+| GET | /api/v1/monitor/cache | system:monitor:cache | 缓存监控 |
+
+### Frontend Errors
+
+| 方法 | 路径 | 权限 | 说明 |
+|------|------|------|------|
+| POST | /api/v1/frontend-errors | isAuthenticated() | 前端错误上报 |
+
+### Data Change Logs
+
+| 方法 | 路径 | 权限 | 说明 |
+|------|------|------|------|
+| GET | /api/v1/data-change-logs | system:audit:list | 数据变更日志分页查询 |
 
 ### Screen
 

@@ -45,7 +45,7 @@ tests:
     expect:
       status: 200
       body:
-        code: 0
+        code: 200
 
   # ─── P0：参数校验 ─────────────────────────────────────────────────
   - id: TC-29-03
@@ -86,10 +86,10 @@ tests:
     priority: P0
     category: schema
     ac: AC-04
-    scenario: "V029 含 7 列审计字段，无 IF NOT EXISTS"
+    scenario: "V031 含 7 列审计字段，无 IF NOT EXISTS"
     method: static_analysis
     expect:
-      file: "ljwx-platform-app/src/main/resources/db/migration/V029__create_sys_frontend_error.sql"
+      file: "ljwx-platform-app/src/main/resources/db/migration/V031__create_sys_frontend_error.sql"
       assert_contains:
         - "tenant_id"
         - "created_by"

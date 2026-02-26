@@ -42,19 +42,23 @@ scope:
 
 静态方法：
 - `Result.ok()` / `Result.ok(T data)`
-- `Result.fail(ErrorCode)` / `Result.fail(String message)`
+- `Result.fail(ErrorCode)` / `Result.fail(int code, String message)`
 
 ### ErrorCode（错误码枚举）
 
 | 错误码 | HTTP状态 | 说明 |
 |--------|----------|------|
-| SUCCESS(0) | 200 | 成功 |
-| UNAUTHORIZED(401001) | 401 | 未认证 |
-| FORBIDDEN(403001) | 403 | 无权限 |
-| NOT_FOUND(404001) | 404 | 资源不存在 |
-| VALIDATION_ERROR(400001) | 400 | 参数校验失败 |
-| BUSINESS_ERROR(400002) | 400 | 业务异常 |
-| INTERNAL_ERROR(500001) | 500 | 系统内部错误 |
+| SUCCESS(200) | 200 | 成功 |
+| TOKEN_INVALID(401001) | 401 | Token 无效 |
+| TOKEN_EXPIRED(401002) | 401 | Token 过期 |
+| TENANT_REJECTED(403001) | 403 | 租户拒绝 |
+| PERMISSION_DENIED(403002) | 403 | 权限不足 |
+| RESOURCE_NOT_FOUND(404001) | 404 | 资源不存在 |
+| PARAM_VALIDATION_FAILED(400001) | 400 | 参数校验失败 |
+| MENU_HAS_CHILDREN(400002) | 400 | 菜单存在子节点，无法删除 |
+| REPEAT_SUBMIT(409001) | 409 | 重复提交 |
+| ACCOUNT_LOCKED(423001) | 423 | 账号锁定 |
+| SYSTEM_ERROR(500001) | 500 | 系统内部错误 |
 
 ### PageResult<T>（分页响应）
 

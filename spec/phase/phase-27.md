@@ -1,6 +1,6 @@
 ---
 phase: 27
-title: "Final Gate and Full Manifest v2"
+title: "Interim Gate and Full Manifest v2"
 targets:
   backend: false
   frontend: false
@@ -11,7 +11,7 @@ scope:
   - "docs/adr/**"
   - "README.md"
 ---
-# Phase 27: Final Gate & Full Manifest v2
+# Phase 27: Interim Gate & Full Manifest v2
 
 ## Overview
 
@@ -19,7 +19,7 @@ scope:
 |------|-----|
 | Phase | 27 |
 | 模块 | 文档 / Manifest（无业务代码） |
-| Feature | 全量 Gate 验证 + FULL_MANIFEST.txt + README.md 更新 |
+| Feature | 阶段性 Gate 验证 + FULL_MANIFEST.txt + README.md 更新 |
 | 前置依赖 | Phase 26 |
 | 测试契约 | N/A — doc-only phase |
 
@@ -37,7 +37,7 @@ scope:
 4. 补充 ADR 文档（如有新架构决策，写入 `docs/adr/`）
 5. 最终版本验证（确认所有 Phase 20-27 文件均已落盘）
 
-> 本 Phase 为文档整理，无 HTTP 端点，验证方式：`bash scripts/gates/gate-all.sh 27` 全部 PASS
+> 本 Phase 为阶段性文档整理（非项目终态），无 HTTP 端点，验证方式：`bash scripts/gates/gate-all.sh 27` 全部 PASS
 
 ## 关键约束
 

@@ -53,7 +53,7 @@ tests:
     expect:
       status: 200
       body:
-        code: 0
+        code: 200
         data: "{jobId}"
       db_assert: "SELECT job_group FROM sys_job WHERE id={jobId} → 'TENANT_1'"
 
@@ -68,7 +68,7 @@ tests:
     expect:
       status: 200
       body:
-        code: 0
+        code: 200
         data:
           list: []
           total: 0
@@ -84,7 +84,7 @@ tests:
     expect:
       status: 200
       body:
-        code: 0
+        code: 200
         data:
           id: "{jobId}"
           jobName: "测试任务"
@@ -103,7 +103,7 @@ tests:
     expect:
       status: 200
       body:
-        code: 0
+        code: 200
 
   - id: TC-07-07
     priority: P0
@@ -116,7 +116,7 @@ tests:
     expect:
       status: 200
       body:
-        code: 0
+        code: 200
       db_assert: "SELECT deleted FROM sys_job WHERE id={jobId} → TRUE"
 
   # ─── P0：租户隔离 ───────────────────────────────────────────────
@@ -151,7 +151,7 @@ tests:
     expect:
       status: 200
       body:
-        code: 0
+        code: 200
 
   - id: TC-07-10
     priority: P0
@@ -164,7 +164,7 @@ tests:
     expect:
       status: 200
       body:
-        code: 0
+        code: 200
       db_assert: "SELECT status FROM sys_job WHERE id={jobId} → 0"
 
   - id: TC-07-11
@@ -178,7 +178,7 @@ tests:
     expect:
       status: 200
       body:
-        code: 0
+        code: 200
       db_assert: "SELECT status FROM sys_job WHERE id={jobId} → 1"
 
   # ─── P0：参数校验 ───────────────────────────────────────────────

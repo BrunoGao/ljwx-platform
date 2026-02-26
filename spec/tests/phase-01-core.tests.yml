@@ -48,38 +48,38 @@ tests:
         - "ok()"
         - "ok(T)"
         - "fail(ErrorCode)"
-        - "fail(String)"
+        - "fail(int, String)"
 
   - id: TC-01-04
     priority: P0
     category: structure
     ac: AC-03
     bl_ref: BL-01-04
-    scenario: "ErrorCode 包含 SUCCESS(0)"
+    scenario: "ErrorCode 包含 SUCCESS(200)"
     method: enum_value_check
     expect:
       enum: "com.ljwx.platform.core.result.ErrorCode"
-      contains: "SUCCESS(0, 200, \"成功\")"
+      contains: "SUCCESS(200, \"success\")"
 
   - id: TC-01-05
     priority: P0
     category: structure
     ac: AC-03
-    scenario: "ErrorCode 包含 UNAUTHORIZED(401001)"
+    scenario: "ErrorCode 包含 TOKEN_INVALID(401001)"
     method: enum_value_check
     expect:
       enum: "com.ljwx.platform.core.result.ErrorCode"
-      contains: "UNAUTHORIZED(401001, 401"
+      contains: "TOKEN_INVALID(401001, \"Token 无效\")"
 
   - id: TC-01-06
     priority: P0
     category: structure
     ac: AC-03
-    scenario: "ErrorCode 包含 FORBIDDEN(403001)"
+    scenario: "ErrorCode 包含 PERMISSION_DENIED(403002)"
     method: enum_value_check
     expect:
       enum: "com.ljwx.platform.core.result.ErrorCode"
-      contains: "FORBIDDEN(403001, 403"
+      contains: "PERMISSION_DENIED(403002, \"权限不足\")"
 
   - id: TC-01-07
     priority: P0

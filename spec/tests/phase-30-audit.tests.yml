@@ -49,7 +49,7 @@ tests:
     expect:
       status: 200
       body:
-        code: 0
+        code: 200
         data.total: "${gte: 0}"
         data.list: "${type: List}"
 

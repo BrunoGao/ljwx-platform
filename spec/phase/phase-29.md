@@ -5,14 +5,14 @@ targets:
   backend: true
   frontend: true
 depends_on: [28]
-bundle_with: []
+bundle_with: [30]
 scope:
   - "ljwx-platform-web/src/main/java/com/ljwx/platform/web/filter/TraceIdFilter.java"
   - "ljwx-platform-web/src/main/java/com/ljwx/platform/web/aop/SlowApiAspect.java"
   - "ljwx-platform-app/src/main/resources/logback-spring.xml"
   - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/controller/FrontendErrorController.java"
   - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/domain/dto/FrontendErrorDTO.java"
-  - "ljwx-platform-app/src/main/resources/db/migration/V029__create_sys_frontend_error.sql"
+  - "ljwx-platform-app/src/main/resources/db/migration/V031__create_sys_frontend_error.sql"
   - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/domain/entity/SysFrontendError.java"
   - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/infra/mapper/SysFrontendErrorMapper.java"
   - "ljwx-platform-app/src/main/resources/mapper/SysFrontendErrorMapper.xml"
@@ -38,7 +38,7 @@ scope:
 
 ## DB 契约
 
-### sys_frontend_error（V029）
+### sys_frontend_error（V031）
 
 | 列名 | 类型 | 约束 | 说明 |
 |------|------|------|------|
@@ -52,14 +52,14 @@ scope:
 | created_time | TIMESTAMP | NOT NULL DEFAULT NOW() | 创建时间（审计字段） |
 | updated_by | BIGINT | NOT NULL DEFAULT 0 | 更新人（审计字段） |
 | updated_time | TIMESTAMP | NOT NULL DEFAULT NOW() | 更新时间（审计字段） |
-| deleted | SMALLINT | NOT NULL DEFAULT 0 | 逻辑删除（审计字段） |
-| version | INT | NOT NULL DEFAULT 0 | 乐观锁（审计字段） |
+| deleted | BOOLEAN | NOT NULL DEFAULT FALSE | 逻辑删除（审计字段） |
+| version | INT | NOT NULL DEFAULT 1 | 乐观锁（审计字段） |
 
 ### Flyway 文件
 
 | 文件 | 说明 |
 |------|------|
-| V029__create_sys_frontend_error.sql | 创建 sys_frontend_error 表，禁止 IF NOT EXISTS |
+| V031__create_sys_frontend_error.sql | 创建 sys_frontend_error 表，禁止 IF NOT EXISTS |
 
 ## API 契约
 
@@ -100,7 +100,7 @@ scope:
 | TC-29-02 | P0 | POST /api/v1/frontend-errors 已登录有效 body → 200 |
 | TC-29-03 | P0 | POST /api/v1/frontend-errors body 缺必填字段 → 400 |
 | TC-29-04 | P0 | 任意 API 响应头包含 X-Trace-Id |
-| TC-29-05 | P0 | V029 含 7 列审计字段，无 IF NOT EXISTS |
+| TC-29-05 | P0 | V031 含 7 列审计字段，无 IF NOT EXISTS |
 | TC-29-06 | P0 | useErrorMonitor.ts 无 TypeScript any，type-check 通过 |
 | TC-29-07 | P1 | 模拟执行时间 > 3000ms 的接口，应用日志出现 WARN SlowApi |
 
@@ -110,15 +110,16 @@ scope:
 
 - TraceIdFilter 在 web 模块，禁止 import security/data 包（DAG 合规）
 - SlowApiAspect 在 web 模块，需要 spring-boot-starter-aop 依赖
-- V029 含 7 列审计字段，无 IF NOT EXISTS
+- V031 含 7 列审计字段，无 IF NOT EXISTS
 - FrontendErrorController 权限注解为 `@PreAuthorize("isAuthenticated()")`，不使用 hasAuthority
 - useErrorMonitor.ts 禁止 any 类型，必须在 main.ts 中调用初始化
+- 与 Phase 30 按 bundle 落地（`V030` 与 `V031` 同批提交），避免迁移版本顺序风险
 
 ## 验收条件
 
 1. 每个 API 响应头包含 X-Trace-Id
 2. 日志输出包含 traceId 字段（JSON 结构化格式）
 3. SlowApiAspect 对执行超 3s 的方法输出 WARN 日志
-4. V029 含 7 列审计字段，无 IF NOT EXISTS
+4. V031 含 7 列审计字段，无 IF NOT EXISTS
 5. POST /api/v1/frontend-errors 已登录时返回 200
 6. useErrorMonitor.ts 无 any 类型，type-check 通过

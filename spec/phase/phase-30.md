@@ -5,7 +5,7 @@ targets:
   backend: true
   frontend: false
 depends_on: [29]
-bundle_with: []
+bundle_with: [29]
 scope:
   - "ljwx-platform-app/src/main/resources/db/migration/V030__create_sys_data_change_log.sql"
   - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/domain/entity/SysDataChangeLog.java"
@@ -54,8 +54,8 @@ scope:
 | created_time | TIMESTAMP | NOT NULL DEFAULT NOW() | 创建时间（审计字段） |
 | updated_by | BIGINT | NOT NULL DEFAULT 0 | 更新人（审计字段） |
 | updated_time | TIMESTAMP | NOT NULL DEFAULT NOW() | 更新时间（审计字段） |
-| deleted | SMALLINT | NOT NULL DEFAULT 0 | 逻辑删除（审计字段） |
-| version | INT | NOT NULL DEFAULT 0 | 乐观锁（审计字段） |
+| deleted | BOOLEAN | NOT NULL DEFAULT FALSE | 逻辑删除（审计字段） |
+| version | INT | NOT NULL DEFAULT 1 | 乐观锁（审计字段） |
 
 ### Flyway 文件
 
@@ -121,6 +121,7 @@ scope:
 - V030 含 7 列审计字段，无 IF NOT EXISTS
 - LogCleanupJob 必须标注 `@DisallowConcurrentExecution`
 - DataChangeLogController 必须标注 `@PreAuthorize("hasAuthority('system:audit:list')")`
+- 与 Phase 29 按 bundle 落地（`V030` 与 `V031` 同批提交），避免迁移版本顺序风险
 
 ## 验收条件
 
