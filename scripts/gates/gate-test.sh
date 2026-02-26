@@ -91,19 +91,37 @@ else
   PKG_DIR_GLOB="$MODULE/src/test/java/com/ljwx/platform/phase${PHASE}"
 fi
 
-if ! ls -d $PKG_DIR_GLOB >/dev/null 2>&1; then
-  if phase_done "$PHASE"; then
-    write_json "FAIL" 1 0 "phase $PHASE is marked done but no phase test package found"
-    exit 1
+CONTRACT_PROTOCOL_DIR="$MODULE/src/test/java/com/ljwx/platform/contract/protocol"
+declare -a TEST_DIRS=()
+
+if [[ -d "$CONTRACT_PROTOCOL_DIR" ]]; then
+  TEST_DIRS+=("$CONTRACT_PROTOCOL_DIR")
+fi
+
+if ls -d $PKG_DIR_GLOB >/dev/null 2>&1; then
+  while IFS= read -r d; do
+    [[ -n "$d" ]] && TEST_DIRS+=("$d")
+  done < <(ls -d $PKG_DIR_GLOB 2>/dev/null)
+else
+  if [[ ! -d "$CONTRACT_PROTOCOL_DIR" ]]; then
+    if phase_done "$PHASE"; then
+      write_json "FAIL" 1 0 "phase $PHASE is marked done but no phase test package found"
+      exit 1
+    fi
+    write_json "SKIP" 0 0 "phase test package not found"
+    exit 0
   fi
-  write_json "SKIP" 0 0 "phase test package not found"
+fi
+
+if [[ "${#TEST_DIRS[@]}" -eq 0 ]]; then
+  write_json "SKIP" 0 0 "no runnable test directories found"
   exit 0
 fi
 
 rm -f "$MODULE"/target/surefire-reports/*.xml >/dev/null 2>&1 || true
 
 TEST_PATTERN="$(
-  find $PKG_DIR_GLOB -type f -name '*.java' 2>/dev/null \
+  find "${TEST_DIRS[@]}" -type f -name '*.java' 2>/dev/null \
     | sed -E "s|^$MODULE/src/test/java/||; s|/|.|g; s|\\.java$||" \
     | paste -sd, -
 )"

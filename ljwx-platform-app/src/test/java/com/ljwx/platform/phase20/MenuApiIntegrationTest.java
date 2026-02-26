@@ -27,6 +27,11 @@ class MenuApiIntegrationTest extends BaseCrudTest {
     }
 
     @Override
+    protected String detailPermission() {
+        return "system:menu:detail";
+    }
+
+    @Override
     protected String updatePermission() {
         return "system:menu:update";
     }
@@ -92,11 +97,11 @@ class MenuApiIntegrationTest extends BaseCrudTest {
     }
 
     @Test
-    void createMenuWithNonExistentParentShouldReturn400() throws Exception {
+    void createMenuWithNonExistentParentShouldReturn404() throws Exception {
         var result = performPost(basePath(), Map.of(
                 "parentId", 99999999L, "name", "Orphan Menu", "menuType", 1,
                 "path", "/orphan", "component", "orphan/index",
                 "sort", 1, "visible", 1, "permission", ""), fullPermissionToken());
-        assertThat(result.getResponse().getStatus()).isEqualTo(400);
+        assertThat(result.getResponse().getStatus()).isEqualTo(404);
     }
 }

@@ -1,0 +1,43 @@
+name: Regression Weekly Campaign
+
+on:
+  workflow_dispatch:
+  # Optional alternative trigger (enable if you want post-merge workflow chaining):
+  # workflow_run:
+  #   workflows: ["Gate Check"]
+  #   types: [completed]
+  schedule:
+    - cron: "0 3 * * *"
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: read
+  repository-projects: write
+
+jobs:
+  regression_weekly:
+    runs-on: ubuntu-latest
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    env:
+      GH_TOKEN: ${{ secrets.PROJECT_TOKEN != '' && secrets.PROJECT_TOKEN || (secrets.PROJECT_V2_TOKEN != '' && secrets.PROJECT_V2_TOKEN || github.token) }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate tools
+        run: |
+          set -euo pipefail
+          command -v jq >/dev/null
+          command -v gh >/dev/null
+
+      - name: Generate / update weekly regression campaign
+        run: |
+          set -euo pipefail
+          MODE="nightly"
+          if [[ "${GITHUB_EVENT_NAME}" == "workflow_run" ]]; then
+            MODE="post-merge"
+          elif [[ "${GITHUB_EVENT_NAME}" == "workflow_dispatch" ]]; then
+            MODE="manual"
+          fi
+          bash scripts/regression/regression-weekly.sh --mode "$MODE" --apply

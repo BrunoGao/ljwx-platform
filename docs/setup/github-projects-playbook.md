@@ -184,6 +184,38 @@ Issue opening rules:
 - Regression failure => `regression-bug.yml`
 - Test infra/report workflow => `tech-task.yml`
 
+## Regression Weekly Campaign Automation
+
+Workflow: `.github/workflows/regression-weekly.yml`
+
+Purpose:
+- maintain one weekly campaign issue: `[Regression] Week-YYYY-WW`
+- append one comment per run with metrics, diff, top risks, and links
+- keep campaign issue synced to Project fields
+  - `Workstream=Regression`
+  - `Suite=Other`
+  - `Priority=P1`
+  - `Gate Status=PASS/FAIL`
+
+Comment sections:
+- Header: timestamp, commit/branch, run URL, dashboard URL
+- Metrics Summary: gate status, critical, tests, coverage
+- Diff Summary: new/resolved violations, coverage delta, tests delta
+- Top Risks: top 5 grouped by rule and impact phases
+- Snapshot: embedded JSON block used as previous baseline on next run
+
+Manual rerun:
+
+```bash
+bash scripts/regression/regression-weekly.sh --mode manual --dry-run
+bash scripts/regression/regression-weekly.sh --mode manual --apply
+```
+
+Token requirements:
+- `issues:write` required for issue/comment updates
+- Project sync may require `PROJECT_TOKEN` (preferred for org-level projects)
+- workflow falls back to `PROJECT_V2_TOKEN` then `GITHUB_TOKEN`
+
 ## Enable GitHub Actions Auto Sync
 
 Required repository secrets:
