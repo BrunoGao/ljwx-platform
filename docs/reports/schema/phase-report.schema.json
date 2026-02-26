@@ -4,7 +4,7 @@
   "required": ["phase", "status", "timestamp", "git", "rules", "summary"],
   "properties": {
     "phase": {"type": "string", "pattern": "^[0-9]{2}$"},
-    "status": {"type": "string", "enum": ["PASS", "FAIL", "PENDING"]},
+    "status": {"type": "string", "enum": ["PASS", "FAIL", "PENDING", "SKIP"]},
     "timestamp": {"type": "string"},
     "git": {
       "type": "object",

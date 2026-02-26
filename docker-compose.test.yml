@@ -1,0 +1,60 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: ljwx-test-mysql
+    command:
+      - --default-authentication-plugin=mysql_native_password
+      - --innodb_buffer_pool_size=128M
+      - --max_connections=100
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: ljwx_platform
+      MYSQL_USER: ljwx
+      MYSQL_PASSWORD: ljwx
+    ports:
+      - "3307:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-proot"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    volumes:
+      - mysql_test_data:/var/lib/mysql
+
+  redis:
+    image: redis:7
+    container_name: ljwx-test-redis
+    ports:
+      - "6380:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  app:
+    image: ${APP_IMAGE:-ghcr.io/brunogao/ljwx-platform-app:latest}
+    container_name: ljwx-test-app
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: test
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/ljwx_platform?useUnicode=true&characterEncoding=UTF-8&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: ljwx
+      SPRING_DATASOURCE_PASSWORD: ljwx
+      SPRING_REDIS_HOST: redis
+      SPRING_REDIS_PORT: 6379
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8080/actuator/health >/dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+    profiles: ["app"]
+
+volumes:
+  mysql_test_data:

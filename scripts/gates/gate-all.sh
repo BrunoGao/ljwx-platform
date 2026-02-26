@@ -39,6 +39,7 @@ if ((10#$PHASE >= 10 && 10#$PHASE <= 19)); then
   PROFILE="frontend"
 fi
 SKIP_HEAVY_GATES="${SKIP_HEAVY_GATES:-false}"
+ENABLE_E2E="${ENABLE_E2E:-0}"
 
 echo "╔══════════════════════════════════════════════════╗"
 echo "║            LJWX Gate — Full Check                ║"
@@ -157,6 +158,29 @@ fi
 echo ""
 
 run_rule "R09" "Tests" "scripts/gates/gate-test.sh" "true" "true"
+
+# R10: E2E (opt-in only)
+((TOTAL++))
+echo "── R10 E2E System Tests ─────────────────────────"
+if [[ "$ENABLE_E2E" != "1" ]]; then
+  echo "  SKIP  set ENABLE_E2E=1 to run system E2E"
+  ((SKIPPED++))
+  write_rule_json "R10" "E2E System Tests" "SKIP" 0 0 "disabled by ENABLE_E2E"
+else
+  if [[ "$SKIP_HEAVY_GATES" == "true" ]]; then
+    echo "  SKIP  heavy gate skipped in batch mode"
+    ((SKIPPED++))
+    write_rule_json "R10" "E2E System Tests" "SKIP" 0 0 "skipped by SKIP_HEAVY_GATES=true"
+  elif bash scripts/gates/gate-e2e.sh >/dev/null 2>&1; then
+    echo "  PASS  scripts/gates/gate-e2e.sh"
+    ((PASSED++))
+  else
+    echo "  FAIL  scripts/gates/gate-e2e.sh"
+    ((FAILED++))
+    FAILED_NAMES+=("R10")
+  fi
+fi
+echo ""
 
 if [[ -x "scripts/reports/collect-artifacts.sh" ]]; then
   bash scripts/reports/collect-artifacts.sh "$PHASE" >/dev/null 2>&1 || true

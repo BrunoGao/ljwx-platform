@@ -2,7 +2,7 @@ name: Deploy Quality Dashboard
 
 on:
   workflow_run:
-    workflows: ["Gate Check"]
+    workflows: ["Gate Check", "Post Merge E2E", "Nightly Regression"]
     types: [completed]
   workflow_dispatch:
 

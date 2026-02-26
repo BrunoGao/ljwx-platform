@@ -1,0 +1,129 @@
+name: Nightly Regression
+
+on:
+  schedule:
+    - cron: "30 3 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+  repository-projects: write
+
+jobs:
+  nightly_regression:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.PROJECT_TOKEN != '' && secrets.PROJECT_TOKEN || (secrets.PROJECT_V2_TOKEN != '' && secrets.PROJECT_V2_TOKEN || github.token) }}
+      APP_IMAGE: ${{ vars.APP_IMAGE != '' && vars.APP_IMAGE || 'ghcr.io/brunogao/ljwx-platform-app:latest' }}
+      BASE_URL: http://localhost:8080
+      ENABLE_E2E: "1"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate tools
+        shell: bash
+        run: |
+          set -euo pipefail
+          command -v jq >/dev/null
+          command -v gh >/dev/null
+          command -v docker >/dev/null
+
+      - name: Start test environment
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash scripts/setup-test-env.sh up
+
+      - name: Run R10 E2E
+        id: r10
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -euo pipefail
+          status="PASS"
+          if ! bash scripts/gates/gate-e2e.sh; then
+            status="FAIL"
+          fi
+          echo "status=$status" >> "$GITHUB_OUTPUT"
+
+      - name: Run R11 Perf baseline
+        id: r11
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -euo pipefail
+          status="PASS"
+          if ! bash scripts/gates/gate-perf.sh; then
+            status="FAIL"
+          fi
+          echo "status=$status" >> "$GITHUB_OUTPUT"
+
+      - name: Build report payload
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          TMP_DIR=/tmp/ljwx-gate-results
+          mkdir -p "$TMP_DIR"
+          bash scripts/gen-rtm.sh || true
+          bash scripts/gates/gate-report.sh 00 "$TMP_DIR"
+          bash scripts/gates/gate-summary.sh
+
+      - name: Create regression issue on failure
+        if: always() && (steps.r10.outputs.status == 'FAIL' || steps.r11.outputs.status == 'FAIL')
+        shell: bash
+        run: |
+          set -euo pipefail
+          run_url="https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          gate="R10"
+          if [[ "${{ steps.r11.outputs.status }}" == "FAIL" ]]; then gate="R11"; fi
+          title="[Bug][Regression][P0] Nightly ${gate} regression detected"
+          if [[ "$gate" == "R10" ]]; then
+            title="[Bug][Regression][P0] Cross-tenant access must return 404 (nightly)"
+          fi
+          gh issue create \
+            --repo "${GITHUB_REPOSITORY}" \
+            --title "$title" \
+            --label "type:bugfix" \
+            --label "priority:P0" \
+            --label "gate:fail" \
+            --body "Automated nightly regression detection.\n\n- Run URL: ${run_url}\n- Gate: ${gate}\n- R10 expected: cross-tenant access MUST return HTTP 404\n- R11 mode: baseline observation (no threshold)\n\nPlease triage and link fix PR." || true
+
+      - name: Update weekly regression campaign
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          overall="PASS"
+          if [[ "${{ steps.r10.outputs.status }}" != "PASS" || "${{ steps.r11.outputs.status }}" != "PASS" ]]; then
+            overall="FAIL"
+          fi
+          bash scripts/regression/regression-weekly.sh --mode nightly --status "$overall" --apply
+
+      - name: Upload gate reports for Pages
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gate-reports
+          path: |
+            docs/reports/**
+            tests/results/**
+
+      - name: Teardown test environment
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash scripts/setup-test-env.sh clean || true
+
+      - name: Fail workflow on regression
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "${{ steps.r10.outputs.status }}" != "PASS" || "${{ steps.r11.outputs.status }}" != "PASS" ]]; then
+            echo "Nightly regression detected: R10=${{ steps.r10.outputs.status }} R11=${{ steps.r11.outputs.status }}" >&2
+            exit 1
+          fi
