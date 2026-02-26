@@ -5,61 +5,52 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>LJWX Quality Dashboard</title>
   <style>
-    :root {
-      --bg:#f5f7fb;
-      --card:#ffffff;
-      --ok:#1a7f37;
-      --fail:#cf222e;
-      --skip:#9a6700;
-      --muted:#57606a;
-      --text:#1f2328;
-      --line:#e6ebf1;
-    }
+    :root { --ok:#1a7f37; --fail:#cf222e; --skip:#9a6700; --muted:#57606a; --text:#1f2328; --line:#e6ebf1; }
     * { box-sizing:border-box; }
     body { margin:0; font-family:"Segoe UI",sans-serif; background:linear-gradient(180deg,#eef3fb,#f9fbfe); color:var(--text); }
-    .wrap { max-width:1400px; margin:20px auto; padding:0 14px 42px; }
-    h1,h2,h3 { margin:0 0 10px; }
-    .hint { color:var(--muted); font-size:12px; }
+    .wrap { max-width:1450px; margin:20px auto; padding:0 14px 42px; }
     .row { display:grid; gap:14px; grid-template-columns:repeat(12,minmax(0,1fr)); }
-    .card { background:var(--card); border-radius:12px; box-shadow:0 8px 22px rgba(31,35,40,.07); border:1px solid #edf1f5; padding:14px; }
+    .card { background:#fff; border-radius:12px; box-shadow:0 8px 22px rgba(31,35,40,.07); border:1px solid #edf1f5; padding:14px; }
     .span-3{grid-column:span 3;} .span-4{grid-column:span 4;} .span-6{grid-column:span 6;} .span-8{grid-column:span 8;} .span-12{grid-column:span 12;}
     .kpi { font-size:30px; font-weight:700; }
-    .label { color:var(--muted); font-size:12px; }
+    .label,.hint { color:var(--muted); font-size:12px; }
     .ok { color:var(--ok); } .fail { color:var(--fail); } .skip { color:var(--skip); }
-    .toolbar { display:flex; gap:8px; flex-wrap:wrap; margin:10px 0 6px; }
+    .toolbar { display:flex; gap:8px; flex-wrap:wrap; margin:8px 0; }
     .btn { border:1px solid var(--line); background:#fff; border-radius:8px; padding:6px 10px; font-size:12px; cursor:pointer; }
-    .btn:hover { background:#f8fafc; }
+    .btn[disabled]{opacity:.5;cursor:not-allowed;}
+    .btn:hover:not([disabled]) { background:#f8fafc; }
     .table-wrap { overflow:auto; }
     table { width:100%; border-collapse:collapse; font-size:12px; }
     th,td { border-bottom:1px solid var(--line); padding:7px; text-align:left; vertical-align:top; }
     tr:hover td { background:#fafcff; }
     .mono { font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
     .badge { display:inline-block; min-width:50px; text-align:center; border-radius:999px; padding:2px 8px; font-size:11px; color:#fff; }
-    .PASS { background:var(--ok); }
-    .FAIL { background:var(--fail); }
-    .SKIP,.PENDING { background:var(--skip); }
+    .PASS { background:var(--ok); } .FAIL { background:var(--fail); } .SKIP,.PENDING { background:var(--skip); }
     .heatmap { display:grid; grid-template-columns:repeat(8,minmax(92px,1fr)); gap:8px; }
     .cell { border-radius:10px; padding:10px; color:#fff; cursor:pointer; min-height:58px; }
     .matrix { overflow:auto; border:1px solid var(--line); border-radius:10px; }
-    .matrix table th { position:sticky; top:0; background:#fff; z-index:1; }
-    .matrix .row-head { position:sticky; left:0; background:#fff; z-index:2; min-width:58px; }
-    .matrix .gcell { text-align:center; cursor:pointer; font-weight:600; min-width:44px; }
-    .drawer-backdrop { position:fixed; inset:0; background:rgba(8,15,30,.28); display:none; }
-    .drawer { position:fixed; top:0; right:0; height:100vh; width:min(760px,95vw); background:#fff; box-shadow:-12px 0 30px rgba(0,0,0,.18); display:none; flex-direction:column; }
+    .matrix th { position:sticky; top:0; background:#fff; z-index:1; }
+    .row-head { position:sticky; left:0; background:#fff; z-index:2; min-width:58px; }
+    .gcell { text-align:center; cursor:pointer; font-weight:600; min-width:44px; }
+    .link { color:#0969da; text-decoration:none; }
+    .link:hover { text-decoration:underline; }
+    .empty { color:var(--muted); font-size:12px; padding:8px 0; }
+
+    .backdrop { position:fixed; inset:0; background:rgba(8,15,30,.28); display:none; }
+    .drawer { position:fixed; top:0; right:0; height:100vh; width:min(780px,95vw); background:#fff; box-shadow:-12px 0 30px rgba(0,0,0,.18); display:none; flex-direction:column; }
     .drawer-head { padding:12px 14px; border-bottom:1px solid var(--line); }
-    .drawer-head h3 { margin:0; }
     .drawer-meta { margin-top:6px; font-size:12px; color:var(--muted); }
     .tabs { display:flex; gap:6px; margin-top:10px; flex-wrap:wrap; }
     .tab { border:1px solid var(--line); border-radius:8px; background:#fff; padding:5px 10px; font-size:12px; cursor:pointer; }
     .tab.active { background:#1f6feb; color:#fff; border-color:#1f6feb; }
-    .drawer-body { overflow:auto; padding:12px 14px 24px; }
-    .empty { color:var(--muted); font-size:12px; padding:6px 0; }
-    .link { color:#0969da; text-decoration:none; }
-    .link:hover { text-decoration:underline; }
-    @media (max-width:980px) {
-      .span-3,.span-4,.span-6,.span-8,.span-12{grid-column:span 12;}
-      .heatmap { grid-template-columns:repeat(4,minmax(0,1fr)); }
-    }
+    .drawer-body { overflow:auto; padding:12px 14px 18px; }
+    .drawer-footer { border-top:1px solid var(--line); padding:10px 14px; display:flex; gap:8px; flex-wrap:wrap; }
+
+    .modal { position:fixed; left:50%; top:50%; transform:translate(-50%,-50%); width:min(1000px,96vw); max-height:90vh; background:#fff; border-radius:12px; box-shadow:0 12px 34px rgba(0,0,0,.25); display:none; flex-direction:column; }
+    .modal-head { padding:12px 14px; border-bottom:1px solid var(--line); }
+    .modal-body { overflow:auto; padding:12px 14px; }
+
+    @media (max-width:980px) { .span-3,.span-4,.span-6,.span-8,.span-12{grid-column:span 12;} .heatmap{grid-template-columns:repeat(4,minmax(0,1fr));} }
   </style>
 </head>
 <body>
@@ -72,7 +63,6 @@
       <div class="card span-3"><div class="label">FAIL</div><div id="kFail" class="kpi fail">-</div></div>
       <div class="card span-3"><div class="label">PENDING</div><div id="kPending" class="kpi skip">-</div></div>
       <div class="card span-3"><div class="label">CRITICAL</div><div id="kCritical" class="kpi">-</div></div>
-
       <div class="card span-6"><div class="label">Tests Execution Rate</div><div id="kExecRate" class="kpi">-</div></div>
       <div class="card span-6"><div class="label">Tests Failure Rate</div><div id="kFailRate" class="kpi">-</div></div>
 
@@ -94,9 +84,18 @@
         <div class="table-wrap"><table id="gapTable"><thead><tr><th>Controller</th><th>Uncovered</th><th>Action</th></tr></thead><tbody></tbody></table></div>
       </div>
 
-      <div class="card span-12">
+      <div class="card span-12" id="rtmSection">
         <h3>RTM</h3>
         <div class="table-wrap"><table id="rtmTable"><thead><tr><th>Phase</th><th>Method</th><th>Endpoint</th><th>Controller</th><th>Covered</th><th>Status</th></tr></thead><tbody></tbody></table></div>
+      </div>
+
+      <div class="card span-12">
+        <h3>History</h3>
+        <div class="toolbar">
+          <button class="btn" id="compareBtn" disabled>Compare A/B</button>
+          <button class="btn" id="clearCompareBtn">Clear A/B</button>
+        </div>
+        <div class="table-wrap"><table id="historyTable"><thead><tr><th>A</th><th>B</th><th>RunKey</th><th>Time</th><th>Commit</th><th>Status</th><th>PassRate</th><th>Run</th></tr></thead><tbody></tbody></table></div>
       </div>
 
       <div class="card span-12">
@@ -106,7 +105,7 @@
     </div>
   </div>
 
-  <div id="drawerBackdrop" class="drawer-backdrop"></div>
+  <div id="drawerBackdrop" class="backdrop"></div>
   <aside id="drawer" class="drawer">
     <div class="drawer-head">
       <h3 id="drawerTitle">Phase Detail</h3>
@@ -116,72 +115,107 @@
         <button class="tab" data-tab="violations">Violations</button>
         <button class="tab" data-tab="tests">Tests</button>
         <button class="tab" data-tab="rtm">RTM Links</button>
-        <button class="tab" id="closeDrawer" style="margin-left:auto">Close</button>
       </div>
     </div>
     <div id="drawerBody" class="drawer-body"></div>
+    <div class="drawer-footer">
+      <button class="btn" id="copyDeepLinkBtn">Copy Link</button>
+      <a class="btn link" id="openRunBtn" target="_blank" rel="noopener">Open CI Run</a>
+      <a class="btn link" id="openPhaseJsonBtn" target="_blank" rel="noopener">Open Phase JSON</a>
+      <button class="btn" id="closeDrawerBtn" style="margin-left:auto">Close</button>
+    </div>
   </aside>
+
+  <div id="diffBackdrop" class="backdrop"></div>
+  <section id="diffModal" class="modal">
+    <div class="modal-head">
+      <h3 id="diffTitle">Diff A/B</h3>
+      <div class="tabs">
+        <button class="tab" data-diff-tab="violations">Violations</button>
+        <button class="tab" data-diff-tab="coverage">Coverage</button>
+        <button class="tab" id="closeDiffBtn" style="margin-left:auto">Close</button>
+      </div>
+    </div>
+    <div id="diffBody" class="modal-body"></div>
+  </section>
 
   <script>
     const RULES = ["R01","R02","R03","R04","R05","R06","R07","R08","R09"];
-    const state = { summary:null, rtm:{matrix:[]}, tests:{summary:{},tests:[]}, phaseMap:new Map(), allViolations:[] };
+    const FALLBACK_REPO = { owner: "BrunoGao", name: "ljwx-platform", branch: "master" };
 
-    function esc(v) {
-      return String(v ?? "").replace(/[&<>"]/g, m => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[m]));
-    }
-    function statusBadge(s) { return `<span class="badge ${s || "PENDING"}">${esc(s || "PENDING")}</span>`; }
-    function getHashParams() { return new URLSearchParams((location.hash || "").replace(/^#/, "")); }
-    function setHash(obj) {
-      const p = new URLSearchParams();
-      Object.keys(obj).forEach(k => { if (obj[k] !== undefined && obj[k] !== null && obj[k] !== "") p.set(k, obj[k]); });
-      location.hash = p.toString();
-    }
-    async function fetchJson(url, fallback) {
-      try { return await fetch(url).then(r => r.json()); } catch (_) { return fallback; }
+    const state = {
+      summary: null,
+      rtm: { matrix: [] },
+      tests: { summary: {}, tests: [] },
+      phaseMap: new Map(),
+      allViolations: [],
+      filters: { controller: null },
+      compare: { a: null, b: null },
+      runs: [],
+      runMap: new Map()
+    };
+
+    const jsonCache = new Map();
+    function esc(v){ return String(v ?? "").replace(/[&<>\"]/g, m => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[m])); }
+    function badge(s){ return `<span class="badge ${s || "PENDING"}">${esc(s || "PENDING")}</span>`; }
+    function hashParams(){ return new URLSearchParams((location.hash || "").replace(/^#/, "")); }
+    function setHash(obj){ const p = new URLSearchParams(); Object.keys(obj).forEach(k=>{ if(obj[k]!==undefined && obj[k]!==null && obj[k]!=="") p.set(k,obj[k]); }); location.hash = p.toString(); }
+    function clearHash(){ history.replaceState(null, "", location.pathname + location.search + location.hash.replace(/#.*/, "")); }
+
+    async function fetchJson(url, fallback, refresh=false){
+      if (!refresh && jsonCache.has(url)) return jsonCache.get(url);
+      const prom = fetch(url).then(r => r.ok ? r.json() : Promise.reject(new Error(r.statusText))).catch(() => fallback);
+      jsonCache.set(url, prom);
+      return prom;
     }
 
-    async function loadPhase(phase) {
-      if (state.phaseMap.has(phase)) return state.phaseMap.get(phase);
-      const json = await fetchJson(`./data/phases/phase-${phase}.json`, null);
-      if (json) state.phaseMap.set(phase, json);
-      return json;
-    }
-
-    function repoInfo() {
+    function repoInfo(){
       const s = state.summary || {};
       const repo = s.repo || {};
       const git = s.git || {};
       const ci = s.ci || {};
-      return { owner: repo.owner || "unknown", name: repo.name || "unknown", branch: git.branch || "unknown", commit: git.short || git.commit || "unknown", run: ci.run_url || "" };
+      return {
+        owner: repo.owner || FALLBACK_REPO.owner,
+        name: repo.name || FALLBACK_REPO.name,
+        branch: git.branch || FALLBACK_REPO.branch,
+        commit: git.short || git.commit || "unknown",
+        run: ci.run_url || ""
+      };
     }
 
-    function computeRates() {
+    async function loadPhase(phase){
+      const key = String(phase).padStart(2, "0");
+      if (state.phaseMap.has(key)) return state.phaseMap.get(key);
+      const j = await fetchJson(`./data/phases/phase-${key}.json`, null);
+      if (j) state.phaseMap.set(key, j);
+      return j;
+    }
+
+    function computeRates(){
       const phases = (state.summary?.phases || []).filter(p => (p.status || "") !== "PENDING");
       const executed = phases.filter(p => !["SKIP","PENDING"].includes((p.r09_status || "").toUpperCase()));
-      const execRate = phases.length ? (executed.length * 100 / phases.length) : 0;
-      const ts = state.tests.summary || {};
-      const denom = (ts.pass || 0) + (ts.fail || 0);
-      const failRate = denom ? (ts.fail * 100 / denom) : 0;
-      return { execRate: execRate.toFixed(2), failRate: failRate.toFixed(2) };
+      const exec = phases.length ? (executed.length * 100 / phases.length) : 0;
+      const s = state.tests.summary || {};
+      const denom = (s.pass || 0) + (s.fail || 0);
+      const fail = denom ? (s.fail * 100 / denom) : 0;
+      return { exec: exec.toFixed(2), fail: fail.toFixed(2) };
     }
 
-    function renderKpis() {
-      const totals = state.summary?.totals || {};
-      document.getElementById("kPass").textContent = totals.pass ?? 0;
-      document.getElementById("kFail").textContent = totals.fail ?? 0;
-      document.getElementById("kPending").textContent = totals.pending ?? 0;
-      document.getElementById("kCritical").textContent = totals.critical ?? 0;
-      const rates = computeRates();
-      document.getElementById("kExecRate").textContent = `${rates.execRate}%`;
-      document.getElementById("kFailRate").textContent = `${rates.failRate}%`;
+    function renderKpis(){
+      const t = state.summary?.totals || {};
+      document.getElementById("kPass").textContent = t.pass ?? 0;
+      document.getElementById("kFail").textContent = t.fail ?? 0;
+      document.getElementById("kPending").textContent = t.pending ?? 0;
+      document.getElementById("kCritical").textContent = t.critical ?? 0;
+      const r = computeRates();
+      document.getElementById("kExecRate").textContent = `${r.exec}%`;
+      document.getElementById("kFailRate").textContent = `${r.fail}%`;
       const ri = repoInfo();
-      const generated = state.summary?.generated_at || "-";
-      document.getElementById("meta").innerHTML = `${esc(ri.owner)}/${esc(ri.name)} @ ${esc(ri.branch)} (${esc(ri.commit)}) generated ${esc(generated)}${ri.run ? ` | <a class="link" href="${ri.run}" target="_blank" rel="noopener">Actions Run</a>` : ""}`;
+      document.getElementById("meta").innerHTML = `${esc(ri.owner)}/${esc(ri.name)} @ ${esc(ri.branch)} (${esc(ri.commit)}) generated ${esc(state.summary?.generated_at || "-")}${ri.run ? ` | <a class="link" href="${ri.run}" target="_blank" rel="noopener">Actions Run</a>` : ""}`;
     }
 
-    function renderHeatmap() {
-      const box = document.getElementById("phaseHeatmap");
-      box.innerHTML = "";
+    function renderHeatmap(){
+      const box = document.getElementById("phaseHeatmap"); box.innerHTML = "";
       (state.summary?.phases || []).forEach(p => {
         const d = document.createElement("div");
         d.className = `cell ${p.status || "PENDING"}`;
@@ -191,230 +225,359 @@
       });
     }
 
-    function renderMatrix() {
+    function renderMatrix(){
       const table = document.getElementById("matrixTable");
       const phases = state.summary?.phases || [];
-      const head = [`<tr><th class="row-head">Gate</th>${phases.map(p => `<th>${esc(p.phase)}</th>`).join("")}</tr>`];
+      const head = `<tr><th class="row-head">Gate</th>${phases.map(p=>`<th>${esc(p.phase)}</th>`).join("")}</tr>`;
       const rows = RULES.map(rule => {
         const cells = phases.map(p => {
           const s = (p.gate_status && p.gate_status[rule]) || "PENDING";
-          return `<td class="gcell ${s}" title="${rule} / phase ${p.phase}" data-phase="${esc(p.phase)}" data-rule="${rule}">${esc(s[0] || "?")}</td>`;
+          return `<td class="gcell ${s}" data-phase="${esc(p.phase)}" data-rule="${rule}">${esc(s[0] || "?")}</td>`;
         }).join("");
         return `<tr><th class="row-head">${rule}</th>${cells}</tr>`;
-      });
-      table.innerHTML = `<thead>${head.join("")}</thead><tbody>${rows.join("")}</tbody>`;
-      table.querySelectorAll(".gcell").forEach(cell => {
-        cell.addEventListener("click", () => setHash({ phase: cell.dataset.phase, gate: cell.dataset.rule }));
-      });
+      }).join("");
+      table.innerHTML = `<thead>${head}</thead><tbody>${rows}</tbody>`;
+      table.querySelectorAll(".gcell").forEach(c => c.onclick = () => setHash({ phase: c.dataset.phase, gate: c.dataset.rule }));
     }
 
-    function renderRtm() {
-      const body = document.querySelector("#rtmTable tbody");
-      body.innerHTML = "";
-      (state.rtm.matrix || []).forEach(m => {
-        const tr = document.createElement("tr");
-        tr.innerHTML = `<td>${esc(m.phase)}</td><td>${esc(m.method)}</td><td class="mono">${esc(m.endpoint)}</td><td>${esc(m.controller)}</td><td>${m.test_covered ? "true" : "false"}</td><td>${statusBadge(m.gate_status)}</td>`;
-        tr.onclick = () => setHash({ phase: m.phase, endpoint: m.endpoint, method: m.method });
-        body.appendChild(tr);
-      });
+    async function collectViolations(){
+      state.allViolations = [];
+      const phases = state.summary?.phases || [];
+      await Promise.all(phases.map(async p => {
+        if (!p.phase) return;
+        const j = await loadPhase(p.phase);
+        (j?.violations || []).forEach(v => state.allViolations.push({ ...v, phase: String(p.phase).padStart(2,"0") }));
+      }));
     }
 
-    function renderTests() {
-      const body = document.querySelector("#testsTable tbody");
-      body.innerHTML = "";
-      (state.tests.tests || []).slice(0, 1500).forEach(t => {
-        const st = t.status === "ERROR" ? "FAIL" : (t.status || "SKIP");
-        const tr = document.createElement("tr");
-        tr.innerHTML = `<td>${esc(t.phase)}</td><td>${esc(t.suite)}</td><td>${esc(t.testcase)}</td><td>${statusBadge(st)}</td><td>${esc(t.time_seconds)}</td><td>${esc(t.message || "")}</td>`;
-        tr.onclick = () => setHash({ phase: t.phase, gate: "R09" });
-        body.appendChild(tr);
-      });
-    }
-
-    function buildRiskRows() {
+    function renderTopRisks(){
       const map = new Map();
       state.allViolations.forEach(v => {
         const key = v.rule || "UNKNOWN";
         if (!map.has(key)) map.set(key, { rule:key, count:0, phases:new Set() });
-        const item = map.get(key);
-        item.count += 1;
-        item.phases.add(String(v.phase));
+        const item = map.get(key); item.count += 1; item.phases.add(v.phase);
       });
-      return [...map.values()].sort((a,b) => b.count - a.count || b.phases.size - a.phases.size);
-    }
-
-    function renderTopRisks() {
-      const body = document.querySelector("#riskTable tbody");
-      body.innerHTML = "";
-      const rows = buildRiskRows().slice(0, 20);
-      if (!rows.length) {
-        body.innerHTML = `<tr><td colspan="4" class="empty">No risks</td></tr>`;
-        return;
-      }
+      const body = document.querySelector("#riskTable tbody"); body.innerHTML = "";
+      const rows = [...map.values()].sort((a,b)=>b.count-a.count).slice(0,20);
+      if (!rows.length) { body.innerHTML = `<tr><td colspan="4" class="empty">No risks</td></tr>`; return; }
       rows.forEach(r => {
-        const phases = [...r.phases].sort().join(",");
         const tr = document.createElement("tr");
-        tr.innerHTML = `<td>${esc(r.rule)}</td><td>${r.count}</td><td>${esc(phases)}</td><td><button class="btn" data-rule="${esc(r.rule)}">Open</button></td>`;
-        tr.querySelector("button").onclick = () => setHash({ gate: r.rule });
+        tr.innerHTML = `<td>${esc(r.rule)}</td><td>${r.count}</td><td>${esc([...r.phases].sort().join(","))}</td><td><button class="btn">Open</button></td>`;
+        tr.querySelector("button").onclick = () => setHash({ gate:r.rule, tab:"violations" });
         body.appendChild(tr);
       });
     }
 
-    function renderCoverageGap() {
-      const body = document.querySelector("#gapTable tbody");
-      body.innerHTML = "";
-      const counts = new Map();
+    function renderCoverageGap(){
+      const map = new Map();
       (state.rtm.matrix || []).forEach(r => {
-        if (r.test_covered) return;
-        const key = r.controller || "unknown";
-        counts.set(key, (counts.get(key) || 0) + 1);
+        const covered = (r.test_covered ?? r.covered) === true;
+        if (covered) return;
+        const k = r.controller || "unknown";
+        map.set(k, (map.get(k)||0) + 1);
       });
-      const rows = [...counts.entries()].sort((a,b) => b[1]-a[1]).slice(0, 20);
-      if (!rows.length) {
-        body.innerHTML = `<tr><td colspan="3" class="empty">No uncovered endpoints</td></tr>`;
-        return;
-      }
+      const body = document.querySelector("#gapTable tbody"); body.innerHTML = "";
+      const rows = [...map.entries()].sort((a,b)=>b[1]-a[1]).slice(0,20);
+      if (!rows.length) { body.innerHTML = `<tr><td colspan="3" class="empty">No uncovered endpoints</td></tr>`; return; }
       rows.forEach(([controller, count]) => {
         const tr = document.createElement("tr");
         tr.innerHTML = `<td>${esc(controller)}</td><td>${count}</td><td><button class="btn">Filter RTM</button></td>`;
-        tr.querySelector("button").onclick = () => setHash({ endpoint:"", method:"", controller });
+        tr.querySelector("button").onclick = () => {
+          setHash({ controller });
+          state.filters.controller = controller;
+          renderRtm();
+          document.getElementById("rtmSection").scrollIntoView({ behavior:"smooth", block:"start" });
+        };
         body.appendChild(tr);
       });
     }
 
-    async function collectViolations() {
-      state.allViolations = [];
-      const phases = state.summary?.phases || [];
-      const jobs = phases.filter(p => p.status === "FAIL" || p.critical > 0).map(async p => {
-        const j = await loadPhase(p.phase);
-        (j?.violations || []).forEach(v => state.allViolations.push({ ...v, phase: p.phase }));
+    function renderRtm(){
+      const params = hashParams();
+      const controllerFromHash = params.get("controller") || state.filters.controller;
+      const endpoint = params.get("endpoint");
+      const method = params.get("method");
+      let rows = state.rtm.matrix || [];
+      if (controllerFromHash) rows = rows.filter(r => (r.controller || "") === controllerFromHash);
+      const body = document.querySelector("#rtmTable tbody"); body.innerHTML = "";
+      rows.forEach(r => {
+        const m = r.method || r.http_method || "";
+        const highlight = endpoint && method && endpoint === r.endpoint && method === m;
+        const tr = document.createElement("tr");
+        if (highlight) tr.style.background = "#fff9db";
+        tr.innerHTML = `<td>${esc(r.phase)}</td><td>${esc(m)}</td><td class="mono">${esc(r.endpoint)}</td><td>${esc(r.controller)}</td><td>${(r.test_covered ?? r.covered) ? "true" : "false"}</td><td>${badge(r.gate_status || r.status)}</td>`;
+        tr.onclick = () => setHash({ phase:r.phase, endpoint:r.endpoint, method:m, tab:"rtm" });
+        body.appendChild(tr);
       });
-      await Promise.all(jobs);
     }
 
-    function closeDrawer() {
-      document.getElementById("drawer").style.display = "none";
-      document.getElementById("drawerBackdrop").style.display = "none";
-    }
-    function openDrawer() {
-      document.getElementById("drawer").style.display = "flex";
-      document.getElementById("drawerBackdrop").style.display = "block";
+    function renderTests(){
+      const body = document.querySelector("#testsTable tbody"); body.innerHTML = "";
+      (state.tests.tests || []).slice(0,1500).forEach(t => {
+        const st = t.status === "ERROR" ? "FAIL" : (t.status || "SKIP");
+        const tr = document.createElement("tr");
+        tr.innerHTML = `<td>${esc(t.phase)}</td><td>${esc(t.suite)}</td><td>${esc(t.testcase)}</td><td>${badge(st)}</td><td>${esc(t.time_seconds)}</td><td>${esc(t.message || "")}</td>`;
+        tr.onclick = () => setHash({ phase:t.phase, gate:"R09", tab:"tests" });
+        body.appendChild(tr);
+      });
     }
 
-    function pickTab(params) {
+    function buildRuns(){
+      const groups = new Map();
+      const history = state.summary?.history || [];
+      history.forEach(h => {
+        const runKey = (h.run_id ? `run:${h.run_id}` : `${h.timestamp || ""}|${h.git_commit || ""}`);
+        if (!groups.has(runKey)) groups.set(runKey, { runKey, run_id:h.run_id || null, run_url:h.run_url || null, timestamp:h.timestamp || "", git_commit:h.git_commit || "", phases:new Map(), entries:[] });
+        const g = groups.get(runKey);
+        g.entries.push(h);
+        if (h.phase) g.phases.set(String(h.phase).padStart(2,"0"), h);
+        if (!g.timestamp || (h.timestamp && h.timestamp > g.timestamp)) g.timestamp = h.timestamp;
+      });
+      const runs = [...groups.values()].map(g => {
+        const list = [...g.phases.values()];
+        const passRate = list.length ? (list.reduce((s,x)=>s + (x.pass_rate || 0), 0) / list.length) : 0;
+        const status = list.some(x => x.status === "FAIL") ? "FAIL" : (list.some(x => x.status === "PENDING") ? "PENDING" : "PASS");
+        return { ...g, passRate:Number(passRate.toFixed(2)), status };
+      }).sort((a,b) => (b.timestamp || "").localeCompare(a.timestamp || ""));
+      state.runs = runs;
+      state.runMap = new Map(runs.map(r => [r.runKey, r]));
+    }
+
+    function renderHistory(){
+      buildRuns();
+      const body = document.querySelector("#historyTable tbody"); body.innerHTML = "";
+      state.runs.slice(0,50).forEach(run => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td><input type="radio" name="cmpA" ${state.compare.a===run.runKey ? "checked" : ""}></td>
+          <td><input type="radio" name="cmpB" ${state.compare.b===run.runKey ? "checked" : ""}></td>
+          <td class="mono">${esc(run.runKey)}</td>
+          <td>${esc(run.timestamp || "-")}</td>
+          <td class="mono">${esc((run.git_commit || "").slice(0,7))}</td>
+          <td>${badge(run.status)}</td>
+          <td>${esc(run.passRate)}%</td>
+          <td>${run.run_url ? `<a class="link" href="${run.run_url}" target="_blank">open</a>` : "-"}</td>`;
+        tr.querySelector('input[name="cmpA"]').onchange = () => { state.compare.a = run.runKey; updateCompareBtn(); };
+        tr.querySelector('input[name="cmpB"]').onchange = () => { state.compare.b = run.runKey; updateCompareBtn(); };
+        body.appendChild(tr);
+      });
+      updateCompareBtn();
+    }
+
+    function updateCompareBtn(){
+      const btn = document.getElementById("compareBtn");
+      btn.disabled = !(state.compare.a && state.compare.b && state.compare.a !== state.compare.b);
+    }
+
+    function openDrawer(){ document.getElementById("drawer").style.display = "flex"; document.getElementById("drawerBackdrop").style.display = "block"; }
+    function closeDrawer(){ document.getElementById("drawer").style.display = "none"; document.getElementById("drawerBackdrop").style.display = "none"; }
+    function openDiff(){ document.getElementById("diffModal").style.display = "flex"; document.getElementById("diffBackdrop").style.display = "block"; }
+    function closeDiff(){ document.getElementById("diffModal").style.display = "none"; document.getElementById("diffBackdrop").style.display = "none"; }
+
+    function pickDrawerTab(params){
+      if (params.get("tab")) return params.get("tab");
       if (params.get("gate") === "R09") return "tests";
       if (params.get("endpoint")) return "rtm";
       if (params.get("violation") || params.get("gate")) return "violations";
       return "summary";
     }
 
-    async function renderDrawerFromHash() {
-      const params = getHashParams();
+    async function renderDrawerFromHash(){
+      const params = hashParams();
       const phase = params.get("phase");
       const gate = params.get("gate");
       const endpoint = params.get("endpoint");
       const method = params.get("method");
-      const activeTab = params.get("tab") || pickTab(params);
+      const tab = pickDrawerTab(params);
 
-      if (!phase && !gate && !endpoint) {
-        closeDrawer();
-        return;
-      }
+      if (!phase && !gate && !endpoint) { closeDrawer(); return; }
 
-      const phaseJson = phase ? await loadPhase(phase) : null;
+      const pj = phase ? await loadPhase(phase) : null;
       const ri = repoInfo();
       const title = phase ? `Phase ${phase}${gate ? ` / ${gate}` : ""}` : (gate ? `Gate ${gate}` : "Endpoint Detail");
-      const ciUrl = phaseJson?.ci?.run_url || state.summary?.ci?.run_url || "";
+      const runUrl = pj?.ci?.run_url || state.summary?.ci?.run_url || "";
       document.getElementById("drawerTitle").textContent = title;
-      document.getElementById("drawerMeta").innerHTML = `${ciUrl ? `<a class="link" href="${ciUrl}" target="_blank" rel="noopener">Open Actions Run</a> | ` : ""}${phaseJson?.git?.commit ? `commit ${esc(phaseJson.git.commit)}` : ""}`;
+      document.getElementById("drawerMeta").innerHTML = `${runUrl ? `<a class="link" href="${runUrl}" target="_blank">Open Actions Run</a> | ` : ""}${pj?.git?.commit ? `commit ${esc(pj.git.commit)}` : ""}`;
+      document.getElementById("openRunBtn").href = runUrl || "#";
+      document.getElementById("openRunBtn").style.pointerEvents = runUrl ? "auto" : "none";
+      const phaseLink = phase ? `./data/phases/phase-${String(phase).padStart(2,"0")}.json` : "#";
+      document.getElementById("openPhaseJsonBtn").href = phaseLink;
 
       const body = document.getElementById("drawerBody");
       const tabs = [...document.querySelectorAll(".tab[data-tab]")];
-      tabs.forEach(t => t.classList.toggle("active", t.dataset.tab === activeTab));
+      tabs.forEach(t => t.classList.toggle("active", t.dataset.tab === tab));
 
-      if (activeTab === "summary") {
-        if (!phaseJson) {
-          body.innerHTML = `<div class="empty">Select a phase to view summary.</div>`;
-        } else {
-          const rules = (phaseJson.rules || []).map(r => `<tr><td>${esc(r.id)}</td><td>${statusBadge(r.status)}</td><td>${esc(r.message || "")}</td></tr>`).join("");
-          const art = phaseJson.artifacts || {};
+      if (tab === "summary") {
+        if (!pj) body.innerHTML = `<div class="empty">Select a phase.</div>`;
+        else {
+          const rows = (pj.rules || []).map(r => `<tr><td>${esc(r.id)}</td><td>${badge(r.status)}</td><td>${esc(r.message || "")}</td></tr>`).join("");
+          const art = pj.artifacts || {};
           body.innerHTML = `
-            <div class="table-wrap"><table><thead><tr><th>Gate</th><th>Status</th><th>Message</th></tr></thead><tbody>${rules || `<tr><td colspan="3" class="empty">No rules</td></tr>`}</tbody></table></div>
+            <div class="table-wrap"><table><thead><tr><th>Gate</th><th>Status</th><th>Message</th></tr></thead><tbody>${rows || `<tr><td colspan="3" class="empty">No gate rows</td></tr>`}</tbody></table></div>
             <p class="hint">Surefire: ${art.surefire_xml_index ? `<a class="link" href="./${art.surefire_xml_index}" target="_blank">index.json</a>` : "-"} | ${art.surefire_html ? `<a class="link" href="./${art.surefire_html}" target="_blank">html</a>` : "-"}</p>
-            <p class="hint">Gate Log: ${art.gate_raw_log ? `<a class="link" href="./${art.gate_raw_log}" target="_blank">open</a>` : "-"}</p>
-          `;
+            <p class="hint">Gate Log: ${art.gate_raw_log ? `<a class="link" href="./${art.gate_raw_log}" target="_blank">open</a>` : "-"}</p>`;
         }
-      } else if (activeTab === "violations") {
+      } else if (tab === "violations") {
         let list = state.allViolations;
-        if (phase) list = list.filter(v => String(v.phase) === String(phase));
+        if (phase) list = list.filter(v => String(v.phase) === String(phase).padStart(2,"0"));
         if (gate) list = list.filter(v => String(v.rule) === String(gate));
         const rows = list.map(v => {
           let msg = esc(v.message || "");
           if (v.file) {
             const line = v.line || 1;
-            msg = `<a class="link" href="https://github.com/${ri.owner}/${ri.name}/blob/master/${v.file}#L${line}" target="_blank" rel="noopener">${msg}</a>`;
+            msg = `<a class="link" href="https://github.com/${ri.owner}/${ri.name}/blob/${ri.branch}/${v.file}#L${line}" target="_blank">${msg}</a>`;
           }
           return `<tr><td>${esc(v.phase)}</td><td>${esc(v.rule)}</td><td>${esc(v.severity || "CRITICAL")}</td><td>${msg}</td></tr>`;
         }).join("");
         body.innerHTML = `<div class="table-wrap"><table><thead><tr><th>Phase</th><th>Rule</th><th>Severity</th><th>Message</th></tr></thead><tbody>${rows || `<tr><td colspan="4" class="empty">No violations</td></tr>`}</tbody></table></div>`;
-      } else if (activeTab === "tests") {
+      } else if (tab === "tests") {
         let rows = state.tests.tests || [];
-        if (phase) rows = rows.filter(t => String(t.phase) === String(phase));
-        rows = rows.map(t => ({ ...t, st: t.status === "ERROR" ? "FAIL" : (t.status || "SKIP") }));
-        const lines = rows.map(t => `<tr><td>${esc(t.phase)}</td><td>${esc(t.suite)}</td><td>${esc(t.testcase)}</td><td>${statusBadge(t.st)}</td><td>${esc(t.time_seconds)}</td><td><span title="${esc(t.message || "")}" class="mono">${esc((t.message || "").slice(0, 220))}</span></td></tr>`).join("");
-        const art = phaseJson?.artifacts || {};
-        body.innerHTML = `
-          <p class="hint">${art.surefire_xml_index ? `<a class="link" href="./${art.surefire_xml_index}" target="_blank">Open surefire-index.json</a>` : ""} ${art.surefire_html ? `| <a class="link" href="./${art.surefire_html}" target="_blank">Open surefire-index.html</a>` : ""}</p>
-          <div class="table-wrap"><table><thead><tr><th>Phase</th><th>Suite</th><th>Case</th><th>Status</th><th>Time(s)</th><th>Message</th></tr></thead><tbody>${lines || `<tr><td colspan="6" class="empty">No tests</td></tr>`}</tbody></table></div>
-        `;
+        if (phase) rows = rows.filter(t => String(t.phase) === String(phase).padStart(2,"0"));
+        const lines = rows.map(t => {
+          const st = t.status === "ERROR" ? "FAIL" : (t.status || "SKIP");
+          return `<tr><td>${esc(t.phase)}</td><td>${esc(t.suite)}</td><td>${esc(t.testcase)}</td><td>${badge(st)}</td><td>${esc(t.time_seconds)}</td><td class="mono">${esc((t.message || "").slice(0,220))}</td></tr>`;
+        }).join("");
+        body.innerHTML = `<div class="table-wrap"><table><thead><tr><th>Phase</th><th>Suite</th><th>Case</th><th>Status</th><th>Time(s)</th><th>Message</th></tr></thead><tbody>${lines || `<tr><td colspan="6" class="empty">No test details</td></tr>`}</tbody></table></div>`;
       } else {
         let rows = state.rtm.matrix || [];
-        if (phase) rows = rows.filter(r => String(r.phase) === String(phase));
-        if (endpoint) rows = rows.filter(r => r.endpoint === endpoint && (!method || r.method === method));
-        const lines = rows.map(r => `<tr><td>${esc(r.phase)}</td><td>${esc(r.method)}</td><td class="mono">${esc(r.endpoint)}</td><td>${esc(r.controller)}</td><td>${r.test_covered ? "true" : "false"}</td><td>${statusBadge(r.gate_status)}</td></tr>`).join("");
+        if (phase) rows = rows.filter(r => String(r.phase).padStart(2,"0") === String(phase).padStart(2,"0"));
+        if (endpoint) rows = rows.filter(r => r.endpoint === endpoint && (!method || (r.method || r.http_method) === method));
+        const lines = rows.map(r => `<tr><td>${esc(r.phase)}</td><td>${esc(r.method || r.http_method || "")}</td><td class="mono">${esc(r.endpoint)}</td><td>${esc(r.controller)}</td><td>${(r.test_covered ?? r.covered) ? "true" : "false"}</td><td>${badge(r.gate_status || r.status)}</td></tr>`).join("");
         body.innerHTML = `<div class="table-wrap"><table><thead><tr><th>Phase</th><th>Method</th><th>Endpoint</th><th>Controller</th><th>Covered</th><th>Status</th></tr></thead><tbody>${lines || `<tr><td colspan="6" class="empty">No RTM links</td></tr>`}</tbody></table></div>`;
       }
 
-      tabs.forEach(tab => {
-        tab.onclick = () => {
-          const p = Object.fromEntries(getHashParams().entries());
-          p.tab = tab.dataset.tab;
-          setHash(p);
-        };
+      tabs.forEach(t => t.onclick = () => {
+        const p = Object.fromEntries(hashParams().entries());
+        p.tab = t.dataset.tab;
+        setHash(p);
       });
       openDrawer();
     }
 
-    async function init() {
-      state.summary = await fetchJson("./data/summary.json", null);
-      if (!state.summary) {
-        document.body.innerHTML = "<pre>加载 summary.json 失败</pre>";
-        return;
-      }
-      state.rtm = await fetchJson("./data/rtm.json", { matrix: [] });
-      state.tests = await fetchJson("./data/tests.json", { summary: { pass:0, fail:0, skip:0 }, tests: [] });
-      await collectViolations();
+    async function openDiffModal(){
+      const runA = state.runMap.get(state.compare.a);
+      const runB = state.runMap.get(state.compare.b);
+      if (!runA || !runB) return;
+      document.getElementById("diffTitle").textContent = `Diff A/B: ${runA.runKey} -> ${runB.runKey}`;
+      renderDiffTab("violations", runA, runB);
+      [...document.querySelectorAll(".tab[data-diff-tab]")].forEach(t => {
+        t.classList.toggle("active", t.dataset.diffTab === "violations");
+        t.onclick = () => {
+          [...document.querySelectorAll(".tab[data-diff-tab]")].forEach(x => x.classList.toggle("active", x === t));
+          renderDiffTab(t.dataset.diffTab, runA, runB);
+        };
+      });
+      openDiff();
+    }
 
+    function makeViolationKeys(run){
+      // History snapshots currently do not include violation list payloads.
+      // Keep this function for forward-compatibility when history entries include violations[].
+      const keys = new Set();
+      (run.entries || []).forEach(e => {
+        (e.violations || []).forEach(v => keys.add(`${v.gate_id || v.rule || "R??"}|${v.rule || ""}|${v.file || ""}|${v.line || ""}`));
+      });
+      return keys;
+    }
+
+    function renderDiffTab(tab, runA, runB){
+      const body = document.getElementById("diffBody");
+      if (tab === "violations") {
+        const aKeys = makeViolationKeys(runA);
+        const bKeys = makeViolationKeys(runB);
+        if (!aKeys.size && !bKeys.size) {
+          const aFails = [...runA.phases.values()].filter(x => x.status === "FAIL").map(x => String(x.phase).padStart(2,"0"));
+          const bFails = [...runB.phases.values()].filter(x => x.status === "FAIL").map(x => String(x.phase).padStart(2,"0"));
+          const newFails = bFails.filter(p => !aFails.includes(p));
+          const resolved = aFails.filter(p => !bFails.includes(p));
+          body.innerHTML = `
+            <p class="hint">历史快照未包含 violations 明细。当前仅提供 phase 失败差异（totals diff fallback）。要实现精确 violation diff，请在 history 快照中补充 violations[] 或 history_file 可寻址路径。</p>
+            <h4>New Fail Phases</h4>
+            <div>${newFails.length ? newFails.map(p => `<button class="btn" data-phase="${p}">Phase ${p}</button>`).join(" ") : `<span class="empty">None</span>`}</div>
+            <h4>Resolved Fail Phases</h4>
+            <div>${resolved.length ? resolved.map(p => `<button class="btn" data-phase="${p}">Phase ${p}</button>`).join(" ") : `<span class="empty">None</span>`}</div>`;
+          body.querySelectorAll("button[data-phase]").forEach(b => b.onclick = () => { closeDiff(); setHash({ phase:b.dataset.phase }); });
+          return;
+        }
+        const newV = [...bKeys].filter(k => !aKeys.has(k));
+        const resV = [...aKeys].filter(k => !bKeys.has(k));
+        body.innerHTML = `
+          <h4>New Violations</h4>
+          <div class="table-wrap"><table><thead><tr><th>Key</th><th>Action</th></tr></thead><tbody>${newV.map(k => `<tr><td class="mono">${esc(k)}</td><td><button class="btn" data-k="${esc(k)}">Open</button></td></tr>`).join("") || `<tr><td colspan="2" class="empty">None</td></tr>`}</tbody></table></div>
+          <h4>Resolved Violations</h4>
+          <div class="table-wrap"><table><thead><tr><th>Key</th></tr></thead><tbody>${resV.map(k => `<tr><td class="mono">${esc(k)}</td></tr>`).join("") || `<tr><td class="empty">None</td></tr>`}</tbody></table></div>`;
+      } else {
+        const cov = state.rtm.matrix || [];
+        const total = cov.length;
+        const covered = cov.filter(x => (x.test_covered ?? x.covered) === true).length;
+        const rate = total ? (covered * 100 / total).toFixed(2) : "0.00";
+        const topGaps = new Map();
+        cov.filter(x => !(x.test_covered ?? x.covered)).forEach(x => topGaps.set(x.controller || "unknown", (topGaps.get(x.controller || "unknown") || 0) + 1));
+        const rows = [...topGaps.entries()].sort((a,b)=>b[1]-a[1]).slice(0,20);
+        const covSnapA = runA.entries.find(e => e.covered_rate !== undefined)?.covered_rate;
+        const covSnapB = runB.entries.find(e => e.covered_rate !== undefined)?.covered_rate;
+        const delta = (covSnapA !== undefined && covSnapB !== undefined) ? (covSnapB - covSnapA).toFixed(2) : null;
+        body.innerHTML = `
+          <p class="hint">当前覆盖率（latest RTM）：${covered}/${total} (${rate}%)</p>
+          <p class="hint">${delta !== null ? `历史覆盖快照 Δ: ${delta}%` : `history 暂无 coverage snapshot，显示当前 Coverage Gap TopN（替代视图）。`}</p>
+          <div class="table-wrap"><table><thead><tr><th>Controller</th><th>Uncovered</th><th>Action</th></tr></thead><tbody>
+          ${rows.map(([c,n]) => `<tr><td>${esc(c)}</td><td>${n}</td><td><button class="btn" data-controller="${esc(c)}">Filter RTM</button></td></tr>`).join("") || `<tr><td colspan="3" class="empty">No gaps</td></tr>`}
+          </tbody></table></div>`;
+        body.querySelectorAll("button[data-controller]").forEach(b => b.onclick = () => {
+          closeDiff();
+          state.filters.controller = b.dataset.controller;
+          setHash({ controller: b.dataset.controller });
+          renderRtm();
+          document.getElementById("rtmSection").scrollIntoView({ behavior:"smooth", block:"start" });
+        });
+      }
+    }
+
+    async function init(refresh=false){
+      if (refresh) jsonCache.clear();
+      state.summary = await fetchJson("./data/summary.json", null, refresh);
+      if (!state.summary) { document.body.innerHTML = "<pre>加载 summary.json 失败</pre>"; return; }
+      state.rtm = await fetchJson("./data/rtm.json", { matrix: [] }, refresh);
+      state.tests = await fetchJson("./data/tests.json", { summary:{ pass:0, fail:0, skip:0 }, tests:[] }, refresh);
+
+      const params = hashParams();
+      state.filters.controller = params.get("controller") || null;
+
+      await collectViolations();
       renderKpis();
       renderHeatmap();
       renderMatrix();
       renderTopRisks();
       renderCoverageGap();
       renderRtm();
+      renderHistory();
       renderTests();
       await renderDrawerFromHash();
     }
 
-    document.getElementById("drawerBackdrop").addEventListener("click", () => {
-      closeDrawer();
-      history.replaceState(null, "", location.pathname + location.search);
-    });
-    document.getElementById("closeDrawer").addEventListener("click", () => {
-      closeDrawer();
-      history.replaceState(null, "", location.pathname + location.search);
+    document.getElementById("compareBtn").onclick = openDiffModal;
+    document.getElementById("clearCompareBtn").onclick = () => { state.compare = { a:null, b:null }; renderHistory(); };
+
+    document.getElementById("drawerBackdrop").onclick = () => { closeDrawer(); clearHash(); };
+    document.getElementById("closeDrawerBtn").onclick = () => { closeDrawer(); clearHash(); };
+    document.getElementById("copyDeepLinkBtn").onclick = async () => {
+      try { await navigator.clipboard.writeText(location.href); } catch (_) {}
+    };
+
+    document.getElementById("diffBackdrop").onclick = closeDiff;
+    document.getElementById("closeDiffBtn").onclick = closeDiff;
+
+    window.addEventListener("hashchange", async () => {
+      const p = hashParams();
+      state.filters.controller = p.get("controller") || null;
+      renderRtm();
+      await renderDrawerFromHash();
     });
 
-    window.addEventListener("hashchange", () => { renderDrawerFromHash(); });
+    window.addEventListener("keydown", e => {
+      if (e.key === "Escape") { closeDrawer(); closeDiff(); }
+    });
+
     init();
   </script>
 </body>
