@@ -17,14 +17,26 @@ Examples:
 USAGE
 }
 
+run_k6() {
+  if command -v k6 >/dev/null 2>&1; then
+    k6 "$@"
+    return
+  fi
+
+  if command -v docker >/dev/null 2>&1; then
+    docker run --rm -i \
+      -v "${ROOT_DIR}:/work" \
+      -w /work \
+      grafana/k6:0.49.0 "$@"
+    return
+  fi
+
+  echo "[k6-run] neither k6 binary nor docker fallback is available"
+  exit 1
+}
+
 if [[ $# -lt 1 ]]; then
   usage
-  exit 1
-fi
-
-if ! command -v k6 >/dev/null 2>&1; then
-  echo "[k6-run] k6 command not found in PATH"
-  echo "Install: https://grafana.com/docs/k6/latest/set-up/install-k6/"
   exit 1
 fi
 
@@ -57,7 +69,7 @@ echo "[k6-run] script=${SCRIPT}"
 echo "[k6-run] summary=${SUMMARY_FILE}"
 echo "[k6-run] raw=${RAW_FILE}"
 
-k6 run \
+run_k6 run \
   --summary-export "${SUMMARY_FILE}" \
   --out "json=${RAW_FILE}" \
   "${SCRIPT}" "$@"

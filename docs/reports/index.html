@@ -67,7 +67,7 @@
       <div class="card span-6"><div class="label">Tests Failure Rate</div><div id="kFailRate" class="kpi">-</div></div>
 
       <div class="card span-8">
-        <h3>Quality Gate Matrix (R01-R09 x Phase)</h3>
+        <h3>Quality Gate Matrix (R01-R11 x Phase)</h3>
         <div class="matrix"><table id="matrixTable"></table></div>
       </div>
       <div class="card span-4">
@@ -140,7 +140,7 @@
   </section>
 
   <script>
-    const RULES = ["R01","R02","R03","R04","R05","R06","R07","R08","R09"];
+    const RULES = ["R01","R02","R03","R04","R05","R06","R07","R08","R09","R10","R11"];
     const FALLBACK_REPO = { owner: "BrunoGao", name: "ljwx-platform", branch: "master" };
 
     const state = {
@@ -410,10 +410,10 @@
       if (tab === "summary") {
         if (!pj) body.innerHTML = `<div class="empty">Select a phase.</div>`;
         else {
-          const rows = (pj.rules || []).map(r => `<tr><td>${esc(r.id)}</td><td>${badge(r.status)}</td><td>${esc(r.message || "")}</td></tr>`).join("");
+          const rows = (pj.rules || []).map(r => `<tr><td>${esc(r.id)}</td><td>${badge(r.status)}</td><td>${esc(r.checks ?? "-")}</td><td>${esc(r.passed ?? "-")}</td><td>${esc(r.failed ?? "-")}</td><td>${esc((r.p95_ms ?? r.avg_ms ?? "-") + "")}</td><td>${esc(r.message || "")}</td></tr>`).join("");
           const art = pj.artifacts || {};
           body.innerHTML = `
-            <div class="table-wrap"><table><thead><tr><th>Gate</th><th>Status</th><th>Message</th></tr></thead><tbody>${rows || `<tr><td colspan="3" class="empty">No gate rows</td></tr>`}</tbody></table></div>
+            <div class="table-wrap"><table><thead><tr><th>Gate</th><th>Status</th><th>Checks</th><th>Passed</th><th>Failed</th><th>p95(ms)</th><th>Message</th></tr></thead><tbody>${rows || `<tr><td colspan="7" class="empty">No gate rows</td></tr>`}</tbody></table></div>
             <p class="hint">Surefire: ${art.surefire_xml_index ? `<a class="link" href="./${art.surefire_xml_index}" target="_blank">index.json</a>` : "-"} | ${art.surefire_html ? `<a class="link" href="./${art.surefire_html}" target="_blank">html</a>` : "-"}</p>
             <p class="hint">Gate Log: ${art.gate_raw_log ? `<a class="link" href="./${art.gate_raw_log}" target="_blank">open</a>` : "-"}</p>`;
         }

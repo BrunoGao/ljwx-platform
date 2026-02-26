@@ -1,0 +1,108 @@
+name: Post Merge E2E
+
+on:
+  push:
+    branches: [master, main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+  repository-projects: write
+
+jobs:
+  post_merge_e2e:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.PROJECT_TOKEN != '' && secrets.PROJECT_TOKEN || (secrets.PROJECT_V2_TOKEN != '' && secrets.PROJECT_V2_TOKEN || github.token) }}
+      APP_IMAGE: ${{ vars.APP_IMAGE != '' && vars.APP_IMAGE || 'ghcr.io/brunogao/ljwx-platform-app:latest' }}
+      BASE_URL: http://localhost:8080
+      ENABLE_E2E: "1"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate tools
+        shell: bash
+        run: |
+          set -euo pipefail
+          command -v jq >/dev/null
+          command -v gh >/dev/null
+          command -v docker >/dev/null
+
+      - name: Start test environment
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash scripts/setup-test-env.sh up
+
+      - name: Run R10 E2E smoke
+        id: r10
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -euo pipefail
+          TMP_DIR=/tmp/ljwx-gate-results
+          mkdir -p "$TMP_DIR"
+          rm -f "$TMP_DIR"/R*.json
+
+          status="PASS"
+          if ! bash scripts/gates/gate-e2e.sh; then
+            status="FAIL"
+          fi
+
+          bash scripts/gen-rtm.sh || true
+          bash scripts/gates/gate-report.sh 00 "$TMP_DIR"
+          bash scripts/gates/gate-summary.sh
+
+          echo "r10_status=$status" >> "$GITHUB_OUTPUT"
+
+      - name: Create regression bug issue on R10 failure
+        if: always() && steps.r10.outputs.r10_status == 'FAIL'
+        shell: bash
+        run: |
+          set -euo pipefail
+          run_url="https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          gh issue create \
+            --repo "${GITHUB_REPOSITORY}" \
+            --title "[Bug][Regression][P0] Cross-tenant access must return 404 (post-merge e2e)" \
+            --label "type:bugfix" \
+            --label "priority:P0" \
+            --label "gate:fail" \
+            --body "Automated regression detection from post-merge E2E.\n\n- Run URL: ${run_url}\n- Gate: R10\n- Expected: cross-tenant read/update/delete MUST return HTTP 404\n- Actual: one or more checks failed in E2E smoke\n\nPlease triage and link fix PR." || true
+
+      - name: Update weekly regression campaign
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          status="${{ steps.r10.outputs.r10_status }}"
+          if [[ -z "$status" ]]; then status="FAIL"; fi
+          bash scripts/regression/regression-weekly.sh --mode post-merge --status "$status" --apply
+
+      - name: Upload gate reports for Pages
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gate-reports
+          path: |
+            docs/reports/**
+            tests/results/**
+
+      - name: Teardown test environment
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash scripts/setup-test-env.sh clean || true
+
+      - name: Fail workflow when R10 fails
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          status="${{ steps.r10.outputs.r10_status }}"
+          if [[ "$status" != "PASS" ]]; then
+            echo "R10 failed: ${status:-unknown}" >&2
+            exit 1
+          fi

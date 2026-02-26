@@ -6,8 +6,7 @@ on:
   # workflow_run:
   #   workflows: ["Gate Check"]
   #   types: [completed]
-  schedule:
-    - cron: "0 3 * * *"
+  # schedule moved to nightly-regression.yml to avoid duplicate campaign comments
 
 permissions:
   contents: read

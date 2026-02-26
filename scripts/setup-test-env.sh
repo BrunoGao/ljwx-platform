@@ -6,6 +6,7 @@ COMPOSE_FILE="${ROOT_DIR}/docker-compose.test.yml"
 BASE_URL="${BASE_URL:-http://localhost:8080}"
 HEALTH_PATH="${HEALTH_PATH:-/actuator/health}"
 WAIT_SECONDS="${WAIT_SECONDS:-180}"
+START_APP_CONTAINER="${START_APP_CONTAINER:-true}"
 
 usage() {
   cat <<USAGE
@@ -13,10 +14,16 @@ Usage:
   bash scripts/setup-test-env.sh <up|down|clean|status>
 
 Commands:
-  up      Start test services and wait until app health endpoint is ready
+  up      Start test services (mysql/redis/app by default) and wait health when app is started
   down    Stop test services
   clean   Stop services and remove volumes
   status  Show service status
+
+Env:
+  START_APP_CONTAINER=true|false   Start app service from compose (default true)
+  BASE_URL=http://localhost:8080   Health check base URL
+  HEALTH_PATH=/actuator/health     Health endpoint path
+  WAIT_SECONDS=180                 Health wait timeout
 USAGE
 }
 
@@ -65,9 +72,14 @@ main() {
   case "${action}" in
     up)
       echo "[setup-test-env] starting services from ${COMPOSE_FILE}"
-      ${compose} -f "${COMPOSE_FILE}" up -d
-      wait_http_ready "${BASE_URL}${HEALTH_PATH}" "${WAIT_SECONDS}"
-      echo "[setup-test-env] BASE_URL=${BASE_URL}"
+      if [[ "$START_APP_CONTAINER" == "true" ]]; then
+        ${compose} -f "${COMPOSE_FILE}" up -d mysql redis app
+        wait_http_ready "${BASE_URL}${HEALTH_PATH}" "${WAIT_SECONDS}"
+        echo "[setup-test-env] BASE_URL=${BASE_URL}"
+      else
+        ${compose} -f "${COMPOSE_FILE}" up -d mysql redis
+        echo "[setup-test-env] started mysql/redis only (START_APP_CONTAINER=false)"
+      fi
       ;;
     down)
       ${compose} -f "${COMPOSE_FILE}" down

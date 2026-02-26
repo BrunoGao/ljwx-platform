@@ -54,6 +54,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 30
+    profiles: ["app"]
 
 volumes:
   mysql_test_data:
