@@ -15,6 +15,26 @@ cd "$PROJECT_ROOT"
 
 ERRORS=0
 
+# Ensure pnpm exists in CI runners. Prefer corepack bootstrap when missing.
+ensure_pnpm() {
+  if command -v pnpm >/dev/null 2>&1; then
+    return 0
+  fi
+
+  if command -v corepack >/dev/null 2>&1; then
+    echo "[Frontend] pnpm not found, bootstrapping via corepack"
+    if corepack enable >/dev/null 2>&1 && corepack prepare pnpm@10 --activate >/dev/null 2>&1; then
+      if command -v pnpm >/dev/null 2>&1; then
+        echo "  PASS: pnpm bootstrapped successfully"
+        return 0
+      fi
+    fi
+  fi
+
+  echo "  FAIL: pnpm not found and corepack bootstrap failed"
+  return 1
+}
+
 # ── Determine which checks to run based on current phase ──
 CURRENT_PHASE=$(sed -n 's/^Phase:[[:space:]]*\([0-9][0-9]*\).*/\1/p' CLAUDE.md 2>/dev/null | head -1 || echo "")
 PHASE_BRIEF=""
@@ -46,17 +66,24 @@ fi
 # ── Frontend: pnpm install + type-check ──
 ADMIN_DIR="ljwx-platform-admin"
 if [[ "$TARGET_FRONTEND" == "true" && -d "$ADMIN_DIR" ]]; then
+  if ! ensure_pnpm; then
+    ((ERRORS++))
+    TARGET_FRONTEND="false"
+  fi
+fi
+
+if [[ "$TARGET_FRONTEND" == "true" && -d "$ADMIN_DIR" ]]; then
   echo ""
   echo "[Frontend] pnpm install --frozen-lockfile"
   cd "$ADMIN_DIR"
 
   # Check if pnpm-lock.yaml exists; if not, use regular install
   if [[ -f "pnpm-lock.yaml" ]]; then
-    if pnpm install --frozen-lockfile 2>&1; then
+    if CI=true pnpm install --frozen-lockfile 2>&1; then
       echo "  PASS: pnpm install succeeded"
     else
       echo "  WARN: --frozen-lockfile failed, trying regular install"
-      if pnpm install 2>&1; then
+      if CI=true pnpm install 2>&1; then
         echo "  PASS: pnpm install (regular) succeeded"
       else
         echo "  FAIL: pnpm install failed"
@@ -64,7 +91,7 @@ if [[ "$TARGET_FRONTEND" == "true" && -d "$ADMIN_DIR" ]]; then
       fi
     fi
   else
-    if pnpm install 2>&1; then
+    if CI=true pnpm install 2>&1; then
       echo "  PASS: pnpm install succeeded"
     else
       echo "  FAIL: pnpm install failed"
@@ -76,7 +103,7 @@ if [[ "$TARGET_FRONTEND" == "true" && -d "$ADMIN_DIR" ]]; then
   echo ""
   echo "[Frontend] type-check"
   if grep -q '"type-check"' package.json 2>/dev/null; then
-    if pnpm run type-check 2>&1; then
+    if CI=true pnpm run type-check 2>&1; then
       echo "  PASS: TypeScript type-check passed"
     else
       echo "  FAIL: TypeScript type-check failed"
