@@ -1,0 +1,112 @@
+name: Project V2 Issue Sync
+
+on:
+  issues:
+    types: [opened, edited, reopened, labeled, unlabeled]
+  workflow_dispatch:
+    inputs:
+      issue_number:
+        description: "Issue number to sync"
+        required: true
+        type: number
+      project_id:
+        description: "Optional Project V2 ID (PVT_...) override"
+        required: false
+        type: string
+      phase:
+        description: "Optional phase override (0..32)"
+        required: false
+        type: string
+      workflow:
+        description: "Optional workflow override (Brief/Spec/Coding/Gate/Review/Done)"
+        required: false
+        type: string
+      priority:
+        description: "Optional priority override (P0/P1/P2)"
+        required: false
+        type: string
+
+permissions:
+  contents: read
+  issues: read
+  repository-projects: write
+
+jobs:
+  sync_issue_to_project:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.PROJECT_V2_TOKEN != '' && secrets.PROJECT_V2_TOKEN || github.token }}
+      PROJECT_ID_FROM_SECRET: ${{ secrets.PROJECT_V2_ID }}
+      PROJECT_ID_FROM_INPUT: ${{ inputs.project_id }}
+      PHASE_INPUT: ${{ inputs.phase }}
+      WORKFLOW_INPUT: ${{ inputs.workflow }}
+      PRIORITY_INPUT: ${{ inputs.priority }}
+      ISSUE_INPUT: ${{ inputs.issue_number }}
+      ISSUE_EVENT_NUMBER: ${{ github.event.issue.number }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate toolchain
+        run: |
+          set -euo pipefail
+          command -v gh >/dev/null
+          command -v jq >/dev/null
+
+      - name: Resolve project id and bootstrap cache (if needed)
+        run: |
+          set -euo pipefail
+          PROJECT_ID=""
+          if [[ -n "${PROJECT_ID_FROM_INPUT:-}" ]]; then
+            PROJECT_ID="${PROJECT_ID_FROM_INPUT}"
+          elif [[ -n "${PROJECT_ID_FROM_SECRET:-}" ]]; then
+            PROJECT_ID="${PROJECT_ID_FROM_SECRET}"
+          fi
+
+          if [[ ! -f ".github/projectv2/project.json" ]]; then
+            if [[ -n "${PROJECT_ID}" ]]; then
+              bash scripts/project/project-bootstrap.sh --project-id "${PROJECT_ID}" --apply
+            else
+              echo "Missing .github/projectv2/project.json and PROJECT_V2_ID secret/input." >&2
+              echo "Please run bootstrap locally and commit cache, or set PROJECT_V2_ID secret." >&2
+              exit 1
+            fi
+          fi
+
+          if [[ -n "${PROJECT_ID}" ]]; then
+            echo "PROJECT_ID=${PROJECT_ID}" >> "$GITHUB_ENV"
+          fi
+
+      - name: Sync issue into Project V2
+        run: |
+          set -euo pipefail
+          ISSUE_NUM=""
+          if [[ "${GITHUB_EVENT_NAME}" == "issues" ]]; then
+            ISSUE_NUM="${ISSUE_EVENT_NUMBER}"
+          else
+            ISSUE_NUM="${ISSUE_INPUT}"
+          fi
+
+          if [[ -z "${ISSUE_NUM}" ]]; then
+            echo "Issue number is empty." >&2
+            exit 1
+          fi
+
+          CMD=(bash scripts/project/project-sync-issue.sh --issue "${ISSUE_NUM}" --apply)
+          if [[ -n "${PROJECT_ID:-}" ]]; then
+            CMD+=(--project-id "${PROJECT_ID}")
+          fi
+          if [[ -n "${PHASE_INPUT:-}" ]]; then
+            CMD+=(--phase "${PHASE_INPUT}")
+          fi
+          if [[ -n "${WORKFLOW_INPUT:-}" ]]; then
+            CMD+=(--workflow "${WORKFLOW_INPUT}")
+          fi
+          if [[ -n "${PRIORITY_INPUT:-}" ]]; then
+            CMD+=(--priority "${PRIORITY_INPUT}")
+          fi
+
+          printf 'Running:'
+          printf ' %q' "${CMD[@]}"
+          echo
+          "${CMD[@]}"
