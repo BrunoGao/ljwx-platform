@@ -15,12 +15,18 @@ jobs:
     runs-on: ubuntu-latest
     env:
       GH_TOKEN: ${{ secrets.PROJECT_TOKEN != '' && secrets.PROJECT_TOKEN || (secrets.PROJECT_V2_TOKEN != '' && secrets.PROJECT_V2_TOKEN || github.token) }}
-      APP_IMAGE: ${{ vars.APP_IMAGE != '' && vars.APP_IMAGE || 'ghcr.io/brunogao/ljwx-platform-app:latest' }}
       BASE_URL: http://localhost:8080
       ENABLE_E2E: "1"
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
 
       - name: Validate tools
         shell: bash
@@ -30,11 +36,39 @@ jobs:
           command -v gh >/dev/null
           command -v docker >/dev/null
 
-      - name: Start test environment
+      - name: Start MySQL/Redis test environment
         shell: bash
         run: |
           set -euo pipefail
-          bash scripts/setup-test-env.sh up
+          START_APP_CONTAINER=false bash scripts/setup-test-env.sh up
+
+      - name: Start app locally
+        shell: bash
+        run: |
+          set -euo pipefail
+          SPRING_PROFILES_ACTIVE=test \
+          SPRING_DATASOURCE_URL='jdbc:mysql://127.0.0.1:3307/ljwx_platform?useUnicode=true&characterEncoding=UTF-8&serverTimezone=UTC' \
+          SPRING_DATASOURCE_USERNAME=ljwx \
+          SPRING_DATASOURCE_PASSWORD=ljwx \
+          SPRING_REDIS_HOST=127.0.0.1 \
+          SPRING_REDIS_PORT=6380 \
+          ./mvnw -pl ljwx-platform-app -am -DskipTests spring-boot:run > app.log 2>&1 &
+          echo $! > app.pid
+
+      - name: Wait app health
+        shell: bash
+        run: |
+          set -euo pipefail
+          for i in {1..90}; do
+            if curl -fsS "${BASE_URL}/actuator/health" >/dev/null 2>&1; then
+              echo "app is healthy"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "app health check timeout" >&2
+          tail -n 200 app.log || true
+          exit 1
 
       - name: Run R10 E2E smoke
         id: r10
@@ -88,12 +122,14 @@ jobs:
           path: |
             docs/reports/**
             tests/results/**
+            app.log
 
       - name: Teardown test environment
         if: always()
         shell: bash
         run: |
           set -euo pipefail
+          if [[ -f app.pid ]]; then kill "$(cat app.pid)" || true; fi
           bash scripts/setup-test-env.sh clean || true
 
       - name: Fail workflow when R10 fails

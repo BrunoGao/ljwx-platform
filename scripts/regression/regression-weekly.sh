@@ -316,14 +316,15 @@ if [[ -z "$ISSUE_NUMBER" ]]; then
       --label "type:test" \
       --label "priority:P1" \
       --label "workflow:review" \
-      --body "$(create_issue_body)" \
-      --json number -q '.number')"
+      --body "$(create_issue_body)")"
+    ISSUE_NUMBER="$(sed -E 's#.*/([0-9]+)$#\1#' <<<"$ISSUE_NUMBER")"
   fi
 fi
 
 COMMENT_URL=""
 if [[ "$DRY_RUN" == "false" ]]; then
-  COMMENT_URL="$(gh issue comment "$ISSUE_NUMBER" --repo "${OWNER}/${REPO}" --body "$COMMENT_MD" --json url -q '.url')"
+  comment_out="$(gh issue comment "$ISSUE_NUMBER" --repo "${OWNER}/${REPO}" --body "$COMMENT_MD" 2>&1 || true)"
+  COMMENT_URL="$(grep -Eo 'https://github.com/[^[:space:]]+/issues/[0-9]+#issuecomment-[0-9]+' <<<"$comment_out" | tail -n1 || true)"
 
   if [[ ! -f "$ROOT_DIR/.github/projectv2/project.json" ]]; then
     echo "missing .github/projectv2/project.json; run project-bootstrap first" >&2
