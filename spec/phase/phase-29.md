@@ -20,128 +20,105 @@ scope:
 ---
 # Phase 29: Observability — TraceId / Structured Logging / Slow API
 
-## 读取清单
+## Overview
 
+| 项目 | 内容 |
+|------|------|
+| Phase | 29 |
+| 模块 | ljwx-platform-web / ljwx-platform-app / ljwx-platform-admin |
+| Feature | 请求链路追踪、结构化日志、慢接口监控、前端错误上报 |
+| 前置依赖 | Phase 28 |
+| 测试契约 | spec/tests/phase-29-observability.tests.yml |
+
+## 读取清单
 - `CLAUDE.md`（自动加载）
 - `spec/01-constraints.md` — §DAG 依赖
 - `spec/04-database.md` — 审计字段规范
 - `spec/08-output-rules.md`
 
-## 任务
+## DB 契约
 
-### 1. 请求链路追踪（web 模块）
+### sys_frontend_error（V029）
 
-**TraceIdFilter**：实现 `jakarta.servlet.Filter`，order=0（最高优先级，在 XssFilter 之前）：
-- 从请求头 `X-Trace-Id` 读取 traceId，若无则生成（UUID 取前 16 位）
-- 写入 `MDC.put("traceId", traceId)`
-- 写入 `MDC.put("tenantId", ...)` 和 `MDC.put("userId", ...)`（从 SecurityContext 提取，未认证时为 "anonymous"）
-- 响应头写入 `X-Trace-Id: {traceId}`
-- finally 块清理 MDC（`MDC.clear()`）
+| 列名 | 类型 | 约束 | 说明 |
+|------|------|------|------|
+| id | BIGINT | PK, NOT NULL | 主键 |
+| error_message | VARCHAR(1000) | NOT NULL | 错误信息 |
+| stack_trace | TEXT | NOT NULL DEFAULT '' | 堆栈信息 |
+| page_url | VARCHAR(500) | NOT NULL DEFAULT '' | 发生页面 |
+| user_agent | VARCHAR(500) | NOT NULL DEFAULT '' | 浏览器信息 |
+| tenant_id | BIGINT | NOT NULL DEFAULT 0 | 租户 ID（审计字段） |
+| created_by | BIGINT | NOT NULL DEFAULT 0 | 创建人（审计字段） |
+| created_time | TIMESTAMP | NOT NULL DEFAULT NOW() | 创建时间（审计字段） |
+| updated_by | BIGINT | NOT NULL DEFAULT 0 | 更新人（审计字段） |
+| updated_time | TIMESTAMP | NOT NULL DEFAULT NOW() | 更新时间（审计字段） |
+| deleted | SMALLINT | NOT NULL DEFAULT 0 | 逻辑删除（审计字段） |
+| version | INT | NOT NULL DEFAULT 0 | 乐观锁（审计字段） |
 
-### 2. 结构化日志（app 模块）
+### Flyway 文件
 
-**logback-spring.xml**：替换默认控制台输出为 JSON 格式（使用 Logback 内置的 `JsonEncoder` 或 `PatternLayout` 输出 JSON 字符串）：
+| 文件 | 说明 |
+|------|------|
+| V029__create_sys_frontend_error.sql | 创建 sys_frontend_error 表，禁止 IF NOT EXISTS |
 
-```xml
-<encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
-  <pattern>{"time":"%d{ISO8601}","level":"%level","traceId":"%X{traceId}","tenantId":"%X{tenantId}","userId":"%X{userId}","logger":"%logger{36}","msg":"%message"}%n</pattern>
-</encoder>
-```
+## API 契约
 
-生产环境（`application-prod.yml`）输出到文件，开发环境保持可读格式。
+| 方法 | 路径 | 权限 | 请求体 | 响应 |
+|------|------|------|--------|------|
+| POST | /api/v1/frontend-errors | isAuthenticated() | FrontendErrorDTO | Result\<Void\> |
 
-### 3. 慢接口监控（web 模块）
+### FrontendErrorDTO 字段
 
-**SlowApiAspect**：AOP 切面，切点为所有 `@RestController` 方法：
-- 记录方法执行时间
-- 超过 3000ms 输出 WARN 日志，包含：接口路径、方法名、执行时间、traceId（从 MDC 读取）
-- 超过 10000ms 输出 ERROR 日志
-
-```java
-@Aspect
-@Component
-public class SlowApiAspect {
-    private static final long WARN_THRESHOLD_MS = 3000;
-    private static final long ERROR_THRESHOLD_MS = 10000;
-    // ...
-}
-```
-
-### 4. 前端错误监控（后端接收端点）
-
-**V029 表 sys_frontend_error**：
-
-| 字段 | 类型 | 说明 |
+| 字段 | 类型 | 约束 |
 |------|------|------|
-| id | BIGINT PK | 主键 |
-| error_message | VARCHAR(1000) NOT NULL | 错误信息 |
-| stack_trace | TEXT NOT NULL DEFAULT '' | 堆栈信息 |
-| page_url | VARCHAR(500) NOT NULL DEFAULT '' | 发生页面 |
-| user_agent | VARCHAR(500) NOT NULL DEFAULT '' | 浏览器信息 |
-| + 7 列审计字段 | | |
+| errorMessage | String | @NotBlank |
+| stackTrace | String | @NotBlank |
+| pageUrl | String | @NotBlank |
+| userAgent | String | @NotBlank |
 
-**FrontendErrorController**：
-```
-POST /api/v1/frontend-errors  权限: 无需权限（已登录即可，@PreAuthorize("isAuthenticated()")）
-```
+## 组件契约
 
-**FrontendErrorDTO**：errorMessage、stackTrace、pageUrl、userAgent（均 @NotBlank）
+| 组件 | 位置 | 核心行为 |
+|------|------|----------|
+| TraceIdFilter | web 模块，order=0 | 读 X-Trace-Id header 或生成 UUID 前 16 位，写入 MDC，响应头回传，finally 清理 MDC |
+| SlowApiAspect | web 模块 | 切所有 @RestController 方法，执行时间 >= 3000ms 输出 WARN，>= 10000ms 输出 ERROR，含 traceId |
+| logback-spring.xml | app 模块 resources | JSON 格式，含 time/level/traceId/tenantId/userId/logger/msg 字段，开发环境可读格式 |
+| useErrorMonitor.ts | admin composables | 监听 window.onerror + unhandledrejection，防抖 5s，POST /api/v1/frontend-errors，main.ts 初始化调用 |
 
-### 5. 前端错误监控（前端上报）
+## 业务规则
 
-**useErrorMonitor.ts**（admin 模块）：
-```typescript
-export function useErrorMonitor() {
-  // 监听 window.onerror 和 unhandledrejection
-  // 上报到 POST /api/v1/frontend-errors
-  // 防抖：同一错误 5 秒内只上报一次
-}
-```
+- **BL-29-01**：请求头存在 `X-Trace-Id` → 直接使用该值；不存在 → 生成 UUID 取前 16 位作为 traceId
+- **BL-29-02**：TraceIdFilter 将 traceId/tenantId/userId 写入 MDC，响应头写入 `X-Trace-Id: {traceId}`，finally 块强制执行 `MDC.clear()`
+- **BL-29-03**：SlowApiAspect 统计方法执行时间，>= 3000ms → 输出 WARN 日志（含路径、方法名、耗时、traceId）；>= 10000ms → 输出 ERROR 日志
+- **BL-29-04**：useErrorMonitor 以错误 message 为 key，同一错误 5 秒内只上报一次，超出防抖窗口后可再次上报
 
-在 `main.ts` 中调用 `useErrorMonitor()` 初始化。
+## P0 测试摘要
+
+| ID | 优先级 | 场景 |
+|----|--------|------|
+| TC-29-01 | P0 | POST /api/v1/frontend-errors 无 Token → 401 |
+| TC-29-02 | P0 | POST /api/v1/frontend-errors 已登录有效 body → 200 |
+| TC-29-03 | P0 | POST /api/v1/frontend-errors body 缺必填字段 → 400 |
+| TC-29-04 | P0 | 任意 API 响应头包含 X-Trace-Id |
+| TC-29-05 | P0 | V029 含 7 列审计字段，无 IF NOT EXISTS |
+| TC-29-06 | P0 | useErrorMonitor.ts 无 TypeScript any，type-check 通过 |
+| TC-29-07 | P1 | 模拟执行时间 > 3000ms 的接口，应用日志出现 WARN SlowApi |
+
+完整用例见 [spec/tests/phase-29-observability.tests.yml](../tests/phase-29-observability.tests.yml)
 
 ## 关键约束
 
-- TraceIdFilter 在 web 模块，不依赖 security/data（DAG 合规）
-- SlowApiAspect 在 web 模块，需要 spring-boot-starter-aop（已在 web pom.xml 中）
+- TraceIdFilter 在 web 模块，禁止 import security/data 包（DAG 合规）
+- SlowApiAspect 在 web 模块，需要 spring-boot-starter-aop 依赖
 - V029 含 7 列审计字段，无 IF NOT EXISTS
-- FrontendErrorController 使用 `isAuthenticated()` 而非具体权限（降低上报门槛）
-
-## Phase-Local Manifest
-
-```
-ljwx-platform-web/src/main/java/com/ljwx/platform/web/filter/TraceIdFilter.java
-ljwx-platform-web/src/main/java/com/ljwx/platform/web/aop/SlowApiAspect.java
-ljwx-platform-app/src/main/resources/logback-spring.xml
-ljwx-platform-app/src/main/java/com/ljwx/platform/app/controller/FrontendErrorController.java
-ljwx-platform-app/src/main/java/com/ljwx/platform/app/domain/dto/FrontendErrorDTO.java
-ljwx-platform-app/src/main/resources/db/migration/V029__create_sys_frontend_error.sql
-ljwx-platform-app/src/main/java/com/ljwx/platform/app/domain/entity/SysFrontendError.java
-ljwx-platform-app/src/main/java/com/ljwx/platform/app/infra/mapper/SysFrontendErrorMapper.java
-ljwx-platform-app/src/main/resources/mapper/SysFrontendErrorMapper.xml
-ljwx-platform-admin/src/composables/useErrorMonitor.ts
-```
+- FrontendErrorController 权限注解为 `@PreAuthorize("isAuthenticated()")`，不使用 hasAuthority
+- useErrorMonitor.ts 禁止 any 类型，必须在 main.ts 中调用初始化
 
 ## 验收条件
 
-1. 每个 API 响应头包含 `X-Trace-Id`
-2. 日志输出包含 traceId 字段
+1. 每个 API 响应头包含 X-Trace-Id
+2. 日志输出包含 traceId 字段（JSON 结构化格式）
 3. SlowApiAspect 对执行超 3s 的方法输出 WARN 日志
 4. V029 含 7 列审计字段，无 IF NOT EXISTS
-5. FrontendErrorController POST 接口返回 200
-6. useErrorMonitor.ts 无 `any` 类型，type-check 通过
-
-## Test Cases
-
-| TC ID | Endpoint | 权限 | 预期状态码 | 关键断言 |
-|------|----------|------|------------|---------|
-| TC-29-01 | GET /api/** | read | 401 | 无 token 返回 Unauthorized |
-| TC-29-02 | GET /api/** | read | 403 | 无权限 token 返回 Forbidden |
-| TC-29-03 | GET /api/** | read | 200 | 成功返回统一响应结构 |
-| TC-29-04 | POST /api/** | write | 400 | 参数校验错误返回 400 |
-| TC-29-05 | POST /api/** | write | 200 | 创建成功并返回 ID/结果 |
-| TC-29-06 | PUT /api/**/{id} | write | 200 | 更新成功且可再次查询 |
-| TC-29-07 | DELETE /api/**/{id} | delete | 200 | 删除后数据不可见（软删/过滤） |
-| TC-29-08 | GET /api/** | read | 200 | 仅可见当前租户数据 |
-| TC-29-09 | GET /api/** | read | 401 | 过期 token 被拒绝 |
-| TC-29-10 | GET /api/** | read | 401 | 非法 token 被拒绝 |
+5. POST /api/v1/frontend-errors 已登录时返回 200
+6. useErrorMonitor.ts 无 any 类型，type-check 通过

@@ -1,0 +1,213 @@
+# Phase 25 — Monitor / RateLimit 测试契约
+# 关联 Spec：spec/phase/phase-25.md
+# 测试类：MonitorControllerIT.java
+
+phase: 25
+module: "monitor"
+ac_ref: "spec/phase/phase-25.md"
+
+tests:
+
+  # ─── P0：安全测试 ───────────────────────────────────────────────
+  - id: TC-25-01
+    priority: P0
+    category: security
+    ac: AC-01
+    scenario: "无 Token 访问 /monitor/server"
+    request:
+      method: GET
+      path: /api/v1/monitor/server
+      auth: none
+    expect:
+      status: 401
+
+  - id: TC-25-02
+    priority: P0
+    category: security
+    ac: AC-01
+    scenario: "无 Token 访问 /monitor/jvm"
+    request:
+      method: GET
+      path: /api/v1/monitor/jvm
+      auth: none
+    expect:
+      status: 401
+
+  - id: TC-25-03
+    priority: P0
+    category: security
+    ac: AC-01
+    scenario: "无 Token 访问 /monitor/cache"
+    request:
+      method: GET
+      path: /api/v1/monitor/cache
+      auth: none
+    expect:
+      status: 401
+
+  - id: TC-25-04
+    priority: P0
+    category: security
+    ac: AC-02
+    scenario: "缺权限 system:monitor:server → 403"
+    request:
+      method: GET
+      path: /api/v1/monitor/server
+      auth: valid_token
+      missing_perm: "system:monitor:server"
+    expect:
+      status: 403
+
+  - id: TC-25-05
+    priority: P0
+    category: security
+    ac: AC-02
+    scenario: "缺权限 system:monitor:jvm → 403"
+    request:
+      method: GET
+      path: /api/v1/monitor/jvm
+      auth: valid_token
+      missing_perm: "system:monitor:jvm"
+    expect:
+      status: 403
+
+  - id: TC-25-06
+    priority: P0
+    category: security
+    ac: AC-02
+    scenario: "缺权限 system:monitor:cache → 403"
+    request:
+      method: GET
+      path: /api/v1/monitor/cache
+      auth: valid_token
+      missing_perm: "system:monitor:cache"
+    expect:
+      status: 403
+
+  # ─── P0：正向流程 ────────────────────────────────────────────────
+  - id: TC-25-07
+    priority: P0
+    category: functional
+    ac: AC-03
+    scenario: "GET /monitor/server 正常返回 CPU/内存/磁盘信息"
+    request:
+      method: GET
+      path: /api/v1/monitor/server
+      auth: full_perm_token
+    expect:
+      status: 200
+      body:
+        code: 0
+        data.cpuUsage: "${type: Number}"
+        data.memUsage: "${type: Number}"
+        data.diskTotal: "${type: Number}"
+
+  - id: TC-25-08
+    priority: P0
+    category: functional
+    ac: AC-03
+    scenario: "GET /monitor/jvm 正常返回 JVM 堆内存信息"
+    request:
+      method: GET
+      path: /api/v1/monitor/jvm
+      auth: full_perm_token
+    expect:
+      status: 200
+      body:
+        code: 0
+        data.heapUsed: "${type: Number}"
+        data.heapMax: "${type: Number}"
+
+  - id: TC-25-09
+    priority: P0
+    category: functional
+    ac: AC-03
+    scenario: "GET /monitor/cache 正常返回 Caffeine 缓存统计"
+    request:
+      method: GET
+      path: /api/v1/monitor/cache
+      auth: full_perm_token
+    expect:
+      status: 200
+      body:
+        code: 0
+        data: "${not_null}"
+
+  # ─── P0：RateLimit 限流 ──────────────────────────────────────────
+  - id: TC-25-10
+    priority: P0
+    category: business
+    ac: AC-04
+    bl_ref: BL-25-01
+    scenario: "超出 @RateLimit 限制 → 429，错误码 RATE_LIMIT_EXCEEDED"
+    setup:
+      annotated_endpoint: "/api/v1/monitor/server"
+      rate_limit_config:
+        key: "user:{userId}"
+        limit: 3
+        window: 60
+      requests_sent: 4
+    request:
+      method: GET
+      path: /api/v1/monitor/server
+      auth: full_perm_token
+      sequence: 4
+    expect:
+      status: 429
+      body:
+        code: "RATE_LIMIT_EXCEEDED"
+
+  - id: TC-25-11
+    priority: P0
+    category: business
+    ac: AC-04
+    bl_ref: BL-25-01
+    scenario: "未超出限制时请求正常放行"
+    setup:
+      rate_limit_config:
+        key: "user:{userId}"
+        limit: 100
+        window: 60
+    request:
+      method: GET
+      path: /api/v1/monitor/server
+      auth: full_perm_token
+    expect:
+      status: 200
+
+  # ─── P1：Token 边界 ──────────────────────────────────────────────
+  - id: TC-25-12
+    priority: P1
+    category: security
+    scenario: "过期 Token 访问 → 401"
+    request:
+      method: GET
+      path: /api/v1/monitor/server
+      auth: expired_token
+    expect:
+      status: 401
+
+  - id: TC-25-13
+    priority: P1
+    category: security
+    scenario: "非法 Token 访问 → 401"
+    request:
+      method: GET
+      path: /api/v1/monitor/server
+      auth: malformed_token
+    expect:
+      status: 401
+
+# ─── AC → TC 映射 ──────────────────────────────────────────────────
+ac_tc_map:
+  AC-01: [TC-25-01, TC-25-02, TC-25-03]
+  AC-02: [TC-25-04, TC-25-05, TC-25-06]
+  AC-03: [TC-25-07, TC-25-08, TC-25-09]
+  AC-04: [TC-25-10, TC-25-11]
+
+# ─── Gate R09 配置 ─────────────────────────────────────────────────
+gate_r09:
+  p0_required: true
+  p1_coverage_target: 0.7
+  p2_skip: true
+  test_class: "MonitorControllerIT"

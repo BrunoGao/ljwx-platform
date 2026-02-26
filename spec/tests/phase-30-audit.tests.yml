@@ -1,0 +1,184 @@
+# Phase 30 — Data Change Audit & Log Cleanup 测试契约
+# 关联 Spec：spec/phase/phase-30.md
+
+phase: 30
+module: "data-change-audit"
+ac_ref: "spec/phase/phase-30.md"
+
+tests:
+
+  # ─── P0：安全测试 ─────────────────────────────────────────────────
+  - id: TC-30-01
+    priority: P0
+    category: security
+    ac: AC-03
+    scenario: "GET /api/v1/data-change-logs 无 Token → 401"
+    request:
+      method: GET
+      path: /api/v1/data-change-logs
+      auth: none
+    expect:
+      status: 401
+
+  - id: TC-30-02
+    priority: P0
+    category: security
+    ac: AC-03
+    scenario: "GET /api/v1/data-change-logs 缺 system:audit:list 权限 → 403"
+    request:
+      method: GET
+      path: /api/v1/data-change-logs
+      auth: valid_token
+      missing_perm: "system:audit:list"
+    expect:
+      status: 403
+
+  # ─── P0：正常查询 ─────────────────────────────────────────────────
+  - id: TC-30-03
+    priority: P0
+    category: crud
+    ac: AC-03
+    scenario: "GET /api/v1/data-change-logs 有 system:audit:list 权限 → 200 分页返回"
+    request:
+      method: GET
+      path: /api/v1/data-change-logs
+      auth: full_perm_token
+      params:
+        pageNum: 1
+        pageSize: 10
+    expect:
+      status: 200
+      body:
+        code: 0
+        data.total: "${gte: 0}"
+        data.list: "${type: List}"
+
+  # ─── P0：数据库 Schema 校验 ───────────────────────────────────────
+  - id: TC-30-04
+    priority: P0
+    category: schema
+    ac: AC-01
+    scenario: "V030 含 7 列审计字段，无 IF NOT EXISTS"
+    method: static_analysis
+    expect:
+      file: "ljwx-platform-app/src/main/resources/db/migration/V030__create_sys_data_change_log.sql"
+      assert_contains:
+        - "tenant_id"
+        - "created_by"
+        - "created_time"
+        - "updated_by"
+        - "updated_time"
+        - "deleted"
+        - "version"
+      assert_not_contains:
+        - "IF NOT EXISTS"
+
+  # ─── P0：DAG 合规校验 ─────────────────────────────────────────────
+  - id: TC-30-05
+    priority: P0
+    category: architecture
+    ac: AC-02
+    bl_ref: BL-30-03
+    scenario: "DataChangeInterceptor 无 security 包 import（DAG 合规）"
+    method: static_analysis
+    expect:
+      file: "ljwx-platform-data/src/main/java/com/ljwx/platform/data/interceptor/DataChangeInterceptor.java"
+      assert_not_contains:
+        - "import com.ljwx.platform.security"
+
+  # ─── P0：权限注解校验 ─────────────────────────────────────────────
+  - id: TC-30-06
+    priority: P0
+    category: security
+    ac: AC-03
+    scenario: "DataChangeLogController 方法有 @PreAuthorize(\"hasAuthority('system:audit:list')\")"
+    method: static_analysis
+    expect:
+      file: "ljwx-platform-app/src/main/java/com/ljwx/platform/app/controller/DataChangeLogController.java"
+      assert_contains:
+        - "@PreAuthorize"
+        - "system:audit:list"
+
+  # ─── P0：并发执行注解校验 ─────────────────────────────────────────
+  - id: TC-30-07
+    priority: P0
+    category: contract
+    ac: AC-04
+    scenario: "LogCleanupJob 有 @DisallowConcurrentExecution"
+    method: static_analysis
+    expect:
+      file: "ljwx-platform-app/src/main/java/com/ljwx/platform/app/infra/quartz/LogCleanupJob.java"
+      assert_contains:
+        - "@DisallowConcurrentExecution"
+
+  # ─── P0：编译验证 ─────────────────────────────────────────────────
+  - id: TC-30-08
+    priority: P0
+    category: build
+    ac: AC-05
+    scenario: "mvn clean compile 通过"
+    expect:
+      command: "mvn clean compile -f pom.xml -q"
+      exit_code: 0
+
+  # ─── P1：审计写入验证 ─────────────────────────────────────────────
+  - id: TC-30-09
+    priority: P1
+    category: business
+    ac: AC-02
+    bl_ref: BL-30-01
+    scenario: "标注 @AuditChange 的 Mapper 执行 UPDATE 后，sys_data_change_log 有对应变更记录"
+    method: integration
+    setup:
+      trigger: "执行标注 @AuditChange 的 Mapper UPDATE 操作"
+    expect:
+      assert: "sys_data_change_log 中存在对应 table_name 和 record_id 的记录，operate_type='UPDATE'"
+
+  # ─── P1：异步写入验证 ─────────────────────────────────────────────
+  - id: TC-30-10
+    priority: P1
+    category: business
+    ac: AC-02
+    bl_ref: BL-30-02
+    scenario: "@Async 异步写入不阻塞主业务，主业务响应时间 < 200ms"
+    method: integration
+    setup:
+      trigger: "执行标注 @AuditChange 的 Mapper UPDATE 操作"
+    expect:
+      assert: "主业务接口响应时间 < 200ms，审计记录在短暂延迟后写入"
+
+  # ─── P1：过滤条件验证 ─────────────────────────────────────────────
+  - id: TC-30-11
+    priority: P1
+    category: crud
+    ac: AC-03
+    scenario: "GET /api/v1/data-change-logs 按 tableName 过滤返回正确数据"
+    request:
+      method: GET
+      path: /api/v1/data-change-logs
+      auth: full_perm_token
+      params:
+        tableName: "sys_user"
+        pageNum: 1
+        pageSize: 10
+    expect:
+      status: 200
+      assert: "response.data.list 中所有记录 tableName='sys_user'"
+
+# ─── AC → TC 映射 ──────────────────────────────────────────────────
+ac_tc_map:
+  AC-01: [TC-30-04]
+  AC-02: [TC-30-05, TC-30-09, TC-30-10]
+  AC-03: [TC-30-01, TC-30-02, TC-30-03, TC-30-06, TC-30-11]
+  AC-04: [TC-30-07]
+  AC-05: [TC-30-08]
+
+# ─── Gate 配置 ─────────────────────────────────────────────────────
+gate_r09:
+  p0_required: true
+  p1_coverage_target: 0.7
+  p2_skip: true
+  test_classes:
+    - "DataChangeLogControllerTest"
+    - "DataChangeInterceptorTest"
+    - "LogCleanupJobTest"

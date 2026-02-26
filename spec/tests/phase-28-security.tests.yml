@@ -1,0 +1,297 @@
+# Phase 28 — Security Hardening 测试契约
+# 关联 Spec：spec/phase/phase-28.md
+# 测试类：SecurityHardeningIT.java
+
+phase: 28
+module: "security-hardening"
+ac_ref: "spec/phase/phase-28.md"
+
+tests:
+
+  # ─── P0：XSS 过滤 ───────────────────────────────────────────────
+  - id: TC-28-01
+    priority: P0
+    category: security
+    ac: AC-01
+    bl_ref: BL-28-01
+    scenario: "请求参数含 <script>alert(1)</script> → 转义后接口正常响应"
+    request:
+      method: GET
+      path: /api/v1/users
+      auth: full_perm_token
+      params:
+        username: "<script>alert(1)</script>"
+    expect:
+      status: 200
+      assert: "实际查询参数已转义为 &lt;script&gt;alert(1)&lt;/script&gt;，无原始标签"
+
+  - id: TC-28-02
+    priority: P0
+    category: security
+    ac: AC-01
+    bl_ref: BL-28-01
+    scenario: "文件上传路径跳过 XSS 过滤，请求正常到达 Controller"
+    request:
+      method: POST
+      path: /api/v1/files/upload
+      auth: full_perm_token
+      content_type: multipart/form-data
+      body:
+        file: "${test_file}"
+    expect:
+      status: 200
+      assert: "XssFilter 未拦截 /api/v1/files/upload，文件数据完整传递"
+
+  - id: TC-28-03
+    priority: P0
+    category: security
+    ac: AC-01
+    bl_ref: BL-28-01
+    scenario: "请求 Header 含 XSS payload → 转义处理"
+    request:
+      method: GET
+      path: /api/v1/users
+      auth: full_perm_token
+      headers:
+        X-Custom-Header: "<img src=x onerror=alert(1)>"
+    expect:
+      status: 200
+      assert: "Header 值已被 HtmlUtils.htmlEscape() 转义"
+
+  # ─── P0：接口幂等 ────────────────────────────────────────────────
+  - id: TC-28-04
+    priority: P0
+    category: business
+    ac: AC-02
+    bl_ref: BL-28-02
+    scenario: "@Idempotent 端点 10 秒内重复提交 → 第 2 次返回 REPEAT_SUBMIT"
+    setup:
+      first_request: true
+      idempotent_endpoint: true
+    request:
+      method: POST
+      path: /api/v1/orders
+      auth: full_perm_token
+      body:
+        amount: 100
+      sequence: 2
+    expect:
+      status: 400
+      body:
+        code: "REPEAT_SUBMIT"
+
+  - id: TC-28-05
+    priority: P0
+    category: business
+    ac: AC-02
+    bl_ref: BL-28-02
+    scenario: "@Idempotent 端点超过 expireSeconds 后重新提交成功"
+    setup:
+      wait_seconds: 11
+    request:
+      method: POST
+      path: /api/v1/orders
+      auth: full_perm_token
+      body:
+        amount: 100
+    expect:
+      status: 200
+      assert: "幂等窗口已过期，请求正常处理"
+
+  - id: TC-28-06
+    priority: P0
+    category: business
+    ac: AC-02
+    bl_ref: BL-28-02
+    scenario: "不同用户对同一端点提交相同 body → 各自独立（幂等键包含 userId）"
+    setup:
+      user_a_first_request: true
+    request:
+      method: POST
+      path: /api/v1/orders
+      auth: user_b_token
+      body:
+        amount: 100
+    expect:
+      status: 200
+      assert: "用户 B 的请求不受用户 A 幂等缓存影响"
+
+  # ─── P0：Token 黑名单 ────────────────────────────────────────────
+  - id: TC-28-07
+    priority: P0
+    category: security
+    ac: AC-03
+    bl_ref: BL-28-03
+    scenario: "登出后原 token 再次请求受保护资源 → 401"
+    setup:
+      login_and_get_token: true
+    steps:
+      - request:
+          method: POST
+          path: /api/v1/auth/logout
+          auth: user_token
+        expect:
+          status: 200
+      - request:
+          method: GET
+          path: /api/v1/users
+          auth: user_token
+        expect:
+          status: 401
+          assert: "Token 已加入黑名单，JwtAuthenticationFilter 拒绝"
+
+  - id: TC-28-08
+    priority: P0
+    category: security
+    ac: AC-03
+    bl_ref: BL-28-03
+    scenario: "登出后 refresh token 换取新 token 后可正常访问"
+    setup:
+      login_and_get_token_pair: true
+    steps:
+      - request:
+          method: POST
+          path: /api/v1/auth/logout
+          auth: access_token
+        expect:
+          status: 200
+      - request:
+          method: POST
+          path: /api/v1/auth/refresh
+          body:
+            refreshToken: "${refresh_token}"
+        expect:
+          status: 200
+          body:
+            data.accessToken: "${not_null}"
+
+  # ─── P0：登录锁定 ────────────────────────────────────────────────
+  - id: TC-28-09
+    priority: P0
+    category: security
+    ac: AC-04
+    bl_ref: BL-28-04
+    scenario: "同账号连续 5 次密码错误后第 6 次请求 → ACCOUNT_LOCKED"
+    setup:
+      failed_attempts: 5
+      username: "locktest@example.com"
+    request:
+      method: POST
+      path: /api/v1/auth/login
+      body:
+        username: "locktest@example.com"
+        password: "WrongPassword1!"
+    expect:
+      status: 400
+      body:
+        code: "ACCOUNT_LOCKED"
+
+  - id: TC-28-10
+    priority: P0
+    category: security
+    ac: AC-04
+    bl_ref: BL-28-04
+    scenario: "登录成功后失败计数清零，再次失败不立即锁定"
+    setup:
+      failed_attempts: 4
+      then_login_success: true
+      username: "locktest2@example.com"
+    request:
+      method: POST
+      path: /api/v1/auth/login
+      body:
+        username: "locktest2@example.com"
+        password: "WrongPassword1!"
+    expect:
+      status: 400
+      assert: "错误码非 ACCOUNT_LOCKED（计数已被 clearFailure 重置，第 1 次失败）"
+
+  # ─── P0：强密码校验 ──────────────────────────────────────────────
+  - id: TC-28-11
+    priority: P0
+    category: validation
+    ac: AC-05
+    bl_ref: BL-28-05
+    scenario: "弱密码（仅小写字母）→ 400，@StrongPassword 校验失败"
+    request:
+      method: POST
+      path: /api/v1/users
+      auth: full_perm_token
+      body:
+        username: "newuser"
+        password: "abcdefgh"
+    expect:
+      status: 400
+      assert: "ConstraintViolation 包含 @StrongPassword 错误信息"
+
+  - id: TC-28-12
+    priority: P0
+    category: validation
+    ac: AC-05
+    bl_ref: BL-28-05
+    scenario: "强密码满足 3 类字符要求 → 校验通过"
+    request:
+      method: POST
+      path: /api/v1/users
+      auth: full_perm_token
+      body:
+        username: "newuser2"
+        password: "Admin@12345"
+    expect:
+      status: 200
+
+  - id: TC-28-13
+    priority: P0
+    category: validation
+    ac: AC-05
+    bl_ref: BL-28-05
+    scenario: "密码长度不足 8 位 → 400"
+    request:
+      method: POST
+      path: /api/v1/users
+      auth: full_perm_token
+      body:
+        username: "newuser3"
+        password: "Ab1!"
+    expect:
+      status: 400
+
+  # ─── P1：边界与组合 ──────────────────────────────────────────────
+  - id: TC-28-14
+    priority: P1
+    category: security
+    scenario: "无 Token 调用登出接口 → 401"
+    request:
+      method: POST
+      path: /api/v1/auth/logout
+      auth: none
+    expect:
+      status: 401
+
+  - id: TC-28-15
+    priority: P1
+    category: business
+    scenario: "未标注 @Idempotent 的端点重复提交 → 正常处理（不触发幂等）"
+    request:
+      method: GET
+      path: /api/v1/users
+      auth: full_perm_token
+      sequence: 2
+    expect:
+      status: 200
+      assert: "非幂等端点不受 IdempotentInterceptor 拦截"
+
+# ─── AC → TC 映射 ──────────────────────────────────────────────────
+ac_tc_map:
+  AC-01: [TC-28-01, TC-28-02, TC-28-03]
+  AC-02: [TC-28-04, TC-28-05, TC-28-06]
+  AC-03: [TC-28-07, TC-28-08]
+  AC-04: [TC-28-09, TC-28-10]
+  AC-05: [TC-28-11, TC-28-12, TC-28-13]
+
+# ─── Gate R09 配置 ─────────────────────────────────────────────────
+gate_r09:
+  p0_required: true
+  p1_coverage_target: 0.7
+  p2_skip: true
+  test_class: "SecurityHardeningIT"

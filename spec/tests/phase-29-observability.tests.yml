@@ -1,0 +1,167 @@
+# Phase 29 — Observability: TraceId / Structured Logging / Slow API 测试契约
+# 关联 Spec：spec/phase/phase-29.md
+
+phase: 29
+module: "observability"
+ac_ref: "spec/phase/phase-29.md"
+
+tests:
+
+  # ─── P0：安全测试 ─────────────────────────────────────────────────
+  - id: TC-29-01
+    priority: P0
+    category: security
+    ac: AC-05
+    bl_ref: BL-29-02
+    scenario: "POST /api/v1/frontend-errors 无 Token → 401"
+    request:
+      method: POST
+      path: /api/v1/frontend-errors
+      auth: none
+      body:
+        errorMessage: "Test error"
+        stackTrace: "at App.vue:1"
+        pageUrl: "http://localhost/"
+        userAgent: "Mozilla/5.0"
+    expect:
+      status: 401
+
+  # ─── P0：正常上报 ─────────────────────────────────────────────────
+  - id: TC-29-02
+    priority: P0
+    category: crud
+    ac: AC-05
+    bl_ref: BL-29-04
+    scenario: "POST /api/v1/frontend-errors 已登录有效 body → 200"
+    request:
+      method: POST
+      path: /api/v1/frontend-errors
+      auth: valid_token
+      body:
+        errorMessage: "TypeError: Cannot read properties of undefined"
+        stackTrace: "at useData (useData.ts:42)\n    at setup (App.vue:10)"
+        pageUrl: "http://localhost/admin/dashboard"
+        userAgent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)"
+    expect:
+      status: 200
+      body:
+        code: 0
+
+  # ─── P0：参数校验 ─────────────────────────────────────────────────
+  - id: TC-29-03
+    priority: P0
+    category: validation
+    ac: AC-05
+    scenario: "POST /api/v1/frontend-errors body 缺必填字段（errorMessage 为空）→ 400"
+    request:
+      method: POST
+      path: /api/v1/frontend-errors
+      auth: valid_token
+      body:
+        errorMessage: ""
+        stackTrace: "at App.vue:1"
+        pageUrl: "http://localhost/"
+        userAgent: "Mozilla/5.0"
+    expect:
+      status: 400
+
+  # ─── P0：响应头 TraceId ───────────────────────────────────────────
+  - id: TC-29-04
+    priority: P0
+    category: contract
+    ac: AC-01
+    bl_ref: BL-29-01
+    scenario: "任意已认证 API 响应头包含 X-Trace-Id"
+    request:
+      method: GET
+      path: /api/v1/profile
+      auth: valid_token
+    expect:
+      status: 200
+      headers:
+        X-Trace-Id: "${not_null}"
+
+  # ─── P0：数据库 Schema 校验 ───────────────────────────────────────
+  - id: TC-29-05
+    priority: P0
+    category: schema
+    ac: AC-04
+    scenario: "V029 含 7 列审计字段，无 IF NOT EXISTS"
+    method: static_analysis
+    expect:
+      file: "ljwx-platform-app/src/main/resources/db/migration/V029__create_sys_frontend_error.sql"
+      assert_contains:
+        - "tenant_id"
+        - "created_by"
+        - "created_time"
+        - "updated_by"
+        - "updated_time"
+        - "deleted"
+        - "version"
+      assert_not_contains:
+        - "IF NOT EXISTS"
+
+  # ─── P0：前端类型安全 ─────────────────────────────────────────────
+  - id: TC-29-06
+    priority: P0
+    category: type_safety
+    ac: AC-06
+    bl_ref: BL-29-04
+    scenario: "useErrorMonitor.ts 无 TypeScript any，type-check 通过"
+    method: static_analysis
+    expect:
+      file: "ljwx-platform-admin/src/composables/useErrorMonitor.ts"
+      assert_not_contains:
+        - ": any"
+        - "as any"
+      command: "cd ljwx-platform-admin && pnpm run type-check"
+      exit_code: 0
+
+  # ─── P1：慢接口日志验证 ───────────────────────────────────────────
+  - id: TC-29-07
+    priority: P1
+    category: business
+    ac: AC-03
+    bl_ref: BL-29-03
+    scenario: "模拟执行时间 > 3000ms 的接口，应用日志出现 WARN SlowApi 含 traceId"
+    method: integration
+    setup:
+      inject_delay_ms: 3500
+      target_endpoint: "GET /api/v1/profile"
+    expect:
+      assert: "应用日志中出现 WARN 级别日志，包含 SlowApi 标识及 traceId 字段"
+
+  # ─── P1：TraceId 透传 ─────────────────────────────────────────────
+  - id: TC-29-08
+    priority: P1
+    category: contract
+    ac: AC-01
+    bl_ref: BL-29-01
+    scenario: "请求携带自定义 X-Trace-Id header，响应中回传相同值"
+    request:
+      method: GET
+      path: /api/v1/profile
+      auth: valid_token
+      headers:
+        X-Trace-Id: "custom-trace-0001"
+    expect:
+      status: 200
+      headers:
+        X-Trace-Id: "custom-trace-0001"
+
+# ─── AC → TC 映射 ──────────────────────────────────────────────────
+ac_tc_map:
+  AC-01: [TC-29-04, TC-29-08]
+  AC-03: [TC-29-07]
+  AC-04: [TC-29-05]
+  AC-05: [TC-29-01, TC-29-02, TC-29-03]
+  AC-06: [TC-29-06]
+
+# ─── Gate 配置 ─────────────────────────────────────────────────────
+gate_r09:
+  p0_required: true
+  p1_coverage_target: 0.7
+  p2_skip: true
+  test_classes:
+    - "FrontendErrorControllerTest"
+    - "TraceIdFilterTest"
