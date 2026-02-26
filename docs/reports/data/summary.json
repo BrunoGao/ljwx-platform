@@ -1,10 +1,20 @@
 {
-  "generated_at": "2026-02-26T07:05:19Z",
+  "generated_at": "2026-02-26T08:15:36Z",
   "repo": {
     "owner": "BrunoGao",
     "name": "ljwx-platform",
+    "default_branch": "master"
+  },
+  "git": {
     "branch": "master",
-    "commit": "e04765b"
+    "commit": "611edd2",
+    "short": "611edd2"
+  },
+  "ci": {
+    "run_id": null,
+    "run_attempt": 1,
+    "workflow": "gate-local",
+    "run_url": null
   },
   "totals": {
     "pass": 32,
@@ -22,7 +32,18 @@
       "warnings": 0,
       "timestamp": "2026-02-26T04:51:47Z",
       "git_commit": "e04765b",
-      "r09_status": "PASS"
+      "r09_status": "PASS",
+      "gate_status": {
+        "R01": "PASS",
+        "R02": "PASS",
+        "R03": "PASS",
+        "R04": "PASS",
+        "R05": "PASS",
+        "R06": "PASS",
+        "R07": "PASS",
+        "R08": "PASS",
+        "R09": "PASS"
+      }
     },
     {
       "phase": "01",
@@ -32,7 +53,17 @@
       "warnings": 0,
       "timestamp": "2026-02-25T15:31:25Z",
       "git_commit": "748007a",
-      "r09_status": "PENDING"
+      "r09_status": "PENDING",
+      "gate_status": {
+        "R01": "PASS",
+        "R02": "SKIP",
+        "R03": "SKIP",
+        "R04": "SKIP",
+        "R05": "SKIP",
+        "R06": "SKIP",
+        "R07": "SKIP",
+        "R08": "SKIP"
+      }
     },
     {
       "phase": "02",
@@ -42,7 +73,17 @@
       "warnings": 0,
       "timestamp": "2026-02-25T15:31:25Z",
       "git_commit": "748007a",
-      "r09_status": "PENDING"
+      "r09_status": "PENDING",
+      "gate_status": {
+        "R01": "PASS",
+        "R02": "SKIP",
+        "R03": "SKIP",
+        "R04": "SKIP",
+        "R05": "SKIP",
+        "R06": "SKIP",
+        "R07": "SKIP",
+        "R08": "SKIP"
+      }
     },
     {
       "phase": "03",
@@ -52,7 +93,17 @@
       "warnings": 0,
       "timestamp": "2026-02-25T15:31:25Z",
       "git_commit": "748007a",
-      "r09_status": "PENDING"
+      "r09_status": "PENDING",
+      "gate_status": {
+        "R01": "PASS",
+        "R02": "SKIP",
+        "R03": "SKIP",
+        "R04": "SKIP",
+        "R05": "SKIP",
+        "R06": "SKIP",
+        "R07": "SKIP",
+        "R08": "SKIP"
+      }
     },
     {
       "phase": "04",
@@ -62,7 +113,17 @@
       "warnings": 0,
       "timestamp": "2026-02-25T15:31:25Z",
       "git_commit": "748007a",
-      "r09_status": "PENDING"
+      "r09_status": "PENDING",
+      "gate_status": {
+        "R01": "PASS",
+        "R02": "SKIP",
+        "R03": "SKIP",
+        "R04": "SKIP",
+        "R05": "SKIP",
+        "R06": "SKIP",
+        "R07": "SKIP",
+        "R08": "SKIP"
+      }
     },
     {
       "phase": "05",
@@ -72,7 +133,17 @@
       "warnings": 0,
       "timestamp": "2026-02-25T15:31:25Z",
       "git_commit": "748007a",
-      "r09_status": "PENDING"
+      "r09_status": "PENDING",
+      "gate_status": {
+        "R01": "PASS",
+        "R02": "SKIP",
+        "R03": "SKIP",
+        "R04": "SKIP",
+        "R05": "SKIP",
+        "R06": "SKIP",
+        "R07": "SKIP",
+        "R08": "SKIP"
+      }
     },
     {
       "phase": "06",
@@ -82,7 +153,17 @@
       "warnings": 0,
       "timestamp": "2026-02-25T15:31:25Z",
       "git_commit": "748007a",
-      "r09_status": "PENDING"
+      "r09_status": "PENDING",
+      "gate_status": {
+        "R01": "PASS",
+        "R02": "SKIP",
+        "R03": "SKIP",
+        "R04": "SKIP",
+        "R05": "SKIP",
+        "R06": "SKIP",
+        "R07": "SKIP",
+        "R08": "SKIP"
+      }
     },
     {
       "phase": "07",
@@ -92,7 +173,17 @@
       "warnings": 0,
       "timestamp": "2026-02-25T15:31:25Z",
       "git_commit": "748007a",
-      "r09_status": "PENDING"
+      "r09_status": "PENDING",
+      "gate_status": {
+        "R01": "PASS",
+        "R02": "SKIP",
+        "R03": "SKIP",
+        "R04": "SKIP",
+        "R05": "SKIP",
+        "R06": "SKIP",
+        "R07": "SKIP",
+        "R08": "SKIP"
+      }
     },
     {
       "phase": "08",
@@ -100,9 +191,20 @@
       "pass_rate": 100,
       "critical": 0,
       "warnings": 0,
-      "timestamp": "2026-02-26T05:24:40Z",
-      "git_commit": "e04765b",
-      "r09_status": "PASS"
+      "timestamp": "2026-02-26T08:15:34Z",
+      "git_commit": "611edd2",
+      "r09_status": "PASS",
+      "gate_status": {
+        "R01": "PASS",
+        "R02": "PASS",
+        "R03": "PASS",
+        "R04": "PASS",
+        "R05": "PASS",
+        "R06": "PASS",
+        "R07": "PASS",
+        "R08": "PASS",
+        "R09": "PASS"
+      }
     },
     {
       "phase": "09",
@@ -112,7 +214,18 @@
       "warnings": 0,
       "timestamp": "2026-02-26T06:56:47Z",
       "git_commit": "e04765b",
-      "r09_status": "PASS"
+      "r09_status": "PASS",
+      "gate_status": {
+        "R01": "PASS",
+        "R02": "PASS",
+        "R03": "PASS",
+        "R04": "PASS",
+        "R05": "PASS",
+        "R06": "PASS",
+        "R07": "PASS",
+        "R08": "PASS",
+        "R09": "PASS"
+      }
     },
     {
       "phase": "10",
@@ -122,7 +235,17 @@
       "warnings": 0,
       "timestamp": "2026-02-25T15:31:25Z",
       "git_commit": "748007a",
-      "r09_status": "PENDING"
+      "r09_status": "PENDING",
+      "gate_status": {
+        "R01": "PASS",
+        "R02": "SKIP",
+        "R03": "SKIP",
+        "R04": "SKIP",
+        "R05": "SKIP",
+        "R06": "SKIP",
+        "R07": "SKIP",
+        "R08": "SKIP"
+      }
     },
     {
       "phase": "11",
@@ -132,7 +255,17 @@
       "warnings": 0,
       "timestamp": "2026-02-25T15:31:25Z",
       "git_commit": "748007a",
-      "r09_status": "PENDING"
+      "r09_status": "PENDING",
+      "gate_status": {
+        "R01": "PASS",
+        "R02": "SKIP",
+        "R03": "SKIP",
+        "R04": "SKIP",
+        "R05": "SKIP",
+        "R06": "SKIP",
+        "R07": "SKIP",
+        "R08": "SKIP"
+      }
     },
     {
       "phase": "12",
@@ -142,7 +275,17 @@
       "warnings": 0,
       "timestamp": "2026-02-25T15:31:25Z",
       "git_commit": "748007a",
-      "r09_status": "PENDING"
+      "r09_status": "PENDING",
+      "gate_status": {
+        "R01": "PASS",
+        "R02": "SKIP",
+        "R03": "SKIP",
+        "R04": "SKIP",
+        "R05": "SKIP",
+        "R06": "SKIP",
+        "R07": "SKIP",
+        "R08": "SKIP"
+      }
     },
     {
       "phase": "13",
@@ -152,7 +295,18 @@
       "warnings": 0,
       "timestamp": "2026-02-26T05:26:34Z",
       "git_commit": "e04765b",
-      "r09_status": "SKIP"
+      "r09_status": "SKIP",
+      "gate_status": {
+        "R01": "PASS",
+        "R02": "SKIP",
+        "R03": "SKIP",
+        "R04": "SKIP",
+        "R05": "SKIP",
+        "R06": "SKIP",
+        "R07": "SKIP",
+        "R08": "PASS",
+        "R09": "SKIP"
+      }
     },
     {
       "phase": "14",
@@ -162,7 +316,17 @@
       "warnings": 0,
       "timestamp": "2026-02-25T15:31:25Z",
       "git_commit": "748007a",
-      "r09_status": "PENDING"
+      "r09_status": "PENDING",
+      "gate_status": {
+        "R01": "PASS",
+        "R02": "SKIP",
+        "R03": "SKIP",
+        "R04": "SKIP",
+        "R05": "SKIP",
+        "R06": "SKIP",
+        "R07": "SKIP",
+        "R08": "SKIP"
+      }
     },
     {
       "phase": "15",
@@ -172,7 +336,17 @@
       "warnings": 0,
       "timestamp": "2026-02-25T15:31:25Z",
       "git_commit": "748007a",
-      "r09_status": "PENDING"
+      "r09_status": "PENDING",
+      "gate_status": {
+        "R01": "PASS",
+        "R02": "SKIP",
+        "R03": "SKIP",
+        "R04": "SKIP",
+        "R05": "SKIP",
+        "R06": "SKIP",
+        "R07": "SKIP",
+        "R08": "SKIP"
+      }
     },
     {
       "phase": "16",
@@ -182,7 +356,17 @@
       "warnings": 0,
       "timestamp": "2026-02-25T15:31:25Z",
       "git_commit": "748007a",
-      "r09_status": "PENDING"
+      "r09_status": "PENDING",
+      "gate_status": {
+        "R01": "PASS",
+        "R02": "SKIP",
+        "R03": "SKIP",
+        "R04": "SKIP",
+        "R05": "SKIP",
+        "R06": "SKIP",
+        "R07": "SKIP",
+        "R08": "SKIP"
+      }
     },
     {
       "phase": "17",
@@ -192,7 +376,17 @@
       "warnings": 0,
       "timestamp": "2026-02-25T15:31:25Z",
       "git_commit": "748007a",
-      "r09_status": "PENDING"
+      "r09_status": "PENDING",
+      "gate_status": {
+        "R01": "PASS",
+        "R02": "SKIP",
+        "R03": "SKIP",
+        "R04": "SKIP",
+        "R05": "SKIP",
+        "R06": "SKIP",
+        "R07": "SKIP",
+        "R08": "SKIP"
+      }
     },
     {
       "phase": "18",
@@ -202,7 +396,17 @@
       "warnings": 0,
       "timestamp": "2026-02-25T15:31:25Z",
       "git_commit": "748007a",
-      "r09_status": "PENDING"
+      "r09_status": "PENDING",
+      "gate_status": {
+        "R01": "PASS",
+        "R02": "SKIP",
+        "R03": "SKIP",
+        "R04": "SKIP",
+        "R05": "SKIP",
+        "R06": "SKIP",
+        "R07": "SKIP",
+        "R08": "SKIP"
+      }
     },
     {
       "phase": "19",
@@ -212,7 +416,17 @@
       "warnings": 0,
       "timestamp": "2026-02-25T15:31:25Z",
       "git_commit": "748007a",
-      "r09_status": "PENDING"
+      "r09_status": "PENDING",
+      "gate_status": {
+        "R01": "PASS",
+        "R02": "SKIP",
+        "R03": "SKIP",
+        "R04": "SKIP",
+        "R05": "SKIP",
+        "R06": "SKIP",
+        "R07": "SKIP",
+        "R08": "SKIP"
+      }
     },
     {
       "phase": "20",
@@ -222,7 +436,17 @@
       "warnings": 0,
       "timestamp": "2026-02-25T15:31:25Z",
       "git_commit": "748007a",
-      "r09_status": "PENDING"
+      "r09_status": "PENDING",
+      "gate_status": {
+        "R01": "PASS",
+        "R02": "SKIP",
+        "R03": "SKIP",
+        "R04": "SKIP",
+        "R05": "SKIP",
+        "R06": "SKIP",
+        "R07": "SKIP",
+        "R08": "SKIP"
+      }
     },
     {
       "phase": "21",
@@ -232,7 +456,17 @@
       "warnings": 0,
       "timestamp": "2026-02-25T15:31:25Z",
       "git_commit": "748007a",
-      "r09_status": "PENDING"
+      "r09_status": "PENDING",
+      "gate_status": {
+        "R01": "PASS",
+        "R02": "SKIP",
+        "R03": "SKIP",
+        "R04": "SKIP",
+        "R05": "SKIP",
+        "R06": "SKIP",
+        "R07": "SKIP",
+        "R08": "SKIP"
+      }
     },
     {
       "phase": "22",
@@ -242,7 +476,17 @@
       "warnings": 0,
       "timestamp": "2026-02-25T15:31:25Z",
       "git_commit": "748007a",
-      "r09_status": "PENDING"
+      "r09_status": "PENDING",
+      "gate_status": {
+        "R01": "PASS",
+        "R02": "SKIP",
+        "R03": "SKIP",
+        "R04": "SKIP",
+        "R05": "SKIP",
+        "R06": "SKIP",
+        "R07": "SKIP",
+        "R08": "SKIP"
+      }
     },
     {
       "phase": "23",
@@ -252,7 +496,18 @@
       "warnings": 0,
       "timestamp": "2026-02-26T05:40:15Z",
       "git_commit": "e04765b",
-      "r09_status": "PASS"
+      "r09_status": "PASS",
+      "gate_status": {
+        "R01": "PASS",
+        "R02": "PASS",
+        "R03": "PASS",
+        "R04": "PASS",
+        "R05": "PASS",
+        "R06": "PASS",
+        "R07": "PASS",
+        "R08": "PASS",
+        "R09": "PASS"
+      }
     },
     {
       "phase": "24",
@@ -262,7 +517,17 @@
       "warnings": 0,
       "timestamp": "2026-02-25T15:31:25Z",
       "git_commit": "748007a",
-      "r09_status": "PENDING"
+      "r09_status": "PENDING",
+      "gate_status": {
+        "R01": "PASS",
+        "R02": "SKIP",
+        "R03": "SKIP",
+        "R04": "SKIP",
+        "R05": "SKIP",
+        "R06": "SKIP",
+        "R07": "SKIP",
+        "R08": "SKIP"
+      }
     },
     {
       "phase": "25",
@@ -272,7 +537,17 @@
       "warnings": 0,
       "timestamp": "2026-02-25T15:31:25Z",
       "git_commit": "748007a",
-      "r09_status": "PENDING"
+      "r09_status": "PENDING",
+      "gate_status": {
+        "R01": "PASS",
+        "R02": "SKIP",
+        "R03": "SKIP",
+        "R04": "SKIP",
+        "R05": "SKIP",
+        "R06": "SKIP",
+        "R07": "SKIP",
+        "R08": "SKIP"
+      }
     },
     {
       "phase": "26",
@@ -282,7 +557,17 @@
       "warnings": 0,
       "timestamp": "2026-02-25T15:31:25Z",
       "git_commit": "748007a",
-      "r09_status": "PENDING"
+      "r09_status": "PENDING",
+      "gate_status": {
+        "R01": "PASS",
+        "R02": "SKIP",
+        "R03": "SKIP",
+        "R04": "SKIP",
+        "R05": "SKIP",
+        "R06": "SKIP",
+        "R07": "SKIP",
+        "R08": "SKIP"
+      }
     },
     {
       "phase": "27",
@@ -292,7 +577,17 @@
       "warnings": 0,
       "timestamp": "2026-02-25T15:31:25Z",
       "git_commit": "748007a",
-      "r09_status": "PENDING"
+      "r09_status": "PENDING",
+      "gate_status": {
+        "R01": "PASS",
+        "R02": "SKIP",
+        "R03": "SKIP",
+        "R04": "SKIP",
+        "R05": "SKIP",
+        "R06": "SKIP",
+        "R07": "SKIP",
+        "R08": "SKIP"
+      }
     },
     {
       "phase": "28",
@@ -302,7 +597,18 @@
       "warnings": 0,
       "timestamp": "2026-02-26T07:05:17Z",
       "git_commit": "e04765b",
-      "r09_status": "PASS"
+      "r09_status": "PASS",
+      "gate_status": {
+        "R01": "PASS",
+        "R02": "PASS",
+        "R03": "PASS",
+        "R04": "PASS",
+        "R05": "PASS",
+        "R06": "PASS",
+        "R07": "PASS",
+        "R08": "PASS",
+        "R09": "PASS"
+      }
     },
     {
       "phase": "29",
@@ -312,7 +618,18 @@
       "warnings": 0,
       "timestamp": "2026-02-26T05:42:17Z",
       "git_commit": "e04765b",
-      "r09_status": "PASS"
+      "r09_status": "PASS",
+      "gate_status": {
+        "R01": "PASS",
+        "R02": "PASS",
+        "R03": "PASS",
+        "R04": "PASS",
+        "R05": "PASS",
+        "R06": "PASS",
+        "R07": "PASS",
+        "R08": "PASS",
+        "R09": "PASS"
+      }
     },
     {
       "phase": "30",
@@ -322,7 +639,18 @@
       "warnings": 0,
       "timestamp": "2026-02-26T06:59:54Z",
       "git_commit": "e04765b",
-      "r09_status": "PASS"
+      "r09_status": "PASS",
+      "gate_status": {
+        "R01": "PASS",
+        "R02": "PASS",
+        "R03": "PASS",
+        "R04": "PASS",
+        "R05": "PASS",
+        "R06": "PASS",
+        "R07": "PASS",
+        "R08": "PASS",
+        "R09": "PASS"
+      }
     },
     {
       "phase": "31",
@@ -332,7 +660,18 @@
       "warnings": 0,
       "timestamp": "2026-02-26T05:44:13Z",
       "git_commit": "e04765b",
-      "r09_status": "PASS"
+      "r09_status": "PASS",
+      "gate_status": {
+        "R01": "PASS",
+        "R02": "PASS",
+        "R03": "PASS",
+        "R04": "PASS",
+        "R05": "PASS",
+        "R06": "PASS",
+        "R07": "PASS",
+        "R08": "PASS",
+        "R09": "PASS"
+      }
     },
     {
       "phase": "32",
@@ -342,10 +681,22 @@
       "warnings": 0,
       "timestamp": "",
       "git_commit": "",
-      "r09_status": "PENDING"
+      "r09_status": "PENDING",
+      "gate_status": {}
     }
   ],
   "history": [
+    {
+      "timestamp": "2026-02-26T08:15:34Z",
+      "phase": "08",
+      "status": "PASS",
+      "pass_rate": 100,
+      "git_commit": "611edd2",
+      "critical": 0,
+      "warnings": 0,
+      "run_id": null,
+      "run_url": null
+    },
     {
       "timestamp": "2026-02-26T07:05:17Z",
       "phase": "28",
@@ -353,7 +704,9 @@
       "pass_rate": 100,
       "git_commit": "e04765b",
       "critical": 0,
-      "warnings": 0
+      "warnings": 0,
+      "run_id": null,
+      "run_url": null
     },
     {
       "timestamp": "2026-02-26T06:59:54Z",
@@ -362,7 +715,9 @@
       "pass_rate": 100,
       "git_commit": "e04765b",
       "critical": 0,
-      "warnings": 0
+      "warnings": 0,
+      "run_id": null,
+      "run_url": null
     },
     {
       "timestamp": "2026-02-26T06:58:26Z",
@@ -371,7 +726,9 @@
       "pass_rate": 88.89,
       "git_commit": "e04765b",
       "critical": 1,
-      "warnings": 0
+      "warnings": 0,
+      "run_id": null,
+      "run_url": null
     },
     {
       "timestamp": "2026-02-26T06:56:47Z",
@@ -380,7 +737,9 @@
       "pass_rate": 100,
       "git_commit": "e04765b",
       "critical": 0,
-      "warnings": 0
+      "warnings": 0,
+      "run_id": null,
+      "run_url": null
     },
     {
       "timestamp": "2026-02-26T06:54:33Z",
@@ -389,7 +748,9 @@
       "pass_rate": 88.89,
       "git_commit": "e04765b",
       "critical": 1,
-      "warnings": 0
+      "warnings": 0,
+      "run_id": null,
+      "run_url": null
     },
     {
       "timestamp": "2026-02-26T05:57:52Z",
@@ -398,7 +759,9 @@
       "pass_rate": 88.89,
       "git_commit": "e04765b",
       "critical": 1,
-      "warnings": 0
+      "warnings": 0,
+      "run_id": null,
+      "run_url": null
     },
     {
       "timestamp": "2026-02-26T05:56:47Z",
@@ -407,7 +770,9 @@
       "pass_rate": 88.89,
       "git_commit": "e04765b",
       "critical": 1,
-      "warnings": 0
+      "warnings": 0,
+      "run_id": null,
+      "run_url": null
     },
     {
       "timestamp": "2026-02-26T05:55:41Z",
@@ -416,7 +781,9 @@
       "pass_rate": 88.89,
       "git_commit": "e04765b",
       "critical": 1,
-      "warnings": 0
+      "warnings": 0,
+      "run_id": null,
+      "run_url": null
     },
     {
       "timestamp": "2026-02-26T05:50:07Z",
@@ -425,7 +792,9 @@
       "pass_rate": 88.89,
       "git_commit": "e04765b",
       "critical": 1,
-      "warnings": 0
+      "warnings": 0,
+      "run_id": null,
+      "run_url": null
     },
     {
       "timestamp": "2026-02-26T05:48:59Z",
@@ -434,7 +803,9 @@
       "pass_rate": 88.89,
       "git_commit": "e04765b",
       "critical": 1,
-      "warnings": 0
+      "warnings": 0,
+      "run_id": null,
+      "run_url": null
     },
     {
       "timestamp": "2026-02-26T05:47:52Z",
@@ -443,7 +814,9 @@
       "pass_rate": 88.89,
       "git_commit": "e04765b",
       "critical": 1,
-      "warnings": 0
+      "warnings": 0,
+      "run_id": null,
+      "run_url": null
     },
     {
       "timestamp": "2026-02-26T05:44:13Z",
@@ -452,7 +825,9 @@
       "pass_rate": 100,
       "git_commit": "e04765b",
       "critical": 0,
-      "warnings": 0
+      "warnings": 0,
+      "run_id": null,
+      "run_url": null
     },
     {
       "timestamp": "2026-02-26T05:43:24Z",
@@ -461,7 +836,9 @@
       "pass_rate": 88.89,
       "git_commit": "e04765b",
       "critical": 1,
-      "warnings": 0
+      "warnings": 0,
+      "run_id": null,
+      "run_url": null
     },
     {
       "timestamp": "2026-02-26T05:42:17Z",
@@ -470,7 +847,9 @@
       "pass_rate": 100,
       "git_commit": "e04765b",
       "critical": 0,
-      "warnings": 0
+      "warnings": 0,
+      "run_id": null,
+      "run_url": null
     },
     {
       "timestamp": "2026-02-26T05:41:25Z",
@@ -479,7 +858,9 @@
       "pass_rate": 88.89,
       "git_commit": "e04765b",
       "critical": 1,
-      "warnings": 0
+      "warnings": 0,
+      "run_id": null,
+      "run_url": null
     },
     {
       "timestamp": "2026-02-26T05:40:15Z",
@@ -488,7 +869,9 @@
       "pass_rate": 100,
       "git_commit": "e04765b",
       "critical": 0,
-      "warnings": 0
+      "warnings": 0,
+      "run_id": null,
+      "run_url": null
     },
     {
       "timestamp": "2026-02-26T05:39:22Z",
@@ -497,7 +880,9 @@
       "pass_rate": 88.89,
       "git_commit": "e04765b",
       "critical": 1,
-      "warnings": 0
+      "warnings": 0,
+      "run_id": null,
+      "run_url": null
     },
     {
       "timestamp": "2026-02-26T05:31:11Z",
@@ -506,7 +891,9 @@
       "pass_rate": 88.89,
       "git_commit": "e04765b",
       "critical": 1,
-      "warnings": 0
+      "warnings": 0,
+      "run_id": null,
+      "run_url": null
     },
     {
       "timestamp": "2026-02-26T05:30:14Z",
@@ -515,7 +902,9 @@
       "pass_rate": 88.89,
       "git_commit": "e04765b",
       "critical": 1,
-      "warnings": 0
+      "warnings": 0,
+      "run_id": null,
+      "run_url": null
     },
     {
       "timestamp": "2026-02-26T05:29:16Z",
@@ -524,7 +913,9 @@
       "pass_rate": 88.89,
       "git_commit": "e04765b",
       "critical": 1,
-      "warnings": 0
+      "warnings": 0,
+      "run_id": null,
+      "run_url": null
     },
     {
       "timestamp": "2026-02-26T05:28:23Z",
@@ -533,7 +924,9 @@
       "pass_rate": 88.89,
       "git_commit": "e04765b",
       "critical": 1,
-      "warnings": 0
+      "warnings": 0,
+      "run_id": null,
+      "run_url": null
     },
     {
       "timestamp": "2026-02-26T05:27:28Z",
@@ -542,7 +935,9 @@
       "pass_rate": 77.78,
       "git_commit": "e04765b",
       "critical": 2,
-      "warnings": 0
+      "warnings": 0,
+      "run_id": null,
+      "run_url": null
     },
     {
       "timestamp": "2026-02-26T05:26:34Z",
@@ -551,7 +946,9 @@
       "pass_rate": 22.22,
       "git_commit": "e04765b",
       "critical": 0,
-      "warnings": 0
+      "warnings": 0,
+      "run_id": null,
+      "run_url": null
     },
     {
       "timestamp": "2026-02-26T05:25:48Z",
@@ -560,7 +957,9 @@
       "pass_rate": 77.78,
       "git_commit": "e04765b",
       "critical": 2,
-      "warnings": 0
+      "warnings": 0,
+      "run_id": null,
+      "run_url": null
     },
     {
       "timestamp": "2026-02-26T05:24:40Z",
@@ -569,7 +968,9 @@
       "pass_rate": 100,
       "git_commit": "e04765b",
       "critical": 0,
-      "warnings": 0
+      "warnings": 0,
+      "run_id": null,
+      "run_url": null
     },
     {
       "timestamp": "2026-02-26T05:22:03Z",
@@ -578,7 +979,9 @@
       "pass_rate": 88.89,
       "git_commit": "e04765b",
       "critical": 1,
-      "warnings": 0
+      "warnings": 0,
+      "run_id": null,
+      "run_url": null
     },
     {
       "timestamp": "2026-02-26T05:15:05Z",
@@ -587,7 +990,9 @@
       "pass_rate": 88.89,
       "git_commit": "e04765b",
       "critical": 1,
-      "warnings": 0
+      "warnings": 0,
+      "run_id": null,
+      "run_url": null
     },
     {
       "timestamp": "2026-02-26T05:07:17Z",
@@ -596,7 +1001,9 @@
       "pass_rate": 88.89,
       "git_commit": "e04765b",
       "critical": 1,
-      "warnings": 0
+      "warnings": 0,
+      "run_id": null,
+      "run_url": null
     },
     {
       "timestamp": "2026-02-26T05:06:23Z",
@@ -605,7 +1012,9 @@
       "pass_rate": 88.89,
       "git_commit": "e04765b",
       "critical": 1,
-      "warnings": 0
+      "warnings": 0,
+      "run_id": null,
+      "run_url": null
     },
     {
       "timestamp": "2026-02-26T04:51:47Z",
@@ -614,7 +1023,9 @@
       "pass_rate": 100,
       "git_commit": "e04765b",
       "critical": 0,
-      "warnings": 0
+      "warnings": 0,
+      "run_id": null,
+      "run_url": null
     },
     {
       "timestamp": "2026-02-25T15:41:14Z",
@@ -623,7 +1034,9 @@
       "pass_rate": 100,
       "git_commit": "5da8be6",
       "critical": 0,
-      "warnings": 0
+      "warnings": 0,
+      "run_id": null,
+      "run_url": null
     },
     {
       "timestamp": "2026-02-25T15:37:26Z",
@@ -632,7 +1045,9 @@
       "pass_rate": 88.89,
       "git_commit": "5da8be6",
       "critical": 1,
-      "warnings": 0
+      "warnings": 0,
+      "run_id": null,
+      "run_url": null
     },
     {
       "timestamp": "2026-02-25T15:35:06Z",
@@ -641,7 +1056,9 @@
       "pass_rate": 88.89,
       "git_commit": "5da8be6",
       "critical": 1,
-      "warnings": 0
+      "warnings": 0,
+      "run_id": null,
+      "run_url": null
     },
     {
       "timestamp": "2026-02-25T15:30:29Z",
@@ -650,7 +1067,9 @@
       "pass_rate": 55.56,
       "git_commit": "748007a",
       "critical": 1,
-      "warnings": 0
+      "warnings": 0,
+      "run_id": null,
+      "run_url": null
     },
     {
       "timestamp": "2026-02-25T15:29:46Z",
@@ -659,7 +1078,9 @@
       "pass_rate": 55.56,
       "git_commit": "748007a",
       "critical": 1,
-      "warnings": 0
+      "warnings": 0,
+      "run_id": null,
+      "run_url": null
     },
     {
       "timestamp": "2026-02-25T15:29:00Z",
@@ -668,7 +1089,9 @@
       "pass_rate": 55.56,
       "git_commit": "748007a",
       "critical": 1,
-      "warnings": 0
+      "warnings": 0,
+      "run_id": null,
+      "run_url": null
     },
     {
       "timestamp": "2026-02-25T15:27:58Z",
@@ -677,7 +1100,9 @@
       "pass_rate": 55.56,
       "git_commit": "748007a",
       "critical": 1,
-      "warnings": 0
+      "warnings": 0,
+      "run_id": null,
+      "run_url": null
     },
     {
       "timestamp": "2026-02-25T15:27:03Z",
@@ -686,7 +1111,9 @@
       "pass_rate": 66.67,
       "git_commit": "748007a",
       "critical": 0,
-      "warnings": 0
+      "warnings": 0,
+      "run_id": null,
+      "run_url": null
     },
     {
       "timestamp": "2026-02-25T15:26:11Z",
@@ -695,7 +1122,9 @@
       "pass_rate": 66.67,
       "git_commit": "748007a",
       "critical": 0,
-      "warnings": 0
+      "warnings": 0,
+      "run_id": null,
+      "run_url": null
     },
     {
       "timestamp": "2026-02-25T15:25:28Z",
@@ -704,7 +1133,9 @@
       "pass_rate": 66.67,
       "git_commit": "748007a",
       "critical": 0,
-      "warnings": 0
+      "warnings": 0,
+      "run_id": null,
+      "run_url": null
     },
     {
       "timestamp": "2026-02-25T15:24:45Z",
@@ -713,7 +1144,9 @@
       "pass_rate": 66.67,
       "git_commit": "748007a",
       "critical": 0,
-      "warnings": 0
+      "warnings": 0,
+      "run_id": null,
+      "run_url": null
     },
     {
       "timestamp": "2026-02-25T15:24:04Z",
@@ -722,7 +1155,9 @@
       "pass_rate": 55.56,
       "git_commit": "748007a",
       "critical": 1,
-      "warnings": 0
+      "warnings": 0,
+      "run_id": null,
+      "run_url": null
     },
     {
       "timestamp": "2026-02-25T15:23:24Z",
@@ -731,7 +1166,9 @@
       "pass_rate": 66.67,
       "git_commit": "748007a",
       "critical": 0,
-      "warnings": 0
+      "warnings": 0,
+      "run_id": null,
+      "run_url": null
     },
     {
       "timestamp": "2026-02-25T15:22:45Z",
@@ -740,7 +1177,9 @@
       "pass_rate": 66.67,
       "git_commit": "748007a",
       "critical": 0,
-      "warnings": 0
+      "warnings": 0,
+      "run_id": null,
+      "run_url": null
     },
     {
       "timestamp": "2026-02-25T15:22:04Z",
@@ -749,7 +1188,9 @@
       "pass_rate": 66.67,
       "git_commit": "748007a",
       "critical": 0,
-      "warnings": 0
+      "warnings": 0,
+      "run_id": null,
+      "run_url": null
     },
     {
       "timestamp": "2026-02-25T15:21:22Z",
@@ -758,7 +1199,9 @@
       "pass_rate": 22.22,
       "git_commit": "748007a",
       "critical": 0,
-      "warnings": 0
+      "warnings": 0,
+      "run_id": null,
+      "run_url": null
     },
     {
       "timestamp": "2026-02-25T15:20:51Z",
@@ -767,7 +1210,9 @@
       "pass_rate": 22.22,
       "git_commit": "748007a",
       "critical": 0,
-      "warnings": 0
+      "warnings": 0,
+      "run_id": null,
+      "run_url": null
     },
     {
       "timestamp": "2026-02-25T15:20:05Z",
@@ -776,7 +1221,9 @@
       "pass_rate": 22.22,
       "git_commit": "748007a",
       "critical": 0,
-      "warnings": 0
+      "warnings": 0,
+      "run_id": null,
+      "run_url": null
     },
     {
       "timestamp": "2026-02-25T15:19:22Z",
@@ -785,16 +1232,9 @@
       "pass_rate": 22.22,
       "git_commit": "748007a",
       "critical": 0,
-      "warnings": 0
-    },
-    {
-      "timestamp": "2026-02-25T15:18:37Z",
-      "phase": "15",
-      "status": "PASS",
-      "pass_rate": 22.22,
-      "git_commit": "748007a",
-      "critical": 0,
-      "warnings": 0
+      "warnings": 0,
+      "run_id": null,
+      "run_url": null
     }
   ]
 }

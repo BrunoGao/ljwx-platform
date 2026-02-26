@@ -8,6 +8,7 @@ OUT="docs/reports/data/tests.json"
 mkdir -p "$(dirname "$OUT")"
 
 python3 - <<'PY'
+import os
 import json
 import pathlib
 import re
@@ -66,6 +67,18 @@ summary = {
 
 out = {
     "generated_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+    "ci": {
+        "run_id": int(os.getenv("GITHUB_RUN_ID")) if os.getenv("GITHUB_RUN_ID", "").isdigit() else None,
+        "run_attempt": int(os.getenv("GITHUB_RUN_ATTEMPT", "1") or 1),
+        "workflow": os.getenv("GITHUB_WORKFLOW", "gate-local"),
+        "run_url": os.getenv("GITHUB_SERVER_URL", "https://github.com")
+        + "/"
+        + os.getenv("GITHUB_REPOSITORY", "")
+        + "/actions/runs/"
+        + os.getenv("GITHUB_RUN_ID", "")
+        if os.getenv("GITHUB_RUN_ID")
+        else None,
+    },
     "summary": summary,
     "tests": tests,
 }

@@ -22,6 +22,24 @@ fi
 commit="$(git rev-parse --short HEAD 2>/dev/null || echo unknown)"
 branch="$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo unknown)"
 ts="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+remote="$(git config --get remote.origin.url 2>/dev/null || true)"
+owner="unknown"
+repo="unknown"
+default_branch="master"
+if [[ "$remote" =~ github.com[:/]([^/]+)/([^/.]+) ]]; then
+  owner="${BASH_REMATCH[1]}"
+  repo="${BASH_REMATCH[2]}"
+fi
+
+run_id="${GITHUB_RUN_ID:-local}"
+run_attempt="${GITHUB_RUN_ATTEMPT:-1}"
+workflow_name="${GITHUB_WORKFLOW:-gate-local}"
+run_url=""
+if [[ "$owner" != "unknown" && "$repo" != "unknown" && "$run_id" != "local" ]]; then
+  run_url="https://github.com/${owner}/${repo}/actions/runs/${run_id}"
+fi
+
+artifact_base="data/artifacts/${run_id}/phase-${PHASE}"
 
 tmp_rules="$(mktemp)"
 if ls "$TMP_DIR"/R*.json >/dev/null 2>&1; then
@@ -78,6 +96,14 @@ phase_json="$(jq -n \
   --arg timestamp "$ts" \
   --arg commit "$commit" \
   --arg branch "$branch" \
+  --arg owner "$owner" \
+  --arg repo "$repo" \
+  --arg default_branch "$default_branch" \
+  --arg run_id "$run_id" \
+  --arg run_attempt "$run_attempt" \
+  --arg workflow_name "$workflow_name" \
+  --arg run_url "$run_url" \
+  --arg artifact_base "$artifact_base" \
   --slurpfile rules "$tmp_rules" \
   --argjson summary "$summary_json" \
   --argjson violations "$violations" \
@@ -85,7 +111,19 @@ phase_json="$(jq -n \
     phase: $phase,
     status: $status,
     timestamp: $timestamp,
+    repo: {owner: $owner, name: $repo, default_branch: $default_branch},
     git: {commit: $commit, branch: $branch},
+    ci: {
+      run_id: (if $run_id == "local" then null else ($run_id | tonumber) end),
+      run_attempt: ($run_attempt | tonumber),
+      workflow: $workflow_name,
+      run_url: (if $run_url == "" then null else $run_url end)
+    },
+    artifacts: {
+      surefire_html: ($artifact_base + "/surefire-index.html"),
+      surefire_xml_index: ($artifact_base + "/surefire-index.json"),
+      gate_raw_log: ($artifact_base + "/gate.log")
+    },
     rules: $rules[0],
     summary: $summary,
     violations: $violations
