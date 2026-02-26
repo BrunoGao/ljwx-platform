@@ -1,0 +1,74 @@
+name: Regression Bug
+description: Record defects discovered by regression/baseline runs
+title: "[Bug][Regression][P0] "
+labels:
+  - type:bugfix
+  - priority:P0
+  - gate:fail
+body:
+  - type: dropdown
+    id: workstream
+    attributes:
+      label: Workstream
+      options:
+        - Regression
+    validations:
+      required: true
+  - type: dropdown
+    id: suite
+    attributes:
+      label: Suite
+      options:
+        - Security
+        - Tenant
+        - CRUD
+        - OpenAPI
+        - Perf
+        - Other
+    validations:
+      required: true
+  - type: input
+    id: phase
+    attributes:
+      label: Phase
+      placeholder: "20"
+    validations:
+      required: false
+  - type: input
+    id: run_url
+    attributes:
+      label: Run URL
+      placeholder: "https://github.com/<owner>/<repo>/actions/runs/<id>"
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Reproduction Steps
+      placeholder: |
+        1. ...
+        2. ...
+        3. ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected_actual
+    attributes:
+      label: Expected vs Actual
+      placeholder: "Expected: ...\nActual: ..."
+    validations:
+      required: true
+  - type: input
+    id: related_gate
+    attributes:
+      label: Related Gate
+      placeholder: "R09"
+    validations:
+      required: false
+  - type: input
+    id: violation_key
+    attributes:
+      label: Violation Key
+      placeholder: "R04|Rule|file|line"
+    validations:
+      required: false

@@ -25,6 +25,18 @@ on:
         description: "Optional priority override (P0/P1/P2)"
         required: false
         type: string
+      gate_status:
+        description: "Optional gate status override (PASS/FAIL/PENDING/SKIP)"
+        required: false
+        type: string
+      workstream:
+        description: "Optional workstream override (Baseline/Regression/Coverage/Infra)"
+        required: false
+        type: string
+      suite:
+        description: "Optional suite override (Security/Tenant/CRUD/OpenAPI/Perf/Other)"
+        required: false
+        type: string
 
 permissions:
   contents: read
@@ -35,12 +47,15 @@ jobs:
   sync_issue_to_project:
     runs-on: ubuntu-latest
     env:
-      GH_TOKEN: ${{ secrets.PROJECT_V2_TOKEN != '' && secrets.PROJECT_V2_TOKEN || github.token }}
+      GH_TOKEN: ${{ secrets.PROJECT_TOKEN != '' && secrets.PROJECT_TOKEN || (secrets.PROJECT_V2_TOKEN != '' && secrets.PROJECT_V2_TOKEN || github.token) }}
       PROJECT_ID_FROM_SECRET: ${{ secrets.PROJECT_V2_ID }}
       PROJECT_ID_FROM_INPUT: ${{ inputs.project_id }}
       PHASE_INPUT: ${{ inputs.phase }}
       WORKFLOW_INPUT: ${{ inputs.workflow }}
       PRIORITY_INPUT: ${{ inputs.priority }}
+      GATE_STATUS_INPUT: ${{ inputs.gate_status }}
+      WORKSTREAM_INPUT: ${{ inputs.workstream }}
+      SUITE_INPUT: ${{ inputs.suite }}
       ISSUE_INPUT: ${{ inputs.issue_number }}
       ISSUE_EVENT_NUMBER: ${{ github.event.issue.number }}
     steps:
@@ -93,18 +108,13 @@ jobs:
           fi
 
           CMD=(bash scripts/project/project-sync-issue.sh --issue "${ISSUE_NUM}" --apply)
-          if [[ -n "${PROJECT_ID:-}" ]]; then
-            CMD+=(--project-id "${PROJECT_ID}")
-          fi
-          if [[ -n "${PHASE_INPUT:-}" ]]; then
-            CMD+=(--phase "${PHASE_INPUT}")
-          fi
-          if [[ -n "${WORKFLOW_INPUT:-}" ]]; then
-            CMD+=(--workflow "${WORKFLOW_INPUT}")
-          fi
-          if [[ -n "${PRIORITY_INPUT:-}" ]]; then
-            CMD+=(--priority "${PRIORITY_INPUT}")
-          fi
+          if [[ -n "${PROJECT_ID:-}" ]]; then CMD+=(--project-id "${PROJECT_ID}"); fi
+          if [[ -n "${PHASE_INPUT:-}" ]]; then CMD+=(--phase "${PHASE_INPUT}"); fi
+          if [[ -n "${WORKFLOW_INPUT:-}" ]]; then CMD+=(--workflow "${WORKFLOW_INPUT}"); fi
+          if [[ -n "${PRIORITY_INPUT:-}" ]]; then CMD+=(--priority "${PRIORITY_INPUT}"); fi
+          if [[ -n "${GATE_STATUS_INPUT:-}" ]]; then CMD+=(--gate "${GATE_STATUS_INPUT}"); fi
+          if [[ -n "${WORKSTREAM_INPUT:-}" ]]; then CMD+=(--workstream "${WORKSTREAM_INPUT}"); fi
+          if [[ -n "${SUITE_INPUT:-}" ]]; then CMD+=(--suite "${SUITE_INPUT}"); fi
 
           printf 'Running:'
           printf ' %q' "${CMD[@]}"

@@ -11,6 +11,8 @@ on:
 
 permissions:
   contents: read
+  issues: read
+  repository-projects: write
 
 concurrency:
   group: gate-${{ github.workflow }}-${{ github.ref }}
@@ -124,6 +126,49 @@ jobs:
             bash scripts/gates/gate-all.sh "$phase" 2>&1 | tee gate.log
           else
             bash scripts/gates/gate-all.sh 2>&1 | tee gate.log
+          fi
+
+      - name: Sync Gate Status To Project
+        if: always()
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.PROJECT_TOKEN != '' && secrets.PROJECT_TOKEN || (secrets.PROJECT_V2_TOKEN != '' && secrets.PROJECT_V2_TOKEN || github.token) }}
+          PROJECT_V2_ID: ${{ secrets.PROJECT_V2_ID }}
+        run: |
+          set -euo pipefail
+          phase="${{ steps.phase.outputs.phase }}"
+          if [[ -z "$phase" ]]; then
+            echo "Skip gate status sync: no single phase detected."
+            exit 0
+          fi
+
+          if [[ ! -f ".github/projectv2/project.json" ]]; then
+            if [[ -n "${PROJECT_V2_ID:-}" ]]; then
+              bash scripts/project/project-bootstrap.sh --project-id "${PROJECT_V2_ID}" --apply
+            else
+              echo "Skip gate status sync: missing .github/projectv2/project.json and PROJECT_V2_ID secret."
+              exit 0
+            fi
+          fi
+
+          phase_fmt="$(printf '%02d' "$phase")"
+          phase_json="docs/reports/data/phases/phase-${phase_fmt}.json"
+          status="PENDING"
+
+          if [[ -f "$phase_json" ]]; then
+            status="$(jq -r '.status // "PENDING"' "$phase_json" | tr '[:lower:]' '[:upper:]')"
+          fi
+
+          case "$status" in
+            PASS|FAIL|PENDING|SKIP) ;;
+            *) status="PENDING" ;;
+          esac
+
+          if ! bash scripts/project/project-sync-gate-status.sh \
+            --phase "$phase" \
+            --status "$status" \
+            --apply; then
+            echo "Gate status sync failed; keep CI green and continue."
           fi
 
       - name: Upload gate artifacts

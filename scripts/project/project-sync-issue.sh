@@ -13,6 +13,9 @@ ITEM_ID=""
 PHASE=""
 WORKFLOW=""
 PRIORITY=""
+GATE_STATUS=""
+WORKSTREAM=""
+SUITE=""
 
 usage() {
   cat <<USAGE
@@ -28,6 +31,9 @@ Field overrides:
   --phase <0..32>
   --workflow <Brief|Spec|Coding|Gate|Review|Done>
   --priority <P0|P1|P2>
+  --gate <PASS|FAIL|PENDING|SKIP>
+  --workstream <Baseline|Regression|Coverage|Infra>
+  --suite <Security|Tenant|CRUD|OpenAPI|Perf|Other>
 
 Mode:
   --dry-run                      Dry run (default)
@@ -45,6 +51,9 @@ while [[ $# -gt 0 ]]; do
     --phase) PHASE="${2:?missing value}"; shift 2 ;;
     --workflow) WORKFLOW="${2:?missing value}"; shift 2 ;;
     --priority) PRIORITY="${2:?missing value}"; shift 2 ;;
+    --gate|--gate-status) GATE_STATUS="${2:?missing value}"; shift 2 ;;
+    --workstream) WORKSTREAM="${2:?missing value}"; shift 2 ;;
+    --suite) SUITE="${2:?missing value}"; shift 2 ;;
     --dry-run) DRY_RUN=true; shift ;;
     --apply) DRY_RUN=false; shift ;;
     -h|--help) usage; exit 0 ;;
@@ -92,6 +101,9 @@ set_cmd=(bash "$SCRIPT_DIR/project-set-fields.sh" "$SET_MODE" --item-id "$ITEM_I
 [[ -n "$PHASE" ]] && set_cmd+=(--phase "$PHASE")
 [[ -n "$WORKFLOW" ]] && set_cmd+=(--workflow "$WORKFLOW")
 [[ -n "$PRIORITY" ]] && set_cmd+=(--priority "$PRIORITY")
+[[ -n "$GATE_STATUS" ]] && set_cmd+=(--gate "$GATE_STATUS")
+[[ -n "$WORKSTREAM" ]] && set_cmd+=(--workstream "$WORKSTREAM")
+[[ -n "$SUITE" ]] && set_cmd+=(--suite "$SUITE")
 
 "${set_cmd[@]}"
 
