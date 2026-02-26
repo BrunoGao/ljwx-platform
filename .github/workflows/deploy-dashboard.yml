@@ -1,18 +1,14 @@
 name: Deploy Quality Dashboard
 
 on:
-  push:
-    branches: [master, main]
-    paths:
-      - docs/reports/index.html
-      - docs/reports/data/phases/**
-      - docs/reports/data/summary.json
-      - docs/reports/data/rtm.json
-      - docs/reports/data/tests.json
-      - docs/reports/schema/**
+  workflow_run:
+    workflows: ["Gate Check"]
+    types: [completed]
+  workflow_dispatch:
 
 permissions:
   contents: read
+  actions: read
   pages: write
   id-token: write
 
@@ -22,18 +18,56 @@ concurrency:
 
 jobs:
   deploy:
+    if: >
+      github.event_name == 'workflow_dispatch' ||
+      (
+        github.event_name == 'workflow_run' &&
+        github.event.workflow_run.conclusion == 'success' &&
+        (
+          github.event.workflow_run.head_branch == 'master' ||
+          github.event.workflow_run.head_branch == 'main'
+        )
+      )
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout (manual fallback)
+        if: github.event_name == 'workflow_dispatch'
         uses: actions/checkout@v4
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
+      - name: Download gate reports artifact
+        if: github.event_name == 'workflow_run'
+        uses: actions/download-artifact@v4
+        with:
+          name: gate-reports
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ github.token }}
+          path: _site
+
+      - name: Resolve Pages source directory
+        id: src
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "${{ github.event_name }}" == "workflow_run" ]]; then
+            if [[ -d "_site/docs/reports" ]]; then
+              echo "path=_site/docs/reports" >> "$GITHUB_OUTPUT"
+            elif [[ -d "_site" ]]; then
+              echo "path=_site" >> "$GITHUB_OUTPUT"
+            else
+              echo "Expected report artifact not found" >&2
+              exit 1
+            fi
+          else
+            echo "path=docs/reports" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: docs/reports
+          path: ${{ steps.src.outputs.path }}
 
       - name: Deploy
         uses: actions/deploy-pages@v4

@@ -3,6 +3,8 @@ name: Gate Check
 on:
   pull_request:
     branches: [master, main, develop]
+  push:
+    branches: [master, main]
   merge_group:
     branches: [master, main, develop]
   workflow_dispatch:
@@ -132,3 +134,13 @@ jobs:
           path: |
             gate.log
             changed_files.txt
+
+      - name: Upload quality reports for Pages
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gate-reports
+          path: |
+            docs/reports/**
+            **/target/surefire-reports/**
+            **/target/failsafe-reports/**
