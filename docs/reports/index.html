@@ -4,24 +4,62 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>LJWX Quality Dashboard</title>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
-    :root { --bg:#f4f7fb; --card:#fff; --ok:#1a7f37; --fail:#cf222e; --pending:#9a6700; --text:#1f2328; --muted:#57606a; }
-    body { margin:0; font-family: "Segoe UI", sans-serif; background: linear-gradient(180deg,#eef4ff,#f7f9fc); color:var(--text); }
-    .wrap { max-width: 1200px; margin: 24px auto; padding: 0 16px 40px; }
-    .row { display:grid; gap:16px; grid-template-columns: repeat(12,minmax(0,1fr)); }
-    .card { background:var(--card); border-radius:14px; box-shadow:0 8px 24px rgba(31,35,40,.08); padding:16px; }
-    .span-3{grid-column: span 3;} .span-4{grid-column: span 4;} .span-6{grid-column: span 6;} .span-8{grid-column: span 8;} .span-12{grid-column: span 12;}
-    .kpi { font-size:30px; font-weight:700; }
-    .label { color:var(--muted); font-size:13px; }
-    .status-pass{color:var(--ok);} .status-fail{color:var(--fail);} .status-pending{color:var(--pending);} 
-    #heatmap { display:grid; grid-template-columns: repeat(8,1fr); gap:8px; }
-    .cell { border-radius:10px; padding:10px; cursor:pointer; color:#fff; font-size:12px; min-height:54px; }
-    .PASS{background:var(--ok);} .FAIL{background:var(--fail);} .PENDING{background:#9a6700;}
-    table { width:100%; border-collapse: collapse; font-size:13px; }
-    th,td { border-bottom:1px solid #eaeef2; padding:8px; text-align:left; }
+    :root {
+      --bg:#f5f7fb;
+      --card:#ffffff;
+      --ok:#1a7f37;
+      --fail:#cf222e;
+      --skip:#9a6700;
+      --muted:#57606a;
+      --text:#1f2328;
+      --line:#e6ebf1;
+    }
+    * { box-sizing:border-box; }
+    body { margin:0; font-family:"Segoe UI",sans-serif; background:linear-gradient(180deg,#eef3fb,#f9fbfe); color:var(--text); }
+    .wrap { max-width:1400px; margin:20px auto; padding:0 14px 42px; }
+    h1,h2,h3 { margin:0 0 10px; }
     .hint { color:var(--muted); font-size:12px; }
-    @media (max-width: 900px){ .span-3,.span-4,.span-6,.span-8,.span-12{grid-column: span 12;} #heatmap{grid-template-columns:repeat(4,1fr);} }
+    .row { display:grid; gap:14px; grid-template-columns:repeat(12,minmax(0,1fr)); }
+    .card { background:var(--card); border-radius:12px; box-shadow:0 8px 22px rgba(31,35,40,.07); border:1px solid #edf1f5; padding:14px; }
+    .span-3{grid-column:span 3;} .span-4{grid-column:span 4;} .span-6{grid-column:span 6;} .span-8{grid-column:span 8;} .span-12{grid-column:span 12;}
+    .kpi { font-size:30px; font-weight:700; }
+    .label { color:var(--muted); font-size:12px; }
+    .ok { color:var(--ok); } .fail { color:var(--fail); } .skip { color:var(--skip); }
+    .toolbar { display:flex; gap:8px; flex-wrap:wrap; margin:10px 0 6px; }
+    .btn { border:1px solid var(--line); background:#fff; border-radius:8px; padding:6px 10px; font-size:12px; cursor:pointer; }
+    .btn:hover { background:#f8fafc; }
+    .table-wrap { overflow:auto; }
+    table { width:100%; border-collapse:collapse; font-size:12px; }
+    th,td { border-bottom:1px solid var(--line); padding:7px; text-align:left; vertical-align:top; }
+    tr:hover td { background:#fafcff; }
+    .mono { font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .badge { display:inline-block; min-width:50px; text-align:center; border-radius:999px; padding:2px 8px; font-size:11px; color:#fff; }
+    .PASS { background:var(--ok); }
+    .FAIL { background:var(--fail); }
+    .SKIP,.PENDING { background:var(--skip); }
+    .heatmap { display:grid; grid-template-columns:repeat(8,minmax(92px,1fr)); gap:8px; }
+    .cell { border-radius:10px; padding:10px; color:#fff; cursor:pointer; min-height:58px; }
+    .matrix { overflow:auto; border:1px solid var(--line); border-radius:10px; }
+    .matrix table th { position:sticky; top:0; background:#fff; z-index:1; }
+    .matrix .row-head { position:sticky; left:0; background:#fff; z-index:2; min-width:58px; }
+    .matrix .gcell { text-align:center; cursor:pointer; font-weight:600; min-width:44px; }
+    .drawer-backdrop { position:fixed; inset:0; background:rgba(8,15,30,.28); display:none; }
+    .drawer { position:fixed; top:0; right:0; height:100vh; width:min(760px,95vw); background:#fff; box-shadow:-12px 0 30px rgba(0,0,0,.18); display:none; flex-direction:column; }
+    .drawer-head { padding:12px 14px; border-bottom:1px solid var(--line); }
+    .drawer-head h3 { margin:0; }
+    .drawer-meta { margin-top:6px; font-size:12px; color:var(--muted); }
+    .tabs { display:flex; gap:6px; margin-top:10px; flex-wrap:wrap; }
+    .tab { border:1px solid var(--line); border-radius:8px; background:#fff; padding:5px 10px; font-size:12px; cursor:pointer; }
+    .tab.active { background:#1f6feb; color:#fff; border-color:#1f6feb; }
+    .drawer-body { overflow:auto; padding:12px 14px 24px; }
+    .empty { color:var(--muted); font-size:12px; padding:6px 0; }
+    .link { color:#0969da; text-decoration:none; }
+    .link:hover { text-decoration:underline; }
+    @media (max-width:980px) {
+      .span-3,.span-4,.span-6,.span-8,.span-12{grid-column:span 12;}
+      .heatmap { grid-template-columns:repeat(4,minmax(0,1fr)); }
+    }
   </style>
 </head>
 <body>
@@ -30,154 +68,354 @@
     <p id="meta" class="hint">加载中...</p>
 
     <div class="row">
-      <div class="card span-3"><div class="label">PASS</div><div id="kPass" class="kpi status-pass">-</div></div>
-      <div class="card span-3"><div class="label">FAIL</div><div id="kFail" class="kpi status-fail">-</div></div>
-      <div class="card span-3"><div class="label">PENDING</div><div id="kPending" class="kpi status-pending">-</div></div>
+      <div class="card span-3"><div class="label">PASS</div><div id="kPass" class="kpi ok">-</div></div>
+      <div class="card span-3"><div class="label">FAIL</div><div id="kFail" class="kpi fail">-</div></div>
+      <div class="card span-3"><div class="label">PENDING</div><div id="kPending" class="kpi skip">-</div></div>
       <div class="card span-3"><div class="label">CRITICAL</div><div id="kCritical" class="kpi">-</div></div>
-      <div class="card span-12"><div class="label">Tests Pass Rate (R09)</div><div id="kTestsPassRate" class="kpi">-</div></div>
-      <div class="card span-4"><div class="label">Test Cases PASS</div><div id="kTestPass" class="kpi status-pass">-</div></div>
-      <div class="card span-4"><div class="label">Test Cases FAIL</div><div id="kTestFail" class="kpi status-fail">-</div></div>
-      <div class="card span-4"><div class="label">Test Cases SKIP</div><div id="kTestSkip" class="kpi status-pending">-</div></div>
 
-      <div class="card span-8"><h3>Phase Heatmap</h3><div id="heatmap"></div></div>
-      <div class="card span-4"><h3>History</h3><canvas id="trend"></canvas></div>
+      <div class="card span-6"><div class="label">Tests Execution Rate</div><div id="kExecRate" class="kpi">-</div></div>
+      <div class="card span-6"><div class="label">Tests Failure Rate</div><div id="kFailRate" class="kpi">-</div></div>
 
-      <div class="card span-12">
-        <h3>RTM</h3>
-        <table id="rtmTable"><thead><tr><th>Phase</th><th>Endpoint</th><th>Method</th><th>Controller</th><th>Test Covered</th><th>Status</th></tr></thead><tbody></tbody></table>
+      <div class="card span-8">
+        <h3>Quality Gate Matrix (R01-R09 x Phase)</h3>
+        <div class="matrix"><table id="matrixTable"></table></div>
+      </div>
+      <div class="card span-4">
+        <h3>Phase Heatmap</h3>
+        <div id="phaseHeatmap" class="heatmap"></div>
+      </div>
+
+      <div class="card span-6">
+        <h3>Top Risks</h3>
+        <div class="table-wrap"><table id="riskTable"><thead><tr><th>Rule</th><th>Count</th><th>Phases</th><th>Action</th></tr></thead><tbody></tbody></table></div>
+      </div>
+      <div class="card span-6">
+        <h3>Coverage Gap</h3>
+        <div class="table-wrap"><table id="gapTable"><thead><tr><th>Controller</th><th>Uncovered</th><th>Action</th></tr></thead><tbody></tbody></table></div>
       </div>
 
       <div class="card span-12">
-        <h3>Violations</h3>
-        <table id="violations"><thead><tr><th>Phase</th><th>Rule</th><th>Severity</th><th>Message</th></tr></thead><tbody></tbody></table>
+        <h3>RTM</h3>
+        <div class="table-wrap"><table id="rtmTable"><thead><tr><th>Phase</th><th>Method</th><th>Endpoint</th><th>Controller</th><th>Covered</th><th>Status</th></tr></thead><tbody></tbody></table></div>
       </div>
 
       <div class="card span-12">
         <h3>Full Test Report</h3>
-        <table id="testsTable">
-          <thead><tr><th>Phase</th><th>Suite</th><th>Test Case</th><th>Status</th><th>Time(s)</th><th>Message</th></tr></thead>
-          <tbody></tbody>
-        </table>
+        <div class="table-wrap"><table id="testsTable"><thead><tr><th>Phase</th><th>Suite</th><th>Case</th><th>Status</th><th>Time(s)</th><th>Message</th></tr></thead><tbody></tbody></table></div>
       </div>
     </div>
   </div>
 
+  <div id="drawerBackdrop" class="drawer-backdrop"></div>
+  <aside id="drawer" class="drawer">
+    <div class="drawer-head">
+      <h3 id="drawerTitle">Phase Detail</h3>
+      <div id="drawerMeta" class="drawer-meta"></div>
+      <div class="tabs">
+        <button class="tab" data-tab="summary">Summary</button>
+        <button class="tab" data-tab="violations">Violations</button>
+        <button class="tab" data-tab="tests">Tests</button>
+        <button class="tab" data-tab="rtm">RTM Links</button>
+        <button class="tab" id="closeDrawer" style="margin-left:auto">Close</button>
+      </div>
+    </div>
+    <div id="drawerBody" class="drawer-body"></div>
+  </aside>
+
   <script>
-    const ownerFallback = 'BrunoGao';
-    const repoFallback = 'ljwx-platform';
+    const RULES = ["R01","R02","R03","R04","R05","R06","R07","R08","R09"];
+    const state = { summary:null, rtm:{matrix:[]}, tests:{summary:{},tests:[]}, phaseMap:new Map(), allViolations:[] };
 
-    function asClass(s){ return s === 'PASS' ? 'status-pass' : s === 'FAIL' ? 'status-fail' : 'status-pending'; }
-    function text(v){ return (v === null || v === undefined || v === '') ? '-' : String(v); }
+    function esc(v) {
+      return String(v ?? "").replace(/[&<>"]/g, m => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[m]));
+    }
+    function statusBadge(s) { return `<span class="badge ${s || "PENDING"}">${esc(s || "PENDING")}</span>`; }
+    function getHashParams() { return new URLSearchParams((location.hash || "").replace(/^#/, "")); }
+    function setHash(obj) {
+      const p = new URLSearchParams();
+      Object.keys(obj).forEach(k => { if (obj[k] !== undefined && obj[k] !== null && obj[k] !== "") p.set(k, obj[k]); });
+      location.hash = p.toString();
+    }
+    async function fetchJson(url, fallback) {
+      try { return await fetch(url).then(r => r.json()); } catch (_) { return fallback; }
+    }
 
-    async function load() {
-      let summary, rtm, tests;
-      try {
-        summary = await fetch('./data/summary.json').then(r => r.json());
-      } catch (e) {
-        document.body.innerHTML = '<pre>加载 summary.json 失败。请使用: python3 -m http.server 8080 -d docs/reports</pre>';
+    async function loadPhase(phase) {
+      if (state.phaseMap.has(phase)) return state.phaseMap.get(phase);
+      const json = await fetchJson(`./data/phases/phase-${phase}.json`, null);
+      if (json) state.phaseMap.set(phase, json);
+      return json;
+    }
+
+    function repoInfo() {
+      const s = state.summary || {};
+      const repo = s.repo || {};
+      const git = s.git || {};
+      const ci = s.ci || {};
+      return { owner: repo.owner || "unknown", name: repo.name || "unknown", branch: git.branch || "unknown", commit: git.short || git.commit || "unknown", run: ci.run_url || "" };
+    }
+
+    function computeRates() {
+      const phases = (state.summary?.phases || []).filter(p => (p.status || "") !== "PENDING");
+      const executed = phases.filter(p => !["SKIP","PENDING"].includes((p.r09_status || "").toUpperCase()));
+      const execRate = phases.length ? (executed.length * 100 / phases.length) : 0;
+      const ts = state.tests.summary || {};
+      const denom = (ts.pass || 0) + (ts.fail || 0);
+      const failRate = denom ? (ts.fail * 100 / denom) : 0;
+      return { execRate: execRate.toFixed(2), failRate: failRate.toFixed(2) };
+    }
+
+    function renderKpis() {
+      const totals = state.summary?.totals || {};
+      document.getElementById("kPass").textContent = totals.pass ?? 0;
+      document.getElementById("kFail").textContent = totals.fail ?? 0;
+      document.getElementById("kPending").textContent = totals.pending ?? 0;
+      document.getElementById("kCritical").textContent = totals.critical ?? 0;
+      const rates = computeRates();
+      document.getElementById("kExecRate").textContent = `${rates.execRate}%`;
+      document.getElementById("kFailRate").textContent = `${rates.failRate}%`;
+      const ri = repoInfo();
+      const generated = state.summary?.generated_at || "-";
+      document.getElementById("meta").innerHTML = `${esc(ri.owner)}/${esc(ri.name)} @ ${esc(ri.branch)} (${esc(ri.commit)}) generated ${esc(generated)}${ri.run ? ` | <a class="link" href="${ri.run}" target="_blank" rel="noopener">Actions Run</a>` : ""}`;
+    }
+
+    function renderHeatmap() {
+      const box = document.getElementById("phaseHeatmap");
+      box.innerHTML = "";
+      (state.summary?.phases || []).forEach(p => {
+        const d = document.createElement("div");
+        d.className = `cell ${p.status || "PENDING"}`;
+        d.innerHTML = `<strong>P${esc(p.phase)}</strong><br>${esc(p.status || "PENDING")}<br>${esc(p.pass_rate || 0)}%`;
+        d.onclick = () => setHash({ phase: p.phase });
+        box.appendChild(d);
+      });
+    }
+
+    function renderMatrix() {
+      const table = document.getElementById("matrixTable");
+      const phases = state.summary?.phases || [];
+      const head = [`<tr><th class="row-head">Gate</th>${phases.map(p => `<th>${esc(p.phase)}</th>`).join("")}</tr>`];
+      const rows = RULES.map(rule => {
+        const cells = phases.map(p => {
+          const s = (p.gate_status && p.gate_status[rule]) || "PENDING";
+          return `<td class="gcell ${s}" title="${rule} / phase ${p.phase}" data-phase="${esc(p.phase)}" data-rule="${rule}">${esc(s[0] || "?")}</td>`;
+        }).join("");
+        return `<tr><th class="row-head">${rule}</th>${cells}</tr>`;
+      });
+      table.innerHTML = `<thead>${head.join("")}</thead><tbody>${rows.join("")}</tbody>`;
+      table.querySelectorAll(".gcell").forEach(cell => {
+        cell.addEventListener("click", () => setHash({ phase: cell.dataset.phase, gate: cell.dataset.rule }));
+      });
+    }
+
+    function renderRtm() {
+      const body = document.querySelector("#rtmTable tbody");
+      body.innerHTML = "";
+      (state.rtm.matrix || []).forEach(m => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `<td>${esc(m.phase)}</td><td>${esc(m.method)}</td><td class="mono">${esc(m.endpoint)}</td><td>${esc(m.controller)}</td><td>${m.test_covered ? "true" : "false"}</td><td>${statusBadge(m.gate_status)}</td>`;
+        tr.onclick = () => setHash({ phase: m.phase, endpoint: m.endpoint, method: m.method });
+        body.appendChild(tr);
+      });
+    }
+
+    function renderTests() {
+      const body = document.querySelector("#testsTable tbody");
+      body.innerHTML = "";
+      (state.tests.tests || []).slice(0, 1500).forEach(t => {
+        const st = t.status === "ERROR" ? "FAIL" : (t.status || "SKIP");
+        const tr = document.createElement("tr");
+        tr.innerHTML = `<td>${esc(t.phase)}</td><td>${esc(t.suite)}</td><td>${esc(t.testcase)}</td><td>${statusBadge(st)}</td><td>${esc(t.time_seconds)}</td><td>${esc(t.message || "")}</td>`;
+        tr.onclick = () => setHash({ phase: t.phase, gate: "R09" });
+        body.appendChild(tr);
+      });
+    }
+
+    function buildRiskRows() {
+      const map = new Map();
+      state.allViolations.forEach(v => {
+        const key = v.rule || "UNKNOWN";
+        if (!map.has(key)) map.set(key, { rule:key, count:0, phases:new Set() });
+        const item = map.get(key);
+        item.count += 1;
+        item.phases.add(String(v.phase));
+      });
+      return [...map.values()].sort((a,b) => b.count - a.count || b.phases.size - a.phases.size);
+    }
+
+    function renderTopRisks() {
+      const body = document.querySelector("#riskTable tbody");
+      body.innerHTML = "";
+      const rows = buildRiskRows().slice(0, 20);
+      if (!rows.length) {
+        body.innerHTML = `<tr><td colspan="4" class="empty">No risks</td></tr>`;
+        return;
+      }
+      rows.forEach(r => {
+        const phases = [...r.phases].sort().join(",");
+        const tr = document.createElement("tr");
+        tr.innerHTML = `<td>${esc(r.rule)}</td><td>${r.count}</td><td>${esc(phases)}</td><td><button class="btn" data-rule="${esc(r.rule)}">Open</button></td>`;
+        tr.querySelector("button").onclick = () => setHash({ gate: r.rule });
+        body.appendChild(tr);
+      });
+    }
+
+    function renderCoverageGap() {
+      const body = document.querySelector("#gapTable tbody");
+      body.innerHTML = "";
+      const counts = new Map();
+      (state.rtm.matrix || []).forEach(r => {
+        if (r.test_covered) return;
+        const key = r.controller || "unknown";
+        counts.set(key, (counts.get(key) || 0) + 1);
+      });
+      const rows = [...counts.entries()].sort((a,b) => b[1]-a[1]).slice(0, 20);
+      if (!rows.length) {
+        body.innerHTML = `<tr><td colspan="3" class="empty">No uncovered endpoints</td></tr>`;
+        return;
+      }
+      rows.forEach(([controller, count]) => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `<td>${esc(controller)}</td><td>${count}</td><td><button class="btn">Filter RTM</button></td>`;
+        tr.querySelector("button").onclick = () => setHash({ endpoint:"", method:"", controller });
+        body.appendChild(tr);
+      });
+    }
+
+    async function collectViolations() {
+      state.allViolations = [];
+      const phases = state.summary?.phases || [];
+      const jobs = phases.filter(p => p.status === "FAIL" || p.critical > 0).map(async p => {
+        const j = await loadPhase(p.phase);
+        (j?.violations || []).forEach(v => state.allViolations.push({ ...v, phase: p.phase }));
+      });
+      await Promise.all(jobs);
+    }
+
+    function closeDrawer() {
+      document.getElementById("drawer").style.display = "none";
+      document.getElementById("drawerBackdrop").style.display = "none";
+    }
+    function openDrawer() {
+      document.getElementById("drawer").style.display = "flex";
+      document.getElementById("drawerBackdrop").style.display = "block";
+    }
+
+    function pickTab(params) {
+      if (params.get("gate") === "R09") return "tests";
+      if (params.get("endpoint")) return "rtm";
+      if (params.get("violation") || params.get("gate")) return "violations";
+      return "summary";
+    }
+
+    async function renderDrawerFromHash() {
+      const params = getHashParams();
+      const phase = params.get("phase");
+      const gate = params.get("gate");
+      const endpoint = params.get("endpoint");
+      const method = params.get("method");
+      const activeTab = params.get("tab") || pickTab(params);
+
+      if (!phase && !gate && !endpoint) {
+        closeDrawer();
         return;
       }
 
-      try {
-        rtm = await fetch('./data/rtm.json').then(r => r.json());
-      } catch (_) {
-        rtm = { matrix: [] };
-      }
+      const phaseJson = phase ? await loadPhase(phase) : null;
+      const ri = repoInfo();
+      const title = phase ? `Phase ${phase}${gate ? ` / ${gate}` : ""}` : (gate ? `Gate ${gate}` : "Endpoint Detail");
+      const ciUrl = phaseJson?.ci?.run_url || state.summary?.ci?.run_url || "";
+      document.getElementById("drawerTitle").textContent = title;
+      document.getElementById("drawerMeta").innerHTML = `${ciUrl ? `<a class="link" href="${ciUrl}" target="_blank" rel="noopener">Open Actions Run</a> | ` : ""}${phaseJson?.git?.commit ? `commit ${esc(phaseJson.git.commit)}` : ""}`;
 
-      try {
-        tests = await fetch('./data/tests.json').then(r => r.json());
-      } catch (_) {
-        tests = { summary: { pass: 0, fail: 0, skip: 0 }, tests: [] };
-      }
+      const body = document.getElementById("drawerBody");
+      const tabs = [...document.querySelectorAll(".tab[data-tab]")];
+      tabs.forEach(t => t.classList.toggle("active", t.dataset.tab === activeTab));
 
-      const t = summary.totals || {};
-      document.getElementById('kPass').textContent = t.pass ?? 0;
-      document.getElementById('kFail').textContent = t.fail ?? 0;
-      document.getElementById('kPending').textContent = t.pending ?? 0;
-      document.getElementById('kCritical').textContent = t.critical ?? 0;
-      document.getElementById('kTestsPassRate').textContent = `${computeR09PassRate(summary.phases || [])}%`;
-      document.getElementById('kTestPass').textContent = tests.summary?.pass ?? 0;
-      document.getElementById('kTestFail').textContent = tests.summary?.fail ?? 0;
-      document.getElementById('kTestSkip').textContent = tests.summary?.skip ?? 0;
-
-      const owner = summary.repo?.owner || ownerFallback;
-      const repo = summary.repo?.name || repoFallback;
-      document.getElementById('meta').textContent = `${owner}/${repo} @ ${summary.repo?.branch || '-'} (${summary.repo?.commit || '-'}) generated ${summary.generated_at || '-'}`;
-
-      const heatmap = document.getElementById('heatmap');
-      const phases = summary.phases || [];
-      phases.forEach(p => {
-        const d = document.createElement('div');
-        d.className = `cell ${p.status || 'PENDING'}`;
-        d.innerHTML = `<strong>Phase ${p.phase}</strong><br>${p.status}<br>${p.pass_rate || 0}%`;
-        d.onclick = () => showPhaseViolations(owner, repo, p.phase);
-        heatmap.appendChild(d);
-      });
-
-      const hist = summary.history || [];
-      const ctx = document.getElementById('trend');
-      new Chart(ctx, {
-        type: 'line',
-        data: {
-          labels: hist.map(h => `${h.phase}@${(h.timestamp || '').slice(11,16)}`),
-          datasets: [{ label: 'Pass Rate', data: hist.map(h => h.pass_rate || 0), borderColor: '#1f6feb', tension: 0.2 }]
-        },
-        options: { scales: { y: { min: 0, max: 100 } } }
-      });
-
-      const tbody = document.querySelector('#rtmTable tbody');
-      (rtm.matrix || []).slice(0, 200).forEach(m => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `<td>${text(m.phase)}</td><td>${text(m.endpoint)}</td><td>${text(m.method)}</td><td>${text(m.controller)}</td><td>${m.test_covered ? 'true' : 'false'}</td><td class="${asClass(m.gate_status)}">${text(m.gate_status)}</td>`;
-        tbody.appendChild(tr);
-      });
-
-      const testsBody = document.querySelector('#testsTable tbody');
-      (tests.tests || []).slice(0, 1000).forEach(tc => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `<td>${text(tc.phase)}</td><td>${text(tc.suite)}</td><td>${text(tc.testcase)}</td><td class="${asClass(tc.status === 'ERROR' ? 'FAIL' : tc.status)}">${text(tc.status)}</td><td>${text(tc.time_seconds)}</td><td>${text(tc.message)}</td>`;
-        testsBody.appendChild(tr);
-      });
-    }
-
-    function computeR09PassRate(phases) {
-      const done = phases.filter(p => p.status && p.status !== 'PENDING');
-      if (!done.length) return 0;
-      return Math.round((done.filter(p => (p.r09_status || '').toUpperCase() === 'PASS').length * 10000 / done.length)) / 100;
-    }
-
-    async function showPhaseViolations(owner, repo, phase) {
-      const body = document.querySelector('#violations tbody');
-      body.innerHTML = '';
-      try {
-        const phaseJson = await fetch(`./data/phases/phase-${phase}.json`).then(r => r.json());
-        const list = phaseJson.violations || [];
-        if (!list.length) {
-          const tr = document.createElement('tr');
-          tr.innerHTML = `<td>${phase}</td><td>-</td><td>-</td><td>No violations</td>`;
-          body.appendChild(tr);
-          return;
+      if (activeTab === "summary") {
+        if (!phaseJson) {
+          body.innerHTML = `<div class="empty">Select a phase to view summary.</div>`;
+        } else {
+          const rules = (phaseJson.rules || []).map(r => `<tr><td>${esc(r.id)}</td><td>${statusBadge(r.status)}</td><td>${esc(r.message || "")}</td></tr>`).join("");
+          const art = phaseJson.artifacts || {};
+          body.innerHTML = `
+            <div class="table-wrap"><table><thead><tr><th>Gate</th><th>Status</th><th>Message</th></tr></thead><tbody>${rules || `<tr><td colspan="3" class="empty">No rules</td></tr>`}</tbody></table></div>
+            <p class="hint">Surefire: ${art.surefire_xml_index ? `<a class="link" href="./${art.surefire_xml_index}" target="_blank">index.json</a>` : "-"} | ${art.surefire_html ? `<a class="link" href="./${art.surefire_html}" target="_blank">html</a>` : "-"}</p>
+            <p class="hint">Gate Log: ${art.gate_raw_log ? `<a class="link" href="./${art.gate_raw_log}" target="_blank">open</a>` : "-"}</p>
+          `;
         }
-
-        list.forEach(v => {
-          const tr = document.createElement('tr');
-          let fileCell = text(v.message);
+      } else if (activeTab === "violations") {
+        let list = state.allViolations;
+        if (phase) list = list.filter(v => String(v.phase) === String(phase));
+        if (gate) list = list.filter(v => String(v.rule) === String(gate));
+        const rows = list.map(v => {
+          let msg = esc(v.message || "");
           if (v.file) {
             const line = v.line || 1;
-            const url = `https://github.com/${owner}/${repo}/blob/master/${v.file}#L${line}`;
-            fileCell = `<a href="${url}" target="_blank" rel="noopener">${text(v.message)}</a>`;
+            msg = `<a class="link" href="https://github.com/${ri.owner}/${ri.name}/blob/master/${v.file}#L${line}" target="_blank" rel="noopener">${msg}</a>`;
           }
-          tr.innerHTML = `<td>${phase}</td><td>${text(v.rule)}</td><td>${text(v.severity)}</td><td>${fileCell}</td>`;
-          body.appendChild(tr);
-        });
-      } catch (_) {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `<td>${phase}</td><td>-</td><td>-</td><td>phase-${phase}.json not found</td>`;
-        body.appendChild(tr);
+          return `<tr><td>${esc(v.phase)}</td><td>${esc(v.rule)}</td><td>${esc(v.severity || "CRITICAL")}</td><td>${msg}</td></tr>`;
+        }).join("");
+        body.innerHTML = `<div class="table-wrap"><table><thead><tr><th>Phase</th><th>Rule</th><th>Severity</th><th>Message</th></tr></thead><tbody>${rows || `<tr><td colspan="4" class="empty">No violations</td></tr>`}</tbody></table></div>`;
+      } else if (activeTab === "tests") {
+        let rows = state.tests.tests || [];
+        if (phase) rows = rows.filter(t => String(t.phase) === String(phase));
+        rows = rows.map(t => ({ ...t, st: t.status === "ERROR" ? "FAIL" : (t.status || "SKIP") }));
+        const lines = rows.map(t => `<tr><td>${esc(t.phase)}</td><td>${esc(t.suite)}</td><td>${esc(t.testcase)}</td><td>${statusBadge(t.st)}</td><td>${esc(t.time_seconds)}</td><td><span title="${esc(t.message || "")}" class="mono">${esc((t.message || "").slice(0, 220))}</span></td></tr>`).join("");
+        const art = phaseJson?.artifacts || {};
+        body.innerHTML = `
+          <p class="hint">${art.surefire_xml_index ? `<a class="link" href="./${art.surefire_xml_index}" target="_blank">Open surefire-index.json</a>` : ""} ${art.surefire_html ? `| <a class="link" href="./${art.surefire_html}" target="_blank">Open surefire-index.html</a>` : ""}</p>
+          <div class="table-wrap"><table><thead><tr><th>Phase</th><th>Suite</th><th>Case</th><th>Status</th><th>Time(s)</th><th>Message</th></tr></thead><tbody>${lines || `<tr><td colspan="6" class="empty">No tests</td></tr>`}</tbody></table></div>
+        `;
+      } else {
+        let rows = state.rtm.matrix || [];
+        if (phase) rows = rows.filter(r => String(r.phase) === String(phase));
+        if (endpoint) rows = rows.filter(r => r.endpoint === endpoint && (!method || r.method === method));
+        const lines = rows.map(r => `<tr><td>${esc(r.phase)}</td><td>${esc(r.method)}</td><td class="mono">${esc(r.endpoint)}</td><td>${esc(r.controller)}</td><td>${r.test_covered ? "true" : "false"}</td><td>${statusBadge(r.gate_status)}</td></tr>`).join("");
+        body.innerHTML = `<div class="table-wrap"><table><thead><tr><th>Phase</th><th>Method</th><th>Endpoint</th><th>Controller</th><th>Covered</th><th>Status</th></tr></thead><tbody>${lines || `<tr><td colspan="6" class="empty">No RTM links</td></tr>`}</tbody></table></div>`;
       }
+
+      tabs.forEach(tab => {
+        tab.onclick = () => {
+          const p = Object.fromEntries(getHashParams().entries());
+          p.tab = tab.dataset.tab;
+          setHash(p);
+        };
+      });
+      openDrawer();
     }
 
-    load();
+    async function init() {
+      state.summary = await fetchJson("./data/summary.json", null);
+      if (!state.summary) {
+        document.body.innerHTML = "<pre>加载 summary.json 失败</pre>";
+        return;
+      }
+      state.rtm = await fetchJson("./data/rtm.json", { matrix: [] });
+      state.tests = await fetchJson("./data/tests.json", { summary: { pass:0, fail:0, skip:0 }, tests: [] });
+      await collectViolations();
+
+      renderKpis();
+      renderHeatmap();
+      renderMatrix();
+      renderTopRisks();
+      renderCoverageGap();
+      renderRtm();
+      renderTests();
+      await renderDrawerFromHash();
+    }
+
+    document.getElementById("drawerBackdrop").addEventListener("click", () => {
+      closeDrawer();
+      history.replaceState(null, "", location.pathname + location.search);
+    });
+    document.getElementById("closeDrawer").addEventListener("click", () => {
+      closeDrawer();
+      history.replaceState(null, "", location.pathname + location.search);
+    });
+
+    window.addEventListener("hashchange", () => { renderDrawerFromHash(); });
+    init();
   </script>
 </body>
 </html>

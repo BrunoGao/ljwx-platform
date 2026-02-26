@@ -158,6 +158,10 @@ echo ""
 
 run_rule "R09" "Tests" "scripts/gates/gate-test.sh" "true" "true"
 
+if [[ -x "scripts/reports/collect-artifacts.sh" ]]; then
+  bash scripts/reports/collect-artifacts.sh "$PHASE" >/dev/null 2>&1 || true
+fi
+
 phase_report_file="$(bash scripts/gates/gate-report.sh "$PHASE" "$TMP_DIR" 2>/dev/null || true)"
 summary_file="$(bash scripts/gates/gate-summary.sh 2>/dev/null || true)"
 if [[ -x "scripts/reports/gen-test-report.sh" ]]; then
@@ -166,20 +170,36 @@ fi
 
 if [[ -z "$phase_report_file" || ! -f "$phase_report_file" ]]; then
   fallback="docs/reports/data/phases/phase-$PHASE.json"
+  run_id="${GITHUB_RUN_ID:-local}"
+  run_url=""
+  remote="$(git config --get remote.origin.url 2>/dev/null || true)"
+  owner="unknown"
+  repo="unknown"
+  if [[ "$remote" =~ github.com[:/]([^/]+)/([^/.]+) ]]; then
+    owner="${BASH_REMATCH[1]}"
+    repo="${BASH_REMATCH[2]}"
+  fi
+  if [[ "$owner" != "unknown" && "$repo" != "unknown" && "$run_id" != "local" ]]; then
+    run_url="https://github.com/${owner}/${repo}/actions/runs/${run_id}"
+  fi
   jq -n \
     --arg phase "$PHASE" \
     --arg ts "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
     --arg commit "$(git rev-parse --short HEAD 2>/dev/null || echo unknown)" \
-    '{phase:$phase,status:"FAIL",timestamp:$ts,git:{commit:$commit,branch:"unknown"},rules:[],summary:{total:0,pass:0,fail:1,skip:0,critical:1,warnings:0,pass_rate:0},violations:[{rule:"SYSTEM",severity:"CRITICAL",file:null,line:null,message:"phase report generation failed"}]}' >"$fallback"
+    --arg run_id "$run_id" \
+    --arg run_url "$run_url" \
+    '{phase:$phase,status:"FAIL",timestamp:$ts,git:{commit:$commit,branch:"unknown"},ci:{run_id:(if $run_id=="local" then null else ($run_id|tonumber) end),run_attempt:1,workflow:"gate-local",run_url:(if $run_url=="" then null else $run_url end)},rules:[],summary:{total:0,pass:0,fail:1,skip:0,critical:1,warnings:0,pass_rate:0},violations:[{rule:"SYSTEM",severity:"CRITICAL",file:null,line:null,message:"phase report generation failed"}]}' >"$fallback"
   phase_report_file="$fallback"
 fi
 
 if [[ -z "$summary_file" || ! -f "$summary_file" ]]; then
   mkdir -p docs/reports/data
+  run_id="${GITHUB_RUN_ID:-local}"
   jq -n \
     --arg ts "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
     --arg commit "$(git rev-parse --short HEAD 2>/dev/null || echo unknown)" \
-    '{generated_at:$ts,repo:{owner:"unknown",name:"unknown",branch:"unknown",commit:$commit},totals:{pass:0,fail:1,pending:0,critical:1,warnings:0},phases:[],history:[]}' > docs/reports/data/summary.json
+    --arg run_id "$run_id" \
+    '{generated_at:$ts,repo:{owner:"unknown",name:"unknown",default_branch:"master"},git:{branch:"unknown",commit:$commit,short:$commit},ci:{run_id:(if $run_id=="local" then null else ($run_id|tonumber) end),run_attempt:1,workflow:"gate-local",run_url:null},totals:{pass:0,fail:1,pending:0,critical:1,warnings:0},phases:[],history:[]}' > docs/reports/data/summary.json
 fi
 
 echo "══════════════════════════════════════════════════"

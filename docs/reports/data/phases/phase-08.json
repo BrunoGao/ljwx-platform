@@ -1,10 +1,26 @@
 {
   "phase": "08",
   "status": "PASS",
-  "timestamp": "2026-02-26T05:24:40Z",
+  "timestamp": "2026-02-26T08:15:34Z",
+  "repo": {
+    "owner": "BrunoGao",
+    "name": "ljwx-platform",
+    "default_branch": "master"
+  },
   "git": {
-    "commit": "e04765b",
+    "commit": "611edd2",
     "branch": "master"
+  },
+  "ci": {
+    "run_id": null,
+    "run_attempt": 1,
+    "workflow": "gate-local",
+    "run_url": null
+  },
+  "artifacts": {
+    "surefire_html": "data/artifacts/local/phase-08/surefire-index.html",
+    "surefire_xml_index": "data/artifacts/local/phase-08/surefire-index.json",
+    "gate_raw_log": "data/artifacts/local/phase-08/gate.log"
   },
   "rules": [
     {

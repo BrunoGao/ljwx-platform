@@ -1,42 +1,40 @@
 {
-  "generated_at": "2026-02-26T07:05:20Z",
+  "generated_at": "2026-02-26T10:31:17Z",
+  "ci": {
+    "run_id": null,
+    "run_attempt": 1,
+    "workflow": "gate-local",
+    "run_url": null
+  },
   "summary": {
-    "total": 4,
-    "pass": 4,
+    "total": 3,
+    "pass": 3,
     "fail": 0,
     "skip": 0
   },
   "tests": [
     {
-      "phase": "28",
-      "suite": "com.ljwx.platform.phase28.SecurityHardeningApiTest",
-      "testcase": "xssCharactersInQueryParamShouldNotBreakRequest",
+      "phase": "08",
+      "suite": "com.ljwx.platform.phase08.DictConfigApiTest",
+      "testcase": "dictListShouldRequireAuth",
       "status": "PASS",
-      "time_seconds": 1.725,
+      "time_seconds": 1.695,
       "message": ""
     },
     {
-      "phase": "28",
-      "suite": "com.ljwx.platform.phase28.SecurityHardeningApiTest",
-      "testcase": "protectedEndpointWithNoPermReturns403",
+      "phase": "08",
+      "suite": "com.ljwx.platform.phase08.DictConfigApiTest",
+      "testcase": "configCrudCoreFlow",
       "status": "PASS",
-      "time_seconds": 0.031,
+      "time_seconds": 0.651,
       "message": ""
     },
     {
-      "phase": "28",
-      "suite": "com.ljwx.platform.phase28.SecurityHardeningApiTest",
-      "testcase": "validTokenWithPermissionShouldAccessProtectedEndpoint",
+      "phase": "08",
+      "suite": "com.ljwx.platform.phase08.DictConfigApiTest",
+      "testcase": "dictCrudCoreFlow",
       "status": "PASS",
-      "time_seconds": 0.368,
-      "message": ""
-    },
-    {
-      "phase": "28",
-      "suite": "com.ljwx.platform.phase28.SecurityHardeningApiTest",
-      "testcase": "protectedEndpointWithoutTokenReturns401",
-      "status": "PASS",
-      "time_seconds": 0.022,
+      "time_seconds": 0.362,
       "message": ""
     }
   ]
