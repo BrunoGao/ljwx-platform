@@ -1,0 +1,60 @@
+name: Test Debt
+description: Track coverage gaps and missing test contracts
+title: "[Coverage][P20] "
+labels:
+  - type:test
+  - workflow:coding
+body:
+  - type: input
+    id: phase
+    attributes:
+      label: Phase
+      placeholder: "20"
+    validations:
+      required: true
+  - type: dropdown
+    id: suite
+    attributes:
+      label: Suite
+      options:
+        - Security
+        - Tenant
+        - CRUD
+        - OpenAPI
+        - Perf
+        - Other
+    validations:
+      required: true
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      options:
+        - P0
+        - P1
+        - P2
+    validations:
+      required: true
+  - type: textarea
+    id: gap_desc
+    attributes:
+      label: Gap Description
+      placeholder: "Describe uncovered test scope and risk."
+    validations:
+      required: true
+  - type: textarea
+    id: target_endpoints
+    attributes:
+      label: Target Endpoints
+      placeholder: |
+        - GET /api/v1/menus/tree
+        - POST /api/v1/menus
+    validations:
+      required: true
+  - type: textarea
+    id: expected_gain
+    attributes:
+      label: Expected Coverage Gain
+      placeholder: "test_covered from 62% to 75%"
+    validations:
+      required: true

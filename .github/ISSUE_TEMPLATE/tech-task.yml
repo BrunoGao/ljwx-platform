@@ -1,0 +1,55 @@
+name: Test Infra Tech Task
+description: Improve CI/test infra/report pipeline
+title: "[Tech][TestInfra] "
+labels:
+  - type:refactor
+  - workflow:coding
+body:
+  - type: dropdown
+    id: workstream
+    attributes:
+      label: Workstream
+      options:
+        - Infra
+    validations:
+      required: true
+  - type: dropdown
+    id: suite
+    attributes:
+      label: Suite
+      options:
+        - Security
+        - Tenant
+        - CRUD
+        - OpenAPI
+        - Perf
+        - Other
+    validations:
+      required: false
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      options:
+        - P0
+        - P1
+        - P2
+    validations:
+      required: true
+  - type: textarea
+    id: deliverables
+    attributes:
+      label: Deliverables
+      placeholder: "scripts / reports / workflow changes"
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance Criteria
+      value: |
+        - [ ] CI workflow updated
+        - [ ] Docs updated
+        - [ ] Dry-run and apply examples verified
+    validations:
+      required: true

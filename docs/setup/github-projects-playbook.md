@@ -6,16 +6,26 @@ This repository provides automation scripts under `scripts/project/`:
 
 - `project-bootstrap.sh`: query Project metadata and cache field/option IDs
 - `project-add-issue.sh`: add an Issue to a Project V2 board
-- `project-set-fields.sh`: update `Phase` / `Workflow` / `Priority` fields
+- `project-set-fields.sh`: update Project fields from issue/body/labels/CLI
 - `project-sync-issue.sh`: one command to add + update fields
+- `project-sync-pr.sh`: sync linked issues from a PR
+- `project-sync-gate-status.sh`: update Gate Status by phase or issue
 
-### Prerequisites
+## Field Model (Required)
 
-- `gh` CLI installed and authenticated: `gh auth login`
-- `jq` installed
-- Write permission for target Project V2
-- For Actions usage, token must have Project write permission
-  - Org-level projects often require PAT or fine-grained token with project write scope
+Create these Project V2 fields in UI (`Project -> Settings -> Fields`):
+
+- `Phase` (Number)
+- `Workflow` (Single-select): `Brief`, `Spec`, `Coding`, `Gate`, `Review`, `Done`
+- `Priority` (Single-select): `P0`, `P1`, `P2`
+- `Gate Status` (Single-select): `PASS`, `FAIL`, `PENDING`, `SKIP`
+- `Workstream` (Single-select): `Baseline`, `Regression`, `Coverage`, `Infra`
+- `Suite` (Single-select): `Security`, `Tenant`, `CRUD`, `OpenAPI`, `Perf`, `Other`
+
+Notes:
+
+- `Workstream` and `Suite` are Project fields (source of truth), not labels.
+- Labels remain optional for search compatibility (e.g. `suite:security`).
 
 ## How To Get Project V2 Node ID
 
@@ -47,8 +57,6 @@ query {
 }
 ```
 
-The returned `id` is your Project Node ID (`PVT_...`).
-
 ### Method 2: `gh` CLI (recommended)
 
 ```bash
@@ -60,15 +68,9 @@ query($org:String!, $number:Int!) {
 }' -F org='<ORG>' -F number=<NUMBER>
 ```
 
-After getting ID:
-
-```bash
-bash scripts/project/project-bootstrap.sh --project-id <PVT_...> --apply
-```
-
 ## Bootstrap Field Cache
 
-`project-bootstrap.sh` writes `.github/projectv2/project.json` used by later scripts.
+`project-bootstrap.sh` writes `.github/projectv2/project.json` used by all sync scripts.
 
 ```bash
 bash scripts/project/project-bootstrap.sh --project-id <PVT_...> --apply
@@ -76,13 +78,13 @@ bash scripts/project/project-bootstrap.sh --project-id <PVT_...> --apply
 bash scripts/project/project-bootstrap.sh --project-url https://github.com/orgs/<ORG>/projects/<NUMBER> --apply
 ```
 
-Expected required fields in the Project:
+The cache includes:
 
-- `Phase` (Number)
-- `Workflow` (Single-select): `Brief/Spec/Coding/Gate/Review/Done`
-- `Priority` (Single-select): `P0/P1/P2`
+- `projectId`
+- `fields.Phase/Workflow/Priority/GateStatus/Workstream/Suite`
+- `options.Workflow/Priority/GateStatus/Workstream/Suite`
 
-If missing, create them in Project UI first, then rerun bootstrap.
+If required fields are missing, bootstrap exits non-zero with creation hints.
 
 ## Sync One Issue To Project
 
@@ -92,7 +94,7 @@ Dry-run by default:
 bash scripts/project/project-sync-issue.sh --issue 123
 ```
 
-Apply changes:
+Apply with explicit overrides:
 
 ```bash
 bash scripts/project/project-sync-issue.sh \
@@ -100,62 +102,112 @@ bash scripts/project/project-sync-issue.sh \
   --phase 20 \
   --workflow Spec \
   --priority P1 \
-  --apply
-```
-
-Using issue URL:
-
-```bash
-bash scripts/project/project-sync-issue.sh \
-  --issue-url https://github.com/<OWNER>/<REPO>/issues/123 \
+  --gate FAIL \
+  --workstream Regression \
+  --suite Security \
   --apply
 ```
 
 Value resolution priority:
 
-1. CLI flags (`--phase/--workflow/--priority`)
-2. Issue title/body patterns (`[Phase 20]`, `Phase: 20`, `Workflow: Spec`, `Priority: P1`)
-3. Labels (`phase-20`, `workflow:spec`, `priority:P1`)
+1. CLI flags
+2. Issue body fields (`Phase:`, `Workflow:`, `Priority:`, `Gate Status:`, `Workstream:`, `Suite:`)
+3. Labels (`phase-20`, `workflow:spec`, `priority:P1`, `gate:fail`, `workstream:regression`, `suite:security`)
+4. Not resolved => skip that field with warning
 
-## Common Errors And Troubleshooting
+## Sync Linked Issues From PR
 
-- Permission denied / GraphQL forbidden
-  - Confirm `gh auth status`
-  - Check account role on org/user project
-  - In CI, use token with project write permission
-- Field not found (`Phase` / `Workflow` / `Priority`)
-  - Create missing field in Project V2 UI
-  - Re-run bootstrap to refresh `.github/projectv2/project.json`
-- Option mismatch (e.g. `workflow` not recognized)
-  - Check exact option names in Project UI
-  - Re-run bootstrap and verify cached `options` map
-- Issue already in project
-  - This is handled idempotently; script reuses existing item and continues to update fields
+```bash
+bash scripts/project/project-sync-pr.sh --pr 456 --apply
+```
 
-## Recommended Team Workflow
+The script resolves linked issues from GraphQL `closingIssuesReferences`, then falls back to PR body keywords (`Closes #123`, `Fixes #123`, `Relates #123`).
 
-1. Project admin runs bootstrap once and commits `.github/projectv2/project.json`
-2. CI/developers use `project-sync-issue.sh` for day-to-day updates
-3. Re-run bootstrap whenever Project field or option definitions change
+## Sync Gate Status
+
+Update by explicit issue:
+
+```bash
+bash scripts/project/project-sync-gate-status.sh \
+  --phase 20 --status PASS --issue 123 --apply
+```
+
+Update by phase auto-discovery:
+
+```bash
+bash scripts/project/project-sync-gate-status.sh \
+  --phase 20 --status FAIL --apply
+```
+
+Auto-discovery rule:
+
+- search open issues with label `phase-XX`
+- title must match `^[Phase XX]`
+- exactly one match required; otherwise exit non-zero to avoid accidental updates
+
+## Views Configuration (Recommended)
+
+Set up these Project views:
+
+- `Board / Workflow`: Group by `Workflow`, sort by `Priority`
+- `Table / Gate`: Columns include `Phase`, `Gate Status`, `Workstream`, `Suite`, `Priority`, `Workflow`
+- `Roadmap / Campaign`: Use date fields from campaign issues, filter `type:test`
+- `Gantt / Infra`: Filter `Workstream=Infra`, group by `Suite`
+
+## Automation
+
+Minimum viable automation:
+
+- `.github/workflows/project-v2-issue-sync.yml`: on `issues` events, run `project-sync-issue.sh --apply`
+- `.github/workflows/gate-check.yml`: after gate run, call `project-sync-gate-status.sh` for detected phase
+
+Optional enhancement:
+
+- on `pull_request` events, call `project-sync-pr.sh --apply`
+- weekly campaign generator workflow for regression summary
+
+## Full Test Ops SOP
+
+Weekly cadence:
+
+1. Create/refresh a `Test Campaign` issue for the week
+2. Open/triage `Test Suite` and `Test Debt` issues by top risks
+3. Run regression and attach run URL to `Regression Bug` issues
+4. Update `Gate Status` on affected Phase epic issues
+5. Close done items and keep unresolved items in next campaign
+
+Issue opening rules:
+
+- Baseline/regression initiative => `test-campaign.yml`
+- Focused suite implementation => `test-suite.yml`
+- Coverage gap => `test-debt.yml`
+- Regression failure => `regression-bug.yml`
+- Test infra/report workflow => `tech-task.yml`
 
 ## Enable GitHub Actions Auto Sync
-
-This repo includes workflow: `.github/workflows/project-v2-issue-sync.yml`.
-
-Trigger behavior:
-
-- Automatic: on `issues` events (`opened/edited/reopened/labeled/unlabeled`)
-- Manual: `workflow_dispatch` with optional overrides
 
 Required repository secrets:
 
 - `PROJECT_V2_ID`: your Project V2 Node ID (`PVT_...`)
-- `PROJECT_V2_TOKEN` (recommended): token with Project write permission
-  - If not set, workflow falls back to `GITHUB_TOKEN` (may be insufficient for org projects)
+- `PROJECT_TOKEN` (preferred) or `PROJECT_V2_TOKEN`: token with Project write permission
+  - `GITHUB_TOKEN` may be enough for repo project, but often insufficient for org project
 
 Quick setup checklist:
 
-1. Add `PROJECT_V2_ID` and `PROJECT_V2_TOKEN` in repo settings
-2. Optionally commit `.github/projectv2/project.json` via bootstrap
-3. Open or edit any issue, then verify workflow `Project V2 Issue Sync` ran successfully
-4. Confirm issue appears in Project and Phase/Workflow/Priority fields are updated
+1. Add `PROJECT_V2_ID` and token secret
+2. Run bootstrap once and commit `.github/projectv2/project.json`
+3. Open or edit any issue and confirm `Project V2 Issue Sync` succeeds
+4. Confirm issue appears in Project with fields populated
+
+## Troubleshooting
+
+- Permission denied / GraphQL forbidden
+  - Verify token scope and project membership
+  - Prefer PAT/fine-grained token for org-level projects
+- Field or option missing
+  - Create field/option in Project UI
+  - Rerun bootstrap and commit updated cache
+- Multiple phase issues matched
+  - Pass `--issue` explicitly to `project-sync-gate-status.sh`
+- No values resolved from issue
+  - Provide CLI overrides (`--phase/--workflow/...`) or align issue template/body values

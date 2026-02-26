@@ -1,0 +1,83 @@
+name: Test Campaign
+description: Track baseline/regression campaign with quality targets
+title: "[Test Campaign] "
+labels:
+  - type:test
+  - workflow:review
+  - priority:P1
+body:
+  - type: dropdown
+    id: workstream
+    attributes:
+      label: Workstream
+      options:
+        - Baseline
+        - Regression
+        - Coverage
+        - Infra
+    validations:
+      required: true
+  - type: dropdown
+    id: suite
+    attributes:
+      label: Suite
+      options:
+        - ALL
+        - Security
+        - Tenant
+        - CRUD
+        - OpenAPI
+        - Perf
+        - Other
+    validations:
+      required: true
+  - type: input
+    id: phase_range
+    attributes:
+      label: Phase Range
+      description: "Optional range, for example 0-19 or 20-32"
+      placeholder: "0-19"
+    validations:
+      required: false
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      options:
+        - P0
+        - P1
+        - P2
+    validations:
+      required: true
+  - type: input
+    id: start_date
+    attributes:
+      label: Start Date
+      placeholder: "2026-02-26"
+    validations:
+      required: false
+  - type: input
+    id: due_date
+    attributes:
+      label: Due Date
+      placeholder: "2026-03-05"
+    validations:
+      required: false
+  - type: textarea
+    id: thresholds
+    attributes:
+      label: Target Thresholds
+      value: |
+        Gate Status: PENDING
+        Critical: 0
+        Coverage: >= 40%
+        Tests Execution: >= 80%
+    validations:
+      required: true
+  - type: textarea
+    id: plan
+    attributes:
+      label: Campaign Plan
+      placeholder: "Scope, schedule, owners, and checkpoints."
+    validations:
+      required: true

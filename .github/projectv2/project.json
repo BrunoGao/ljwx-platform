@@ -1,0 +1,405 @@
+{
+  "generated_at": "2026-02-26T13:15:12Z",
+  "repo": {
+    "owner": "BrunoGao",
+    "name": "ljwx-platform"
+  },
+  "projectId": "PVT_kwHOAgn-Ls4BQO6g",
+  "projectTitle": "@BrunoGao's untitled project",
+  "projectUrl": "https://github.com/users/BrunoGao/projects/2",
+  "fields": {
+    "Title": {
+      "id": "PVTF_lAHOAgn-Ls4BQO6gzg-aZgg",
+      "name": "Title",
+      "dataType": "TITLE",
+      "type": "ProjectV2Field",
+      "options": {}
+    },
+    "Assignees": {
+      "id": "PVTF_lAHOAgn-Ls4BQO6gzg-aZgk",
+      "name": "Assignees",
+      "dataType": "ASSIGNEES",
+      "type": "ProjectV2Field",
+      "options": {}
+    },
+    "Status": {
+      "id": "PVTSSF_lAHOAgn-Ls4BQO6gzg-aZgo",
+      "name": "Status",
+      "dataType": "SINGLE_SELECT",
+      "type": "ProjectV2SingleSelectField",
+      "options": {
+        "Todo": "f75ad846",
+        "In Progress": "47fc9ee4",
+        "Done": "98236657"
+      }
+    },
+    "Labels": {
+      "id": "PVTF_lAHOAgn-Ls4BQO6gzg-aZgs",
+      "name": "Labels",
+      "dataType": "LABELS",
+      "type": "ProjectV2Field",
+      "options": {}
+    },
+    "Linked pull requests": {
+      "id": "PVTF_lAHOAgn-Ls4BQO6gzg-aZgw",
+      "name": "Linked pull requests",
+      "dataType": "LINKED_PULL_REQUESTS",
+      "type": "ProjectV2Field",
+      "options": {}
+    },
+    "Milestone": {
+      "id": "PVTF_lAHOAgn-Ls4BQO6gzg-aZg0",
+      "name": "Milestone",
+      "dataType": "MILESTONE",
+      "type": "ProjectV2Field",
+      "options": {}
+    },
+    "Repository": {
+      "id": "PVTF_lAHOAgn-Ls4BQO6gzg-aZg4",
+      "name": "Repository",
+      "dataType": "REPOSITORY",
+      "type": "ProjectV2Field",
+      "options": {}
+    },
+    "Reviewers": {
+      "id": "PVTF_lAHOAgn-Ls4BQO6gzg-aZg8",
+      "name": "Reviewers",
+      "dataType": "REVIEWERS",
+      "type": "ProjectV2Field",
+      "options": {}
+    },
+    "Parent issue": {
+      "id": "PVTF_lAHOAgn-Ls4BQO6gzg-aZhA",
+      "name": "Parent issue",
+      "dataType": "PARENT_ISSUE",
+      "type": "ProjectV2Field",
+      "options": {}
+    },
+    "Sub-issues progress": {
+      "id": "PVTF_lAHOAgn-Ls4BQO6gzg-aZhE",
+      "name": "Sub-issues progress",
+      "dataType": "SUB_ISSUES_PROGRESS",
+      "type": "ProjectV2Field",
+      "options": {}
+    },
+    "Phase": {
+      "id": "PVTF_lAHOAgn-Ls4BQO6gzg-abak",
+      "name": "Phase",
+      "dataType": "NUMBER",
+      "type": "ProjectV2Field",
+      "options": {}
+    },
+    "Workflow": {
+      "id": "PVTSSF_lAHOAgn-Ls4BQO6gzg-abbQ",
+      "name": "Workflow",
+      "dataType": "SINGLE_SELECT",
+      "type": "ProjectV2SingleSelectField",
+      "options": {
+        "Brief": "6c087cee",
+        "Spec": "fb1169c1",
+        "Coding": "49af090a",
+        "Gate": "d23c6985",
+        "Review": "f0ed582f",
+        "Done": "8f047a4b"
+      }
+    },
+    "Priority": {
+      "id": "PVTSSF_lAHOAgn-Ls4BQO6gzg-abcA",
+      "name": "Priority",
+      "dataType": "SINGLE_SELECT",
+      "type": "ProjectV2SingleSelectField",
+      "options": {
+        "P0": "809c80ce",
+        "P1": "2890e7ed",
+        "P2": "a300b0dc"
+      }
+    },
+    "GateStatus": {
+      "id": "PVTSSF_lAHOAgn-Ls4BQO6gzg-abcs",
+      "name": "Gate Status",
+      "dataType": "SINGLE_SELECT",
+      "type": "ProjectV2SingleSelectField",
+      "options": {
+        "PASS": "ee16da95",
+        "FAIL": "2ac5496d",
+        "PENDING": "4b9324d4",
+        "SKIP": "e8fe3284"
+      }
+    },
+    "Workstream": {
+      "id": "PVTSSF_lAHOAgn-Ls4BQO6gzg-abeA",
+      "name": "Workstream",
+      "dataType": "SINGLE_SELECT",
+      "type": "ProjectV2SingleSelectField",
+      "options": {
+        "Baseline": "27541a10",
+        "Regression": "f03b4b1b",
+        "Coverage": "97d56540",
+        "Infra": "ce7ee847"
+      }
+    },
+    "Suite": {
+      "id": "PVTSSF_lAHOAgn-Ls4BQO6gzg-abes",
+      "name": "Suite",
+      "dataType": "SINGLE_SELECT",
+      "type": "ProjectV2SingleSelectField",
+      "options": {
+        "Security": "d6ce53ae",
+        "Tenant": "65c932c0",
+        "CRUD": "1eeb8d7b",
+        "OpenAPI": "13bf390e",
+        "Perf": "a5ca8bb7",
+        "Other": "1194d134"
+      }
+    }
+  },
+  "options": {
+    "Workflow": {
+      "Brief": "6c087cee",
+      "Spec": "fb1169c1",
+      "Coding": "49af090a",
+      "Gate": "d23c6985",
+      "Review": "f0ed582f",
+      "Done": "8f047a4b"
+    },
+    "Priority": {
+      "P0": "809c80ce",
+      "P1": "2890e7ed",
+      "P2": "a300b0dc"
+    },
+    "GateStatus": {
+      "PASS": "ee16da95",
+      "FAIL": "2ac5496d",
+      "PENDING": "4b9324d4",
+      "SKIP": "e8fe3284"
+    },
+    "Workstream": {
+      "Baseline": "27541a10",
+      "Regression": "f03b4b1b",
+      "Coverage": "97d56540",
+      "Infra": "ce7ee847"
+    },
+    "Suite": {
+      "Security": "d6ce53ae",
+      "Tenant": "65c932c0",
+      "CRUD": "1eeb8d7b",
+      "OpenAPI": "13bf390e",
+      "Perf": "a5ca8bb7",
+      "Other": "1194d134"
+    }
+  },
+  "all_fields": [
+    {
+      "__typename": "ProjectV2Field",
+      "id": "PVTF_lAHOAgn-Ls4BQO6gzg-aZgg",
+      "name": "Title",
+      "dataType": "TITLE"
+    },
+    {
+      "__typename": "ProjectV2Field",
+      "id": "PVTF_lAHOAgn-Ls4BQO6gzg-aZgk",
+      "name": "Assignees",
+      "dataType": "ASSIGNEES"
+    },
+    {
+      "__typename": "ProjectV2SingleSelectField",
+      "id": "PVTSSF_lAHOAgn-Ls4BQO6gzg-aZgo",
+      "name": "Status",
+      "dataType": "SINGLE_SELECT",
+      "options": [
+        {
+          "id": "f75ad846",
+          "name": "Todo"
+        },
+        {
+          "id": "47fc9ee4",
+          "name": "In Progress"
+        },
+        {
+          "id": "98236657",
+          "name": "Done"
+        }
+      ]
+    },
+    {
+      "__typename": "ProjectV2Field",
+      "id": "PVTF_lAHOAgn-Ls4BQO6gzg-aZgs",
+      "name": "Labels",
+      "dataType": "LABELS"
+    },
+    {
+      "__typename": "ProjectV2Field",
+      "id": "PVTF_lAHOAgn-Ls4BQO6gzg-aZgw",
+      "name": "Linked pull requests",
+      "dataType": "LINKED_PULL_REQUESTS"
+    },
+    {
+      "__typename": "ProjectV2Field",
+      "id": "PVTF_lAHOAgn-Ls4BQO6gzg-aZg0",
+      "name": "Milestone",
+      "dataType": "MILESTONE"
+    },
+    {
+      "__typename": "ProjectV2Field",
+      "id": "PVTF_lAHOAgn-Ls4BQO6gzg-aZg4",
+      "name": "Repository",
+      "dataType": "REPOSITORY"
+    },
+    {
+      "__typename": "ProjectV2Field",
+      "id": "PVTF_lAHOAgn-Ls4BQO6gzg-aZg8",
+      "name": "Reviewers",
+      "dataType": "REVIEWERS"
+    },
+    {
+      "__typename": "ProjectV2Field",
+      "id": "PVTF_lAHOAgn-Ls4BQO6gzg-aZhA",
+      "name": "Parent issue",
+      "dataType": "PARENT_ISSUE"
+    },
+    {
+      "__typename": "ProjectV2Field",
+      "id": "PVTF_lAHOAgn-Ls4BQO6gzg-aZhE",
+      "name": "Sub-issues progress",
+      "dataType": "SUB_ISSUES_PROGRESS"
+    },
+    {
+      "__typename": "ProjectV2Field",
+      "id": "PVTF_lAHOAgn-Ls4BQO6gzg-abak",
+      "name": "Phase",
+      "dataType": "NUMBER"
+    },
+    {
+      "__typename": "ProjectV2SingleSelectField",
+      "id": "PVTSSF_lAHOAgn-Ls4BQO6gzg-abbQ",
+      "name": "Workflow",
+      "dataType": "SINGLE_SELECT",
+      "options": [
+        {
+          "id": "6c087cee",
+          "name": "Brief"
+        },
+        {
+          "id": "fb1169c1",
+          "name": "Spec"
+        },
+        {
+          "id": "49af090a",
+          "name": "Coding"
+        },
+        {
+          "id": "d23c6985",
+          "name": "Gate"
+        },
+        {
+          "id": "f0ed582f",
+          "name": "Review"
+        },
+        {
+          "id": "8f047a4b",
+          "name": "Done"
+        }
+      ]
+    },
+    {
+      "__typename": "ProjectV2SingleSelectField",
+      "id": "PVTSSF_lAHOAgn-Ls4BQO6gzg-abcA",
+      "name": "Priority",
+      "dataType": "SINGLE_SELECT",
+      "options": [
+        {
+          "id": "809c80ce",
+          "name": "P0"
+        },
+        {
+          "id": "2890e7ed",
+          "name": "P1"
+        },
+        {
+          "id": "a300b0dc",
+          "name": "P2"
+        }
+      ]
+    },
+    {
+      "__typename": "ProjectV2SingleSelectField",
+      "id": "PVTSSF_lAHOAgn-Ls4BQO6gzg-abcs",
+      "name": "Gate Status",
+      "dataType": "SINGLE_SELECT",
+      "options": [
+        {
+          "id": "ee16da95",
+          "name": "PASS"
+        },
+        {
+          "id": "2ac5496d",
+          "name": "FAIL"
+        },
+        {
+          "id": "4b9324d4",
+          "name": "PENDING"
+        },
+        {
+          "id": "e8fe3284",
+          "name": "SKIP"
+        }
+      ]
+    },
+    {
+      "__typename": "ProjectV2SingleSelectField",
+      "id": "PVTSSF_lAHOAgn-Ls4BQO6gzg-abeA",
+      "name": "Workstream",
+      "dataType": "SINGLE_SELECT",
+      "options": [
+        {
+          "id": "27541a10",
+          "name": "Baseline"
+        },
+        {
+          "id": "f03b4b1b",
+          "name": "Regression"
+        },
+        {
+          "id": "97d56540",
+          "name": "Coverage"
+        },
+        {
+          "id": "ce7ee847",
+          "name": "Infra"
+        }
+      ]
+    },
+    {
+      "__typename": "ProjectV2SingleSelectField",
+      "id": "PVTSSF_lAHOAgn-Ls4BQO6gzg-abes",
+      "name": "Suite",
+      "dataType": "SINGLE_SELECT",
+      "options": [
+        {
+          "id": "d6ce53ae",
+          "name": "Security"
+        },
+        {
+          "id": "65c932c0",
+          "name": "Tenant"
+        },
+        {
+          "id": "1eeb8d7b",
+          "name": "CRUD"
+        },
+        {
+          "id": "13bf390e",
+          "name": "OpenAPI"
+        },
+        {
+          "id": "a5ca8bb7",
+          "name": "Perf"
+        },
+        {
+          "id": "1194d134",
+          "name": "Other"
+        }
+      ]
+    }
+  ]
+}

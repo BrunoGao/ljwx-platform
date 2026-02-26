@@ -1,0 +1,66 @@
+name: Test Suite Task
+description: Implement or run a focused suite task
+title: "[Baseline][Security] "
+labels:
+  - type:test
+  - workflow:coding
+body:
+  - type: dropdown
+    id: workstream
+    attributes:
+      label: Workstream
+      options:
+        - Baseline
+        - Regression
+        - Coverage
+        - Infra
+    validations:
+      required: true
+  - type: dropdown
+    id: suite
+    attributes:
+      label: Suite
+      options:
+        - Security
+        - Tenant
+        - CRUD
+        - OpenAPI
+        - Perf
+        - Other
+    validations:
+      required: true
+  - type: input
+    id: phase
+    attributes:
+      label: Phase
+      placeholder: "20"
+    validations:
+      required: false
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      options:
+        - P0
+        - P1
+        - P2
+    validations:
+      required: true
+  - type: textarea
+    id: run_cmd
+    attributes:
+      label: Run Command
+      placeholder: "mvn -Dtest=SecurityHardeningApiTest test"
+    validations:
+      required: true
+  - type: textarea
+    id: checklist
+    attributes:
+      label: Verification Checklist
+      value: |
+        - [ ] Local run success
+        - [ ] CI run success
+        - [ ] Report linked
+        - [ ] Related spec updated
+    validations:
+      required: true

@@ -327,12 +327,27 @@ setup_labels() {
 
   upsert_label "gate:pass" "0e8a16" "Gate passed"
   upsert_label "gate:fail" "d73a4a" "Gate failed"
+  upsert_label "gate:pending" "8a8a8a" "Gate pending"
+  upsert_label "gate:skip" "bfdadc" "Gate skipped"
 
   upsert_label "workflow:brief" "5319e7" "Brief stage"
   upsert_label "workflow:spec" "1d76db" "Spec stage"
   upsert_label "workflow:coding" "0e8a16" "Coding stage"
   upsert_label "workflow:gate" "e67e22" "Gate checking"
   upsert_label "workflow:review" "8a8a8a" "Review stage"
+  upsert_label "workflow:done" "0e8a16" "Done stage"
+
+  upsert_label "workstream:baseline" "1d76db" "Baseline workstream"
+  upsert_label "workstream:regression" "5319e7" "Regression workstream"
+  upsert_label "workstream:coverage" "fbca04" "Coverage workstream"
+  upsert_label "workstream:infra" "8a8a8a" "Infra workstream"
+
+  upsert_label "suite:security" "d73a4a" "Security test suite"
+  upsert_label "suite:tenant" "e67e22" "Tenant test suite"
+  upsert_label "suite:crud" "0e8a16" "CRUD test suite"
+  upsert_label "suite:openapi" "1d76db" "OpenAPI test suite"
+  upsert_label "suite:perf" "5319e7" "Performance test suite"
+  upsert_label "suite:other" "bfdadc" "Other test suite"
 
   upsert_label "gate-failure" "b60205" "Created from gate failure"
 }

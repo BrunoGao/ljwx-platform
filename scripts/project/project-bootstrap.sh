@@ -85,39 +85,87 @@ cache_json="$(jq -n \
   --arg projectId "$PROJECT_ID" \
   --argjson project "$(jq '.data.node' <<<"$raw")" \
   '
-  def keyname($n): ($n|ascii_downcase|gsub("[^a-z0-9]+";"_")|gsub("(^_|_$)";""));
-  {
-    generated_at:$generated_at,
-    repo:{owner:$owner,name:$repo},
-    projectId:$projectId,
-    projectTitle:($project.title // ""),
-    projectUrl:($project.url // ""),
-    fields:(
-      reduce ($project.fields.nodes // [])[] as $f ({};
-        . + {
-          (keyname($f.name)):{
-            id:$f.id,
-            name:$f.name,
-            dataType:$f.dataType,
-            type:$f.__typename,
-            options:(
-              if $f.__typename == "ProjectV2SingleSelectField" then
-                reduce ($f.options // [])[] as $o ({}; . + {($o.name):$o.id})
-              else {}
-              end
-            )
-          }
+  def canonical($n):
+    ($n|ascii_downcase) as $v
+    | if $v == "phase" then "Phase"
+      elif $v == "workflow" then "Workflow"
+      elif $v == "priority" then "Priority"
+      elif $v == "gate status" or $v == "gatestatus" then "GateStatus"
+      elif $v == "workstream" then "Workstream"
+      elif $v == "suite" then "Suite"
+      else $n
+      end;
+  def by_name:
+    reduce ($project.fields.nodes // [])[] as $f ({};
+      . + {
+        (canonical($f.name)): {
+          id: $f.id,
+          name: $f.name,
+          dataType: $f.dataType,
+          type: $f.__typename,
+          options: (
+            if $f.__typename == "ProjectV2SingleSelectField" then
+              reduce ($f.options // [])[] as $o ({}; . + {($o.name): $o.id})
+            else {}
+            end
+          )
         }
-      )
-    ),
-    all_fields:($project.fields.nodes // [])
+      }
+    );
+  {
+    generated_at: $generated_at,
+    repo: { owner: $owner, name: $repo },
+    projectId: $projectId,
+    projectTitle: ($project.title // ""),
+    projectUrl: ($project.url // ""),
+    fields: by_name,
+    options: {
+      Workflow: (by_name.Workflow.options // {}),
+      Priority: (by_name.Priority.options // {}),
+      GateStatus: (by_name.GateStatus.options // {}),
+      Workstream: (by_name.Workstream.options // {}),
+      Suite: (by_name.Suite.options // {})
+    },
+    all_fields: ($project.fields.nodes // [])
   }
 ')"
+
+required_fields=(Phase Workflow Priority GateStatus Workstream Suite)
+missing=()
+for f in "${required_fields[@]}"; do
+  fid="$(jq -r --arg f "$f" '.fields[$f].id // empty' <<<"$cache_json")"
+  [[ -n "$fid" ]] || missing+=("$f")
+done
+
+required_options_Workflow=(Brief Spec Coding Gate Review Done)
+required_options_Priority=(P0 P1 P2)
+required_options_GateStatus=(PASS FAIL PENDING SKIP)
+required_options_Workstream=(Baseline Regression Coverage Infra)
+required_options_Suite=(Security Tenant CRUD OpenAPI Perf Other)
+missing_options=()
+for field in Workflow Priority GateStatus Workstream Suite; do
+  arr_name="required_options_${field}[@]"
+  for opt in "${!arr_name}"; do
+    oid="$(jq -r --arg f "$field" --arg o "$opt" '.options[$f][$o] // empty' <<<"$cache_json")"
+    [[ -n "$oid" ]] || missing_options+=("${field}:${opt}")
+  done
+done
+
+if (( ${#missing[@]} > 0 || ${#missing_options[@]} > 0 )); then
+  if (( ${#missing[@]} > 0 )); then
+    echo "[error] missing required Project V2 fields: ${missing[*]}" >&2
+  fi
+  if (( ${#missing_options[@]} > 0 )); then
+    echo "[error] missing required Project V2 options: ${missing_options[*]}" >&2
+  fi
+  echo "Create missing fields/options in Project UI: Settings -> Fields, then rerun bootstrap." >&2
+  exit 1
+fi
 
 printf 'Project: %s (%s)\n' "$(jq -r '.projectTitle' <<<"$cache_json")" "$PROJECT_ID"
 printf 'URL: %s\n' "$(jq -r '.projectUrl' <<<"$cache_json")"
 printf 'Fields:\n'
-jq -r '.fields | to_entries[] | "- " + .value.name + " => " + .value.id + (if (.value.options|length)>0 then " (options: " + ((.value.options|keys)|join(",")) + ")" else "" end)' <<<"$cache_json"
+jq -r '.fields | to_entries[] | "- " + .key + " => " + .value.id + (if (.value.options|length)>0 then " (options: " + ((.value.options|keys)|join(",")) + ")" else "" end)' <<<"$cache_json"
 
 if [[ "$DRY_RUN" == "true" ]]; then
   echo "[dry-run] cache file not written: $CACHE_FILE"

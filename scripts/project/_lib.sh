@@ -20,6 +20,10 @@ lower() {
   printf '%s' "$1" | tr '[:upper:]' '[:lower:]'
 }
 
+upper() {
+  printf '%s' "$1" | tr '[:lower:]' '[:upper:]'
+}
+
 ensure_tools() {
   need_cmd gh
   need_cmd jq
@@ -105,15 +109,59 @@ find_project_item_for_issue() {
     | head -n1
 }
 
-field_id_from_cache() {
-  local key="$1"
-  [[ -f "$CACHE_FILE" ]] || return 1
-  jq -r --arg key "$key" '.fields[$key].id // empty' "$CACHE_FILE"
-}
-
 option_id_from_cache() {
   local field_key="$1" option_name="$2"
   [[ -f "$CACHE_FILE" ]] || return 1
-  jq -r --arg fk "$field_key" --arg opt "$option_name" '.fields[$fk].options[$opt] // empty' "$CACHE_FILE"
+  local fk
+  fk="$(normalize_field_key "$field_key")"
+  jq -r --arg fk "$fk" --arg opt "$option_name" '
+    .options[$fk][$opt]
+    // .fields[$fk].options[$opt]
+    // empty
+  ' "$CACHE_FILE"
 }
 
+normalize_field_key() {
+  local s
+  s="$(lower "$(trim "$1")")"
+  s="${s// /}"
+  s="${s//_/}"
+  s="${s//-/}"
+  case "$s" in
+    phase) echo "Phase" ;;
+    workflow) echo "Workflow" ;;
+    priority) echo "Priority" ;;
+    gatestatus|gate) echo "GateStatus" ;;
+    workstream) echo "Workstream" ;;
+    suite) echo "Suite" ;;
+    *) echo "$1" ;;
+  esac
+}
+
+field_id_from_cache() {
+  local key="$1"
+  [[ -f "$CACHE_FILE" ]] || return 1
+  local fk
+  fk="$(normalize_field_key "$key")"
+  case "$fk" in
+    Phase) jq -r '.fields.Phase.id // .fields.phase.id // empty' "$CACHE_FILE" ;;
+    Workflow) jq -r '.fields.Workflow.id // .fields.workflow.id // empty' "$CACHE_FILE" ;;
+    Priority) jq -r '.fields.Priority.id // .fields.priority.id // empty' "$CACHE_FILE" ;;
+    GateStatus) jq -r '.fields.GateStatus.id // .fields.gate_status.id // .fields.gatestatus.id // empty' "$CACHE_FILE" ;;
+    Workstream) jq -r '.fields.Workstream.id // .fields.workstream.id // empty' "$CACHE_FILE" ;;
+    Suite) jq -r '.fields.Suite.id // .fields.suite.id // empty' "$CACHE_FILE" ;;
+    *) jq -r --arg key "$fk" '.fields[$key].id // empty' "$CACHE_FILE" ;;
+  esac
+}
+
+extract_body_field_value() {
+  local body="$1" name="$2"
+  awk -v n="$name" '
+    BEGIN { IGNORECASE = 1 }
+    $0 ~ "^[[:space:]]*" n "[[:space:]]*:[[:space:]]*" {
+      sub("^[[:space:]]*" n "[[:space:]]*:[[:space:]]*", "", $0)
+      print $0
+      exit
+    }
+  ' <<<"$body" | sed 's/[[:space:]]*$//'
+}
