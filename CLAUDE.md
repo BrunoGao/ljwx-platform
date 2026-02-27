@@ -92,98 +92,16 @@ Phase: 31 (Frontend Permission Directive and Enhancement) — PASSED
 <version>1.0.0-SNAPSHOT</version>
 ```
 
-## 代码风格参考（少样本）
+## 代码风格参考
 
-### Controller（后端）
-
-```java
-@RestController
-@RequestMapping("/api/users")
-@RequiredArgsConstructor
-public class UserController {
-    private final UserAppService userAppService;
-
-    @GetMapping
-    @PreAuthorize("hasAuthority('user:read')")
-    public Result<PageResult<UserVO>> list(UserQueryDTO query) {
-        return Result.ok(userAppService.listUsers(query));
-    }
-
-    @PostMapping
-    @PreAuthorize("hasAuthority('user:write')")
-    public Result<Long> create(@RequestBody @Valid UserCreateDTO dto) {
-        return Result.ok(userAppService.createUser(dto));
-    }
-}
-```
-
-### Service（后端）
-
-```java
-@Service
-@RequiredArgsConstructor
-public class UserAppService {
-    private final UserMapper userMapper;
-
-    public PageResult<UserVO> listUsers(UserQueryDTO query) {
-        // 不传 tenantId，TenantLineInterceptor 自动注入
-        List<UserVO> list = userMapper.selectUserList(query);
-        long total = userMapper.countUsers(query);
-        return new PageResult<>(list, total);
-    }
-}
-```
-
-### Vue 组件（前端）
-
-```vue
-<script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { getUsers } from '@/api/user'
-import type { UserVO } from '@ljwx/shared'
-
-const loading = ref(false)
-const users = ref<UserVO[]>([])
-
-onMounted(async () => {
-  loading.value = true
-  try {
-    users.value = await getUsers()
-  } finally {
-    loading.value = false
-  }
-})
-</script>
-```
-
-### API 调用（前端）
-
-```typescript
-import request from '@/api/request'
-import type { Result, PageResult, UserVO, UserQueryDTO } from '@ljwx/shared'
-
-export function getUsers(params?: UserQueryDTO): Promise<PageResult<UserVO>> {
-  return request.get('/users', { params })
-}
-```
-
-## 反模式（IMPORTANT — 禁止）
-
-- ❌ data 模块 import com.ljwx.platform.security.* → 违反 DAG
-- ❌ security 模块 import com.ljwx.platform.data.* → 违反 DAG
-- ❌ DTO 中 private Long tenantId → 违反多租户规则
-- ❌ @PreAuthorize("hasRole('ADMIN')") → 不使用 ROLE_ 前缀
-- ❌ "axios": "^1.13.5" → 禁止 caret
-- ❌ const data: any = response → 禁止 any
-- ❌ CREATE TABLE IF NOT EXISTS 在 Flyway SQL 中 → 禁止
-- ❌ VITE_API_BASE_URL → 已废弃变量名
-- ❌ 按 vue-router v4 经验写 createRouter → 必须用 v5 API
-- ❌ 修改非本 Phase 职责范围内的文件 → PATCHES 最小化
-- ❌ // ... 省略 ... 或 /* rest same as before */ → 必须输出完整内容
+详见自动加载的规则文件（无需重复，优先读规则文件）：
+- Java 约定：`.claude/rules/java-conventions.md`（Controller / Service / DTO 少样本）
+- Vue/TS 约定：`.claude/rules/vue-conventions.md`（组件 / API 少样本）
+- Flyway 规范：`.claude/rules/flyway-rules.md`（迁移 SQL 少样本）
 
 ## Compact 指令
 
-When compacting, always preserve: 当前 Phase 编号及进度、已完成的文件清单、硬规则全文、版本锁定表全文、反模式清单。
+When compacting, always preserve: 当前 Phase 编号及进度、已完成的文件清单、硬规则全文、版本锁定表全文。
 
 ## GitHub 集成规范（DevEx）
 

@@ -2,6 +2,7 @@
 name: gen-migration
 description: Generate a Flyway SQL migration file following LJWX project conventions. Use when adding new database tables or schema changes.
 argument-hint: "[phase-number] [description]"
+disable-model-invocation: true
 ---
 
 # 生成 Flyway 迁移文件

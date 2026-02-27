@@ -2,6 +2,7 @@
 name: phase-exec
 description: Execute a specific phase of LJWX platform development. Use when asked to implement a phase or when the user says phase followed by a number.
 argument-hint: [phase-number or range like 0-1]
+disable-model-invocation: true
 ---
 
 # Phase 执行流程
