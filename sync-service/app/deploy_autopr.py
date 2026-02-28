@@ -33,6 +33,14 @@ class _RepoFile:
     content: str
 
 
+@dataclass(frozen=True)
+class _PullRequestInfo:
+    number: int
+    head_ref: str
+    state: str
+    title: str
+
+
 class DeployRepoAutoPr:
     def __init__(self, settings: Settings) -> None:
         self._settings = settings
@@ -99,7 +107,7 @@ class DeployRepoAutoPr:
             f"- digest: `{task.digest}`\n"
             f"- tag: `{sha_tag}`\n"
         )
-        self._create_or_reuse_pr(
+        pr = self._create_or_reuse_pr(
             owner=owner,
             repo=repo,
             head_branch=branch,
@@ -107,6 +115,19 @@ class DeployRepoAutoPr:
             title=title,
             body=body,
         )
+        self._close_superseded_prs(
+            owner=owner,
+            repo=repo,
+            component=component,
+            current_pr_number=pr.number,
+        )
+        if self._settings.deploy_autopr_auto_merge_enabled:
+            self._try_merge_pr(
+                owner=owner,
+                repo=repo,
+                pr_number=pr.number,
+                title=title,
+            )
         logger.info(
             "自动 PR 已准备完成 task_id=%s component=%s tag=%s branch=%s",
             task.task_id,
@@ -200,7 +221,7 @@ class DeployRepoAutoPr:
         base_branch: str,
         title: str,
         body: str,
-    ) -> None:
+    ) -> _PullRequestInfo:
         payload = {
             "title": title,
             "head": head_branch,
@@ -208,12 +229,79 @@ class DeployRepoAutoPr:
             "body": body,
         }
         try:
-            self._request_json("POST", f"/repos/{owner}/{repo}/pulls", payload)
+            created = self._request_json(
+                "POST", f"/repos/{owner}/{repo}/pulls", payload
+            )
+            return self._to_pr_info(created)
         except DeployAutoPrError as exc:
             if "A pull request already exists" in str(exc):
                 logger.info("自动 PR 已存在，分支=%s", head_branch)
-                return
+                existing = self._find_open_pr_by_head(
+                    owner=owner,
+                    repo=repo,
+                    head_branch=head_branch,
+                )
+                if existing is None:
+                    raise DeployAutoPrError("发现 PR 已存在但未查询到对应 open PR")
+                return existing
             raise
+
+    def _close_superseded_prs(
+        self,
+        owner: str,
+        repo: str,
+        component: str,
+        current_pr_number: int,
+    ) -> None:
+        if not self._settings.deploy_autopr_close_superseded_prs:
+            return
+        prefix = f"{self._settings.deploy_autopr_branch_prefix}/{component}/"
+        open_prs = self._list_open_prs(owner, repo)
+        for pr in open_prs:
+            if pr.number == current_pr_number:
+                continue
+            if not pr.head_ref.startswith(prefix):
+                continue
+            self._request_json(
+                "PATCH",
+                f"/repos/{owner}/{repo}/pulls/{pr.number}",
+                {"state": "closed"},
+            )
+            logger.info("已自动关闭旧 PR pr=%s head=%s", pr.number, pr.head_ref)
+
+    def _try_merge_pr(self, owner: str, repo: str, pr_number: int, title: str) -> None:
+        payload = {
+            "commit_title": title,
+            "merge_method": self._settings.deploy_autopr_auto_merge_method,
+        }
+        try:
+            self._request_json(
+                "PUT",
+                f"/repos/{owner}/{repo}/pulls/{pr_number}/merge",
+                payload,
+            )
+            logger.info("已自动合并 PR pr=%s", pr_number)
+        except DeployAutoPrError as exc:
+            logger.warning("自动合并未完成 pr=%s error=%s", pr_number, str(exc))
+
+    def _find_open_pr_by_head(
+        self, owner: str, repo: str, head_branch: str
+    ) -> _PullRequestInfo | None:
+        data = self._request_json(
+            "GET",
+            f"/repos/{owner}/{repo}/pulls?state=open&head={owner}:{quote(head_branch)}",
+        )
+        for item in self._as_list(data):
+            pr = self._to_pr_info(item)
+            if pr.head_ref == head_branch and pr.state.lower() == "open":
+                return pr
+        return None
+
+    def _list_open_prs(self, owner: str, repo: str) -> list[_PullRequestInfo]:
+        data = self._request_json(
+            "GET", f"/repos/{owner}/{repo}/pulls?state=open&per_page=100"
+        )
+        return [self._to_pr_info(item) for item in self._as_list(data)]
 
     def _request_json(
         self, method: str, path: str, payload: dict[str, str] | None = None
@@ -255,3 +343,31 @@ class DeployRepoAutoPr:
         if not isinstance(value, dict):
             raise DeployAutoPrError("GitHub API 返回结构不符合预期")
         return value
+
+    @staticmethod
+    def _as_list(value: object) -> list[object]:
+        if not isinstance(value, list):
+            raise DeployAutoPrError("GitHub API 返回列表结构不符合预期")
+        return value
+
+    def _to_pr_info(self, value: object) -> _PullRequestInfo:
+        obj = self._as_dict(value)
+        number = obj.get("number")
+        state = obj.get("state")
+        title = obj.get("title")
+        head = self._as_dict(obj.get("head"))
+        head_ref = head.get("ref")
+        if not isinstance(number, int):
+            raise DeployAutoPrError("PR 返回缺少 number")
+        if not isinstance(state, str) or state == "":
+            raise DeployAutoPrError("PR 返回缺少 state")
+        if not isinstance(title, str):
+            raise DeployAutoPrError("PR 返回缺少 title")
+        if not isinstance(head_ref, str) or head_ref == "":
+            raise DeployAutoPrError("PR 返回缺少 head.ref")
+        return _PullRequestInfo(
+            number=number,
+            head_ref=head_ref,
+            state=state,
+            title=title,
+        )

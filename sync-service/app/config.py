@@ -52,6 +52,15 @@ class Settings(BaseSettings):
     deploy_autopr_branch_prefix: str = Field(
         default="sync", alias="DEPLOY_AUTOPR_BRANCH_PREFIX"
     )
+    deploy_autopr_close_superseded_prs: bool = Field(
+        default=True, alias="DEPLOY_AUTOPR_CLOSE_SUPERSEDED_PRS"
+    )
+    deploy_autopr_auto_merge_enabled: bool = Field(
+        default=False, alias="DEPLOY_AUTOPR_AUTO_MERGE_ENABLED"
+    )
+    deploy_autopr_auto_merge_method: str = Field(
+        default="squash", alias="DEPLOY_AUTOPR_AUTO_MERGE_METHOD"
+    )
     deploy_repo_owner: str = Field(default="BrunoGaoSZ", alias="DEPLOY_REPO_OWNER")
     deploy_repo_name: str = Field(default="ljwx-deploy", alias="DEPLOY_REPO_NAME")
     deploy_repo_base_branch: str = Field(
