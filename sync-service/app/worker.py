@@ -6,16 +6,24 @@ from datetime import UTC, datetime
 
 from .config import Settings
 from .db import Database, TaskRecord
+from .deploy_autopr import DeployAutoPrError, DeployRepoAutoPr
 from .skopeo_runner import FatalError, RetryableError, SkopeoRunner
 
 logger = logging.getLogger(__name__)
 
 
 class WorkerService:
-    def __init__(self, db: Database, skopeo: SkopeoRunner, settings: Settings) -> None:
+    def __init__(
+        self,
+        db: Database,
+        skopeo: SkopeoRunner,
+        settings: Settings,
+        deploy_autopr: DeployRepoAutoPr | None = None,
+    ) -> None:
         self._db = db
         self._skopeo = skopeo
         self._settings = settings
+        self._deploy_autopr = deploy_autopr
         self._stop_event = asyncio.Event()
         self._task: asyncio.Task[None] | None = None
 
@@ -65,6 +73,7 @@ class WorkerService:
         try:
             if self._skopeo.harbor_has_digest(task):
                 self._db.set_verified(task.task_id, now)
+                self._trigger_deploy_autopr(task)
                 logger.info(
                     "任务已验证完成（目标已存在同 digest） task_id=%s", task.task_id
                 )
@@ -73,6 +82,7 @@ class WorkerService:
             self._skopeo.copy_task(task)
             self._skopeo.verify_digest(task)
             self._db.set_verified(task.task_id, datetime.now(UTC))
+            self._trigger_deploy_autopr(task)
             logger.info("任务同步并校验成功 task_id=%s", task.task_id)
         except RetryableError as exc:
             retry = task.retry_count + 1
@@ -102,6 +112,16 @@ class WorkerService:
             self._db.set_failed_fatal(task.task_id, str(exc), datetime.now(UTC))
             logger.error("任务致命失败 task_id=%s error=%s", task.task_id, str(exc))
 
+    def _trigger_deploy_autopr(self, task: TaskRecord) -> None:
+        if self._deploy_autopr is None:
+            return
+        try:
+            self._deploy_autopr.submit_verified_task(task)
+        except DeployAutoPrError as exc:
+            logger.error(
+                "自动 deploy PR 失败 task_id=%s error=%s", task.task_id, str(exc)
+            )
+
 
 async def run_worker_forever() -> None:
     settings = Settings()
@@ -111,7 +131,10 @@ async def run_worker_forever() -> None:
     )
     db = Database(settings.sqlite_path)
     skopeo = SkopeoRunner(settings)
-    worker = WorkerService(db=db, skopeo=skopeo, settings=settings)
+    deploy_autopr = DeployRepoAutoPr(settings)
+    worker = WorkerService(
+        db=db, skopeo=skopeo, settings=settings, deploy_autopr=deploy_autopr
+    )
     await worker.start()
     try:
         while True:

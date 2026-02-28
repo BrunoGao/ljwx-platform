@@ -7,6 +7,7 @@ from fastapi import FastAPI
 
 from .config import get_settings
 from .db import Database
+from .deploy_autopr import DeployRepoAutoPr
 from .routes import router
 from .skopeo_runner import SkopeoRunner
 from .worker import WorkerService
@@ -22,7 +23,10 @@ async def lifespan(app: FastAPI):
 
     db = Database(settings.sqlite_path)
     skopeo = SkopeoRunner(settings)
-    worker = WorkerService(db=db, skopeo=skopeo, settings=settings)
+    deploy_autopr = DeployRepoAutoPr(settings)
+    worker = WorkerService(
+        db=db, skopeo=skopeo, settings=settings, deploy_autopr=deploy_autopr
+    )
 
     app.state.settings = settings
     app.state.db = db

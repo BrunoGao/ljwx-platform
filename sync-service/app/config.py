@@ -42,6 +42,26 @@ class Settings(BaseSettings):
     retry_base_seconds: int = Field(default=10, alias="RETRY_BASE_SECONDS")
     retry_max_seconds: int = Field(default=600, alias="RETRY_MAX_SECONDS")
 
+    deploy_autopr_enabled: bool = Field(default=False, alias="DEPLOY_AUTOPR_ENABLED")
+    deploy_autopr_github_token: str = Field(
+        default="", alias="DEPLOY_AUTOPR_GITHUB_TOKEN"
+    )
+    deploy_autopr_timeout_seconds: int = Field(
+        default=10, alias="DEPLOY_AUTOPR_TIMEOUT_SECONDS"
+    )
+    deploy_autopr_branch_prefix: str = Field(
+        default="sync", alias="DEPLOY_AUTOPR_BRANCH_PREFIX"
+    )
+    deploy_repo_owner: str = Field(default="BrunoGaoSZ", alias="DEPLOY_REPO_OWNER")
+    deploy_repo_name: str = Field(default="ljwx-deploy", alias="DEPLOY_REPO_NAME")
+    deploy_repo_base_branch: str = Field(
+        default="main", alias="DEPLOY_REPO_BASE_BRANCH"
+    )
+    deploy_repo_file_path: str = Field(
+        default="apps/ljwx-platform/overlays/prod/kustomization.yaml",
+        alias="DEPLOY_REPO_FILE_PATH",
+    )
+
 
 @lru_cache(maxsize=1)
 def get_settings() -> Settings:
