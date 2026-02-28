@@ -1,0 +1,279 @@
+name: build-and-notify
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  GHCR_REGISTRY: ghcr.io
+
+jobs:
+  build-backend:
+    name: Build Backend To GHCR
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    outputs:
+      image: ${{ steps.meta.outputs.image }}
+      digest: ${{ steps.push.outputs.digest }}
+      short_sha: ${{ steps.meta.outputs.short_sha }}
+      branch: ${{ steps.meta.outputs.branch }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: "21"
+          distribution: "temurin"
+          cache: "maven"
+
+      - name: Resolve metadata
+        id: meta
+        shell: bash
+        run: |
+          set -euo pipefail
+          SHORT_SHA="${GITHUB_SHA::7}"
+          BRANCH_NAME="${GITHUB_REF_NAME}"
+          REPOSITORY_LOWER="$(echo "${GITHUB_REPOSITORY}" | tr '[:upper:]' '[:lower:]')"
+          IMAGE="${GHCR_REGISTRY}/${REPOSITORY_LOWER}/ljwx-platform"
+          {
+            echo "short_sha=${SHORT_SHA}"
+            echo "branch=${BRANCH_NAME}"
+            echo "image=${IMAGE}"
+            echo "sha_tag=sha-${SHORT_SHA}"
+            echo "branch_tag=branch-${BRANCH_NAME}"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Login GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build backend image (buildpacks)
+        shell: bash
+        run: |
+          set -euo pipefail
+          mvn -B -ntp -q -pl ljwx-platform-app -am install -DskipTests
+          mvn -B -ntp -q -f ljwx-platform-app/pom.xml spring-boot:build-image \
+            -DskipTests \
+            -Dspring-boot.build-image.imageName="${{ steps.meta.outputs.image }}:${{ steps.meta.outputs.sha_tag }}"
+          docker tag "${{ steps.meta.outputs.image }}:${{ steps.meta.outputs.sha_tag }}" \
+            "${{ steps.meta.outputs.image }}:${{ steps.meta.outputs.branch_tag }}"
+
+      - name: Push backend tags
+        id: push
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker push "${{ steps.meta.outputs.image }}:${{ steps.meta.outputs.sha_tag }}"
+          docker push "${{ steps.meta.outputs.image }}:${{ steps.meta.outputs.branch_tag }}"
+          REPO_DIGEST="$(docker inspect --format='{{index .RepoDigests 0}}' "${{ steps.meta.outputs.image }}:${{ steps.meta.outputs.sha_tag }}")"
+          echo "digest=${REPO_DIGEST#*@}" >> "$GITHUB_OUTPUT"
+
+  build-admin-ui:
+    name: Build Admin UI To GHCR
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    outputs:
+      image: ${{ steps.meta.outputs.image }}
+      digest: ${{ steps.build.outputs.digest }}
+      short_sha: ${{ steps.meta.outputs.short_sha }}
+      branch: ${{ steps.meta.outputs.branch }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Resolve metadata
+        id: meta
+        shell: bash
+        run: |
+          set -euo pipefail
+          SHORT_SHA="${GITHUB_SHA::7}"
+          BRANCH_NAME="${GITHUB_REF_NAME}"
+          REPOSITORY_LOWER="$(echo "${GITHUB_REPOSITORY}" | tr '[:upper:]' '[:lower:]')"
+          IMAGE="${GHCR_REGISTRY}/${REPOSITORY_LOWER}/ljwx-platform-admin-ui"
+          {
+            echo "short_sha=${SHORT_SHA}"
+            echo "branch=${BRANCH_NAME}"
+            echo "image=${IMAGE}"
+            echo "sha_tag=sha-${SHORT_SHA}"
+            echo "branch_tag=branch-${BRANCH_NAME}"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push admin UI
+        id: build
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ljwx-platform-admin/Dockerfile
+          push: true
+          tags: |
+            ${{ steps.meta.outputs.image }}:${{ steps.meta.outputs.sha_tag }}
+            ${{ steps.meta.outputs.image }}:${{ steps.meta.outputs.branch_tag }}
+          cache-from: type=gha,scope=admin-ui-ghcr
+          cache-to: type=gha,scope=admin-ui-ghcr,mode=max
+
+  build-screen:
+    name: Build Screen To GHCR
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    outputs:
+      image: ${{ steps.meta.outputs.image }}
+      digest: ${{ steps.build.outputs.digest }}
+      short_sha: ${{ steps.meta.outputs.short_sha }}
+      branch: ${{ steps.meta.outputs.branch }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Resolve metadata
+        id: meta
+        shell: bash
+        run: |
+          set -euo pipefail
+          SHORT_SHA="${GITHUB_SHA::7}"
+          BRANCH_NAME="${GITHUB_REF_NAME}"
+          REPOSITORY_LOWER="$(echo "${GITHUB_REPOSITORY}" | tr '[:upper:]' '[:lower:]')"
+          IMAGE="${GHCR_REGISTRY}/${REPOSITORY_LOWER}/ljwx-platform-screen"
+          {
+            echo "short_sha=${SHORT_SHA}"
+            echo "branch=${BRANCH_NAME}"
+            echo "image=${IMAGE}"
+            echo "sha_tag=sha-${SHORT_SHA}"
+            echo "branch_tag=branch-${BRANCH_NAME}"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push screen
+        id: build
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ljwx-platform-screen/Dockerfile
+          push: true
+          tags: |
+            ${{ steps.meta.outputs.image }}:${{ steps.meta.outputs.sha_tag }}
+            ${{ steps.meta.outputs.image }}:${{ steps.meta.outputs.branch_tag }}
+          cache-from: type=gha,scope=screen-ghcr
+          cache-to: type=gha,scope=screen-ghcr,mode=max
+
+  notify-sync-service:
+    name: Notify Sync Service
+    runs-on: ubuntu-latest
+    needs:
+      - build-backend
+      - build-admin-ui
+      - build-screen
+    timeout-minutes: 10
+    steps:
+      - name: Send webhook events
+        env:
+          SYNC_WEBHOOK_URL: ${{ secrets.SYNC_WEBHOOK_URL }}
+          SYNC_WEBHOOK_SECRET: ${{ secrets.SYNC_WEBHOOK_SECRET }}
+          SYNC_BEARER_TOKEN: ${{ secrets.SYNC_BEARER_TOKEN }}
+          BACKEND_IMAGE: ${{ needs.build-backend.outputs.image }}
+          BACKEND_DIGEST: ${{ needs.build-backend.outputs.digest }}
+          BACKEND_SHORT_SHA: ${{ needs.build-backend.outputs.short_sha }}
+          BACKEND_BRANCH: ${{ needs.build-backend.outputs.branch }}
+          ADMIN_IMAGE: ${{ needs.build-admin-ui.outputs.image }}
+          ADMIN_DIGEST: ${{ needs.build-admin-ui.outputs.digest }}
+          ADMIN_SHORT_SHA: ${{ needs.build-admin-ui.outputs.short_sha }}
+          ADMIN_BRANCH: ${{ needs.build-admin-ui.outputs.branch }}
+          SCREEN_IMAGE: ${{ needs.build-screen.outputs.image }}
+          SCREEN_DIGEST: ${{ needs.build-screen.outputs.digest }}
+          SCREEN_SHORT_SHA: ${{ needs.build-screen.outputs.short_sha }}
+          SCREEN_BRANCH: ${{ needs.build-screen.outputs.branch }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [ -z "${SYNC_WEBHOOK_URL:-}" ] || [ -z "${SYNC_WEBHOOK_SECRET:-}" ] || [ -z "${SYNC_BEARER_TOKEN:-}" ]; then
+            echo "SYNC webhook secrets are required." >&2
+            exit 1
+          fi
+
+          send_event() {
+            local component="$1"
+            local image="$2"
+            local digest="$3"
+            local short_sha="$4"
+            local branch="$5"
+
+            local event_id="${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-${component}-${GITHUB_SHA}"
+            local triggered_at
+            triggered_at="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+
+            local payload
+            payload="$(jq -nc \
+              --arg event_id "${event_id}" \
+              --arg repository "${GITHUB_REPOSITORY}" \
+              --arg image "${image}" \
+              --arg git_sha "${GITHUB_SHA}" \
+              --arg short_sha "${short_sha}" \
+              --arg branch "${branch}" \
+              --arg digest "${digest}" \
+              --arg triggered_at "${triggered_at}" \
+              --arg tag1 "sha-${short_sha}" \
+              --arg tag2 "branch-${branch}" \
+              --arg component "${component}" \
+              '{
+                event_id: $event_id,
+                repository: $repository,
+                image: $image,
+                git_sha: $git_sha,
+                short_sha: $short_sha,
+                branch: $branch,
+                digest: $digest,
+                tags: [$tag1, $tag2],
+                component: $component,
+                triggered_at: $triggered_at
+              }')"
+
+            local timestamp
+            timestamp="$(date +%s)"
+
+            local signature
+            signature="$(printf '%s.%s' "${timestamp}" "${payload}" \
+              | openssl dgst -sha256 -hmac "${SYNC_WEBHOOK_SECRET}" -binary \
+              | xxd -p -c 256)"
+
+            curl -fsS -X POST "${SYNC_WEBHOOK_URL}/sync" \
+              -H "Content-Type: application/json" \
+              -H "Authorization: Bearer ${SYNC_BEARER_TOKEN}" \
+              -H "X-Sync-Timestamp: ${timestamp}" \
+              -H "X-Sync-Signature: sha256=${signature}" \
+              -d "${payload}"
+          }
+
+          send_event "backend" "${BACKEND_IMAGE}" "${BACKEND_DIGEST}" "${BACKEND_SHORT_SHA}" "${BACKEND_BRANCH}"
+          send_event "admin-ui" "${ADMIN_IMAGE}" "${ADMIN_DIGEST}" "${ADMIN_SHORT_SHA}" "${ADMIN_BRANCH}"
+          send_event "screen" "${SCREEN_IMAGE}" "${SCREEN_DIGEST}" "${SCREEN_SHORT_SHA}" "${SCREEN_BRANCH}"

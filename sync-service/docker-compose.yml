@@ -1,0 +1,13 @@
+version: "3.9"
+
+services:
+  sync-service:
+    build: .
+    env_file:
+      - .env
+    ports:
+      - "8088:8088"
+    volumes:
+      - ./data:/data
+      - /etc/ssl/certs:/etc/ssl/certs:ro
+    restart: unless-stopped

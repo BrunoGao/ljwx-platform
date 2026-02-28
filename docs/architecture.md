@@ -219,3 +219,35 @@ public interface CurrentTenantHolder {
 - 业务接口：`/api/v1/*`
 - 权限命名：`system:{resource}:{action}`
 
+
+## GHCR -> Harbor Sync 架构（2026-02-27）
+
+### 目标
+- CI 构建与部署解耦：GitHub Actions 只负责构建并推送到 GHCR。
+- 本地 k3s 集群只从 Harbor 拉取镜像，避免公网波动影响部署稳定性。
+- 保持 GitOps：部署版本仍由 deploy 仓库变更驱动（ArgoCD/Flux 监听 Git）。
+
+### 三段分离
+- CI（GitHub Actions）
+  - 工作流：`.github/workflows/build-and-notify.yml`
+  - 输出：GHCR 镜像 + 权威 digest + webhook 事件
+- Sync（本地 sync-service）
+  - 接收 webhook，落 sqlite 队列，后台 Worker 使用 `skopeo` 从 GHCR 同步到 Harbor，并校验 digest
+- CD（GitOps）
+  - 仅消费 Harbor 镜像（推荐不可变 `sha-<shortsha>` tag 或 digest）
+  - 同步成功（VERIFIED）后再更新 deploy 仓库镜像引用
+
+### 数据与幂等
+- `webhook_events.event_id` 唯一，防重放与重复通知。
+- `tasks(repository,image,digest,target_repo)` 唯一，防同一 digest 重复同步。
+- Worker 状态机：`PENDING -> SYNCING -> VERIFIED`，失败分为 `FAILED_RETRYABLE` 与 `FAILED_FATAL`。
+
+### 安全
+- `Authorization: Bearer <token>`
+- HMAC-SHA256 签名：`X-Sync-Timestamp` + `X-Sync-Signature`
+- 时间窗校验：`WEBHOOK_MAX_SKEW_SECONDS`（默认 300 秒）
+
+### 镜像命名
+- GHCR：`ghcr.io/<owner>/<repo>/<component>:sha-<shortsha>`
+- Harbor：`harbor.eu.lingjingwanxiang.cn/<project>/<component>:sha-<shortsha>`
+- 同步时保留 `sha-*` 与 `branch-*` 标签，便于审计与回滚。

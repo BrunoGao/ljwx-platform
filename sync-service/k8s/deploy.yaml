@@ -1,0 +1,107 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: sync-service-data
+  namespace: infra
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sync-service
+  namespace: infra
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sync-service
+  template:
+    metadata:
+      labels:
+        app: sync-service
+    spec:
+      imagePullSecrets:
+        - name: regcred
+      containers:
+        - name: sync-service
+          image: harbor.eu.lingjingwanxiang.cn/ljwx/sync-service:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8088
+              name: http
+          envFrom:
+            - secretRef:
+                name: sync-service-env
+          volumeMounts:
+            - name: data
+              mountPath: /data
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 8088
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 3
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8088
+            initialDelaySeconds: 20
+            periodSeconds: 20
+            timeoutSeconds: 3
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 1
+              memory: 1Gi
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: sync-service-data
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sync-service
+  namespace: infra
+spec:
+  selector:
+    app: sync-service
+  ports:
+    - name: http
+      port: 8088
+      targetPort: 8088
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: sync-service
+  namespace: infra
+  annotations:
+    cert-manager.io/cluster-issuer: dnspod-letsencrypt
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: sync.eu.lingjingwanxiang.cn
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: sync-service
+                port:
+                  number: 8088
+  tls:
+    - hosts:
+        - sync.eu.lingjingwanxiang.cn
+      secretName: sync-eu-lingjingwanxiang-cn-tls
