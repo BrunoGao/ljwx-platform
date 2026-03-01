@@ -16,7 +16,7 @@
 ## 一次性初始化
 
 ### 1. 配置证书默认签发器
-- 参考 [cert-manager-default-issuer-checklist.md](/root/codes/ljwx-platform/docs/setup/cert-manager-default-issuer-checklist.md)。
+- 参考 [cert-manager-default-issuer-checklist.md](./cert-manager-default-issuer-checklist.md)。
 - 至少保证：
 - `ClusterIssuer/dnspod-letsencrypt` 存在且 `Ready=True`。
 - 所有 Ingress 不再使用 `letsencrypt-prod`。

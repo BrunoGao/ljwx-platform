@@ -35,6 +35,6 @@
 
 ## 相关文档
 
-- [Phase Spec 索引](../../spec/phase/README.md)
+- [Phase Spec 目录](../../spec/phase/)
 - [全局约束](../../spec/01-constraints.md)
 - [P0-P1 Spec 索引](../P0-P1-Spec-Index.md)

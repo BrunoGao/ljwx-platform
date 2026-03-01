@@ -80,4 +80,4 @@ Snowflake ID 命名。上传限制 50 MB。白名单后缀：jpg, jpeg, png, gif
 
 ## Vue Router 5 兼容性约束
 
-路由实现必须以 vue-router @~5.0.2 的 API 为准。Vue Router 5 相对 v4 有关键变更（如将 unplugin-vue-router 合并进核心包，路由文件约定发生变化）。以官方文档（https://router.vuejs.org/guide/migration/v4-to-v5）与类型定义为准，禁止按 v4 经验写代码。若某个 v4 API 在 v5 中已被标记 deprecated 或移除，必须使用 v5 推荐的替代方案。
+路由实现必须以 vue-router @~5.0.2 的 API 为准。Vue Router 5 相对 v4 有关键变更（如将 unplugin-vue-router 合并进核心包，路由文件约定发生变化）。以 [Vue Router 5 官方文档](https://router.vuejs.org/) 与类型定义为准，禁止按 v4 经验写代码。若某个 v4 API 在 v5 中已被标记 deprecated 或移除，必须使用 v5 推荐的替代方案。

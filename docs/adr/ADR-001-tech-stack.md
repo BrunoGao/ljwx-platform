@@ -33,6 +33,6 @@
 
 ## 参考
 
-- [Spring Boot 3.x 文档](https://docs.spring.io/spring-boot/docs/3.5.x/)
-- [Vue Router 5 迁移指南](https://router.vuejs.org/guide/migration/v4-to-v5)
+- [Spring Boot 3.x 文档](https://docs.spring.io/spring-boot/reference/)
+- [Vue Router 5 文档](https://router.vuejs.org/)
 - [MyBatis-Plus 多租户插件](https://baomidou.com/plugins/tenant/)

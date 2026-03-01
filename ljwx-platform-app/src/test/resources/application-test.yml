@@ -1,8 +1,8 @@
 spring:
   datasource:
-    url: jdbc:postgresql://127.0.0.1:5432/placeholder
-    username: placeholder
-    password: placeholder
+    url: jdbc:postgresql://127.0.0.1:5432/${POSTGRES_DB:ljwx_platform}
+    username: ${POSTGRES_USER:postgres}
+    password: ${POSTGRES_PASSWORD:postgres}
     driver-class-name: org.postgresql.Driver
   flyway:
     enabled: true
