@@ -1,0 +1,209 @@
+# Phase 33 — Multi-Level Cache Manager 测试契约
+# 关联 Spec：spec/phase/phase-33.md
+
+phase: 33
+module: "cache"
+ac_ref: "spec/phase/phase-33.md"
+
+tests:
+
+  # ─── P0：安全测试 ───────────────────────────────────────────────
+  - id: TC-33-01
+    priority: P0
+    category: security
+    scenario: "无 Token 访问缓存管理 → 401"
+    request:
+      method: GET
+      path: /api/v1/cache/stats
+      auth: none
+    expect:
+      status: 401
+
+  - id: TC-33-02
+    priority: P0
+    category: security
+    scenario: "无权限 Token 清空缓存 → 403"
+    request:
+      method: DELETE
+      path: /api/v1/cache/clear
+      auth: token_without_permission
+    expect:
+      status: 403
+
+  # ─── P0：缓存功能 ──────────────────────────────────────────────
+  - id: TC-33-03
+    priority: P0
+    category: cache
+    ac: AC-02
+    bl_ref: BL-33-01
+    scenario: "REDIS_ONLY 档位缓存生效"
+    steps:
+      - "调用权限查询接口"
+      - "验证仅 Redis 有缓存，Caffeine 无缓存"
+    expect:
+      note: "Redis 命中，Caffeine 未命中"
+
+  - id: TC-33-04
+    priority: P0
+    category: cache
+    ac: AC-02
+    bl_ref: BL-33-02
+    scenario: "CAFFEINE_REDIS 档位 L1 命中"
+    steps:
+      - "首次查询字典数据（写入 L1 + L2）"
+      - "第二次查询相同数据"
+    expect:
+      note: "第二次查询从 Caffeine L1 返回，无 Redis 查询"
+
+  - id: TC-33-05
+    priority: P0
+    category: cache
+    ac: AC-02
+    bl_ref: BL-33-02
+    scenario: "CAFFEINE_REDIS 档位 L1 未命中，L2 命中"
+    steps:
+      - "Pod A 查询字典数据（写入 L1 + L2）"
+      - "Pod B 查询相同数据（L1 未命中）"
+    expect:
+      note: "Pod B 从 Redis L2 返回，并回填 L1"
+
+  - id: TC-33-06
+    priority: P0
+    category: cache
+    ac: AC-02
+    bl_ref: BL-33-03
+    scenario: "CAFFEINE_ONLY 档位缓存生效"
+    steps:
+      - "查询静态枚举数据"
+      - "验证仅 Caffeine 有缓存，Redis 无缓存"
+    expect:
+      note: "Caffeine 命中，Redis 未写入"
+
+  # ─── P0：缓存失效 ──────────────────────────────────────────────
+  - id: TC-33-07
+    priority: P0
+    category: cache
+    ac: AC-03
+    bl_ref: BL-33-04
+    scenario: "缓存失效 Pub/Sub 广播"
+    steps:
+      - "Pod A 更新字典数据"
+      - "Pod A 发送缓存失效消息"
+      - "Pod B 收到消息并清空本地缓存"
+    expect:
+      note: "Pod B 下次查询重新加载数据"
+
+  - id: TC-33-08
+    priority: P0
+    category: cache
+    ac: AC-04
+    bl_ref: BL-33-05
+    scenario: "跳过自己发出的 Pub/Sub 消息"
+    steps:
+      - "Pod A 发送缓存失效消息（sourcePod=A）"
+      - "Pod A 收到自己的消息"
+    expect:
+      note: "Pod A 跳过处理，不重复失效"
+
+  # ─── P0：权限缓存强一致性 ──────────────────────────────────────
+  - id: TC-33-09
+    priority: P0
+    category: cache
+    ac: AC-05
+    bl_ref: BL-33-06
+    scenario: "权限缓存使用 REDIS_ONLY"
+    steps:
+      - "查询用户权限"
+      - "验证缓存策略为 REDIS_ONLY"
+    expect:
+      note: "仅 Redis 有缓存，保证强一致性"
+
+  # ─── P0：租户隔离 ───────────────────────────────────────────────
+  - id: TC-33-10
+    priority: P0
+    category: tenant_isolation
+    scenario: "租户 A 查不到租户 B 的缓存"
+    setup:
+      - create_cache_for_tenant_A
+      - create_cache_for_tenant_B
+    request:
+      method: GET
+      path: /api/v1/cache/stats
+      auth: token_tenant_A
+    expect:
+      status: 200
+      body:
+        data: "[仅包含租户 A 的缓存统计]"
+
+  # ─── P1：缓存配置验证 ───────────────────────────────────────────
+  - id: TC-33-11
+    priority: P1
+    category: config
+    ac: AC-06
+    bl_ref: BL-33-07
+    scenario: "字典缓存使用 CAFFEINE_REDIS + TTL 60s"
+    steps:
+      - "查询字典数据"
+      - "验证缓存策略和 TTL"
+    expect:
+      note: "Caffeine L1 TTL 60s，Redis L2 TTL 60s"
+
+  - id: TC-33-12
+    priority: P1
+    category: config
+    ac: AC-02
+    bl_ref: BL-33-08
+    scenario: "Caffeine L1 最大容量 10000"
+    steps:
+      - "写入 10001 条缓存"
+      - "验证 LRU 淘汰"
+    expect:
+      note: "最早的缓存被淘汰，总数保持 10000"
+
+  - id: TC-33-13
+    priority: P1
+    category: config
+    ac: AC-02
+    bl_ref: BL-33-09
+    scenario: "Redis L2 默认 TTL 300s"
+    steps:
+      - "写入缓存（未指定 TTL）"
+      - "验证 Redis TTL"
+    expect:
+      note: "Redis TTL 为 300s"
+
+  # ─── P1：数据库结构验证 ─────────────────────────────────────────
+  - id: TC-33-14
+    priority: P1
+    category: db_schema
+    ac: AC-01
+    scenario: "cache_invalidation_event 表包含 7 列审计字段"
+    expect:
+      db_assert: "cache_invalidation_event 表包含 tenant_id, created_by, created_time, updated_by, updated_time, deleted, version"
+
+  - id: TC-33-15
+    priority: P1
+    category: db_schema
+    ac: AC-01
+    scenario: "cache_name 有索引"
+    expect:
+      db_assert: "cache_invalidation_event 表 cache_name 列有索引"
+
+# ─── AC → TC 映射 ──────────────────────────────────────────────────
+ac_tc_map:
+  AC-01: [TC-33-14, TC-33-15]
+  AC-02: [TC-33-03, TC-33-04, TC-33-05, TC-33-06, TC-33-12, TC-33-13]
+  AC-03: [TC-33-07]
+  AC-04: [TC-33-08]
+  AC-05: [TC-33-09]
+  AC-06: [TC-33-11]
+  AC-07: []  # 多 Pod 部署测试由集成测试覆盖
+  AC-08: []  # 编译检查由 Gate R01 覆盖
+
+# ─── Gate R09 配置 ─────────────────────────────────────────────────
+gate_r09:
+  p0_required: true
+  p1_coverage_target: 0.7
+  p2_skip: true
+  test_class: "MultiLevelCacheManagerTest"
+  note: "本 Phase 包含缓存分档、Pub/Sub 广播、租户隔离、配置验证测试"

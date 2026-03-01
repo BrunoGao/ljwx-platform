@@ -1,0 +1,238 @@
+# Phase 34 — Outbox Event Pattern 测试契约
+# 关联 Spec：spec/phase/phase-34.md
+
+phase: 34
+module: "outbox"
+ac_ref: "spec/phase/phase-34.md"
+
+tests:
+
+  # ─── P0：安全测试 ───────────────────────────────────────────────
+  - id: TC-34-01
+    priority: P0
+    category: security
+    scenario: "无 Token 访问 Outbox 事件 → 401"
+    request:
+      method: GET
+      path: /api/v1/outbox/events
+      auth: none
+    expect:
+      status: 401
+
+  - id: TC-34-02
+    priority: P0
+    category: security
+    scenario: "无权限 Token 重试事件 → 403"
+    request:
+      method: POST
+      path: /api/v1/outbox/events/{eventId}/retry
+      auth: token_without_permission
+    expect:
+      status: 403
+
+  # ─── P0：事件发布 ──────────────────────────────────────────────
+  - id: TC-34-03
+    priority: P0
+    category: outbox
+    ac: AC-02
+    bl_ref: BL-34-01
+    scenario: "业务事务中发布事件到 Outbox 表"
+    steps:
+      - "开启事务"
+      - "更新业务数据"
+      - "调用 OutboxEventPublisher.publish()"
+      - "提交事务"
+    expect:
+      status: 200
+      db_assert: "SELECT status FROM sys_outbox_event WHERE id={eventId} → PENDING"
+
+  - id: TC-34-04
+    priority: P0
+    category: outbox
+    ac: AC-06
+    bl_ref: BL-34-02
+    scenario: "Outbox 事件插入触发 PostgreSQL NOTIFY"
+    steps:
+      - "插入 Outbox 事件"
+      - "验证 NOTIFY 消息发送"
+    expect:
+      note: "pg_notify 触发，通知轮询器"
+
+  # ─── P0：事件轮询 ─��────────────────────────────────────────────
+  - id: TC-34-05
+    priority: P0
+    category: outbox
+    ac: AC-03
+    bl_ref: BL-34-03
+    scenario: "轮询器扫描并发送 PENDING 事件"
+    setup:
+      - create_pending_event
+    steps:
+      - "OutboxEventPoller.pollAndPublish() 执行"
+      - "事件发布到 ApplicationEventBus"
+    expect:
+      db_assert: "SELECT status FROM sys_outbox_event WHERE id={eventId} → SENT"
+
+  - id: TC-34-06
+    priority: P0
+    category: outbox
+    ac: AC-03
+    bl_ref: BL-34-03
+    scenario: "轮询器仅处理 next_retry_time <= NOW() 的事件"
+    setup:
+      - create_pending_event_with_future_retry_time
+    steps:
+      - "OutboxEventPoller.pollAndPublish() 执行"
+    expect:
+      note: "事件未被处理，状态仍为 PENDING"
+
+  # ─── P0：事件重试 ──────────────────────────────────────────────
+  - id: TC-34-07
+    priority: P0
+    category: outbox
+    ac: AC-04
+    bl_ref: BL-34-04
+    scenario: "事件发送失败自动重试"
+    setup:
+      - create_pending_event
+      - mock_event_send_failure
+    steps:
+      - "OutboxEventPoller.pollAndPublish() 执行"
+      - "事件发送失败"
+    expect:
+      db_assert: "SELECT retry_count FROM sys_outbox_event WHERE id={eventId} → 1"
+      note: "next_retry_time 更新为 now + 60s"
+
+  - id: TC-34-08
+    priority: P0
+    category: outbox
+    ac: AC-04
+    bl_ref: BL-34-06
+    scenario: "指数退避策略计算 next_retry_time"
+    setup:
+      - create_pending_event_with_retry_count_2
+    steps:
+      - "事件发送失败"
+      - "计算 next_retry_time"
+    expect:
+      note: "next_retry_time = now + 2^2 * 60s = now + 240s"
+
+  - id: TC-34-09
+    priority: P0
+    category: outbox
+    ac: AC-05
+    bl_ref: BL-34-05
+    scenario: "达到最大重试次数标记为 FAILED"
+    setup:
+      - create_pending_event_with_retry_count_3
+      - mock_event_send_failure
+    steps:
+      - "OutboxEventPoller.pollAndPublish() 执行"
+      - "retry_count >= max_retry"
+    expect:
+      db_assert: "SELECT status FROM sys_outbox_event WHERE id={eventId} → FAILED"
+
+  # ─── P0：事件成功 ──────────────────────────────────────────────
+  - id: TC-34-10
+    priority: P0
+    category: outbox
+    ac: AC-03
+    bl_ref: BL-34-07
+    scenario: "事件发送成功更新状态和时间"
+    setup:
+      - create_pending_event
+    steps:
+      - "OutboxEventPoller.pollAndPublish() 执行"
+      - "事件发送成功"
+    expect:
+      db_assert: "SELECT status, sent_time FROM sys_outbox_event WHERE id={eventId} → SENT, NOT NULL"
+
+  # ─── P0：租户隔离 ───────────────────────────────────────────────
+  - id: TC-34-11
+    priority: P0
+    category: tenant_isolation
+    scenario: "租户 A 查不到租户 B 的事件"
+    setup:
+      - create_event_for_tenant_A
+      - create_event_for_tenant_B
+    request:
+      method: GET
+      path: /api/v1/outbox/events
+      auth: token_tenant_A
+    expect:
+      status: 200
+      body:
+        data:
+          list: "[仅包含租户 A 的事件]"
+
+  # ─── P1：事件清理 ──────────────────────────────────────────────
+  - id: TC-34-12
+    priority: P1
+    category: cleanup
+    ac: AC-07
+    bl_ref: BL-34-08
+    scenario: "定期清理 30 天前的 SENT 事件"
+    setup:
+      - create_sent_event_31_days_ago
+      - create_sent_event_29_days_ago
+    steps:
+      - "执行清理任务"
+    expect:
+      db_assert: "SELECT COUNT(*) FROM sys_outbox_event WHERE status='SENT' AND created_time < NOW() - INTERVAL '30 days' → 0"
+
+  - id: TC-34-13
+    priority: P1
+    category: cleanup
+    ac: AC-07
+    bl_ref: BL-34-08
+    scenario: "FAILED 事件不被清理"
+    setup:
+      - create_failed_event_31_days_ago
+    steps:
+      - "执行清理任务"
+    expect:
+      db_assert: "SELECT COUNT(*) FROM sys_outbox_event WHERE status='FAILED' AND created_time < NOW() - INTERVAL '30 days' → 1"
+
+  # ─── P1：数据库结构验证 ─────────────────────────────────────────
+  - id: TC-34-14
+    priority: P1
+    category: db_schema
+    ac: AC-01
+    scenario: "sys_outbox_event 表包含 7 列审计字段"
+    expect:
+      db_assert: "sys_outbox_event 表包含 tenant_id, created_by, created_time, updated_by, updated_time, deleted, version"
+
+  - id: TC-34-15
+    priority: P1
+    category: db_schema
+    ac: AC-01
+    scenario: "status 和 next_retry_time 有复合索引"
+    expect:
+      db_assert: "sys_outbox_event 表有 idx_status_next_retry_time 索引"
+
+  - id: TC-34-16
+    priority: P1
+    category: db_schema
+    ac: AC-01
+    scenario: "aggregate_type 和 aggregate_id 有复合索引"
+    expect:
+      db_assert: "sys_outbox_event 表有 idx_aggregate 索引"
+
+# ─── AC → TC 映射 ──────────────────────────────────────────────────
+ac_tc_map:
+  AC-01: [TC-34-14, TC-34-15, TC-34-16]
+  AC-02: [TC-34-03]
+  AC-03: [TC-34-05, TC-34-06, TC-34-10]
+  AC-04: [TC-34-07, TC-34-08]
+  AC-05: [TC-34-09]
+  AC-06: [TC-34-04]
+  AC-07: [TC-34-12, TC-34-13]
+  AC-08: []  # 编译检查由 Gate R01 覆盖
+
+# ─── Gate R09 配置 ─────────────────────────────────────────────────
+gate_r09:
+  p0_required: true
+  p1_coverage_target: 0.7
+  p2_skip: true
+  test_class: "OutboxEventTest"
+  note: "本 Phase 包含事件发布、轮询、重试、清理、租户隔离测试"

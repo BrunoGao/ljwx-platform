@@ -1,0 +1,217 @@
+# Phase 44 — Role Data Scope 测试契约
+# 关联 Spec：spec/phase/phase-44.md
+
+phase: 44
+module: "role-data-scope"
+ac_ref: "spec/phase/phase-44.md"
+
+tests:
+
+  # ─── P0：安全测试 ───────────────────────────────────────────────
+  - id: TC-44-01
+    priority: P0
+    category: security
+    scenario: "无 Token 访问数据范围 → 401"
+    request:
+      method: GET
+      path: /api/v1/roles/{roleId}/data-scope
+      auth: none
+    expect:
+      status: 401
+
+  - id: TC-44-02
+    priority: P0
+    category: security
+    scenario: "无权限 Token 设置数据范围 → 403"
+    request:
+      method: PUT
+      path: /api/v1/roles/{roleId}/data-scope
+      auth: token_without_permission
+    expect:
+      status: 403
+
+  # ─── P0：数据范围配置 ──────────────────────────────────────────
+  - id: TC-44-03
+    priority: P0
+    category: data_scope
+    ac: AC-01
+    scenario: "设置角色数据范围为全部"
+    request:
+      method: PUT
+      path: /api/v1/roles/{roleId}/data-scope
+      auth: token_with_system:role:update
+      body:
+        dataScope: "ALL"
+    expect:
+      status: 200
+      db_assert: "SELECT data_scope FROM sys_role WHERE id={roleId} → ALL"
+
+  - id: TC-44-04
+    priority: P0
+    category: data_scope
+    ac: AC-01
+    scenario: "设置角色数据范围为本部门"
+    request:
+      method: PUT
+      path: /api/v1/roles/{roleId}/data-scope
+      auth: token_with_system:role:update
+      body:
+        dataScope: "DEPT"
+    expect:
+      status: 200
+      db_assert: "SELECT data_scope FROM sys_role WHERE id={roleId} → DEPT"
+
+  - id: TC-44-05
+    priority: P0
+    category: data_scope
+    ac: AC-01
+    scenario: "设置角色数据范围为本部门及下级"
+    request:
+      method: PUT
+      path: /api/v1/roles/{roleId}/data-scope
+      auth: token_with_system:role:update
+      body:
+        dataScope: "DEPT_AND_CHILD"
+    expect:
+      status: 200
+      db_assert: "SELECT data_scope FROM sys_role WHERE id={roleId} → DEPT_AND_CHILD"
+
+  - id: TC-44-06
+    priority: P0
+    category: data_scope
+    ac: AC-01
+    scenario: "设置角色数据范围为仅本人"
+    request:
+      method: PUT
+      path: /api/v1/roles/{roleId}/data-scope
+      auth: token_with_system:role:update
+      body:
+        dataScope: "SELF"
+    expect:
+      status: 200
+      db_assert: "SELECT data_scope FROM sys_role WHERE id={roleId} → SELF"
+
+  - id: TC-44-07
+    priority: P0
+    category: data_scope
+    ac: AC-02
+    scenario: "设置角色数据范围为自定义部门"
+    request:
+      method: PUT
+      path: /api/v1/roles/{roleId}/data-scope
+      auth: token_with_system:role:update
+      body:
+        dataScope: "CUSTOM"
+        deptIds: [1, 2, 3]
+    expect:
+      status: 200
+      db_assert: "SELECT COUNT(*) FROM sys_role_dept WHERE role_id={roleId} → 3"
+
+  # ─── P0：数据范围过滤 ──────────────────────────────────────────
+  - id: TC-44-08
+    priority: P0
+    category: data_scope
+    ac: AC-03
+    scenario: "ALL 范围查询所有数据"
+    setup:
+      - create_role_with_data_scope_ALL
+      - create_user_with_role
+      - create_data_in_multiple_depts
+    request:
+      method: GET
+      path: /api/v1/users
+      auth: token_with_role_ALL
+    expect:
+      status: 200
+      body:
+        data:
+          list: "[包含所有部门的用户]"
+
+  - id: TC-44-09
+    priority: P0
+    category: data_scope
+    ac: AC-03
+    scenario: "DEPT 范围仅查询本部门数据"
+    setup:
+      - create_role_with_data_scope_DEPT
+      - create_user_in_dept_1
+      - create_data_in_dept_1_and_2
+    request:
+      method: GET
+      path: /api/v1/users
+      auth: token_user_dept_1
+    expect:
+      status: 200
+      body:
+        data:
+          list: "[仅包含部门 1 的用户]"
+
+  - id: TC-44-10
+    priority: P0
+    category: data_scope
+    ac: AC-03
+    scenario: "SELF 范围仅查询本人数据"
+    setup:
+      - create_role_with_data_scope_SELF
+      - create_user_A
+      - create_data_for_user_A_and_B
+    request:
+      method: GET
+      path: /api/v1/users
+      auth: token_user_A
+    expect:
+      status: 200
+      body:
+        data:
+          list: "[仅包含用户 A 的数据]"
+
+  # ─── P0：租户隔离 ───────────────────────────────────────────────
+  - id: TC-44-11
+    priority: P0
+    category: tenant_isolation
+    scenario: "数据范围不跨租户"
+    setup:
+      - create_role_with_data_scope_ALL_for_tenant_A
+      - create_data_for_tenant_A_and_B
+    request:
+      method: GET
+      path: /api/v1/users
+      auth: token_tenant_A_with_role_ALL
+    expect:
+      status: 200
+      body:
+        data:
+          list: "[仅包含租户 A 的数据]"
+
+  # ─── P1：数据库结构验证 ─────────────────────────────────────────
+  - id: TC-44-12
+    priority: P1
+    category: db_schema
+    ac: AC-04
+    scenario: "sys_role 表包含 data_scope 列"
+    expect:
+      db_assert: "sys_role 表包含 data_scope 列"
+
+  - id: TC-44-13
+    priority: P1
+    category: db_schema
+    ac: AC-04
+    scenario: "sys_role_dept 表包含 7 列审计字段"
+    expect:
+      db_assert: "sys_role_dept 表包含 tenant_id, created_by, created_time, updated_by, updated_time, deleted, version"
+
+# ─── AC → TC 映射 ──────────────────────────────────────────────────
+ac_tc_map:
+  AC-01: [TC-44-03, TC-44-04, TC-44-05, TC-44-06]
+  AC-02: [TC-44-07]
+  AC-03: [TC-44-08, TC-44-09, TC-44-10]
+  AC-04: [TC-44-12, TC-44-13]
+  AC-05: []  # 编译检查由 Gate R01 覆盖
+
+# ─── Gate R09 配置 ─────────────────────────────────────────────────
+gate_r09:
+  p0_required: true
+  p1_coverage_target: 0.7
+  p2_skip: true
+  test_class: "RoleDataScopeControllerTest"
+  note: "本 Phase 包含数据范围配置、数据过滤、租户隔离测试"

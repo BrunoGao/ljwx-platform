@@ -1,0 +1,217 @@
+# Phase 43 — Tenant Domain 测试契约
+# 关联 Spec：spec/phase/phase-43.md
+
+phase: 43
+module: "tenant-domain"
+ac_ref: "spec/phase/phase-43.md"
+
+tests:
+
+  # ─── P0：安全测试 ───────────────────────────────────────────────
+  - id: TC-43-01
+    priority: P0
+    category: security
+    scenario: "无 Token 访问域名管理 → 401"
+    request:
+      method: GET
+      path: /api/v1/tenant/domains
+      auth: none
+    expect:
+      status: 401
+
+  - id: TC-43-02
+    priority: P0
+    category: security
+    scenario: "无权限 Token 绑定域名 → 403"
+    request:
+      method: POST
+      path: /api/v1/tenant/domains
+      auth: token_without_permission
+    expect:
+      status: 403
+
+  # ─── P0：域名 CRUD ─────────────────────────────────────────────
+  - id: TC-43-03
+    priority: P0
+    category: crud
+    ac: AC-01
+    scenario: "绑定租户域名"
+    request:
+      method: POST
+      path: /api/v1/tenant/domains
+      auth: token_with_tenant:domain:create
+      body:
+        domain: "tenant1.example.com"
+        isPrimary: true
+    expect:
+      status: 200
+      body:
+        code: 200
+        data: "{domainId}"
+
+  - id: TC-43-04
+    priority: P0
+    category: crud
+    scenario: "查询租户域名列表"
+    request:
+      method: GET
+      path: /api/v1/tenant/domains
+      auth: token_with_tenant:domain:list
+    expect:
+      status: 200
+      body:
+        code: 200
+        data:
+          list: "[域名列表]"
+
+  - id: TC-43-05
+    priority: P0
+    category: crud
+    scenario: "设置主域名"
+    setup:
+      - create_domain_A
+      - create_domain_B
+    request:
+      method: PUT
+      path: /api/v1/tenant/domains/{domainId}/set-primary
+      auth: token_with_tenant:domain:update
+    expect:
+      status: 200
+      db_assert: "SELECT is_primary FROM tenant_domain WHERE id={domainId} → TRUE"
+
+  - id: TC-43-06
+    priority: P0
+    category: crud
+    scenario: "删除域名"
+    request:
+      method: DELETE
+      path: /api/v1/tenant/domains/{domainId}
+      auth: token_with_tenant:domain:delete
+    expect:
+      status: 200
+      db_assert: "SELECT deleted FROM tenant_domain WHERE id={domainId} → TRUE"
+
+  # ─── P0：业务规则 ──────────────────────────────────────────────
+  - id: TC-43-07
+    priority: P0
+    category: validation
+    ac: AC-02
+    scenario: "域名唯一性校验"
+    setup:
+      - create_domain_for_tenant_A
+    request:
+      method: POST
+      path: /api/v1/tenant/domains
+      auth: token_tenant_B
+      body:
+        domain: "tenant1.example.com"
+    expect:
+      status: 400
+      body:
+        code: 400002
+        message: "域名已被使用"
+
+  - id: TC-43-08
+    priority: P0
+    category: validation
+    ac: AC-03
+    scenario: "域名格式校验"
+    request:
+      method: POST
+      path: /api/v1/tenant/domains
+      auth: token_with_tenant:domain:create
+      body:
+        domain: "invalid domain"
+    expect:
+      status: 400
+      body:
+        code: 400001
+        message: "域名格式无效"
+
+  - id: TC-43-09
+    priority: P0
+    category: business
+    ac: AC-04
+    scenario: "每个租户只能有一个主域名"
+    setup:
+      - create_primary_domain
+    request:
+      method: POST
+      path: /api/v1/tenant/domains
+      auth: token_with_tenant:domain:create
+      body:
+        domain: "tenant2.example.com"
+        isPrimary: true
+    expect:
+      note: "旧主域名自动设置为非主域名"
+      db_assert: "SELECT COUNT(*) FROM tenant_domain WHERE tenant_id={tenantId} AND is_primary=TRUE → 1"
+
+  - id: TC-43-10
+    priority: P0
+    category: business
+    ac: AC-05
+    scenario: "通过域名识别租户"
+    setup:
+      - create_domain_for_tenant_A
+    request:
+      method: GET
+      path: /api/v1/auth/tenant-by-domain?domain=tenant1.example.com
+      auth: none
+    expect:
+      status: 200
+      body:
+        data:
+          tenantId: "{tenantAId}"
+
+  # ─── P0：租户隔离 ───────────────────────────────────────────────
+  - id: TC-43-11
+    priority: P0
+    category: tenant_isolation
+    scenario: "租户 A 查不到租户 B 的域名"
+    setup:
+      - create_domain_for_tenant_A
+      - create_domain_for_tenant_B
+    request:
+      method: GET
+      path: /api/v1/tenant/domains
+      auth: token_tenant_A
+    expect:
+      status: 200
+      body:
+        data:
+          list: "[仅包含租户 A 的域名]"
+
+  # ─── P1：数据库结构验证 ─────────────────────────────────────────
+  - id: TC-43-12
+    priority: P1
+    category: db_schema
+    ac: AC-06
+    scenario: "tenant_domain 表包含 7 列审计字段"
+    expect:
+      db_assert: "tenant_domain 表包含 tenant_id, created_by, created_time, updated_by, updated_time, deleted, version"
+
+  - id: TC-43-13
+    priority: P1
+    category: db_schema
+    ac: AC-02
+    scenario: "domain 有 UNIQUE 约束"
+    expect:
+      db_assert: "tenant_domain 表 domain 列有 UNIQUE 约束"
+
+# ─── AC → TC 映射 ──────────────────────────────────────────────────
+ac_tc_map:
+  AC-01: [TC-43-03, TC-43-04, TC-43-05, TC-43-06]
+  AC-02: [TC-43-07, TC-43-13]
+  AC-03: [TC-43-08]
+  AC-04: [TC-43-09]
+  AC-05: [TC-43-10]
+  AC-06: [TC-43-12]
+  AC-07: []  # 编译检查由 Gate R01 覆盖
+
+# ─── Gate R09 配置 ─────────────────────────────────────────────────
+gate_r09:
+  p0_required: true
+  p1_coverage_target: 0.7
+  p2_skip: true
+  test_class: "TenantDomainControllerTest"
+  note: "本 Phase 包含域名 CRUD、唯一性校验、主域名管理、租户识别测试"

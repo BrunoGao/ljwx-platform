@@ -70,7 +70,7 @@ scope:
 
 ```java
 @Component
-@Order(Ordered.HIGHEST_PRECEDENCE)
+@Order(2)  // 在 TenantContextFilter (Order=1) 之后执行
 public class LoggingFilter extends OncePerRequestFilter {
 
     @Override
@@ -78,10 +78,10 @@ public class LoggingFilter extends OncePerRequestFilter {
                                    HttpServletResponse response,
                                    FilterChain filterChain) {
         try {
-            // 注入 MDC
+            // 注入 MDC (此时 TenantContext 已设置)
             MDC.put(MDCKeys.TRACE_ID, generateTraceId());
-            MDC.put(MDCKeys.TENANT_ID, getTenantId());
-            MDC.put(MDCKeys.USER_ID, getUserId());
+            MDC.put(MDCKeys.TENANT_ID, String.valueOf(TenantContext.getTenantId()));
+            MDC.put(MDCKeys.USER_ID, String.valueOf(getUserId()));
             MDC.put(MDCKeys.REQUEST_URI, request.getRequestURI());
             MDC.put(MDCKeys.REQUEST_METHOD, request.getMethod());
             MDC.put(MDCKeys.CLIENT_IP, getClientIp(request));

@@ -12,7 +12,7 @@ scope:
   - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/infra/mapper/TaskExecutionLogMapper.java"
   - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/appservice/TaskExecutionLogAppService.java"
   - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/controller/TaskExecutionLogController.java"
-  - "ljwx-platform-core/src/main/java/com/ljwx/platform/core/task/TaskExecutionLogger.java"
+  - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/task/TaskExecutionLogger.java"
   - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/domain/dto/TaskExecutionLogQueryDTO.java"
   - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/domain/vo/TaskExecutionLogVO.java"
   - "ljwx-platform-admin/src/api/taskLog.ts"

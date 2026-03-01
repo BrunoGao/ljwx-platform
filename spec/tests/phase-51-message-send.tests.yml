@@ -1,0 +1,233 @@
+# Phase 51 — Message Send 测试契约
+# 关联 Spec：spec/phase/phase-51.md
+
+phase: 51
+module: "message-send"
+ac_ref: "spec/phase/phase-51.md"
+
+tests:
+
+  # ─── P0：安全测试 ───────────────────────────────────────────────
+  - id: TC-51-01
+    priority: P0
+    category: security
+    scenario: "无 Token 发送消息 → 401"
+    request:
+      method: POST
+      path: /api/v1/message/send
+      auth: none
+    expect:
+      status: 401
+
+  - id: TC-51-02
+    priority: P0
+    category: security
+    scenario: "无权限 Token 发送消息 → 403"
+    request:
+      method: POST
+      path: /api/v1/message/send
+      auth: token_without_permission
+    expect:
+      status: 403
+
+  # ─── P0：消息发送 ──────────────────────────────────────────────
+  - id: TC-51-03
+    priority: P0
+    category: message
+    ac: AC-01
+    scenario: "发送站内信"
+    request:
+      method: POST
+      path: /api/v1/message/send
+      auth: token_with_system:message:send
+      body:
+        messageType: "SYSTEM"
+        templateCode: "WELCOME"
+        receivers: [1001, 1002]
+        variables:
+          userName: "张三"
+    expect:
+      status: 200
+      body:
+        code: 200
+        data: "{messageId}"
+
+  - id: TC-51-04
+    priority: P0
+    category: message
+    ac: AC-02
+    scenario: "发送邮件"
+    request:
+      method: POST
+      path: /api/v1/message/send
+      auth: token_with_system:message:send
+      body:
+        messageType: "EMAIL"
+        templateCode: "ORDER_CONFIRM"
+        receivers: ["user@example.com"]
+        variables:
+          orderNo: "ORD123"
+    expect:
+      status: 200
+      body:
+        code: 200
+
+  - id: TC-51-05
+    priority: P0
+    category: message
+    ac: AC-03
+    scenario: "发送短信"
+    request:
+      method: POST
+      path: /api/v1/message/send
+      auth: token_with_system:message:send
+      body:
+        messageType: "SMS"
+        templateCode: "VERIFY_CODE"
+        receivers: ["13800138000"]
+        variables:
+          code: "123456"
+    expect:
+      status: 200
+      body:
+        code: 200
+
+  # ─── P0：批量发送 ──────────────────────────────────────────────
+  - id: TC-51-06
+    priority: P0
+    category: message
+    ac: AC-04
+    scenario: "批量发送消息"
+    request:
+      method: POST
+      path: /api/v1/message/send/batch
+      auth: token_with_system:message:send
+      body:
+        messageType: "SYSTEM"
+        templateCode: "ANNOUNCEMENT"
+        receivers: [1001, 1002, 1003, 1004, 1005]
+        variables:
+          title: "系统维护通知"
+    expect:
+      status: 200
+      body:
+        code: 200
+        data:
+          successCount: 5
+
+  # ─── P0：业务规则 ──────────────────────────────────────────────
+  - id: TC-51-07
+    priority: P0
+    category: validation
+    ac: AC-05
+    scenario: "接收者不能为空"
+    request:
+      method: POST
+      path: /api/v1/message/send
+      auth: token_with_system:message:send
+      body:
+        messageType: "SYSTEM"
+        templateCode: "WELCOME"
+        receivers: []
+    expect:
+      status: 400
+      body:
+        code: 400001
+        message: "接收者不能为空"
+
+  - id: TC-51-08
+    priority: P0
+    category: validation
+    ac: AC-06
+    scenario: "模板不存在 → 400"
+    request:
+      method: POST
+      path: /api/v1/message/send
+      auth: token_with_system:message:send
+      body:
+        messageType: "SYSTEM"
+        templateCode: "NON_EXISTENT"
+        receivers: [1001]
+    expect:
+      status: 400
+      body:
+        code: 400002
+        message: "模板不存在"
+
+  # ─── P0：异步发送 ──────────────────────────────────────────────
+  - id: TC-51-09
+    priority: P0
+    category: message
+    ac: AC-07
+    scenario: "异步发送消息"
+    request:
+      method: POST
+      path: /api/v1/message/send/async
+      auth: token_with_system:message:send
+      body:
+        messageType: "EMAIL"
+        templateCode: "REPORT"
+        receivers: ["user@example.com"]
+    expect:
+      status: 200
+      body:
+        code: 200
+        data:
+          taskId: "{异步任务 ID}"
+
+  # ─── P0：租户隔离 ───────────────────────────────────────────────
+  - id: TC-51-10
+    priority: P0
+    category: tenant_isolation
+    scenario: "租户 A 无法向租户 B 的用户发送消息"
+    setup:
+      - create_user_for_tenant_B
+    request:
+      method: POST
+      path: /api/v1/message/send
+      auth: token_tenant_A
+      body:
+        messageType: "SYSTEM"
+        templateCode: "WELCOME"
+        receivers: ["{tenantBUserId}"]
+    expect:
+      status: 403
+      body:
+        code: 403001
+
+  # ─── P1：数据库结构验证 ─────────────────────────────────────────
+  - id: TC-51-11
+    priority: P1
+    category: db_schema
+    ac: AC-08
+    scenario: "msg_send_record 表包含 7 列审计字段"
+    expect:
+      db_assert: "msg_send_record 表包含 tenant_id, created_by, created_time, updated_by, updated_time, deleted, version"
+
+  - id: TC-51-12
+    priority: P1
+    category: db_schema
+    ac: AC-08
+    scenario: "receiver_id 有索引"
+    expect:
+      db_assert: "msg_send_record 表 receiver_id 列有索引"
+
+# ─── AC → TC 映射 ──────────────────────────────────────────────────
+ac_tc_map:
+  AC-01: [TC-51-03]
+  AC-02: [TC-51-04]
+  AC-03: [TC-51-05]
+  AC-04: [TC-51-06]
+  AC-05: [TC-51-07]
+  AC-06: [TC-51-08]
+  AC-07: [TC-51-09]
+  AC-08: [TC-51-11, TC-51-12]
+  AC-09: []  # 编译检查由 Gate R01 覆盖
+
+# ─── Gate R09 配置 ─────────────────────────────────────────────────
+gate_r09:
+  p0_required: true
+  p1_coverage_target: 0.7
+  p2_skip: true
+  test_class: "MessageSendControllerTest"
+  note: "本 Phase 包含消息发送、批量发送、异步发送、租户隔离测试"

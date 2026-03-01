@@ -1,0 +1,221 @@
+# Phase 49 — Webhook Configuration 测试契约
+# 关联 Spec：spec/phase/phase-49.md
+
+phase: 49
+module: "webhook"
+ac_ref: "spec/phase/phase-49.md"
+
+tests:
+
+  # ─── P0：安全测试 ───────────────────────────────────────────────
+  - id: TC-49-01
+    priority: P0
+    category: security
+    scenario: "无 Token 访问 Webhook 配置 → 401"
+    request:
+      method: GET
+      path: /api/v1/webhooks
+      auth: none
+    expect:
+      status: 401
+
+  - id: TC-49-02
+    priority: P0
+    category: security
+    scenario: "无权限 Token 创建 Webhook → 403"
+    request:
+      method: POST
+      path: /api/v1/webhooks
+      auth: token_without_permission
+    expect:
+      status: 403
+
+  # ─── P0：Webhook CRUD ──────────────────────────────────────────
+  - id: TC-49-03
+    priority: P0
+    category: crud
+    ac: AC-01
+    scenario: "创建 Webhook 配置"
+    request:
+      method: POST
+      path: /api/v1/webhooks
+      auth: token_with_system:webhook:create
+      body:
+        webhookName: "用户创建通知"
+        webhookUrl: "https://example.com/webhook"
+        eventType: "USER_CREATED"
+        secret: "webhook_secret"
+    expect:
+      status: 200
+      body:
+        code: 200
+        data: "{webhookId}"
+
+  - id: TC-49-04
+    priority: P0
+    category: crud
+    scenario: "查询 Webhook 列表"
+    request:
+      method: GET
+      path: /api/v1/webhooks
+      auth: token_with_system:webhook:list
+    expect:
+      status: 200
+      body:
+        data:
+          list: "[Webhook 列表]"
+
+  - id: TC-49-05
+    priority: P0
+    category: crud
+    scenario: "查询 Webhook 详情"
+    request:
+      method: GET
+      path: /api/v1/webhooks/{webhookId}
+      auth: token_with_system:webhook:detail
+    expect:
+      status: 200
+      body:
+        data:
+          webhookName: "用户创建通知"
+
+  - id: TC-49-06
+    priority: P0
+    category: crud
+    scenario: "更新 Webhook 配置"
+    request:
+      method: PUT
+      path: /api/v1/webhooks/{webhookId}
+      auth: token_with_system:webhook:update
+      body:
+        webhookUrl: "https://example.com/webhook-v2"
+    expect:
+      status: 200
+
+  - id: TC-49-07
+    priority: P0
+    category: crud
+    scenario: "删除 Webhook（软删除）"
+    request:
+      method: DELETE
+      path: /api/v1/webhooks/{webhookId}
+      auth: token_with_system:webhook:delete
+    expect:
+      status: 200
+      db_assert: "SELECT deleted FROM webhook_config WHERE id={webhookId} → TRUE"
+
+  # ─── P0：Webhook 触发 ──────────────────────────────────────────
+  - id: TC-49-08
+    priority: P0
+    category: webhook
+    ac: AC-02
+    scenario: "事件触发 Webhook 调用"
+    setup:
+      - create_webhook_for_USER_CREATED
+      - mock_webhook_endpoint
+    steps:
+      - "创建用户"
+      - "触发 USER_CREATED 事件"
+    expect:
+      note: "Webhook 端点收到 POST 请求"
+
+  - id: TC-49-09
+    priority: P0
+    category: webhook
+    ac: AC-03
+    scenario: "Webhook 请求包含签名"
+    setup:
+      - create_webhook_with_secret
+      - mock_webhook_endpoint
+    steps:
+      - "触发事件"
+      - "验证请求头"
+    expect:
+      note: "请求头包含 X-Webhook-Signature"
+
+  - id: TC-49-10
+    priority: P0
+    category: webhook
+    ac: AC-04
+    scenario: "Webhook 调用失败自动重试"
+    setup:
+      - create_webhook
+      - mock_webhook_failure
+    steps:
+      - "触发事件"
+      - "Webhook 调用失败"
+    expect:
+      note: "自动重试 3 次"
+
+  # ─── P0：业务规则 ──────────────────────────────────────────────
+  - id: TC-49-11
+    priority: P0
+    category: validation
+    ac: AC-05
+    scenario: "Webhook URL 格式校验"
+    request:
+      method: POST
+      path: /api/v1/webhooks
+      auth: token_with_system:webhook:create
+      body:
+        webhookName: "测试"
+        webhookUrl: "invalid-url"
+        eventType: "USER_CREATED"
+    expect:
+      status: 400
+      body:
+        code: 400001
+        message: "URL 格式无效"
+
+  # ─── P0：租户隔离 ───────────────────────────────────────────────
+  - id: TC-49-12
+    priority: P0
+    category: tenant_isolation
+    scenario: "租户 A 查不到租户 B 的 Webhook"
+    setup:
+      - create_webhook_for_tenant_A
+      - create_webhook_for_tenant_B
+    request:
+      method: GET
+      path: /api/v1/webhooks
+      auth: token_tenant_A
+    expect:
+      status: 200
+      body:
+        data:
+          list: "[仅包含租户 A 的 Webhook]"
+
+  # ─── P1：数据库结构验证 ─────────────────────────────────────────
+  - id: TC-49-13
+    priority: P1
+    category: db_schema
+    ac: AC-06
+    scenario: "webhook_config 表包含 7 列审计字段"
+    expect:
+      db_assert: "webhook_config 表包含 tenant_id, created_by, created_time, updated_by, updated_time, deleted, version"
+
+  - id: TC-49-14
+    priority: P1
+    category: db_schema
+    ac: AC-06
+    scenario: "event_type 有索引"
+    expect:
+      db_assert: "webhook_config 表 event_type 列有索引"
+
+# ─── AC → TC 映射 ──────────────────────────────────────────────────
+ac_tc_map:
+  AC-01: [TC-49-03, TC-49-04, TC-49-05, TC-49-06, TC-49-07]
+  AC-02: [TC-49-08]
+  AC-03: [TC-49-09]
+  AC-04: [TC-49-10]
+  AC-05: [TC-49-11]
+  AC-06: [TC-49-13, TC-49-14]
+  AC-07: []  # 编译检查由 Gate R01 覆盖
+
+# ─── Gate R09 配置 ─────────────────────────────────────────────────
+gate_r09:
+  p0_required: true
+  p1_coverage_target: 0.7
+  p2_skip: true
+  test_class: "WebhookControllerTest"
+  note: "本 Phase 包含 Webhook CRUD、触发、签名、重试、租户隔离测试"

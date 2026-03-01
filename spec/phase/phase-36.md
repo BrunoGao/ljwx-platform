@@ -98,7 +98,8 @@ public class TenantMetricsFilter extends OncePerRequestFilter {
                     tenantId, request.getRequestURI(), duration);
 
             // 记录全局指标（写入 Prometheus）
-            Counter.builder("http_requests_total")
+            Counter.builder("tenant_http_requests_total")
+                   .tag("tenant_id", String.valueOf(tenantId))
                    .tag("status", String.valueOf(response.getStatus()))
                    .register(meterRegistry)
                    .increment();

@@ -1,0 +1,214 @@
+# Phase 36 — Prometheus Metrics Monitoring 测试契约
+# 关联 Spec：spec/phase/phase-36.md
+
+phase: 36
+module: "metrics"
+ac_ref: "spec/phase/phase-36.md"
+
+tests:
+
+  # ─── P0：安全测试 ───────────────────────────────────────────────
+  - id: TC-36-01
+    priority: P0
+    category: security
+    scenario: "无 Token 访问指标端点 → 401"
+    request:
+      method: GET
+      path: /actuator/prometheus
+      auth: none
+    expect:
+      status: 401
+
+  - id: TC-36-02
+    priority: P0
+    category: security
+    scenario: "无权限 Token 访问指标 → 403"
+    request:
+      method: GET
+      path: /actuator/prometheus
+      auth: token_without_permission
+    expect:
+      status: 403
+
+  # ─── P0：指标采集 ──────────────────────────────────────────────
+  - id: TC-36-03
+    priority: P0
+    category: metrics
+    ac: AC-01
+    scenario: "JVM 指标正常采集"
+    request:
+      method: GET
+      path: /actuator/prometheus
+      auth: token_with_actuator:metrics
+    expect:
+      status: 200
+      body:
+        contains:
+          - "jvm_memory_used_bytes"
+          - "jvm_gc_pause_seconds"
+          - "jvm_threads_live"
+
+  - id: TC-36-04
+    priority: P0
+    category: metrics
+    ac: AC-01
+    scenario: "HTTP 请求指标正常采集"
+    steps:
+      - "发起 HTTP 请求"
+      - "查询 Prometheus 指标"
+    expect:
+      note: "http_server_requests_seconds_count 增加"
+
+  - id: TC-36-05
+    priority: P0
+    category: metrics
+    ac: AC-02
+    scenario: "租户维度指标采集"
+    steps:
+      - "租户 A 发起请求"
+      - "查询 Prometheus 指标"
+    expect:
+      note: "指标包含 tenant_id 标签"
+
+  # ─── P0：指标分层 ──────────────────────────────────────────────
+  - id: TC-36-06
+    priority: P0
+    category: metrics
+    ac: AC-03
+    scenario: "L1 低基数指标（全局监控）"
+    request:
+      method: GET
+      path: /actuator/prometheus
+      auth: token_with_actuator:metrics
+    expect:
+      note: "指标基数 < 1000，包含 JVM、HTTP 状态码"
+
+  - id: TC-36-07
+    priority: P0
+    category: metrics
+    ac: AC-03
+    scenario: "L2 租户维度指标（租户异常）"
+    steps:
+      - "查询 Loki 日志"
+      - "验证租户维度指标"
+    expect:
+      note: "包含租户请求量、错误率"
+
+  # ─── P0：ServiceMonitor 配置 ───────────────────────────────────
+  - id: TC-36-08
+    priority: P0
+    category: k8s
+    ac: AC-04
+    scenario: "ServiceMonitor 自动发现服务"
+    steps:
+      - "部署应用到 K8s"
+      - "验证 ServiceMonitor 配置"
+    expect:
+      note: "Prometheus 自动发现并采集指标"
+
+  - id: TC-36-09
+    priority: P0
+    category: k8s
+    ac: AC-04
+    scenario: "ServiceMonitor 采集间隔为 30s"
+    steps:
+      - "检查 ServiceMonitor 配置"
+    expect:
+      note: "interval: 30s"
+
+  # ─── P0：租户隔离 ───────────────────────────────────────────────
+  - id: TC-36-10
+    priority: P0
+    category: tenant_isolation
+    scenario: "租户 A 查不到租户 B 的指标"
+    setup:
+      - create_metrics_for_tenant_A
+      - create_metrics_for_tenant_B
+    request:
+      method: GET
+      path: /api/v1/metrics?tenantId={tenantA}
+      auth: token_tenant_A
+    expect:
+      status: 200
+      body:
+        data: "[仅包含租户 A 的指标]"
+
+  # ─── P1：告警规则 ──────────────────────────────────────────────
+  - id: TC-36-11
+    priority: P1
+    category: alerting
+    ac: AC-05
+    scenario: "高错误率告警规则"
+    steps:
+      - "错误率 > 5% 持续 5 分钟"
+      - "验证告警触发"
+    expect:
+      note: "告警级别为 Critical"
+
+  - id: TC-36-12
+    priority: P1
+    category: alerting
+    ac: AC-05
+    scenario: "高内存使用告警规则"
+    steps:
+      - "堆内存 > 90% 持续 5 分钟"
+      - "验证告警触发"
+    expect:
+      note: "告警级别为 Warning"
+
+  - id: TC-36-13
+    priority: P1
+    category: alerting
+    ac: AC-05
+    scenario: "服务不可用告警规则"
+    steps:
+      - "服务不可用持续 1 分钟"
+      - "验证告警触发"
+    expect:
+      note: "告警级别为 Critical"
+
+  # ─── P1：指标查询 ──────────────────────────────────────────────
+  - id: TC-36-14
+    priority: P1
+    category: metrics
+    scenario: "查询租户请求量 Top 10"
+    request:
+      method: GET
+      path: /api/v1/metrics/tenant/top?metric=request_count&limit=10
+      auth: token_with_system:metrics:list
+    expect:
+      status: 200
+      body:
+        data:
+          list: "[Top 10 租户请求量]"
+
+  - id: TC-36-15
+    priority: P1
+    category: metrics
+    scenario: "查询租户错误率 Top 10"
+    request:
+      method: GET
+      path: /api/v1/metrics/tenant/top?metric=error_rate&limit=10
+      auth: token_with_system:metrics:list
+    expect:
+      status: 200
+      body:
+        data:
+          list: "[Top 10 租户错误率]"
+
+# ─── AC → TC 映射 ──────────────────────────────────────────────────
+ac_tc_map:
+  AC-01: [TC-36-03, TC-36-04]
+  AC-02: [TC-36-05]
+  AC-03: [TC-36-06, TC-36-07]
+  AC-04: [TC-36-08, TC-36-09]
+  AC-05: [TC-36-11, TC-36-12, TC-36-13]
+  AC-06: []  # 编译检查由 Gate R01 覆盖
+
+# ─── Gate R09 配置 ─────────────────────────────────────────────────
+gate_r09:
+  p0_required: true
+  p1_coverage_target: 0.7
+  p2_skip: true
+  test_class: "PrometheusMetricsTest"
+  note: "本 Phase 包含指标采集、分层、ServiceMonitor、告警、租户隔离测试"

@@ -10,9 +10,10 @@ scope:
   - "ljwx-platform-app/src/main/resources/db/migration/V034__create_outbox_event.sql"
   - "ljwx-platform-core/src/main/java/com/ljwx/platform/core/event/OutboxEvent.java"
   - "ljwx-platform-core/src/main/java/com/ljwx/platform/core/event/OutboxEventPublisher.java"
-  - "ljwx-platform-core/src/main/java/com/ljwx/platform/core/event/OutboxEventPoller.java"
+  - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/service/OutboxEventPoller.java"
   - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/infra/mapper/OutboxEventMapper.java"
   - "ljwx-platform-app/src/main/resources/mapper/OutboxEventMapper.xml"
+  - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/listener/OutboxEventNotificationListener.java"
 ---
 # Phase 34 — Outbox 事件表 (Outbox Event Pattern)
 

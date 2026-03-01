@@ -1,0 +1,220 @@
+# Phase 50 — Message Template 测试契约
+# 关联 Spec：spec/phase/phase-50.md
+
+phase: 50
+module: "message-template"
+ac_ref: "spec/phase/phase-50.md"
+
+tests:
+
+  # ─── P0：安全测试 ───────────────────────────────────────────────
+  - id: TC-50-01
+    priority: P0
+    category: security
+    scenario: "无 Token 访问消息模板 → 401"
+    request:
+      method: GET
+      path: /api/v1/message/templates
+      auth: none
+    expect:
+      status: 401
+
+  - id: TC-50-02
+    priority: P0
+    category: security
+    scenario: "无权限 Token 创建模板 → 403"
+    request:
+      method: POST
+      path: /api/v1/message/templates
+      auth: token_without_permission
+    expect:
+      status: 403
+
+  # ─── P0：模板 CRUD ─────────────────────────────────────────────
+  - id: TC-50-03
+    priority: P0
+    category: crud
+    ac: AC-01
+    scenario: "创建消息模板"
+    request:
+      method: POST
+      path: /api/v1/message/templates
+      auth: token_with_system:message:create
+      body:
+        templateName: "欢迎消息"
+        templateCode: "WELCOME"
+        templateContent: "欢迎 {{userName}} 加入系统"
+        templateType: "SYSTEM"
+    expect:
+      status: 200
+      body:
+        code: 200
+        data: "{templateId}"
+
+  - id: TC-50-04
+    priority: P0
+    category: crud
+    scenario: "查询模板列表"
+    request:
+      method: GET
+      path: /api/v1/message/templates
+      auth: token_with_system:message:list
+    expect:
+      status: 200
+      body:
+        data:
+          list: "[模板列表]"
+
+  - id: TC-50-05
+    priority: P0
+    category: crud
+    scenario: "查询模板详情"
+    request:
+      method: GET
+      path: /api/v1/message/templates/{templateId}
+      auth: token_with_system:message:detail
+    expect:
+      status: 200
+      body:
+        data:
+          templateName: "欢迎消息"
+
+  - id: TC-50-06
+    priority: P0
+    category: crud
+    scenario: "更新模板内容"
+    request:
+      method: PUT
+      path: /api/v1/message/templates/{templateId}
+      auth: token_with_system:message:update
+      body:
+        templateContent: "欢迎 {{userName}}，您的账号已激活"
+    expect:
+      status: 200
+
+  - id: TC-50-07
+    priority: P0
+    category: crud
+    scenario: "删除模板（软删除）"
+    request:
+      method: DELETE
+      path: /api/v1/message/templates/{templateId}
+      auth: token_with_system:message:delete
+    expect:
+      status: 200
+      db_assert: "SELECT deleted FROM msg_template WHERE id={templateId} → TRUE"
+
+  # ─── P0：变量替换 ──────────────────────────────────────────────
+  - id: TC-50-08
+    priority: P0
+    category: template
+    ac: AC-02
+    scenario: "模板变量替换"
+    setup:
+      - create_template_with_variables
+    request:
+      method: POST
+      path: /api/v1/message/templates/{templateId}/render
+      auth: token_with_system:message:render
+      body:
+        variables:
+          userName: "张三"
+          orderNo: "ORD123"
+    expect:
+      status: 200
+      body:
+        data:
+          content: "欢迎 张三，您的订单 ORD123 已创建"
+
+  - id: TC-50-09
+    priority: P0
+    category: template
+    ac: AC-03
+    scenario: "缺少必需变量 → 400"
+    setup:
+      - create_template_with_required_variables
+    request:
+      method: POST
+      path: /api/v1/message/templates/{templateId}/render
+      auth: token_with_system:message:render
+      body:
+        variables:
+          userName: "张三"
+    expect:
+      status: 400
+      body:
+        code: 400001
+        message: "缺少必需变量: orderNo"
+
+  # ─── P0：业务规则 ──────────────────────────────────────────────
+  - id: TC-50-10
+    priority: P0
+    category: validation
+    ac: AC-04
+    scenario: "模板编码唯一性校验"
+    setup:
+      - create_template_with_code_WELCOME
+    request:
+      method: POST
+      path: /api/v1/message/templates
+      auth: token_with_system:message:create
+      body:
+        templateName: "欢迎消息2"
+        templateCode: "WELCOME"
+    expect:
+      status: 400
+      body:
+        code: 400002
+        message: "模板编码已存在"
+
+  # ─── P0：租户隔离 ───────────────────────────────────────────────
+  - id: TC-50-11
+    priority: P0
+    category: tenant_isolation
+    scenario: "租户 A 查不到租户 B 的模板"
+    setup:
+      - create_template_for_tenant_A
+      - create_template_for_tenant_B
+    request:
+      method: GET
+      path: /api/v1/message/templates
+      auth: token_tenant_A
+    expect:
+      status: 200
+      body:
+        data:
+          list: "[仅包含租户 A 的模板]"
+
+  # ─── P1：数据库结构验证 ─────────────────────────────────────────
+  - id: TC-50-12
+    priority: P1
+    category: db_schema
+    ac: AC-05
+    scenario: "msg_template 表包含 7 列审计字段"
+    expect:
+      db_assert: "msg_template 表包含 tenant_id, created_by, created_time, updated_by, updated_time, deleted, version"
+
+  - id: TC-50-13
+    priority: P1
+    category: db_schema
+    ac: AC-04
+    scenario: "template_code 有 UNIQUE 约束"
+    expect:
+      db_assert: "msg_template 表 template_code 列有 UNIQUE 约束"
+
+# ─── AC → TC 映射 ──────────────────────────────────────────────────
+ac_tc_map:
+  AC-01: [TC-50-03, TC-50-04, TC-50-05, TC-50-06, TC-50-07]
+  AC-02: [TC-50-08]
+  AC-03: [TC-50-09]
+  AC-04: [TC-50-10, TC-50-13]
+  AC-05: [TC-50-12]
+  AC-06: []  # 编译检查由 Gate R01 覆盖
+
+# ─── Gate R09 配置 ─────────────────────────────────────────────────
+gate_r09:
+  p0_required: true
+  p1_coverage_target: 0.7
+  p2_skip: true
+  test_class: "MessageTemplateControllerTest"
+  note: "本 Phase 包含模板 CRUD、变量替换、唯一性校验、租户隔离测试"

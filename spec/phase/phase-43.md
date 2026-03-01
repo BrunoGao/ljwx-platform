@@ -12,7 +12,7 @@ scope:
   - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/infra/mapper/TenantDomainMapper.java"
   - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/appservice/TenantDomainAppService.java"
   - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/controller/TenantDomainController.java"
-  - "ljwx-platform-web/src/main/java/com/ljwx/platform/web/filter/TenantDomainFilter.java"
+  - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/filter/TenantDomainFilter.java"
   - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/domain/dto/TenantDomainCreateDTO.java"
   - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/domain/vo/TenantDomainVO.java"
 ---
@@ -33,7 +33,6 @@ scope:
 - `spec/04-database.md` — §租户域名表
 - `spec/03-api.md` — §租户域名 API
 - `spec/01-constraints.md` — §审计字段
-- `spec/registry/constraints.yml` — §缓存策略
 - `spec/08-output-rules.md`
 
 ---
@@ -64,6 +63,7 @@ scope:
 | is_primary | BOOLEAN | NOT NULL, DEFAULT FALSE | 是否主域名 |
 | verified | BOOLEAN | NOT NULL, DEFAULT FALSE | 是否已验证 |
 | verified_time | TIMESTAMP | | 验证时间 |
+| verify_token | VARCHAR(100) | | 验证 token |
 | remark | VARCHAR(500) | | 备注 |
 | created_by | BIGINT | NOT NULL, DEFAULT 0 | 创建人 |
 | created_time | TIMESTAMP | NOT NULL, DEFAULT CURRENT_TIMESTAMP | 创建时间 |

@@ -1,0 +1,224 @@
+# Phase 46 — Workflow Engine 测试契约
+# 关联 Spec：spec/phase/phase-46.md
+
+phase: 46
+module: "workflow"
+ac_ref: "spec/phase/phase-46.md"
+
+tests:
+
+  # ─── P0：安全测试 ───────────────────────────────────────────────
+  - id: TC-46-01
+    priority: P0
+    category: security
+    scenario: "无 Token 访问工作流 → 401"
+    request:
+      method: GET
+      path: /api/v1/workflows
+      auth: none
+    expect:
+      status: 401
+
+  - id: TC-46-02
+    priority: P0
+    category: security
+    scenario: "无权限 Token 创建工作流 → 403"
+    request:
+      method: POST
+      path: /api/v1/workflows
+      auth: token_without_permission
+    expect:
+      status: 403
+
+  # ─── P0：工作流 CRUD ───────────────────────────────────────────
+  - id: TC-46-03
+    priority: P0
+    category: crud
+    ac: AC-01
+    scenario: "创建工作流定义"
+    request:
+      method: POST
+      path: /api/v1/workflows
+      auth: token_with_system:workflow:create
+      body:
+        workflowName: "请假审批"
+        workflowKey: "leave_approval"
+        definition: "{JSON 定义}"
+    expect:
+      status: 200
+      body:
+        code: 200
+        data: "{workflowId}"
+
+  - id: TC-46-04
+    priority: P0
+    category: crud
+    scenario: "查询工作流列表"
+    request:
+      method: GET
+      path: /api/v1/workflows
+      auth: token_with_system:workflow:list
+    expect:
+      status: 200
+      body:
+        data:
+          list: "[工作流列表]"
+
+  - id: TC-46-05
+    priority: P0
+    category: crud
+    scenario: "查询工作流详情"
+    request:
+      method: GET
+      path: /api/v1/workflows/{workflowId}
+      auth: token_with_system:workflow:detail
+    expect:
+      status: 200
+      body:
+        data:
+          workflowName: "请假审批"
+
+  - id: TC-46-06
+    priority: P0
+    category: crud
+    scenario: "更新工作流定义"
+    request:
+      method: PUT
+      path: /api/v1/workflows/{workflowId}
+      auth: token_with_system:workflow:update
+      body:
+        workflowName: "请假审批（更新）"
+    expect:
+      status: 200
+
+  # ─── P0：工作流实例 ────────────────────────────────────────────
+  - id: TC-46-07
+    priority: P0
+    category: workflow
+    ac: AC-02
+    scenario: "启动工作流实例"
+    setup:
+      - create_workflow_definition
+    request:
+      method: POST
+      path: /api/v1/workflows/{workflowId}/start
+      auth: token_with_system:workflow:start
+      body:
+        businessKey: "LEAVE001"
+        variables:
+          days: 3
+          reason: "事假"
+    expect:
+      status: 200
+      body:
+        data: "{instanceId}"
+
+  - id: TC-46-08
+    priority: P0
+    category: workflow
+    ac: AC-03
+    scenario: "完成工作流任务"
+    setup:
+      - create_workflow_instance
+      - create_pending_task
+    request:
+      method: POST
+      path: /api/v1/workflows/tasks/{taskId}/complete
+      auth: token_with_system:workflow:task
+      body:
+        approved: true
+        comment: "同意"
+    expect:
+      status: 200
+      db_assert: "SELECT status FROM workflow_task WHERE id={taskId} → COMPLETED"
+
+  - id: TC-46-09
+    priority: P0
+    category: workflow
+    ac: AC-04
+    scenario: "查询待办任务"
+    setup:
+      - create_workflow_instance_with_tasks
+    request:
+      method: GET
+      path: /api/v1/workflows/tasks/pending
+      auth: token_user
+    expect:
+      status: 200
+      body:
+        data:
+          list: "[当前用户的待办任务]"
+
+  # ─── P0：业务规则 ──────────────────────────────────────────────
+  - id: TC-46-10
+    priority: P0
+    category: business
+    ac: AC-05
+    scenario: "工作流 Key 唯一性校验"
+    setup:
+      - create_workflow_with_key_leave_approval
+    request:
+      method: POST
+      path: /api/v1/workflows
+      auth: token_with_system:workflow:create
+      body:
+        workflowName: "请假审批2"
+        workflowKey: "leave_approval"
+    expect:
+      status: 400
+      body:
+        code: 400002
+        message: "工作流 Key 已存在"
+
+  # ─── P0：租户隔离 ───────────────────────────────────────────────
+  - id: TC-46-11
+    priority: P0
+    category: tenant_isolation
+    scenario: "租户 A 查不到租户 B 的工作流"
+    setup:
+      - create_workflow_for_tenant_A
+      - create_workflow_for_tenant_B
+    request:
+      method: GET
+      path: /api/v1/workflows
+      auth: token_tenant_A
+    expect:
+      status: 200
+      body:
+        data:
+          list: "[仅包含租户 A 的工作流]"
+
+  # ─── P1：数据库结构验证 ─────────────────────────────────────────
+  - id: TC-46-12
+    priority: P1
+    category: db_schema
+    ac: AC-06
+    scenario: "workflow_definition 表包含 7 列审计字段"
+    expect:
+      db_assert: "workflow_definition 表包含 tenant_id, created_by, created_time, updated_by, updated_time, deleted, version"
+
+  - id: TC-46-13
+    priority: P1
+    category: db_schema
+    ac: AC-05
+    scenario: "workflow_key 有 UNIQUE 约束"
+    expect:
+      db_assert: "workflow_definition 表 workflow_key 列有 UNIQUE 约束"
+
+# ─── AC → TC 映射 ──────────────────────────────────────────────────
+ac_tc_map:
+  AC-01: [TC-46-03, TC-46-04, TC-46-05, TC-46-06]
+  AC-02: [TC-46-07]
+  AC-03: [TC-46-08]
+  AC-04: [TC-46-09]
+  AC-05: [TC-46-10, TC-46-13]
+  AC-06: [TC-46-12]
+  AC-07: []  # 编译检查由 Gate R01 覆盖
+
+# ─── Gate R09 配置 ─────────────────────────────────────────────────
+gate_r09:
+  p0_required: true
+  p1_coverage_target: 0.7
+  p2_skip: true
+  test_class: "WorkflowControllerTest"
+  note: "本 Phase 包含工作流 CRUD、实例启动、任务完成、租户隔离测试"

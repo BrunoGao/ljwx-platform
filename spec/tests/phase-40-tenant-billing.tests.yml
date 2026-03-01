@@ -1,0 +1,200 @@
+# Phase 40 — Tenant Billing 测试契约
+# 关联 Spec：spec/phase/phase-40.md
+
+phase: 40
+module: "tenant-billing"
+ac_ref: "spec/phase/phase-40.md"
+
+tests:
+
+  # ─── P0：安全测试 ───────────────────────────────────────────────
+  - id: TC-40-01
+    priority: P0
+    category: security
+    scenario: "无 Token 访问计费记录 → 401"
+    request:
+      method: GET
+      path: /api/v1/tenant/billing
+      auth: none
+    expect:
+      status: 401
+
+  - id: TC-40-02
+    priority: P0
+    category: security
+    scenario: "无权限 Token 创建账单 → 403"
+    request:
+      method: POST
+      path: /api/v1/tenant/billing
+      auth: token_without_permission
+    expect:
+      status: 403
+
+  # ─── P0：计费 CRUD ─────────────────────────────────────────────
+  - id: TC-40-03
+    priority: P0
+    category: crud
+    ac: AC-01
+    scenario: "创建租户账单"
+    request:
+      method: POST
+      path: /api/v1/tenant/billing
+      auth: token_with_system:billing:create
+      body:
+        tenantId: 1001
+        packageId: 1
+        amount: 99.00
+        billingPeriod: "2026-03"
+        dueDate: "2026-03-31"
+    expect:
+      status: 200
+      body:
+        code: 200
+        data: "{billingId}"
+
+  - id: TC-40-04
+    priority: P0
+    category: crud
+    scenario: "查询账单列表"
+    request:
+      method: GET
+      path: /api/v1/tenant/billing
+      auth: token_with_system:billing:list
+    expect:
+      status: 200
+      body:
+        code: 200
+        data:
+          list: "[账单列表]"
+
+  - id: TC-40-05
+    priority: P0
+    category: crud
+    scenario: "查询账单详情"
+    request:
+      method: GET
+      path: /api/v1/tenant/billing/{billingId}
+      auth: token_with_system:billing:detail
+    expect:
+      status: 200
+      body:
+        code: 200
+        data:
+          amount: 99.00
+
+  - id: TC-40-06
+    priority: P0
+    category: crud
+    scenario: "支付账单"
+    request:
+      method: POST
+      path: /api/v1/tenant/billing/{billingId}/pay
+      auth: token_with_tenant:billing:pay
+      body:
+        paymentMethod: "ALIPAY"
+        transactionId: "TXN123456"
+    expect:
+      status: 200
+      body:
+        code: 200
+      db_assert: "SELECT status FROM tenant_billing WHERE id={billingId} → PAID"
+
+  # ─── P0：业务规则 ──────────────────────────────────────────────
+  - id: TC-40-07
+    priority: P0
+    category: business
+    ac: AC-02
+    scenario: "账单金额必须大于 0"
+    request:
+      method: POST
+      path: /api/v1/tenant/billing
+      auth: token_with_system:billing:create
+      body:
+        tenantId: 1001
+        amount: 0
+    expect:
+      status: 400
+      body:
+        code: 400001
+        message: "账单金额必须大于 0"
+
+  - id: TC-40-08
+    priority: P0
+    category: business
+    ac: AC-03
+    scenario: "已支付账单不可重复支付"
+    setup:
+      - create_paid_billing
+    request:
+      method: POST
+      path: /api/v1/tenant/billing/{billingId}/pay
+      auth: token_with_tenant:billing:pay
+    expect:
+      status: 400
+      body:
+        code: 400002
+        message: "账单已支付"
+
+  - id: TC-40-09
+    priority: P0
+    category: business
+    ac: AC-04
+    scenario: "账单到期自动标记为逾期"
+    setup:
+      - create_unpaid_billing_with_past_due_date
+    steps:
+      - "执行定时任务"
+    expect:
+      db_assert: "SELECT status FROM tenant_billing WHERE id={billingId} → OVERDUE"
+
+  # ─── P0：租户隔离 ───────────────────────────────────────────────
+  - id: TC-40-10
+    priority: P0
+    category: tenant_isolation
+    scenario: "租户 A 查不到租户 B 的账单"
+    setup:
+      - create_billing_for_tenant_A
+      - create_billing_for_tenant_B
+    request:
+      method: GET
+      path: /api/v1/tenant/billing
+      auth: token_tenant_A
+    expect:
+      status: 200
+      body:
+        data:
+          list: "[仅包含租户 A 的账单]"
+
+  # ─── P1：数据库结构验证 ─────────────────────────────────────────
+  - id: TC-40-11
+    priority: P1
+    category: db_schema
+    ac: AC-05
+    scenario: "tenant_billing 表包含 7 列审计字段"
+    expect:
+      db_assert: "tenant_billing 表包含 tenant_id, created_by, created_time, updated_by, updated_time, deleted, version"
+
+  - id: TC-40-12
+    priority: P1
+    category: db_schema
+    ac: AC-05
+    scenario: "tenant_id 和 billing_period 有复合索引"
+    expect:
+      db_assert: "tenant_billing 表有 idx_tenant_billing_period 索引"
+
+# ─── AC → TC 映射 ──────────────────────────────────────────────────
+ac_tc_map:
+  AC-01: [TC-40-03, TC-40-04, TC-40-05, TC-40-06]
+  AC-02: [TC-40-07]
+  AC-03: [TC-40-08]
+  AC-04: [TC-40-09]
+  AC-05: [TC-40-11, TC-40-12]
+  AC-06: []  # 编译检查由 Gate R01 覆盖
+
+# ─── Gate R09 配置 ─────────────────────────────────────────────────
+gate_r09:
+  p0_required: true
+  p1_coverage_target: 0.7
+  p2_skip: true
+  test_class: "TenantBillingControllerTest"
+  note: "本 Phase 包含账单 CRUD、支付、逾期处理、租户隔离测试"

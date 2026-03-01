@@ -12,7 +12,7 @@ scope:
   - "ljwx-platform-core/src/main/java/com/ljwx/platform/core/cache/CacheLevel.java"
   - "ljwx-platform-core/src/main/java/com/ljwx/platform/core/cache/CacheInvalidationListener.java"
   - "ljwx-platform-core/src/main/java/com/ljwx/platform/core/cache/config/CacheConfig.java"
-  - "ljwx-platform-core/src/main/java/com/ljwx/platform/core/cache/annotation/Cacheable.java"
+  - "ljwx-platform-core/src/main/java/com/ljwx/platform/core/cache/annotation/MultiLevelCacheable.java"
   - "ljwx-platform-app/src/main/resources/application.yml"
 ---
 # Phase 33 — 多级缓存管理器 (Multi-Level Cache Manager)
@@ -90,7 +90,7 @@ scope:
 ```
 ┌─────────────────────────────────────────┐
 │  Application Layer                      │
-│  @Cacheable(level=REDIS_ONLY)          │
+│  @MultiLevelCacheable(level=REDIS_ONLY) │
 └─────────────────┬───────────────────────┘
                   │
 ┌─────────────────▼───────────────────────┐
@@ -130,12 +130,12 @@ public enum CacheLevel {
 }
 ```
 
-### @Cacheable 注解
+### @MultiLevelCacheable 注解
 
 ```java
 @Target({ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
-public @interface Cacheable {
+public @interface MultiLevelCacheable {
     String cacheName();                    // 缓存名称
     String key() default "";               // SpEL 表达式
     CacheLevel level() default CAFFEINE_REDIS;  // 缓存档位

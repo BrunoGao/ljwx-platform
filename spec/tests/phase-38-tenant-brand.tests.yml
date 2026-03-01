@@ -1,0 +1,206 @@
+# Phase 38 — Tenant Branding 测试契约
+# 关联 Spec：spec/phase/phase-38.md
+
+phase: 38
+module: "tenant-brand"
+ac_ref: "spec/phase/phase-38.md"
+
+tests:
+
+  # ─── P0：安全测试 ───────────────────────────────────────────────
+  - id: TC-38-01
+    priority: P0
+    category: security
+    scenario: "无 Token 访问品牌配置 → 401"
+    request:
+      method: GET
+      path: /api/v1/tenant/brand
+      auth: none
+    expect:
+      status: 401
+
+  - id: TC-38-02
+    priority: P0
+    category: security
+    scenario: "无权限 Token 更新品牌 → 403"
+    request:
+      method: PUT
+      path: /api/v1/tenant/brand
+      auth: token_without_permission
+    expect:
+      status: 403
+
+  # ─── P0：品牌配置 CRUD ─────────────────────────────────────────
+  - id: TC-38-03
+    priority: P0
+    category: crud
+    ac: AC-01
+    scenario: "查询租户品牌配置"
+    request:
+      method: GET
+      path: /api/v1/tenant/brand
+      auth: token_with_tenant:brand:detail
+    expect:
+      status: 200
+      body:
+        code: 200
+        data:
+          tenantName: "测试租户"
+          logo: "https://example.com/logo.png"
+
+  - id: TC-38-04
+    priority: P0
+    category: crud
+    ac: AC-01
+    scenario: "更新基础信息"
+    request:
+      method: PUT
+      path: /api/v1/tenant/brand
+      auth: token_with_tenant:brand:update
+      body:
+        tenantName: "测试租户（更新）"
+        logo: "https://example.com/new-logo.png"
+        favicon: "https://example.com/favicon.ico"
+    expect:
+      status: 200
+      body:
+        code: 200
+
+  - id: TC-38-05
+    priority: P0
+    category: crud
+    ac: AC-02
+    scenario: "更新主题配色"
+    request:
+      method: PUT
+      path: /api/v1/tenant/brand
+      auth: token_with_tenant:brand:update
+      body:
+        primaryColor: "#409EFF"
+        secondaryColor: "#67C23A"
+        backgroundColor: "#FFFFFF"
+    expect:
+      status: 200
+      body:
+        code: 200
+
+  - id: TC-38-06
+    priority: P0
+    category: crud
+    ac: AC-03
+    scenario: "更新登录页配置"
+    request:
+      method: PUT
+      path: /api/v1/tenant/brand
+      auth: token_with_tenant:brand:update
+      body:
+        loginBgImage: "https://example.com/login-bg.jpg"
+        loginSlogan: "欢迎使用"
+        copyright: "© 2026 测试租户"
+    expect:
+      status: 200
+      body:
+        code: 200
+
+  # ─── P0：业务规则 ──────────────────────────────────────────────
+  - id: TC-38-07
+    priority: P0
+    category: validation
+    ac: AC-04
+    scenario: "颜色格式校验"
+    request:
+      method: PUT
+      path: /api/v1/tenant/brand
+      auth: token_with_tenant:brand:update
+      body:
+        primaryColor: "invalid-color"
+    expect:
+      status: 400
+      body:
+        code: 400001
+        message: "颜色格式无效"
+
+  - id: TC-38-08
+    priority: P0
+    category: validation
+    ac: AC-04
+    scenario: "URL 格式校验"
+    request:
+      method: PUT
+      path: /api/v1/tenant/brand
+      auth: token_with_tenant:brand:update
+      body:
+        logo: "invalid-url"
+    expect:
+      status: 400
+      body:
+        code: 400001
+        message: "URL 格式无效"
+
+  # ─── P0：租户隔离 ───────────────────────────────────────────────
+  - id: TC-38-09
+    priority: P0
+    category: tenant_isolation
+    scenario: "租户 A 无法查看租户 B 的品牌配置"
+    setup:
+      - create_brand_for_tenant_A
+      - create_brand_for_tenant_B
+    request:
+      method: GET
+      path: /api/v1/tenant/brand
+      auth: token_tenant_A
+    expect:
+      status: 200
+      body:
+        data:
+          tenantId: "{tenantAId}"
+
+  - id: TC-38-10
+    priority: P0
+    category: tenant_isolation
+    scenario: "租户 A 无法更新租户 B 的品牌配置"
+    request:
+      method: PUT
+      path: /api/v1/tenant/brand
+      auth: token_tenant_A
+      body:
+        tenantId: "{tenantBId}"
+        tenantName: "恶意更新"
+    expect:
+      status: 403
+      body:
+        code: 403001
+
+  # ─── P1：数据库结构验证 ─────────────────────────────────────────
+  - id: TC-38-11
+    priority: P1
+    category: db_schema
+    ac: AC-05
+    scenario: "tenant_brand 表包含 7 列审计字段"
+    expect:
+      db_assert: "tenant_brand 表包含 tenant_id, created_by, created_time, updated_by, updated_time, deleted, version"
+
+  - id: TC-38-12
+    priority: P1
+    category: db_schema
+    ac: AC-05
+    scenario: "tenant_id 有 UNIQUE 约束"
+    expect:
+      db_assert: "tenant_brand 表 tenant_id 列有 UNIQUE 约束"
+
+# ─── AC → TC 映射 ──────────────────────────────────────────────────
+ac_tc_map:
+  AC-01: [TC-38-03, TC-38-04]
+  AC-02: [TC-38-05]
+  AC-03: [TC-38-06]
+  AC-04: [TC-38-07, TC-38-08]
+  AC-05: [TC-38-11, TC-38-12]
+  AC-06: []  # 编译检查由 Gate R01 覆盖
+
+# ─── Gate R09 配置 ─────────────────────────────────────────────────
+gate_r09:
+  p0_required: true
+  p1_coverage_target: 0.7
+  p2_skip: true
+  test_class: "TenantBrandControllerTest"
+  note: "本 Phase 包含品牌配置 CRUD、格式校验、租户隔离测试"

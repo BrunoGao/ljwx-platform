@@ -100,7 +100,7 @@ public class TenantLineHandler implements TenantLineHandler {
     public Expression getTenantId() {
         Long tenantId = TenantContext.getTenantId();
         // 超级管理员 (tenant_id=0) 跳过租户过滤
-        if (tenantId == null || tenantId == 0) {
+        if (tenantId == null || Long.valueOf(0).equals(tenantId)) {
             return null;
         }
         return new LongValue(tenantId);
@@ -130,7 +130,7 @@ public class SecurityUtils {
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
         if (userDetails instanceof LoginUser) {
             LoginUser loginUser = (LoginUser) userDetails;
-            return loginUser.getTenantId() != null && loginUser.getTenantId() == 0;
+            return loginUser.getTenantId() != null && Long.valueOf(0).equals(loginUser.getTenantId());
         }
         return false;
     }
@@ -162,7 +162,7 @@ public class TenantContextFilter extends OncePerRequestFilter {
             Long userTenantId = loginUser.getTenantId();
 
             // 2. 超级管理员可以通过 header 切换租户
-            if (userTenantId != null && userTenantId == 0) {
+            if (userTenantId != null && Long.valueOf(0).equals(userTenantId)) {
                 String headerTenantId = request.getHeader("X-Tenant-Id");
                 if (StringUtils.hasText(headerTenantId)) {
                     return Long.parseLong(headerTenantId);

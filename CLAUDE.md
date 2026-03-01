@@ -1,123 +1,563 @@
-# LJWX Platform
+# LJWX Platform Spec 编写指南
 
-企业级全栈脚手架。Java 21 / Spring Boot 3.5 后端 + Vue 3 三端前端（Admin 管理后台 / Mobile uni-app 移动端 / Screen 数据大屏）。
+## 目录
+- [核心原则](#核心原则)
+- [Spec 结构规范](#spec-结构规范)
+- [质量检查清单](#质量检查清单)
+- [常见错误与修复](#常见错误与修复)
+- [最佳实践](#最佳实践)
 
-## 工作流程（IMPORTANT — YOU MUST FOLLOW）
+---
 
-### 首次启动（Preflight）
-如果 Current Phase 显示"尚未开始"，必须先执行 preflight 自检：
-1. 运行 `/preflight`
-2. 等待全部检查通过
-3. 通过后将 Current Phase 更新为 `Phase: 0 (Skeleton) — READY`
-4. 然后才能执行 `/phase-exec 0`
+## 核心原则
 
-### 常规 Phase 执行
-1. 确认 Current Phase 编号
-2. 读取 `spec/phase/phase-{NN}.md` 获取本阶段任务、读取清单、验收条件
-3. **仅**按"读取清单"中列出的文件和章节读取 `spec/` 内容
-4. 禁止扫描整个 `spec/` 目录（Phase 19 除外）
-5. 按 `spec/08-output-rules.md` 格式输出
-6. 完成后告知用户更新 Current Phase
+### 1. SSOT (Single Source of Truth)
+所有关键配置必须在 Registry 中注册:
+- **权限**: `spec/registry/permissions.yml`
+- **Flyway 版本**: `spec/registry/migrations.yml`
+- **可观测性**: `spec/registry/observability.yml`
+- **全局约束**: `spec/registry/constraints.yml`
 
-## Current Phase
-
-Phase: 31 (Frontend Permission Directive and Enhancement) — PASSED
-
-已完成: Phase 0-31 PASSED
-待执行: Phase 32+
-
-## 硬规则（违反任何一篇为 FAIL）
-
-1. **DAG 依赖**: core ← {security, data} ← web ← app。security 和 data 互不依赖。禁止 data import security 的任何类，反之亦然
-2. **前端 semver**: 所有 dependencies / devDependencies 仅用 `~`（tilde），禁止 `^`（caret）
-3. **审计字段 (audit fields)**: 所有业务表（Quartz 除外）必须含 tenant_id, created_by, created_time, updated_by, updated_time, deleted, version 共 7 列，均 NOT NULL + 有 DEFAULT
-4. **TypeScript**: 禁止 `any`，tsconfig 开启 `strict: true`
-5. **权限注解**: 每个 Controller 方法必须 `@PreAuthorize`（login / refresh 除外），格式 `hasAuthority('resource:action')`，不使用 ROLE_ 前缀
-6. **tenant_id**: DTO 中禁止出现，前端禁止传递，后端由 Interceptor 自动注入
-7. **环境变量**: 前端统一 `VITE_APP_BASE_API`，禁止 `VITE_API_BASE_URL`
-8. **Vue Router**: 必须按 vue-router @5 API 写，禁止按 v4 经验写。参考 https://router.vuejs.org/guide/migration/v4-to-v5
-9. **Flyway**: 禁止 `IF NOT EXISTS`
-10. **POM 版本**: 禁止 `${latest.version}`，所有版本必须硬编码数字
-11. **输出完整性**: NEW FILES 必须输出完整文件内容，禁止 `// ...省略...` 或 `/* same as before */`
-12. **PATCHES 最小化**: 仅修改与当前 Phase 直接相关的文件，禁止顺手重构、重新格式化、批量重写无关文件
-13. **日志脱敏**: password → `***`，phone → 中间四位 `*`，idCard → 中间段 `*`
-14. **BCrypt**: admin 密码 `Admin@12345` 使用 cost=10 的 BCrypt hash，写在 V006 种子 SQL 中
-
-## 版本锁定（SINGLE SOURCE OF TRUTH — 其他文件禁止重复写版本号，引用本段即可）
-
-### 后端
-
-| 依赖 | 版本 |
-|------|------|
-| Java JDK | 21 (21.0.10) |
-| Spring Boot | 3.5.11 |
-| MyBatis Spring Boot Starter | 3.0.5 |
-| springdoc-openapi (BOM) | 2.8.15 |
-| Testcontainers (BOM) | 1.21.4 |
-| PostgreSQL (Docker) | 16.12 (postgres:16.12-alpine) |
-| Flyway | 由 Spring Boot BOM 管理 |
-| Quartz | 由 spring-boot-starter-quartz 管理 |
-| Maven Wrapper | 3.9.9 |
-
-### 前端
-
-| 依赖 | 版本 | 策略 |
-|------|------|------|
-| Node.js | 22.22.0 (.nvmrc) | ≥20.19 \| ≥22.12 |
-| pnpm | 10.30.1 | packageManager 字段锁定 |
-| Vue | ~3.5.28 | ~ patch only |
-| Vite | ~7.3.1 | ~ patch only |
-| TypeScript | ~5.9.3 | ~ patch only |
-| Vue Router | ~5.0.2 | ~ patch only |
-| Pinia | ~3.0.4 | ~ patch only |
-| Element Plus | ~2.13.2 | ~ patch only |
-| @element-plus/icons-vue | ~2.3.2 | ~ patch only |
-| ECharts | ~6.0.0 | ~ patch only |
-| Axios | ~1.13.5 | ~ patch only |
-| @vueuse/core | ~14.2.1 | ~ patch only |
-| unplugin-auto-import | ~21.0.0 | ~ devDep |
-| unplugin-vue-components | ~31.0.0 | ~ devDep |
-| vue-tsc | ~3.2.4 | ~ devDep |
-| sass | ~1.97.3 | ~ devDep |
-| nprogress | ~0.2.0 | ~ |
-| dayjs | ~1.11.19 | ~ |
-| @kjgl77/datav-vue3 | ~1.7.4 | ~ Screen 专用 |
-| tsup | ~8.5.0 | ~ shared 包构建 |
-
-### Maven 坐标
-
-```xml
-<groupId>com.ljwx.platform</groupId>
-<artifactId>ljwx-platform-{module}</artifactId>
-<version>1.0.0-SNAPSHOT</version>
+### 2. DAG 依赖硬规则
+模块依赖必须严格遵守 DAG (有向无环图):
+```
+core ← {security, data} ← web ← app
 ```
 
-## 代码风格参考
+**禁止**:
+- ❌ core 依赖 app
+- ❌ data 依赖 security
+- ❌ web 依赖 app (Filter 必须在 app 模块)
 
-详见自动加载的规则文件（无需重复，优先读规则文件）：
-- Java 约定：`.claude/rules/java-conventions.md`（Controller / Service / DTO 少样本）
-- Vue/TS 约定：`.claude/rules/vue-conventions.md`（组件 / API 少样本）
-- Flyway 规范：`.claude/rules/flyway-rules.md`（迁移 SQL 少样本）
+### 3. 数据库兼容性
+- ✅ 使用 PostgreSQL 14+ 语法
+- ❌ 禁止 MySQL 专有函数 (如 `find_in_set()`)
+- ✅ 使用 PostgreSQL 数组: `ancestors @> ARRAY[...]::bigint[]`
 
-## Compact 指令
+### 4. 审计字段完整性
+每个表必须包含 7 个审计字段:
+```sql
+tenant_id BIGINT NOT NULL DEFAULT 0,
+created_by BIGINT NOT NULL DEFAULT 0,
+created_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+updated_by BIGINT NOT NULL DEFAULT 0,
+updated_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+deleted BOOLEAN NOT NULL DEFAULT FALSE,
+version INT NOT NULL DEFAULT 1
+```
 
-When compacting, always preserve: 当前 Phase 编号及进度、已完成的文件清单、硬规则全文、版本锁定表全文。
+**禁止**: `+ 7 审计字段` 这种速记方式
 
-## GitHub 集成规范（DevEx）
+---
 
-- Issue 必须使用模板创建（禁用空白 Issue）
-- PR 必须关联 Issue（`Closes #XX` 或 `Relates #XX`）
-- Commit message 建议格式：`feat|fix|docs(phase-XX): description`
-- Release tag 格式：`vX.Y.Z-phaseNN`
+## Spec 结构规范
 
-## Quality Dashboard & Gate System
+### 完整 Phase Spec 模板
 
-- Gate 以 `scripts/gates/gate-all.sh [phase]` 退出码为准：`0=PASS`，非 0 视为 FAIL。
-- 每次 gate 运行必须产出：
-  - `docs/reports/data/phases/phase-XX.json`
-  - `docs/reports/data/summary.json`
-  - `docs/reports/data/rtm.json`
-- 前端 phase（10-19）仅强制 `R01`，其余规则写入 `SKIP`。
-- `docs/reports/data/history/**` 仅用于本地历史快照，默认不纳入 Git。
-- Dashboard 页面为 `docs/reports/index.html`，本地预览：
-  - `python3 -m http.server 8080 -d docs/reports`
+```markdown
+---
+phase: XX
+title: "功能名称 (English Name)"
+targets:
+  backend: true
+  frontend: true
+depends_on: [YY]
+bundle_with: []
+scope:
+  - "ljwx-platform-app/src/main/resources/db/migration/VXXX__description.sql"
+  - "ljwx-platform-app/src/main/java/.../Entity.java"
+  - "ljwx-platform-app/src/main/java/.../Mapper.java"
+  - "ljwx-platform-app/src/main/java/.../AppService.java"
+  - "ljwx-platform-app/src/main/java/.../Controller.java"
+  - "ljwx-platform-app/src/main/java/.../dto/CreateDTO.java"
+  - "ljwx-platform-app/src/main/java/.../vo/VO.java"
+  - "ljwx-platform-admin/src/api/xxx.ts"
+  - "ljwx-platform-admin/src/views/xxx/index.vue"
+---
+# Phase XX — 功能名称
+
+| 项目 | 值 |
+|-----|---|
+| Phase | XX |
+| 模块 | ljwx-platform-app (后端) + ljwx-platform-admin (前端) |
+| Feature | LX-DXX-FXX |
+| 前置依赖 | Phase YY |
+| 测试契约 | `spec/tests/phase-XX-xxx.tests.yml` |
+| 优先级 | 🔴 **P0** / 🟡 **P1** / 🟢 **P2** |
+
+## 读取清单
+
+- `CLAUDE.md`（自动加载）
+- `spec/04-database.md` — §相关表
+- `spec/03-api.md` — §相关 API
+- `spec/01-constraints.md` — §审计字段
+- `spec/08-output-rules.md`
+
+## 功能概述
+
+**问题**: 描述当前系统的问题
+
+**解决方案**: 实现 XXX 功能,支持:
+1. 功能点 1
+2. 功能点 2
+3. 功能点 3
+
+## 数据库契约
+
+### 表结构：table_name
+
+| 列名 | 类型 | 约束 | 说明 |
+|------|------|------|------|
+| id | BIGINT | PK, NOT NULL | 主键（雪花 ID） |
+| field1 | VARCHAR(100) | NOT NULL | 字段说明 |
+| field2 | INT | NOT NULL, DEFAULT 0 | 字段说明 |
+| tenant_id | BIGINT | NOT NULL, DEFAULT 0, INDEX | 租户 ID |
+| created_by | BIGINT | NOT NULL, DEFAULT 0 | 创建人 |
+| created_time | TIMESTAMP | NOT NULL, DEFAULT CURRENT_TIMESTAMP | 创建时间 |
+| updated_by | BIGINT | NOT NULL, DEFAULT 0 | 更新人 |
+| updated_time | TIMESTAMP | NOT NULL, DEFAULT CURRENT_TIMESTAMP | 更新时间 |
+| deleted | BOOLEAN | NOT NULL, DEFAULT FALSE | 软删除 |
+| version | INT | NOT NULL, DEFAULT 1 | 乐观锁 |
+
+**索引**:
+- `uk_xxx` (field1, deleted) UNIQUE
+- `idx_tenant_id` (tenant_id)
+
+### Flyway 文件
+
+| 文件 | 内容 |
+|------|------|
+| `VXXX__description.sql` | 建表 + 索引 |
+
+禁止：`IF NOT EXISTS`、在建表文件中写 DML。
+
+## API 契约
+
+| 方法 | 路径 | 权限标识 | 请求体 | 响应体 | 说明 |
+|------|------|----------|--------|--------|------|
+| GET | /api/v1/xxx | system:xxx:list | — | Result<List<VO>> | 列表查询 |
+| GET | /api/v1/xxx/{id} | system:xxx:query | — | Result<VO> | 详情查询 |
+| POST | /api/v1/xxx | system:xxx:add | CreateDTO | Result<Long> | 创建 |
+| PUT | /api/v1/xxx/{id} | system:xxx:edit | UpdateDTO | Result<Void> | 更新 |
+| DELETE | /api/v1/xxx/{id} | system:xxx:delete | — | Result<Void> | 删除 |
+
+## DTO / VO 契约
+
+### CreateDTO（创建请求）
+
+| 字段 | 类型 | 校验 | 说明 |
+|------|------|------|------|
+| field1 | String | @NotBlank, @Size(max=100) | 字段说明 |
+| field2 | Integer | @NotNull, @Min(0) | 字段说明 |
+
+**禁止字段**：`id`、`tenantId`、`createdBy`、`createdTime`、`updatedBy`、`updatedTime`、`deleted`、`version`
+
+### UpdateDTO（更新请求）
+
+| 字段 | 类型 | 校验 | 说明 |
+|------|------|------|------|
+| field1 | String | @NotBlank, @Size(max=100) | 字段说明 |
+
+**禁止字段**：`id`、`tenantId`、`createdBy`、`createdTime`、`updatedBy`、`updatedTime`、`deleted`、`version`
+
+### VO（响应）
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| id | Long | 主键 |
+| field1 | String | 字段说明 |
+| createdTime | LocalDateTime | 创建时间 |
+| updatedTime | LocalDateTime | 更新时间 |
+
+**禁止字段**：`deleted`、`createdBy`、`updatedBy`、`version`
+
+## 核心组件契约
+
+### Service 类
+
+```java
+@Service
+@RequiredArgsConstructor
+public class XxxAppService {
+
+    // 列表查询
+    public PageResult<XxxVO> list(XxxQueryDTO query);
+
+    // 详情查询
+    public XxxVO getById(Long id);
+
+    // 创建
+    @Transactional
+    public Long create(XxxCreateDTO dto);
+
+    // 更新
+    @Transactional
+    public void update(Long id, XxxUpdateDTO dto);
+
+    // 删除
+    @Transactional
+    public void delete(Long id);
+}
+```
+
+### Controller 类
+
+```java
+@RestController
+@RequestMapping("/api/v1/xxx")
+@RequiredArgsConstructor
+public class XxxController {
+
+    @GetMapping
+    @PreAuthorize("hasAuthority('system:xxx:list')")
+    public Result<PageResult<XxxVO>> list(XxxQueryDTO query);
+
+    @GetMapping("/{id}")
+    @PreAuthorize("hasAuthority('system:xxx:query')")
+    public Result<XxxVO> getById(@PathVariable Long id);
+
+    @PostMapping
+    @PreAuthorize("hasAuthority('system:xxx:add')")
+    public Result<Long> create(@Valid @RequestBody XxxCreateDTO dto);
+
+    @PutMapping("/{id}")
+    @PreAuthorize("hasAuthority('system:xxx:edit')")
+    public Result<Void> update(@PathVariable Long id, @Valid @RequestBody XxxUpdateDTO dto);
+
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasAuthority('system:xxx:delete')")
+    public Result<Void> delete(@PathVariable Long id);
+}
+```
+
+## 业务规则
+
+> 格式：BL-XX-{序号}：[条件] → [动作] → [结果/异常]
+
+- **BL-XX-01**：条件 → 动作 → 结果
+- **BL-XX-02**：条件 → 动作 → 异常
+
+## 测试用例（摘要）
+
+详细用例见 **`spec/tests/phase-XX-xxx.tests.yml`**。
+
+P0 强制覆盖：
+
+| ID | 场景 | P |
+|----|------|---|
+| TC-XX-01 | 无 Token → 401 | P0 |
+| TC-XX-02 | 无权限 → 403 | P0 |
+| TC-XX-03 | 正常 CRUD | P0 |
+
+## 验收条件
+
+- **AC-01**：Flyway 迁移含 7 列审计字段,无 `IF NOT EXISTS`
+- **AC-02**：所有 Controller 方法有 `@PreAuthorize`
+- **AC-03**：DTO 不含禁止字段
+- **AC-04**：编译通过,所有 P0 用例通过
+
+## 关键约束（硬规则速查）
+
+- 审计字段：7 列 NOT NULL + DEFAULT,禁止在 DTO 中声明
+- 权限格式：`hasAuthority('system:xxx:list')` —— 无 ROLE_ 前缀
+- 禁止：`IF NOT EXISTS` · 在 DTO 中声明禁止字段
+- DAG 依赖：core ← {security, data} ← web ← app
+```
+
+---
+
+## 质量检查清单
+
+### Phase Spec 必备要素
+
+- [ ] **YAML Frontmatter 完整**
+  - phase, title, targets, depends_on, bundle_with
+  - scope 列表包含所有文件路径
+
+- [ ] **数据库契约完整**
+  - 表结构展开所有列（禁止 "+ 7 审计字段"）
+  - 索引定义清晰
+  - Flyway 版本号正确（与 Phase 号对应）
+
+- [ ] **API 契约完整**
+  - 所有 CRUD 接口定义
+  - 权限标识符正确
+
+- [ ] **DTO/VO 契约完整**
+  - 字段列表完整
+  - 校验注解明确
+  - 禁止字段列表清晰
+
+- [ ] **核心组件契约**
+  - Service 方法签名
+  - Controller 方法签名
+  - 关键类的代码示例
+
+- [ ] **业务规则清晰**
+  - BL-XX-{序号} 格式
+  - 条件 → 动作 → 结果
+
+- [ ] **测试契约引用**
+  - 引用 `spec/tests/phase-XX-xxx.tests.yml`
+  - P0 测试用例摘要
+
+- [ ] **前端文件路径**
+  - API 文件路径
+  - Vue 组件路径
+
+### Registry 同步检查
+
+- [ ] **permissions.yml 更新**
+  - 新增权限已注册
+  - 权限命名符合规范: `resource:action`
+  - action 必须是: list/query/add/edit/delete
+
+- [ ] **migrations.yml 更新**
+  - Flyway 版本号已注册
+  - 版本号与 Phase 号对应
+  - 表名列表完整
+
+- [ ] **observability.yml 遵守**
+  - Loki label 仅使用白名单
+  - Prometheus label 避免高基数
+
+### DAG 依赖检查
+
+- [ ] **模块依赖正确**
+  - core 不依赖 app
+  - data 不依赖 security
+  - web 不依赖 app
+  - Filter 在 app 模块（不在 web）
+
+### 数据库兼容性检查
+
+- [ ] **PostgreSQL 兼容**
+  - 无 MySQL 专有函数
+  - 使用 PostgreSQL 数组语法
+  - 使用 JSONB (不是 JSON)
+
+---
+
+## 常见错误与修复
+
+### 错误 1: Flyway 版本号乱序
+
+**错误示例**:
+```yaml
+- version: "038"
+  phase: 38
+- version: "035"  # ❌ 版本号倒退
+  phase: 40
+```
+
+**修复**:
+```yaml
+- version: "038"
+  phase: 38
+- version: "040"  # ✅ 版本号递增
+  phase: 40
+```
+
+### 错误 2: DAG 违规
+
+**错误示例**:
+```java
+// ❌ TenantDomainFilter 在 web 模块
+@Component
+public class TenantDomainFilter {
+    @Autowired
+    private TenantDomainService service;  // service 在 app 模块
+}
+```
+
+**修复**:
+```java
+// ✅ TenantDomainFilter 移至 app 模块
+// ljwx-platform-app/.../TenantDomainFilter.java
+@Component
+public class TenantDomainFilter {
+    @Autowired
+    private TenantDomainRepository repository;  // 可以依赖 data
+}
+```
+
+### 错误 3: MySQL 函数不兼容
+
+**错误示例**:
+```sql
+-- ❌ MySQL 专有函数
+WHERE find_in_set(#{deptId}, ancestors)
+```
+
+**修复**:
+```sql
+-- ✅ PostgreSQL 兼容
+WHERE ancestors @> ARRAY[#{deptId}]::bigint[]
+```
+
+### 错误 4: 审计字段速记
+
+**错误示例**:
+```markdown
+| field1 | VARCHAR(100) | NOT NULL | 字段 1 |
+| + 7 审计字段 | | |  # ❌ 速记方式
+```
+
+**修复**:
+```markdown
+| field1 | VARCHAR(100) | NOT NULL | 字段 1 |
+| tenant_id | BIGINT | NOT NULL, DEFAULT 0, INDEX | 租户 ID |
+| created_by | BIGINT | NOT NULL, DEFAULT 0 | 创建人 |
+| created_time | TIMESTAMP | NOT NULL, DEFAULT CURRENT_TIMESTAMP | 创建时间 |
+| updated_by | BIGINT | NOT NULL, DEFAULT 0 | 更新人 |
+| updated_time | TIMESTAMP | NOT NULL, DEFAULT CURRENT_TIMESTAMP | 更新时间 |
+| deleted | BOOLEAN | NOT NULL, DEFAULT FALSE | 软删除 |
+| version | INT | NOT NULL, DEFAULT 1 | 乐观锁 |
+```
+
+### 错误 5: Long 对象比较
+
+**错误示例**:
+```java
+// ❌ Long 对象用 == 比较
+if (userTenantId != null && userTenantId == 0) {
+```
+
+**修复**:
+```java
+// ✅ 使用 equals() 或拆箱
+if (userTenantId != null && userTenantId.longValue() == 0L) {
+// 或
+if (Long.valueOf(0).equals(userTenantId)) {
+```
+
+### 错误 6: HMAC 实现错误
+
+**错误示例**:
+```java
+// ❌ 字符串拼接后哈希,不是 HMAC
+String signature = SHA256(appKey + timestamp + nonce + body + secretKey);
+```
+
+**修复**:
+```java
+// ✅ 真正的 HMAC-SHA256
+String message = appKey + "\n" + timestamp + "\n" + nonce + "\n" + bodyHash;
+String signature = HMAC_SHA256(key=secretKey, data=message);
+```
+
+---
+
+## 最佳实践
+
+### 1. 先读 Registry,再写 Spec
+
+在编写 Phase spec 前,先检查:
+- `spec/registry/permissions.yml` - 权限是否已注册
+- `spec/registry/migrations.yml` - Flyway 版本号是否可用
+- `spec/registry/constraints.yml` - 全局约束是否遵守
+
+### 2. 使用 Spec Quality Gate
+
+每次提交前运行:
+```bash
+python scripts/spec-quality-gate.py
+```
+
+检查:
+- 权限命名规范
+- Flyway 版本唯一性
+- Loki/Prometheus label 合规性
+
+### 3. 参考已有 Phase
+
+高质量 Phase 参考:
+- Phase 33: 多级缓存（完整的架构设计）
+- Phase 34: Outbox 模式（完整的组件契约）
+- Phase 41: 租户生命周期（完整的业务规则）
+
+### 4. 避免过度设计
+
+- ❌ 不要为未来需求设计
+- ❌ 不要添加"可能有用"的字段
+- ✅ 只实现当前 Phase 的需求
+- ✅ 保持简单和聚焦
+
+### 5. 代码示例要可执行
+
+所有代码示例必须:
+- 语法正确
+- 类型匹配
+- 依赖可用
+- 可以直接复制使用
+
+### 6. 测试先行
+
+在编写 spec 时同步编写测试用例:
+- P0 用例覆盖核心流程
+- P1 用例覆盖边界情况
+- P2 用例覆盖异常场景
+
+---
+
+## Spec 评审标准
+
+### 优秀 Spec (90+ 分)
+
+- ✅ 所有必备要素完整
+- ✅ Registry 同步更新
+- ✅ DAG 依赖正确
+- ✅ 数据库兼容性检查通过
+- ✅ 代码示例可执行
+- ✅ 测试用例完整
+
+### 合格 Spec (70-89 分)
+
+- ✅ 核心要素完整
+- ⚠️ 部分细节缺失
+- ✅ 无 CRITICAL 问题
+- ⚠️ 有少量高危/中等问题
+
+### 不合格 Spec (<70 分)
+
+- ❌ 缺少必备要素
+- ❌ 有 CRITICAL 问题
+- ❌ DAG 违规
+- ❌ 数据库不兼容
+
+---
+
+## 工具与资源
+
+### 质量门禁工具
+
+- `scripts/spec-quality-gate.py` - 权限/Flyway/label 检查
+- `scripts/check-flyway-uniqueness.py` - Flyway 唯一性检查
+- `.github/workflows/spec-quality-gate.yml` - CI 自动检查
+
+### Registry 文件
+
+- `spec/registry/permissions.yml` - 权限 SSOT
+- `spec/registry/migrations.yml` - Flyway SSOT
+- `spec/registry/observability.yml` - 可观测性配置
+- `spec/registry/constraints.yml` - 全局约束
+
+### ADR 文档
+
+- `docs/adr/ADR-0001-multi-level-cache.md` - 多级缓存
+- `docs/adr/ADR-0004-outbox-pattern.md` - Outbox 模式
+- `docs/adr/ADR-0006-hmac-authentication.md` - HMAC 认证
+- `docs/adr/ADR-0008-workflow-visibility.md` - 工作流可见性
+
+---
+
+## 总结
+
+高质量 Spec 的核心:
+1. **完整性** - 所有必备要素齐全
+2. **一致性** - 与 Registry 同步
+3. **正确性** - 无 DAG 违规、数据库兼容
+4. **可执行性** - 代码示例可直接使用
+5. **可测试性** - 测试用例完整
+
+记住: **Spec 是代码生成的唯一输入,质量决定输出。**

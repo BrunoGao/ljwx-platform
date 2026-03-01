@@ -1,0 +1,225 @@
+# Phase 41 — Tenant Lifecycle 测试契约
+# 关联 Spec：spec/phase/phase-41.md
+
+phase: 41
+module: "tenant-lifecycle"
+ac_ref: "spec/phase/phase-41.md"
+
+tests:
+
+  # ─── P0：安全测试 ───────────────────────────────────────────────
+  - id: TC-41-01
+    priority: P0
+    category: security
+    scenario: "无 Token 访问生命周期管理 → 401"
+    request:
+      method: GET
+      path: /api/v1/tenant/lifecycle
+      auth: none
+    expect:
+      status: 401
+
+  - id: TC-41-02
+    priority: P0
+    category: security
+    scenario: "无权限 Token 激活租户 → 403"
+    request:
+      method: POST
+      path: /api/v1/tenant/{tenantId}/activate
+      auth: token_without_permission
+    expect:
+      status: 403
+
+  # ─── P0：生命周期状态转换 ──────────────────────────────────────
+  - id: TC-41-03
+    priority: P0
+    category: lifecycle
+    ac: AC-01
+    scenario: "租户创建后状态为 PENDING"
+    request:
+      method: POST
+      path: /api/v1/tenants
+      auth: token_with_system:tenant:create
+      body:
+        tenantName: "新租户"
+        tenantCode: "NEW001"
+    expect:
+      status: 200
+      db_assert: "SELECT status FROM sys_tenant WHERE id={tenantId} → PENDING"
+
+  - id: TC-41-04
+    priority: P0
+    category: lifecycle
+    ac: AC-02
+    scenario: "激活租户：PENDING → ACTIVE"
+    setup:
+      - create_pending_tenant
+    request:
+      method: POST
+      path: /api/v1/tenant/{tenantId}/activate
+      auth: token_with_system:tenant:activate
+    expect:
+      status: 200
+      db_assert: "SELECT status FROM sys_tenant WHERE id={tenantId} → ACTIVE"
+
+  - id: TC-41-05
+    priority: P0
+    category: lifecycle
+    ac: AC-03
+    scenario: "暂停租户：ACTIVE → SUSPENDED"
+    setup:
+      - create_active_tenant
+    request:
+      method: POST
+      path: /api/v1/tenant/{tenantId}/suspend
+      auth: token_with_system:tenant:suspend
+      body:
+        reason: "逾期未付款"
+    expect:
+      status: 200
+      db_assert: "SELECT status FROM sys_tenant WHERE id={tenantId} → SUSPENDED"
+
+  - id: TC-41-06
+    priority: P0
+    category: lifecycle
+    ac: AC-04
+    scenario: "恢复租户：SUSPENDED → ACTIVE"
+    setup:
+      - create_suspended_tenant
+    request:
+      method: POST
+      path: /api/v1/tenant/{tenantId}/resume
+      auth: token_with_system:tenant:resume
+    expect:
+      status: 200
+      db_assert: "SELECT status FROM sys_tenant WHERE id={tenantId} → ACTIVE"
+
+  - id: TC-41-07
+    priority: P0
+    category: lifecycle
+    ac: AC-05
+    scenario: "注销租户：ACTIVE → TERMINATED"
+    setup:
+      - create_active_tenant
+    request:
+      method: POST
+      path: /api/v1/tenant/{tenantId}/terminate
+      auth: token_with_system:tenant:terminate
+      body:
+        reason: "租户申请注销"
+    expect:
+      status: 200
+      db_assert: "SELECT status FROM sys_tenant WHERE id={tenantId} → TERMINATED"
+
+  # ─── P0：业务规则 ──────────────────────────────────────────────
+  - id: TC-41-08
+    priority: P0
+    category: business
+    ac: AC-06
+    scenario: "SUSPENDED 租户无法登录"
+    setup:
+      - create_suspended_tenant
+      - create_user_for_tenant
+    request:
+      method: POST
+      path: /api/v1/auth/login
+      body:
+        username: "testuser"
+        password: "password"
+    expect:
+      status: 403
+      body:
+        code: 403002
+        message: "租户已暂停"
+
+  - id: TC-41-09
+    priority: P0
+    category: business
+    ac: AC-07
+    scenario: "TERMINATED 租户无法登录"
+    setup:
+      - create_terminated_tenant
+      - create_user_for_tenant
+    request:
+      method: POST
+      path: /api/v1/auth/login
+      body:
+        username: "testuser"
+        password: "password"
+    expect:
+      status: 403
+      body:
+        code: 403003
+        message: "租户已注销"
+
+  - id: TC-41-10
+    priority: P0
+    category: business
+    ac: AC-08
+    scenario: "TERMINATED 租户不可恢复"
+    setup:
+      - create_terminated_tenant
+    request:
+      method: POST
+      path: /api/v1/tenant/{tenantId}/resume
+      auth: token_with_system:tenant:resume
+    expect:
+      status: 400
+      body:
+        code: 400002
+        message: "已注销租户不可恢复"
+
+  # ─── P0：租户隔离 ───────────────────────────────────────────────
+  - id: TC-41-11
+    priority: P0
+    category: tenant_isolation
+    scenario: "租户 A 无法操作租户 B 的生命周期"
+    setup:
+      - create_tenant_A
+      - create_tenant_B
+    request:
+      method: POST
+      path: /api/v1/tenant/{tenantBId}/suspend
+      auth: token_tenant_A_admin
+    expect:
+      status: 403
+      body:
+        code: 403001
+
+  # ─── P1：数据库结构验证 ─────────────────────────────────────────
+  - id: TC-41-12
+    priority: P1
+    category: db_schema
+    ac: AC-09
+    scenario: "tenant_lifecycle_log 表包含 7 列审计字段"
+    expect:
+      db_assert: "tenant_lifecycle_log 表包含 tenant_id, created_by, created_time, updated_by, updated_time, deleted, version"
+
+  - id: TC-41-13
+    priority: P1
+    category: db_schema
+    ac: AC-09
+    scenario: "tenant_id 有索引"
+    expect:
+      db_assert: "tenant_lifecycle_log 表 tenant_id 列有索引"
+
+# ─── AC → TC 映射 ──────────────────────────────────────────────────
+ac_tc_map:
+  AC-01: [TC-41-03]
+  AC-02: [TC-41-04]
+  AC-03: [TC-41-05]
+  AC-04: [TC-41-06]
+  AC-05: [TC-41-07]
+  AC-06: [TC-41-08]
+  AC-07: [TC-41-09]
+  AC-08: [TC-41-10]
+  AC-09: [TC-41-12, TC-41-13]
+  AC-10: []  # 编译检查由 Gate R01 覆盖
+
+# ─── Gate R09 配置 ─────────────────────────────────────────────────
+gate_r09:
+  p0_required: true
+  p1_coverage_target: 0.7
+  p2_skip: true
+  test_class: "TenantLifecycleControllerTest"
+  note: "本 Phase 包含生命周期状态转换、登录拦截、租户隔离测试"

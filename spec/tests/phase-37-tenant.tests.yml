@@ -1,0 +1,202 @@
+# Phase 37 — Tenant Management 测试契约
+# 关联 Spec：spec/phase/phase-37.md
+
+phase: 37
+module: "tenant"
+ac_ref: "spec/phase/phase-37.md"
+
+tests:
+
+  # ─── P0：安全测试 ───────────────────────────────────────────────
+  - id: TC-37-01
+    priority: P0
+    category: security
+    scenario: "无 Token 访问租户管理 → 401"
+    request:
+      method: GET
+      path: /api/v1/tenants
+      auth: none
+    expect:
+      status: 401
+
+  - id: TC-37-02
+    priority: P0
+    category: security
+    scenario: "无权限 Token 创建租户 → 403"
+    request:
+      method: POST
+      path: /api/v1/tenants
+      auth: token_without_permission
+    expect:
+      status: 403
+
+  # ─── P0：租户 CRUD ─────────────────────────────────────────────
+  - id: TC-37-03
+    priority: P0
+    category: crud
+    ac: AC-01
+    scenario: "创建租户成功"
+    request:
+      method: POST
+      path: /api/v1/tenants
+      auth: token_with_system:tenant:create
+      body:
+        tenantName: "测试租户"
+        tenantCode: "TEST001"
+        contactName: "张三"
+        contactPhone: "13800138000"
+        status: 1
+    expect:
+      status: 200
+      body:
+        code: 200
+        data: "{tenantId}"
+
+  - id: TC-37-04
+    priority: P0
+    category: crud
+    scenario: "查询租户列表"
+    request:
+      method: GET
+      path: /api/v1/tenants
+      auth: token_with_system:tenant:list
+    expect:
+      status: 200
+      body:
+        code: 200
+        data:
+          list: "[租户列表]"
+
+  - id: TC-37-05
+    priority: P0
+    category: crud
+    scenario: "查询租户详情"
+    request:
+      method: GET
+      path: /api/v1/tenants/{tenantId}
+      auth: token_with_system:tenant:detail
+    expect:
+      status: 200
+      body:
+        code: 200
+        data:
+          tenantName: "测试租户"
+
+  - id: TC-37-06
+    priority: P0
+    category: crud
+    scenario: "更新租户信息"
+    request:
+      method: PUT
+      path: /api/v1/tenants/{tenantId}
+      auth: token_with_system:tenant:update
+      body:
+        tenantName: "测试租户（更新）"
+    expect:
+      status: 200
+      body:
+        code: 200
+
+  - id: TC-37-07
+    priority: P0
+    category: crud
+    scenario: "删除租户（软删除）"
+    request:
+      method: DELETE
+      path: /api/v1/tenants/{tenantId}
+      auth: token_with_system:tenant:delete
+    expect:
+      status: 200
+      body:
+        code: 200
+      db_assert: "SELECT deleted FROM sys_tenant WHERE id={tenantId} → TRUE"
+
+  # ─── P0：业务规则 ──────────────────────────────────────────────
+  - id: TC-37-08
+    priority: P0
+    category: validation
+    ac: AC-02
+    scenario: "租户编码唯一性校验"
+    setup:
+      - create_tenant_with_code_TEST001
+    request:
+      method: POST
+      path: /api/v1/tenants
+      auth: token_with_system:tenant:create
+      body:
+        tenantName: "测试租户2"
+        tenantCode: "TEST001"
+    expect:
+      status: 400
+      body:
+        code: 400002
+        message: "租户编码已存在"
+
+  - id: TC-37-09
+    priority: P0
+    category: validation
+    ac: AC-03
+    scenario: "租户状态枚举校验"
+    request:
+      method: POST
+      path: /api/v1/tenants
+      auth: token_with_system:tenant:create
+      body:
+        tenantName: "测试租户"
+        tenantCode: "TEST002"
+        status: 99
+    expect:
+      status: 400
+      body:
+        code: 400001
+        message: "租户状态无效"
+
+  # ─── P0：租户隔离 ───────────────────────────────────────────────
+  - id: TC-37-10
+    priority: P0
+    category: tenant_isolation
+    scenario: "普通租户无法查看其他租户信息"
+    setup:
+      - create_tenant_A
+      - create_tenant_B
+    request:
+      method: GET
+      path: /api/v1/tenants/{tenantBId}
+      auth: token_tenant_A
+    expect:
+      status: 403
+      body:
+        code: 403001
+
+  # ─── P1：数据库结构验证 ─────────────────────────────────────────
+  - id: TC-37-11
+    priority: P1
+    category: db_schema
+    ac: AC-04
+    scenario: "sys_tenant 表包含 7 列审计字段"
+    expect:
+      db_assert: "sys_tenant 表包含 tenant_id, created_by, created_time, updated_by, updated_time, deleted, version"
+
+  - id: TC-37-12
+    priority: P1
+    category: db_schema
+    ac: AC-02
+    scenario: "tenant_code 有 UNIQUE 约束"
+    expect:
+      db_assert: "sys_tenant 表 tenant_code 列有 UNIQUE 约束"
+
+# ─── AC → TC 映射 ──────────────────────────────────────────────────
+ac_tc_map:
+  AC-01: [TC-37-03, TC-37-04, TC-37-05, TC-37-06, TC-37-07]
+  AC-02: [TC-37-08, TC-37-12]
+  AC-03: [TC-37-09]
+  AC-04: [TC-37-11]
+  AC-05: []  # 编译检查由 Gate R01 覆盖
+
+# ─── Gate R09 配置 ─────────────────────────────────────────────────
+gate_r09:
+  p0_required: true
+  p1_coverage_target: 0.7
+  p2_skip: true
+  test_class: "TenantControllerTest"
+  note: "本 Phase 包含租户 CRUD、唯一性校验、状态校验、租户隔离测试"

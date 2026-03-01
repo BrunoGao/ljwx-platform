@@ -1,0 +1,209 @@
+# Phase 52 — Message Log 测试契约
+# 关联 Spec：spec/phase/phase-52.md
+
+phase: 52
+module: "message-log"
+ac_ref: "spec/phase/phase-52.md"
+
+tests:
+
+  # ─── P0：安全测试 ───────────────────────────────────────────────
+  - id: TC-52-01
+    priority: P0
+    category: security
+    scenario: "无 Token 访问消息日志 → 401"
+    request:
+      method: GET
+      path: /api/v1/message/logs
+      auth: none
+    expect:
+      status: 401
+
+  - id: TC-52-02
+    priority: P0
+    category: security
+    scenario: "无权限 Token 查询日志 → 403"
+    request:
+      method: GET
+      path: /api/v1/message/logs
+      auth: token_without_permission
+    expect:
+      status: 403
+
+  # ─── P0：日志记录 ──────────────────────────────────────────────
+  - id: TC-52-03
+    priority: P0
+    category: log
+    ac: AC-01
+    scenario: "消息发送成功记录日志"
+    setup:
+      - send_message_successfully
+    expect:
+      db_assert: "SELECT status FROM msg_log WHERE message_id={messageId} → SUCCESS"
+
+  - id: TC-52-04
+    priority: P0
+    category: log
+    ac: AC-01
+    scenario: "消息发送失败记录日志"
+    setup:
+      - send_message_with_failure
+    expect:
+      db_assert: "SELECT status, error_message FROM msg_log WHERE message_id={messageId} → FAILED, NOT NULL"
+
+  - id: TC-52-05
+    priority: P0
+    category: log
+    ac: AC-02
+    scenario: "日志包含发送时长"
+    setup:
+      - send_message
+    expect:
+      db_assert: "SELECT send_duration FROM msg_log WHERE message_id={messageId} → > 0"
+
+  - id: TC-52-06
+    priority: P0
+    category: log
+    ac: AC-03
+    scenario: "日志包含接收者信息"
+    setup:
+      - send_message_to_user
+    expect:
+      db_assert: "SELECT receiver_id, receiver_type FROM msg_log WHERE message_id={messageId} → NOT NULL"
+
+  # ─── P0：日志查询 ──────────────────────────────────────────────
+  - id: TC-52-07
+    priority: P0
+    category: log
+    ac: AC-04
+    scenario: "按消息 ID 查询日志"
+    request:
+      method: GET
+      path: /api/v1/message/logs?messageId={messageId}
+      auth: token_with_system:message:log
+    expect:
+      status: 200
+      body:
+        data:
+          list: "[指定消息的日志]"
+
+  - id: TC-52-08
+    priority: P0
+    category: log
+    ac: AC-04
+    scenario: "按时间范围查询日志"
+    request:
+      method: GET
+      path: /api/v1/message/logs?startTime={start}&endTime={end}
+      auth: token_with_system:message:log
+    expect:
+      status: 200
+      body:
+        data:
+          list: "[指定时间范围的日志]"
+
+  - id: TC-52-09
+    priority: P0
+    category: log
+    ac: AC-04
+    scenario: "按状态查询日志"
+    request:
+      method: GET
+      path: /api/v1/message/logs?status=FAILED
+      auth: token_with_system:message:log
+    expect:
+      status: 200
+      body:
+        data:
+          list: "[所有失败的日志]"
+
+  - id: TC-52-10
+    priority: P0
+    category: log
+    ac: AC-05
+    scenario: "按接收者查询日志"
+    request:
+      method: GET
+      path: /api/v1/message/logs?receiverId={userId}
+      auth: token_with_system:message:log
+    expect:
+      status: 200
+      body:
+        data:
+          list: "[指定接收者的日志]"
+
+  # ─── P0：租户隔离 ───────────────────────────────────────────────
+  - id: TC-52-11
+    priority: P0
+    category: tenant_isolation
+    scenario: "租户 A 查不到租户 B 的消息日志"
+    setup:
+      - send_message_for_tenant_A
+      - send_message_for_tenant_B
+    request:
+      method: GET
+      path: /api/v1/message/logs
+      auth: token_tenant_A
+    expect:
+      status: 200
+      body:
+        data:
+          list: "[仅包含租户 A 的日志]"
+
+  # ─── P1：日志清理 ──────────────────────────────────────────────
+  - id: TC-52-12
+    priority: P1
+    category: cleanup
+    ac: AC-06
+    scenario: "定期清理 180 天前的日志"
+    setup:
+      - create_log_181_days_ago
+      - create_log_179_days_ago
+    steps:
+      - "执行清理任务"
+    expect:
+      db_assert: "SELECT COUNT(*) FROM msg_log WHERE created_time < NOW() - INTERVAL '180 days' → 0"
+
+  # ─── P1：数据库结构验证 ─────────────────────────────────────────
+  - id: TC-52-13
+    priority: P1
+    category: db_schema
+    ac: AC-07
+    scenario: "msg_log 表包含 7 列审计字段"
+    expect:
+      db_assert: "msg_log 表包含 tenant_id, created_by, created_time, updated_by, updated_time, deleted, version"
+
+  - id: TC-52-14
+    priority: P1
+    category: db_schema
+    ac: AC-07
+    scenario: "message_id 有索引"
+    expect:
+      db_assert: "msg_log 表 message_id 列有索引"
+
+  - id: TC-52-15
+    priority: P1
+    category: db_schema
+    ac: AC-07
+    scenario: "receiver_id 有索引"
+    expect:
+      db_assert: "msg_log 表 receiver_id 列有索引"
+
+# ─── AC → TC 映射 ──────────────────────────────────────────────────
+ac_tc_map:
+  AC-01: [TC-52-03, TC-52-04]
+  AC-02: [TC-52-05]
+  AC-03: [TC-52-06]
+  AC-04: [TC-52-07, TC-52-08, TC-52-09]
+  AC-05: [TC-52-10]
+  AC-06: [TC-52-12]
+  AC-07: [TC-52-13, TC-52-14, TC-52-15]
+  AC-08: []  # 编译检查由 Gate R01 覆盖
+
+# ─── Gate R09 配置 ─────────────────────────────────────────────────
+gate_r09:
+  p0_required: true
+  p1_coverage_target: 0.7
+  p2_skip: true
+  test_class: "MessageLogControllerTest"
+  note: "本 Phase 包含日志记录、查询、清理、租户隔离测试"

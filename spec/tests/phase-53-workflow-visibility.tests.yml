@@ -1,0 +1,230 @@
+# Phase 53 — Workflow Visibility 测试契约
+# 关联 Spec：spec/phase/phase-53.md
+
+phase: 53
+module: "workflow-visibility"
+ac_ref: "spec/phase/phase-53.md"
+
+tests:
+
+  # ─── P0：安全测试 ───────────────────────────────────────────────
+  - id: TC-53-01
+    priority: P0
+    category: security
+    scenario: "无 Token 访问工作流可见性 → 401"
+    request:
+      method: GET
+      path: /api/v1/workflows/{workflowId}/visibility
+      auth: none
+    expect:
+      status: 401
+
+  - id: TC-53-02
+    priority: P0
+    category: security
+    scenario: "无权限 Token 设置可见性 → 403"
+    request:
+      method: PUT
+      path: /api/v1/workflows/{workflowId}/visibility
+      auth: token_without_permission
+    expect:
+      status: 403
+
+  # ─── P0：可见性配置 ────────────────────────────────────────────
+  - id: TC-53-03
+    priority: P0
+    category: visibility
+    ac: AC-01
+    scenario: "设置工作流对所有人可见"
+    request:
+      method: PUT
+      path: /api/v1/workflows/{workflowId}/visibility
+      auth: token_with_system:workflow:update
+      body:
+        visibilityType: "ALL"
+    expect:
+      status: 200
+      db_assert: "SELECT visibility_type FROM workflow_definition WHERE id={workflowId} → ALL"
+
+  - id: TC-53-04
+    priority: P0
+    category: visibility
+    ac: AC-01
+    scenario: "设置工作流对指定角色可见"
+    request:
+      method: PUT
+      path: /api/v1/workflows/{workflowId}/visibility
+      auth: token_with_system:workflow:update
+      body:
+        visibilityType: "ROLE"
+        roleIds: [1, 2, 3]
+    expect:
+      status: 200
+      db_assert: "SELECT COUNT(*) FROM workflow_role WHERE workflow_id={workflowId} → 3"
+
+  - id: TC-53-05
+    priority: P0
+    category: visibility
+    ac: AC-01
+    scenario: "设置工作流对指定部门可见"
+    request:
+      method: PUT
+      path: /api/v1/workflows/{workflowId}/visibility
+      auth: token_with_system:workflow:update
+      body:
+        visibilityType: "DEPT"
+        deptIds: [10, 20]
+    expect:
+      status: 200
+      db_assert: "SELECT COUNT(*) FROM workflow_dept WHERE workflow_id={workflowId} → 2"
+
+  - id: TC-53-06
+    priority: P0
+    category: visibility
+    ac: AC-01
+    scenario: "设置工作流对指定用户可见"
+    request:
+      method: PUT
+      path: /api/v1/workflows/{workflowId}/visibility
+      auth: token_with_system:workflow:update
+      body:
+        visibilityType: "USER"
+        userIds: [1001, 1002]
+    expect:
+      status: 200
+      db_assert: "SELECT COUNT(*) FROM workflow_user WHERE workflow_id={workflowId} → 2"
+
+  # ─── P0：可见性过滤 ────────────────────────────────────────────
+  - id: TC-53-07
+    priority: P0
+    category: visibility
+    ac: AC-02
+    scenario: "用户仅查看可见的工作流"
+    setup:
+      - create_workflow_visible_to_role_A
+      - create_workflow_visible_to_role_B
+      - create_user_with_role_A
+    request:
+      method: GET
+      path: /api/v1/workflows
+      auth: token_user_role_A
+    expect:
+      status: 200
+      body:
+        data:
+          list: "[仅包含对角色 A 可见的工作流]"
+
+  - id: TC-53-08
+    priority: P0
+    category: visibility
+    ac: AC-03
+    scenario: "用户无法启动不可见的工作流"
+    setup:
+      - create_workflow_visible_to_role_A
+      - create_user_with_role_B
+    request:
+      method: POST
+      path: /api/v1/workflows/{workflowId}/start
+      auth: token_user_role_B
+    expect:
+      status: 403
+      body:
+        code: 403002
+        message: "无权访问该工作流"
+
+  # ─── P0：业务规则 ──────────────────────────────────────────────
+  - id: TC-53-09
+    priority: P0
+    category: business
+    ac: AC-04
+    scenario: "ALL 类型工作流对所有用户可见"
+    setup:
+      - create_workflow_with_visibility_ALL
+      - create_any_user
+    request:
+      method: GET
+      path: /api/v1/workflows
+      auth: token_any_user
+    expect:
+      status: 200
+      body:
+        data:
+          list: "[包含 ALL 类型工作流]"
+
+  - id: TC-53-10
+    priority: P0
+    category: business
+    ac: AC-05
+    scenario: "超管可以查看所有工作流"
+    setup:
+      - create_workflow_with_restricted_visibility
+    request:
+      method: GET
+      path: /api/v1/workflows
+      auth: token_super_admin
+    expect:
+      status: 200
+      body:
+        data:
+          list: "[包含所有工作流]"
+
+  # ─── P0：租户隔离 ───────────────────────────────────────────────
+  - id: TC-53-11
+    priority: P0
+    category: tenant_isolation
+    scenario: "可见性配置不跨租户"
+    setup:
+      - create_workflow_for_tenant_A_visible_to_role_X
+      - create_user_for_tenant_B_with_role_X
+    request:
+      method: GET
+      path: /api/v1/workflows
+      auth: token_tenant_B_user
+    expect:
+      status: 200
+      body:
+        data:
+          list: "[不包含租户 A 的工作流]"
+
+  # ─── P1：数据库结构验证 ─────────────────────────────────────────
+  - id: TC-53-12
+    priority: P1
+    category: db_schema
+    ac: AC-06
+    scenario: "workflow_role 表包含 7 列审计字段"
+    expect:
+      db_assert: "workflow_role 表包含 tenant_id, created_by, created_time, updated_by, updated_time, deleted, version"
+
+  - id: TC-53-13
+    priority: P1
+    category: db_schema
+    ac: AC-06
+    scenario: "workflow_dept 表包含 7 列审计字段"
+    expect:
+      db_assert: "workflow_dept 表包含 tenant_id, created_by, created_time, updated_by, updated_time, deleted, version"
+
+  - id: TC-53-14
+    priority: P1
+    category: db_schema
+    ac: AC-06
+    scenario: "workflow_user 表包含 7 列审计字段"
+    expect:
+      db_assert: "workflow_user 表包含 tenant_id, created_by, created_time, updated_by, updated_time, deleted, version"
+
+# ─── AC → TC 映射 ──────────────────────────────────────────────────
+ac_tc_map:
+  AC-01: [TC-53-03, TC-53-04, TC-53-05, TC-53-06]
+  AC-02: [TC-53-07]
+  AC-03: [TC-53-08]
+  AC-04: [TC-53-09]
+  AC-05: [TC-53-10]
+  AC-06: [TC-53-12, TC-53-13, TC-53-14]
+  AC-07: []  # 编译检查由 Gate R01 覆盖
+
+# ─── Gate R09 配置 ─────────────────────────────────────────────────
+gate_r09:
+  p0_required: true
+  p1_coverage_target: 0.7
+  p2_skip: true
+  test_class: "WorkflowVisibilityControllerTest"
+  note: "本 Phase 包含可见性配置、过滤、超管权限、租户隔离测试"

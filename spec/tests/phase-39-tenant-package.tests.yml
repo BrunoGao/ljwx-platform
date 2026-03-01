@@ -1,0 +1,206 @@
+# Phase 39 — Tenant Package 测试契约
+# 关联 Spec：spec/phase/phase-39.md
+
+phase: 39
+module: "tenant-package"
+ac_ref: "spec/phase/phase-39.md"
+
+tests:
+
+  # ─── P0：安全测试 ───────────────────────────────────────────────
+  - id: TC-39-01
+    priority: P0
+    category: security
+    scenario: "无 Token 访问套餐管理 → 401"
+    request:
+      method: GET
+      path: /api/v1/tenant/packages
+      auth: none
+    expect:
+      status: 401
+
+  - id: TC-39-02
+    priority: P0
+    category: security
+    scenario: "无权限 Token 创建套餐 → 403"
+    request:
+      method: POST
+      path: /api/v1/tenant/packages
+      auth: token_without_permission
+    expect:
+      status: 403
+
+  # ─── P0：套餐 CRUD ─────────────────────────────────────────────
+  - id: TC-39-03
+    priority: P0
+    category: crud
+    ac: AC-01
+    scenario: "创建租户套餐"
+    request:
+      method: POST
+      path: /api/v1/tenant/packages
+      auth: token_with_system:package:create
+      body:
+        packageName: "基础版"
+        packageCode: "BASIC"
+        maxUsers: 10
+        maxStorage: 1073741824
+        price: 99.00
+        duration: 365
+    expect:
+      status: 200
+      body:
+        code: 200
+        data: "{packageId}"
+
+  - id: TC-39-04
+    priority: P0
+    category: crud
+    scenario: "查询套餐列表"
+    request:
+      method: GET
+      path: /api/v1/tenant/packages
+      auth: token_with_system:package:list
+    expect:
+      status: 200
+      body:
+        code: 200
+        data:
+          list: "[套餐列表]"
+
+  - id: TC-39-05
+    priority: P0
+    category: crud
+    scenario: "查询套餐详情"
+    request:
+      method: GET
+      path: /api/v1/tenant/packages/{packageId}
+      auth: token_with_system:package:detail
+    expect:
+      status: 200
+      body:
+        code: 200
+        data:
+          packageName: "基础版"
+
+  - id: TC-39-06
+    priority: P0
+    category: crud
+    scenario: "更新套餐信息"
+    request:
+      method: PUT
+      path: /api/v1/tenant/packages/{packageId}
+      auth: token_with_system:package:update
+      body:
+        packageName: "基础版（更新）"
+        price: 89.00
+    expect:
+      status: 200
+      body:
+        code: 200
+
+  - id: TC-39-07
+    priority: P0
+    category: crud
+    scenario: "删除套餐（软删除）"
+    request:
+      method: DELETE
+      path: /api/v1/tenant/packages/{packageId}
+      auth: token_with_system:package:delete
+    expect:
+      status: 200
+      body:
+        code: 200
+      db_assert: "SELECT deleted FROM tenant_package WHERE id={packageId} → TRUE"
+
+  # ─── P0：业务规则 ──────────────────────────────────────────────
+  - id: TC-39-08
+    priority: P0
+    category: validation
+    ac: AC-02
+    scenario: "套餐编码唯一性校验"
+    setup:
+      - create_package_with_code_BASIC
+    request:
+      method: POST
+      path: /api/v1/tenant/packages
+      auth: token_with_system:package:create
+      body:
+        packageName: "基础版2"
+        packageCode: "BASIC"
+    expect:
+      status: 400
+      body:
+        code: 400002
+        message: "套餐编码已存在"
+
+  - id: TC-39-09
+    priority: P0
+    category: validation
+    ac: AC-03
+    scenario: "价格必须大于 0"
+    request:
+      method: POST
+      path: /api/v1/tenant/packages
+      auth: token_with_system:package:create
+      body:
+        packageName: "免费版"
+        packageCode: "FREE"
+        price: -1.00
+    expect:
+      status: 400
+      body:
+        code: 400001
+        message: "价格必须大于 0"
+
+  - id: TC-39-10
+    priority: P0
+    category: validation
+    ac: AC-03
+    scenario: "最大用户数必须大于 0"
+    request:
+      method: POST
+      path: /api/v1/tenant/packages
+      auth: token_with_system:package:create
+      body:
+        packageName: "测试版"
+        packageCode: "TEST"
+        maxUsers: 0
+    expect:
+      status: 400
+      body:
+        code: 400001
+        message: "最大用户数必须大于 0"
+
+  # ─── P1：数据库结构验证 ─────────────────────────────────────────
+  - id: TC-39-11
+    priority: P1
+    category: db_schema
+    ac: AC-04
+    scenario: "tenant_package 表包含 7 列审计字段"
+    expect:
+      db_assert: "tenant_package 表包含 tenant_id, created_by, created_time, updated_by, updated_time, deleted, version"
+
+  - id: TC-39-12
+    priority: P1
+    category: db_schema
+    ac: AC-02
+    scenario: "package_code 有 UNIQUE 约束"
+    expect:
+      db_assert: "tenant_package 表 package_code 列有 UNIQUE 约束"
+
+# ─── AC → TC 映射 ──────────────────────────────────────────────────
+ac_tc_map:
+  AC-01: [TC-39-03, TC-39-04, TC-39-05, TC-39-06, TC-39-07]
+  AC-02: [TC-39-08, TC-39-12]
+  AC-03: [TC-39-09, TC-39-10]
+  AC-04: [TC-39-11]
+  AC-05: []  # 编译检查由 Gate R01 覆盖
+
+# ─── Gate R09 配置 ─────────────────────────────────────────────────
+gate_r09:
+  p0_required: true
+  p1_coverage_target: 0.7
+  p2_skip: true
+  test_class: "TenantPackageControllerTest"
+  note: "本 Phase 包含套餐 CRUD、唯一性校验、价格校验、用户数校验测试"

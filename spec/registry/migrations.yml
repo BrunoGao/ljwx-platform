@@ -185,24 +185,24 @@ migrations:
     status: "planned"
 
   - version: "035"
-    description: "create_sys_post"
+    description: "create_sys_prometheus_metrics"
     type: "DDL"
-    phase: 40
-    tables: ["sys_post"]
+    phase: 36
+    tables: ["sys_prometheus_metrics"]
     status: "planned"
 
   - version: "036"
-    description: "create_sys_user_post"
+    description: "create_sys_loki_labels"
     type: "DDL"
-    phase: 40
-    tables: ["sys_user_post"]
+    phase: 35
+    tables: ["sys_loki_labels"]
     status: "planned"
 
   - version: "037"
-    description: "add_tenant_lifecycle_fields"
+    description: "create_sys_api_rate_limit"
     type: "DDL"
-    phase: 41
-    tables: ["sys_tenant"]
+    phase: 37
+    tables: ["sys_api_rate_limit"]
     status: "planned"
 
   - version: "038"
@@ -218,26 +218,28 @@ migrations:
     phase: 38
     status: "planned"
 
-  # ==================== Phase 41-53 (P1 剩余) ====================
-  # 预留版本号,待 Phase spec 生成时填充
+  # ==================== Phase 40-53 (P1 剩余) ====================
 
   - version: "040"
-    description: "TBD"
-    type: "TBD"
-    phase: "TBD"
-    status: "reserved"
+    description: "create_sys_post"
+    type: "DDL"
+    phase: 40
+    tables: ["sys_post"]
+    status: "planned"
 
   - version: "041"
-    description: "TBD"
-    type: "TBD"
-    phase: "TBD"
-    status: "reserved"
+    description: "create_sys_user_post"
+    type: "DDL"
+    phase: 40
+    tables: ["sys_user_post"]
+    status: "planned"
 
   - version: "042"
-    description: "TBD"
-    type: "TBD"
-    phase: "TBD"
-    status: "reserved"
+    description: "add_tenant_lifecycle_fields"
+    type: "DDL"
+    phase: 41
+    tables: ["sys_tenant"]
+    status: "planned"
 
   - version: "043"
     description: "create_tenant_domain"

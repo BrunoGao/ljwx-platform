@@ -127,6 +127,7 @@ scope:
 | footerLinks | List<FooterLink> | | 页脚链接 |
 | mobileIconUrl | String | @URL | 移动端图标 |
 | mobileSplashUrl | String | @URL | 移动端启动页 |
+| customCss | String | @Size(max=10000) | 自定义 CSS (需过滤危险代码) |
 | customCss | String | @Size(max=10000) | 自定义 CSS |
 
 **禁止字段**：`id`、`tenantId`、`createdBy`、`createdTime`、`updatedBy`、`updatedTime`、`deleted`、`version`
@@ -164,10 +165,11 @@ scope:
 - **BL-38-01**：租户首次访问 → 自动创建默认品牌配置 → 使用系统默认值
 - **BL-38-02**：更新品牌配置 → 失效 brandCache → 广播 Outbox 事件
 - **BL-38-03**：前端加载 → 从 brandCache 读取 → Caffeine L1 + Redis L2
-- **BL-38-04**：自定义 CSS → 过滤危险代码 → 禁止 `<script>`、`javascript:`
+- **BL-38-04**：自定义 CSS → 过滤危险代码 → 禁止 `<script>`、`javascript:`、`expression()`、`@import`、`url()` (除 data: 和 https:)
 - **BL-38-05**：颜色值 → 校验格式 → 必须为 `#RRGGBB` 格式
 - **BL-38-06**：Logo/图标 → 限制大小 → 最大 2MB
 - **BL-38-07**：页脚链接 → 最多 10 个 → 超出拒绝
+- **BL-38-08**：CSS 属性白名单 → 仅允许安全属性 → 拒绝 behavior、-moz-binding 等危险属性
 
 ---
 
@@ -182,6 +184,73 @@ scope:
 )
 public TenantBrandVO getBrandByTenantId(Long tenantId) {
     // ...
+}
+```
+
+### CSS 安全过滤器
+
+```java
+public class CssSanitizer {
+
+    // CSS 属性白名单
+    private static final Set<String> ALLOWED_CSS_PROPERTIES = Set.of(
+        "color", "background-color", "background", "font-size", "font-family", "font-weight",
+        "margin", "margin-top", "margin-right", "margin-bottom", "margin-left",
+        "padding", "padding-top", "padding-right", "padding-bottom", "padding-left",
+        "border", "border-radius", "border-color", "border-width", "border-style",
+        "width", "height", "max-width", "max-height", "min-width", "min-height",
+        "display", "position", "top", "right", "bottom", "left",
+        "text-align", "text-decoration", "line-height", "letter-spacing",
+        "opacity", "z-index", "overflow", "box-shadow", "text-shadow"
+    );
+
+    // 危险模式 (正则表达式)
+    private static final List<Pattern> DANGEROUS_PATTERNS = List.of(
+        Pattern.compile("<script", Pattern.CASE_INSENSITIVE),
+        Pattern.compile("javascript:", Pattern.CASE_INSENSITIVE),
+        Pattern.compile("expression\\s*\\(", Pattern.CASE_INSENSITIVE),
+        Pattern.compile("@import", Pattern.CASE_INSENSITIVE),
+        Pattern.compile("behavior\\s*:", Pattern.CASE_INSENSITIVE),
+        Pattern.compile("-moz-binding\\s*:", Pattern.CASE_INSENSITIVE),
+        Pattern.compile("url\\s*\\((?!\\s*(data:|https:))", Pattern.CASE_INSENSITIVE)
+    );
+
+    /**
+     * 过滤自定义 CSS,移除危险代码
+     * @param css 原始 CSS
+     * @return 过滤后的安全 CSS
+     * @throws IllegalArgumentException 如果包含危险代码
+     */
+    public static String sanitize(String css) {
+        if (css == null || css.isBlank()) {
+            return "";
+        }
+
+        // 1. 检查危险模式
+        for (Pattern pattern : DANGEROUS_PATTERNS) {
+            if (pattern.matcher(css).find()) {
+                throw new IllegalArgumentException("CSS contains dangerous code: " + pattern.pattern());
+            }
+        }
+
+        // 2. 解析 CSS 并验证属性白名单
+        // 简化实现: 使用正则提取 property: value; 对
+        Pattern propertyPattern = Pattern.compile("([a-z-]+)\\s*:\\s*([^;]+);");
+        Matcher matcher = propertyPattern.matcher(css);
+
+        StringBuilder sanitized = new StringBuilder();
+        while (matcher.find()) {
+            String property = matcher.group(1).trim().toLowerCase();
+            String value = matcher.group(2).trim();
+
+            // 验证属性是否在白名单中
+            if (ALLOWED_CSS_PROPERTIES.contains(property)) {
+                sanitized.append(property).append(": ").append(value).append("; ");
+            }
+        }
+
+        return sanitized.toString();
+    }
 }
 ```
 

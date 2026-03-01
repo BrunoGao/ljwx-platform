@@ -1,0 +1,221 @@
+# Phase 35 — Structured Logging 测试契约
+# 关联 Spec：spec/phase/phase-35.md
+
+phase: 35
+module: "logging"
+ac_ref: "spec/phase/phase-35.md"
+
+tests:
+
+  # ─── P0：安全测试 ───────────────────────────────────────────────
+  - id: TC-35-01
+    priority: P0
+    category: security
+    scenario: "无 Token 访问日志查询 → 401"
+    request:
+      method: GET
+      path: /api/v1/logs
+      auth: none
+    expect:
+      status: 401
+
+  - id: TC-35-02
+    priority: P0
+    category: security
+    scenario: "无权限 Token 查询日志 → 403"
+    request:
+      method: GET
+      path: /api/v1/logs
+      auth: token_without_permission
+    expect:
+      status: 403
+
+  # ─── P0：日志格式 ──────────────────────────────────────────────
+  - id: TC-35-03
+    priority: P0
+    category: logging
+    ac: AC-01
+    scenario: "日志输出为 JSON 格式"
+    steps:
+      - "触发日志输出"
+      - "验证日志格式"
+    expect:
+      note: "日志为有效 JSON，包含 timestamp, level, message, traceId, tenantId, userId"
+
+  - id: TC-35-04
+    priority: P0
+    category: logging
+    ac: AC-02
+    scenario: "MDC 注入 traceId"
+    steps:
+      - "发起 HTTP 请求"
+      - "检查日志中的 traceId"
+    expect:
+      note: "traceId 存在且格式正确（UUID）"
+
+  - id: TC-35-05
+    priority: P0
+    category: logging
+    ac: AC-02
+    scenario: "MDC 注入 tenantId"
+    steps:
+      - "使用租户 Token 发起请求"
+      - "检查日志中的 tenantId"
+    expect:
+      note: "tenantId 与 JWT claim 一致"
+
+  - id: TC-35-06
+    priority: P0
+    category: logging
+    ac: AC-02
+    scenario: "MDC 注入 userId"
+    steps:
+      - "使用用户 Token 发起请求"
+      - "检查日志中的 userId"
+    expect:
+      note: "userId 与 JWT claim 一致"
+
+  # ─── P0：日志脱敏 ──────────────────────────────────────────────
+  - id: TC-35-07
+    priority: P0
+    category: logging
+    ac: AC-03
+    scenario: "密码字段脱敏为 ***"
+    steps:
+      - "记录包含 password 字段的日志"
+      - "验证日志内容"
+    expect:
+      note: "password 值为 ***"
+
+  - id: TC-35-08
+    priority: P0
+    category: logging
+    ac: AC-03
+    scenario: "手机号中间四位脱敏"
+    steps:
+      - "记录包含 phone 字段的日志"
+      - "验证日志内容"
+    expect:
+      note: "phone 值为 138****5678"
+
+  - id: TC-35-09
+    priority: P0
+    category: logging
+    ac: AC-03
+    scenario: "身份证号中间段脱敏"
+    steps:
+      - "记录包含 idCard 字段的日志"
+      - "验证日志内容"
+    expect:
+      note: "idCard 值为 110101**********19"
+
+  # ─── P0：Loki 集成 ─────────────────────────────────────────────
+  - id: TC-35-10
+    priority: P0
+    category: logging
+    ac: AC-04
+    scenario: "Fluent Bit 采集日志到 Loki"
+    steps:
+      - "应用输出日志"
+      - "Fluent Bit 采集日志"
+      - "查询 Loki"
+    expect:
+      note: "Loki 中存在对应日志"
+
+  - id: TC-35-11
+    priority: P0
+    category: logging
+    ac: AC-04
+    scenario: "Loki 标签包含 tenantId"
+    steps:
+      - "查询 Loki 日志"
+      - "验证标签"
+    expect:
+      note: "日志包含 tenantId 标签"
+
+  # ─── P0：租户隔离 ───────────────────────────────────────────────
+  - id: TC-35-12
+    priority: P0
+    category: tenant_isolation
+    scenario: "租户 A 查不到租户 B 的日志"
+    setup:
+      - create_log_for_tenant_A
+      - create_log_for_tenant_B
+    request:
+      method: GET
+      path: /api/v1/logs
+      auth: token_tenant_A
+    expect:
+      status: 200
+      body:
+        data:
+          list: "[仅包含租户 A 的日志]"
+
+  # ─── P1：日志级别 ──────────────────────────────────────────────
+  - id: TC-35-13
+    priority: P1
+    category: logging
+    ac: AC-05
+    scenario: "生产环境日志级别为 INFO"
+    steps:
+      - "检查 application-prod.yml"
+      - "验证日志级别配置"
+    expect:
+      note: "logging.level.root=INFO"
+
+  - id: TC-35-14
+    priority: P1
+    category: logging
+    ac: AC-05
+    scenario: "开发环境日志级别为 DEBUG"
+    steps:
+      - "检查 application-dev.yml"
+      - "验证日志级别配置"
+    expect:
+      note: "logging.level.root=DEBUG"
+
+  # ─── P1：日志查询 ──────────────────────────────────────────────
+  - id: TC-35-15
+    priority: P1
+    category: logging
+    scenario: "按 traceId 查询日志"
+    request:
+      method: GET
+      path: /api/v1/logs?traceId={traceId}
+      auth: token_with_system:log:list
+    expect:
+      status: 200
+      body:
+        data:
+          list: "[包含指定 traceId 的所有日志]"
+
+  - id: TC-35-16
+    priority: P1
+    category: logging
+    scenario: "按时间范围查询日志"
+    request:
+      method: GET
+      path: /api/v1/logs?startTime={start}&endTime={end}
+      auth: token_with_system:log:list
+    expect:
+      status: 200
+      body:
+        data:
+          list: "[指定时间范围内的日志]"
+
+# ─── AC → TC 映射 ──────────────────────────────────────────────────
+ac_tc_map:
+  AC-01: [TC-35-03]
+  AC-02: [TC-35-04, TC-35-05, TC-35-06]
+  AC-03: [TC-35-07, TC-35-08, TC-35-09]
+  AC-04: [TC-35-10, TC-35-11]
+  AC-05: [TC-35-13, TC-35-14]
+  AC-06: []  # 编译检查由 Gate R01 覆盖
+
+# ─── Gate R09 配置 ─────────────────────────────────────────────────
+gate_r09:
+  p0_required: true
+  p1_coverage_target: 0.7
+  p2_skip: true
+  test_class: "StructuredLoggingTest"
+  note: "本 Phase 包含日志格式、MDC 注入、脱敏、Loki 集成、租户隔离测试"

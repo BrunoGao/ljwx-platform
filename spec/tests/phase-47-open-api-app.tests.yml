@@ -1,0 +1,213 @@
+# Phase 47 — Open API App 测试契约
+# 关联 Spec：spec/phase/phase-47.md
+
+phase: 47
+module: "open-api-app"
+ac_ref: "spec/phase/phase-47.md"
+
+tests:
+
+  # ─── P0：安全测试 ───────────────────────────────────────────────
+  - id: TC-47-01
+    priority: P0
+    category: security
+    scenario: "无 Token 访问应用管理 → 401"
+    request:
+      method: GET
+      path: /api/v1/open-api/apps
+      auth: none
+    expect:
+      status: 401
+
+  - id: TC-47-02
+    priority: P0
+    category: security
+    scenario: "无权限 Token 创建应用 → 403"
+    request:
+      method: POST
+      path: /api/v1/open-api/apps
+      auth: token_without_permission
+    expect:
+      status: 403
+
+  # ─── P0：应用 CRUD ─────────────────────────────────────────────
+  - id: TC-47-03
+    priority: P0
+    category: crud
+    ac: AC-01
+    scenario: "创建 Open API 应用"
+    request:
+      method: POST
+      path: /api/v1/open-api/apps
+      auth: token_with_system:openapi:create
+      body:
+        appName: "测试应用"
+        appCode: "TEST_APP"
+        description: "测试应用描述"
+    expect:
+      status: 200
+      body:
+        code: 200
+        data: "{appId}"
+
+  - id: TC-47-04
+    priority: P0
+    category: crud
+    scenario: "查询应用列表"
+    request:
+      method: GET
+      path: /api/v1/open-api/apps
+      auth: token_with_system:openapi:list
+    expect:
+      status: 200
+      body:
+        data:
+          list: "[应用列表]"
+
+  - id: TC-47-05
+    priority: P0
+    category: crud
+    scenario: "查询应用详情"
+    request:
+      method: GET
+      path: /api/v1/open-api/apps/{appId}
+      auth: token_with_system:openapi:detail
+    expect:
+      status: 200
+      body:
+        data:
+          appName: "测试应用"
+
+  - id: TC-47-06
+    priority: P0
+    category: crud
+    scenario: "更新应用信息"
+    request:
+      method: PUT
+      path: /api/v1/open-api/apps/{appId}
+      auth: token_with_system:openapi:update
+      body:
+        appName: "测试应用（更新）"
+    expect:
+      status: 200
+
+  - id: TC-47-07
+    priority: P0
+    category: crud
+    scenario: "删除应用（软删除）"
+    request:
+      method: DELETE
+      path: /api/v1/open-api/apps/{appId}
+      auth: token_with_system:openapi:delete
+    expect:
+      status: 200
+      db_assert: "SELECT deleted FROM open_api_app WHERE id={appId} → TRUE"
+
+  # ─── P0：业务规则 ──────────────────────────────────────────────
+  - id: TC-47-08
+    priority: P0
+    category: validation
+    ac: AC-02
+    scenario: "应用编码唯一性校验"
+    setup:
+      - create_app_with_code_TEST_APP
+    request:
+      method: POST
+      path: /api/v1/open-api/apps
+      auth: token_with_system:openapi:create
+      body:
+        appName: "测试应用2"
+        appCode: "TEST_APP"
+    expect:
+      status: 400
+      body:
+        code: 400002
+        message: "应用编码已存在"
+
+  - id: TC-47-09
+    priority: P0
+    category: business
+    ac: AC-03
+    scenario: "创建应用自动生成 App ID 和 App Secret"
+    request:
+      method: POST
+      path: /api/v1/open-api/apps
+      auth: token_with_system:openapi:create
+      body:
+        appName: "测试应用"
+        appCode: "TEST_APP"
+    expect:
+      status: 200
+      body:
+        data:
+          appId: "{自动生成的 UUID}"
+          appSecret: "{自动生成的密钥}"
+
+  - id: TC-47-10
+    priority: P0
+    category: business
+    ac: AC-04
+    scenario: "重置 App Secret"
+    setup:
+      - create_app
+    request:
+      method: POST
+      path: /api/v1/open-api/apps/{appId}/reset-secret
+      auth: token_with_system:openapi:update
+    expect:
+      status: 200
+      body:
+        data:
+          appSecret: "{新的密钥}"
+
+  # ─── P0：租户隔离 ───────────────────────────────────────────────
+  - id: TC-47-11
+    priority: P0
+    category: tenant_isolation
+    scenario: "租户 A 查不到租户 B 的应用"
+    setup:
+      - create_app_for_tenant_A
+      - create_app_for_tenant_B
+    request:
+      method: GET
+      path: /api/v1/open-api/apps
+      auth: token_tenant_A
+    expect:
+      status: 200
+      body:
+        data:
+          list: "[仅包含租户 A 的应用]"
+
+  # ─── P1：数据库结构验证 ─────────────────────────────────────────
+  - id: TC-47-12
+    priority: P1
+    category: db_schema
+    ac: AC-05
+    scenario: "open_api_app 表包含 7 列审计字段"
+    expect:
+      db_assert: "open_api_app 表包含 tenant_id, created_by, created_time, updated_by, updated_time, deleted, version"
+
+  - id: TC-47-13
+    priority: P1
+    category: db_schema
+    ac: AC-02
+    scenario: "app_code 有 UNIQUE 约束"
+    expect:
+      db_assert: "open_api_app 表 app_code 列有 UNIQUE 约束"
+
+# ─── AC → TC 映射 ──────────────────────────────────────────────────
+ac_tc_map:
+  AC-01: [TC-47-03, TC-47-04, TC-47-05, TC-47-06, TC-47-07]
+  AC-02: [TC-47-08, TC-47-13]
+  AC-03: [TC-47-09]
+  AC-04: [TC-47-10]
+  AC-05: [TC-47-12]
+  AC-06: []  # 编译检查由 Gate R01 覆盖
+
+# ─── Gate R09 配置 ─────────────────────────────────────────────────
+gate_r09:
+  p0_required: true
+  p1_coverage_target: 0.7
+  p2_skip: true
+  test_class: "OpenApiAppControllerTest"
+  note: "本 Phase 包含应用 CRUD、密钥生成、重置、租户隔离测试"

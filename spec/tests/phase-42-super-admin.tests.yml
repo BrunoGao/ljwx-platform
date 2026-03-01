@@ -1,0 +1,208 @@
+# Phase 42 — Super Admin 测试契约
+# 关联 Spec：spec/phase/phase-42.md
+
+phase: 42
+module: "super-admin"
+ac_ref: "spec/phase/phase-42.md"
+
+tests:
+
+  # ─── P0：安全测试 ───────────────────────────────────────────────
+  - id: TC-42-01
+    priority: P0
+    category: security
+    scenario: "无 Token 访问超管功能 → 401"
+    request:
+      method: GET
+      path: /api/v1/super/tenants
+      auth: none
+    expect:
+      status: 401
+
+  - id: TC-42-02
+    priority: P0
+    category: security
+    scenario: "普通租户管理员访问超管功能 → 403"
+    request:
+      method: GET
+      path: /api/v1/super/tenants
+      auth: token_tenant_admin
+    expect:
+      status: 403
+
+  # ─── P0：超管权限 ──────────────────────────────────────────────
+  - id: TC-42-03
+    priority: P0
+    category: authorization
+    ac: AC-01
+    scenario: "超管可以查看所有租户"
+    setup:
+      - create_tenant_A
+      - create_tenant_B
+    request:
+      method: GET
+      path: /api/v1/super/tenants
+      auth: token_super_admin
+    expect:
+      status: 200
+      body:
+        data:
+          list: "[包含所有租户]"
+
+  - id: TC-42-04
+    priority: P0
+    category: authorization
+    ac: AC-02
+    scenario: "超管可以创建租户"
+    request:
+      method: POST
+      path: /api/v1/super/tenants
+      auth: token_super_admin
+      body:
+        tenantName: "新租户"
+        tenantCode: "NEW001"
+    expect:
+      status: 200
+      body:
+        code: 200
+        data: "{tenantId}"
+
+  - id: TC-42-05
+    priority: P0
+    category: authorization
+    ac: AC-03
+    scenario: "超管可以暂停任意租户"
+    setup:
+      - create_active_tenant
+    request:
+      method: POST
+      path: /api/v1/super/tenants/{tenantId}/suspend
+      auth: token_super_admin
+      body:
+        reason: "违规操作"
+    expect:
+      status: 200
+      db_assert: "SELECT status FROM sys_tenant WHERE id={tenantId} → SUSPENDED"
+
+  - id: TC-42-06
+    priority: P0
+    category: authorization
+    ac: AC-04
+    scenario: "超管可以查看任意租户的用户"
+    setup:
+      - create_tenant_with_users
+    request:
+      method: GET
+      path: /api/v1/super/tenants/{tenantId}/users
+      auth: token_super_admin
+    expect:
+      status: 200
+      body:
+        data:
+          list: "[租户的所有用户]"
+
+  # ─── P0：业务规则 ──────────────────────────────────────────────
+  - id: TC-42-07
+    priority: P0
+    category: business
+    ac: AC-05
+    scenario: "超管 tenant_id 为 0"
+    request:
+      method: GET
+      path: /api/v1/auth/me
+      auth: token_super_admin
+    expect:
+      status: 200
+      body:
+        data:
+          tenantId: 0
+
+  - id: TC-42-08
+    priority: P0
+    category: business
+    ac: AC-06
+    scenario: "超管不受租户隔离限制"
+    setup:
+      - create_data_for_tenant_A
+      - create_data_for_tenant_B
+    request:
+      method: GET
+      path: /api/v1/super/data
+      auth: token_super_admin
+    expect:
+      status: 200
+      body:
+        data:
+          list: "[包含所有租户的数据]"
+
+  - id: TC-42-09
+    priority: P0
+    category: business
+    ac: AC-07
+    scenario: "超管可以重置任意租户管理员密码"
+    setup:
+      - create_tenant_admin
+    request:
+      method: POST
+      path: /api/v1/super/users/{userId}/reset-password
+      auth: token_super_admin
+      body:
+        newPassword: "NewPass@123"
+    expect:
+      status: 200
+      body:
+        code: 200
+
+  # ─── P0：租户隔离 ───────────────────────────────────────────────
+  - id: TC-42-10
+    priority: P0
+    category: tenant_isolation
+    scenario: "普通租户管理员无法访问其他租户"
+    setup:
+      - create_tenant_A
+      - create_tenant_B
+    request:
+      method: GET
+      path: /api/v1/tenants/{tenantBId}
+      auth: token_tenant_A_admin
+    expect:
+      status: 403
+      body:
+        code: 403001
+
+  # ─── P1：数据库结构验证 ─────────────────────────────────────────
+  - id: TC-42-11
+    priority: P1
+    category: db_schema
+    ac: AC-08
+    scenario: "超管用户 tenant_id 为 0"
+    expect:
+      db_assert: "SELECT tenant_id FROM sys_user WHERE username='superadmin' → 0"
+
+  - id: TC-42-12
+    priority: P1
+    category: db_schema
+    ac: AC-08
+    scenario: "超管角色 tenant_id 为 0"
+    expect:
+      db_assert: "SELECT tenant_id FROM sys_role WHERE role_code='SUPER_ADMIN' → 0"
+
+# ─── AC → TC 映射 ──────────────────────────────────────────────────
+ac_tc_map:
+  AC-01: [TC-42-03]
+  AC-02: [TC-42-04]
+  AC-03: [TC-42-05]
+  AC-04: [TC-42-06]
+  AC-05: [TC-42-07]
+  AC-06: [TC-42-08]
+  AC-07: [TC-42-09]
+  AC-08: [TC-42-11, TC-42-12]
+  AC-09: []  # 编译检查由 Gate R01 覆盖
+
+# ─── Gate R09 配置 ─────────────────────────────────────────────────
+gate_r09:
+  p0_required: true
+  p1_coverage_target: 0.7
+  p2_skip: true
+  test_class: "SuperAdminControllerTest"
+  note: "本 Phase 包含超管权限、跨租户操作、租户隔离测试"

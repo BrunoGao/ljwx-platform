@@ -13,6 +13,8 @@ scope:
   - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/appservice/RoleDataScopeAppService.java"
   - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/controller/RoleDataScopeController.java"
   - "ljwx-platform-data/src/main/java/com/ljwx/platform/data/interceptor/DataScopeInterceptor.java"
+  - "ljwx-platform-data/src/main/java/com/ljwx/platform/data/context/DataScopeContext.java"
+  - "ljwx-platform-web/src/main/java/com/ljwx/platform/web/filter/DataScopeContextFilter.java"
   - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/domain/dto/RoleDataScopeUpdateDTO.java"
   - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/domain/vo/RoleDataScopeVO.java"
 ---
@@ -144,6 +146,44 @@ scope:
 
 ## 核心组件契约
 
+### DataScopeContext (ThreadLocal)
+
+```java
+/**
+ * 数据范围上下文 (避免 data 模块依赖 web 模块)
+ * 由 Filter 在请求开始时设置,在 Interceptor 中读取
+ */
+public class DataScopeContext {
+    private static final ThreadLocal<DataScopeInfo> CONTEXT = new ThreadLocal<>();
+
+    public static void set(Long userId, Long deptId, List<Long> roleIds) {
+        CONTEXT.set(new DataScopeInfo(userId, deptId, roleIds));
+    }
+
+    public static DataScopeInfo get() {
+        return CONTEXT.get();
+    }
+
+    public static void clear() {
+        CONTEXT.remove();
+    }
+
+    public static class DataScopeInfo {
+        private final Long userId;
+        private final Long deptId;
+        private final List<Long> roleIds;
+
+        public DataScopeInfo(Long userId, Long deptId, List<Long> roleIds) {
+            this.userId = userId;
+            this.deptId = deptId;
+            this.roleIds = roleIds;
+        }
+
+        // getters...
+    }
+}
+```
+
 ### DataScopeInterceptor
 
 ```java
@@ -155,14 +195,14 @@ public class DataScopeInterceptor implements Interceptor {
 
     @Override
     public Object intercept(Invocation invocation) throws Throwable {
-        // 1. 获取当前用户
-        LoginUser loginUser = SecurityUtils.getLoginUser();
-        if (loginUser == null) {
+        // 1. 从 ThreadLocal 获取用户信息 (避免依赖 SecurityUtils)
+        DataScopeContext.DataScopeInfo dataScopeInfo = DataScopeContext.get();
+        if (dataScopeInfo == null) {
             return invocation.proceed();
         }
 
         // 2. 获取用户所有角色的数据范围
-        List<DataScope> dataScopes = getDataScopes(loginUser.getRoleIds());
+        List<DataScope> dataScopes = getDataScopes(dataScopeInfo.getRoleIds());
 
         // 3. 如果有 ALL 数据范围,直接返回
         if (dataScopes.contains(DataScope.ALL)) {
@@ -175,10 +215,17 @@ public class DataScopeInterceptor implements Interceptor {
         String originalSql = boundSql.getSql();
 
         // 5. 动态添加 WHERE 条件
-        String dataScopeSql = buildDataScopeSql(dataScopes, loginUser);
+        List<Object> dataScopeParams = new ArrayList<>();
+        String dataScopeSql = buildDataScopeSql(dataScopes, dataScopeInfo, dataScopeParams);
         String newSql = originalSql + " AND (" + dataScopeSql + ")";
 
-        // 6. 替换 SQL
+        // 6. 绑定参数到 BoundSql (防止 SQL 注入)
+        MetaObject metaObject = SystemMetaObject.forObject(boundSql);
+        for (int i = 0; i < dataScopeParams.size(); i++) {
+            metaObject.setValue("additionalParameters.dataScope_param_" + i, dataScopeParams.get(i));
+        }
+
+        // 7. 替换 SQL
         Field field = BoundSql.class.getDeclaredField("sql");
         field.setAccessible(true);
         field.set(boundSql, newSql);
@@ -186,24 +233,30 @@ public class DataScopeInterceptor implements Interceptor {
         return invocation.proceed();
     }
 
-    private String buildDataScopeSql(List<DataScope> dataScopes, LoginUser loginUser) {
+    private String buildDataScopeSql(List<DataScope> dataScopes, DataScopeContext.DataScopeInfo dataScopeInfo, List<Object> params) {
         List<String> conditions = new ArrayList<>();
 
         for (DataScope dataScope : dataScopes) {
             switch (dataScope) {
                 case DEPT:
-                    conditions.add("dept_id = " + loginUser.getDeptId());
+                    conditions.add("dept_id = ?");
+                    params.add(dataScopeInfo.getDeptId());
                     break;
                 case DEPT_AND_CHILD:
-                    conditions.add("dept_id IN (SELECT id FROM sys_dept WHERE find_in_set(" + loginUser.getDeptId() + ", ancestors))");
+                    // PostgreSQL 兼容: 使用 ANY + string_to_array 替代 find_in_set
+                    conditions.add("? = ANY(string_to_array(ancestors, ',')::bigint[])");
+                    params.add(dataScopeInfo.getDeptId());
                     break;
                 case SELF:
-                    conditions.add("created_by = " + loginUser.getUserId());
+                    conditions.add("created_by = ?");
+                    params.add(dataScopeInfo.getUserId());
                     break;
                 case CUSTOM:
-                    List<Long> customDeptIds = getCustomDeptIds(loginUser.getRoleIds());
+                    List<Long> customDeptIds = getCustomDeptIds(dataScopeInfo.getRoleIds());
                     if (!customDeptIds.isEmpty()) {
-                        conditions.add("dept_id IN (" + String.join(",", customDeptIds.stream().map(String::valueOf).collect(Collectors.toList())) + ")");
+                        String placeholders = String.join(",", Collections.nCopies(customDeptIds.size(), "?"));
+                        conditions.add("dept_id IN (" + placeholders + ")");
+                        params.addAll(customDeptIds);
                     }
                     break;
             }
@@ -220,6 +273,36 @@ public class DataScopeInterceptor implements Interceptor {
     )
     private List<Long> getCustomDeptIds(List<Long> roleIds) {
         return roleDataScopeRepository.findDeptIdsByRoleIds(roleIds);
+    }
+}
+```
+
+### DataScopeContextFilter
+
+```java
+@Component
+@Order(2)  // 在 TenantContextFilter 之后执行
+public class DataScopeContextFilter extends OncePerRequestFilter {
+
+    @Override
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+            throws ServletException, IOException {
+        try {
+            // 从 SecurityContext 获取用户信息并设置到 ThreadLocal
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            if (authentication != null && authentication.getPrincipal() instanceof LoginUser) {
+                LoginUser loginUser = (LoginUser) authentication.getPrincipal();
+                DataScopeContext.set(
+                    loginUser.getUserId(),
+                    loginUser.getDeptId(),
+                    loginUser.getRoleIds()
+                );
+            }
+
+            filterChain.doFilter(request, response);
+        } finally {
+            DataScopeContext.clear();
+        }
     }
 }
 ```

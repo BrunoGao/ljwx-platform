@@ -10,7 +10,8 @@ scope:
   - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/service/TenantInitializer.java"
   - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/service/TenantLifecycleService.java"
   - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/controller/TenantLifecycleController.java"
-  - "ljwx-platform-app/src/main/resources/db/migration/V037__add_tenant_lifecycle_fields.sql"
+  - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/filter/TenantLifecycleFilter.java"
+  - "ljwx-platform-app/src/main/resources/db/migration/V042__add_tenant_lifecycle_fields.sql"
   - "ljwx-platform-admin/src/views/system/tenant/lifecycle.vue"
 ---
 # Phase 41: Tenant Lifecycle Management
@@ -49,7 +50,7 @@ scope:
 
 | 文件 | 说明 |
 |------|------|
-| V037__add_tenant_lifecycle_fields.sql | 为 sys_tenant 添加生命周期字段,禁止 IF NOT EXISTS |
+| V042__add_tenant_lifecycle_fields.sql | 为 sys_tenant 添加生命周期字段,禁止 IF NOT EXISTS |
 
 ## API 契约
 
@@ -78,7 +79,7 @@ scope:
 |------|------|----------|
 | TenantInitializer | app 模块 | 租户创建后初始化: 创建默认管理员、默认角色、默认菜单、默认部门 |
 | TenantLifecycleService | app 模块 | freeze(tenantId, reason) / unfreeze(tenantId) / cancel(tenantId, reason) |
-| TenantLifecycleFilter | web 模块 | 拦截所有请求,检查 TenantContext.tenantId 的 lifecycle_status,FROZEN/CANCELLED 返回 403 |
+| TenantLifecycleFilter | app 模块 | 拦截所有请求,检查 TenantContext.tenantId 的 lifecycle_status,FROZEN/CANCELLED 返回 403 |
 | TenantLifecycleController | app 模块 | 租户生命周期管理接口 |
 
 ## 业务规则
@@ -102,15 +103,15 @@ scope:
 | TC-41-04 | POST /api/v1/tenants/{id}/unfreeze 解冻租户 | 200, lifecycle_status=ACTIVE, sys_outbox_event 写入 TenantUnfrozen |
 | TC-41-05 | POST /api/v1/tenants/{id}/cancel 注销租户 | 200, lifecycle_status=CANCELLED, sys_outbox_event 写入 TenantCancelled |
 | TC-41-06 | 注销租户后,该租户用户请求任意接口 | 403, message="租户已注销" |
-| TC-41-07 | V037 含 5 个新字段,无 IF NOT EXISTS | 通过 |
+| TC-41-07 | V042 含 5 个新字段,无 IF NOT EXISTS | 通过 |
 
 完整测试用例见 [spec/tests/phase-41-tenant-lifecycle.tests.yml](../tests/phase-41-tenant-lifecycle.tests.yml)。
 
 ## 关键约束
 
 - TenantInitializer 在 app 模块,可以 import data 模块
-- TenantLifecycleFilter 在 web 模块,禁止 import data 模块,通过 TenantService 查询状态
-- V037 含 5 个新字段,无 IF NOT EXISTS
+- TenantLifecycleFilter 在 app 模块,可以直接查询 TenantRepository
+- V042 含 5 个新字段,无 IF NOT EXISTS
 - 冻结/解冻/注销操作必须写 Outbox 事件,保证最终一致性
 - 租户初始化必须在事务内完成,失败则回滚
 - 默认管理员密码必须符合强密码规则 (Phase 28)
@@ -121,7 +122,7 @@ scope:
 2. 冻结租户后,该租户用户无法访问任何接口 (403)
 3. 解冻租户后,该租户用户恢复正常访问
 4. 注销租户后,该租户用户无法访问任何接口 (403)
-5. V037 含 5 个新字段,无 IF NOT EXISTS
+5. V042 含 5 个新字段,无 IF NOT EXISTS
 6. 冻结/解冻/注销操作写入 sys_outbox_event
 7. 编译通过,无 DAG 违规
 8. 所有 P0 测试用例通过
