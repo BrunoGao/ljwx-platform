@@ -87,12 +87,12 @@ scope:
 
 | 方法 | 路径 | 权限 |
 |------|------|------|
-| POST | /api/v1/message/subscriptions | message:subscription:add |
-| PUT | /api/v1/message/subscriptions/{id} | message:subscription:edit |
-| DELETE | /api/v1/message/subscriptions/{id} | message:subscription:delete |
-| GET | /api/v1/message/subscriptions/{id} | message:subscription:query |
-| GET | /api/v1/message/subscriptions | message:subscription:list |
-| PUT | /api/v1/message/subscriptions/{id}/status | message:subscription:edit |
+| POST | /api/v1/message/subscriptions | system:message:subscription:add |
+| PUT | /api/v1/message/subscriptions/{id} | system:message:subscription:edit |
+| DELETE | /api/v1/message/subscriptions/{id} | system:message:subscription:delete |
+| GET | /api/v1/message/subscriptions/{id} | system:message:subscription:query |
+| GET | /api/v1/message/subscriptions | system:message:subscription:list |
+| PUT | /api/v1/message/subscriptions/{id}/status | system:message:subscription:edit |
 
 ## 业务规则
 
@@ -164,37 +164,37 @@ public class MsgSubscriptionVO {
 public class MsgSubscriptionController {
 
     @PostMapping
-    @PreAuthorize("@ss.hasPermission('message:subscription:add')")
+    @PreAuthorize("@ss.hasPermission('system:message:subscription:add')")
     public R<Long> create(@Valid @RequestBody MsgSubscriptionDTO dto) {
         // 创建订阅
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("@ss.hasPermission('message:subscription:edit')")
+    @PreAuthorize("@ss.hasPermission('system:message:subscription:edit')")
     public R<Void> update(@PathVariable Long id, @Valid @RequestBody MsgSubscriptionDTO dto) {
         // 更新订阅
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("@ss.hasPermission('message:subscription:delete')")
+    @PreAuthorize("@ss.hasPermission('system:message:subscription:delete')")
     public R<Void> delete(@PathVariable Long id) {
         // 删除订阅
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("@ss.hasPermission('message:subscription:query')")
+    @PreAuthorize("@ss.hasPermission('system:message:subscription:query')")
     public R<MsgSubscriptionVO> getById(@PathVariable Long id) {
         // 查询订阅详情
     }
 
     @GetMapping
-    @PreAuthorize("@ss.hasPermission('message:subscription:list')")
+    @PreAuthorize("@ss.hasPermission('system:message:subscription:list')")
     public R<PageResult<MsgSubscriptionVO>> list(MsgSubscriptionQueryDTO query) {
         // 分页查询订阅列表
     }
 
     @PutMapping("/{id}/status")
-    @PreAuthorize("@ss.hasPermission('message:subscription:edit')")
+    @PreAuthorize("@ss.hasPermission('system:message:subscription:edit')")
     public R<Void> updateStatus(@PathVariable Long id, @RequestParam String status) {
         // 更新订阅状态
     }

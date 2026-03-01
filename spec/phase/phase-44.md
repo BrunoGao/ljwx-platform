@@ -138,7 +138,7 @@ scope:
 |------|------|----------|
 | **ALL** | 全部数据 | 无条件 |
 | **DEPT** | 本部门数据 | `dept_id = #{userDeptId}` |
-| **DEPT_AND_CHILD** | 本部门及子部门数据 | `dept_id IN (SELECT id FROM sys_dept WHERE find_in_set(#{userDeptId}, ancestors))` |
+| **DEPT_AND_CHILD** | 本部门及子部门数据 | `? = ANY(string_to_array(ancestors, ',')::bigint[])` |
 | **SELF** | 仅本人数据 | `created_by = #{userId}` |
 | **CUSTOM** | 自定义部门数据 | `dept_id IN (#{customDeptIds})` |
 

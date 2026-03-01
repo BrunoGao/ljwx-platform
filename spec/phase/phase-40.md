@@ -7,8 +7,8 @@ targets:
 depends_on: [39]
 bundle_with: []
 scope:
-  - "ljwx-platform-app/src/main/resources/db/migration/V035__create_post.sql"
-  - "ljwx-platform-app/src/main/resources/db/migration/V036__create_user_post.sql"
+  - "ljwx-platform-app/src/main/resources/db/migration/V040__create_sys_post.sql"
+  - "ljwx-platform-app/src/main/resources/db/migration/V041__create_sys_user_post.sql"
   - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/domain/entity/Post.java"
   - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/domain/entity/UserPost.java"
   - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/infra/mapper/PostMapper.java"
@@ -107,8 +107,8 @@ scope:
 
 | 文件 | 内容 |
 |------|------|
-| `V035__create_post.sql` | 建表 + 索引 |
-| `V036__create_user_post.sql` | 建表 + 索引 |
+| `V040__create_sys_post.sql` | 建表 + 索引 |
+| `V041__create_sys_user_post.sql` | 建表 + 索引 |
 
 禁止：`IF NOT EXISTS`、在建表文件中写 DML。
 

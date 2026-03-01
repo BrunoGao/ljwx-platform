@@ -670,6 +670,12 @@ permissions:
     module: "message"
     phase: 51
 
+  - code: "system:message:record:query"
+    name: "消息记录详情"
+    description: "查看消息发送记录详情"
+    module: "message"
+    phase: 51
+
   - code: "system:message:inbox:list"
     name: "站内信列表"
     description: "查看站内信列表"
@@ -681,6 +687,37 @@ permissions:
     description: "标记站内信已读"
     module: "message"
     phase: 51
+
+  # 消息订阅管理
+  - code: "system:message:subscription:add"
+    name: "新增订阅"
+    description: "创建消息订阅"
+    module: "message"
+    phase: 52
+
+  - code: "system:message:subscription:edit"
+    name: "编辑订阅"
+    description: "修改消息订阅"
+    module: "message"
+    phase: 52
+
+  - code: "system:message:subscription:delete"
+    name: "删除订阅"
+    description: "删除消息订阅"
+    module: "message"
+    phase: 52
+
+  - code: "system:message:subscription:query"
+    name: "订阅详情"
+    description: "查看消息订阅详情"
+    module: "message"
+    phase: 52
+
+  - code: "system:message:subscription:list"
+    name: "订阅列表"
+    description: "查看消息订阅列表"
+    module: "message"
+    phase: 52
 
   # 敏感数据加密
   - code: "system:encrypt:key:add"

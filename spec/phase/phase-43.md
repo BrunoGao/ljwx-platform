@@ -248,7 +248,7 @@ public class TenantContextFilter extends OncePerRequestFilter {
             Long userTenantId = loginUser.getTenantId();
 
             // 3. 超级管理员可以通过 header 切换租户
-            if (userTenantId != null && userTenantId == 0) {
+            if (userTenantId != null && userTenantId.longValue() == 0L) {
                 String headerTenantId = request.getHeader("X-Tenant-Id");
                 if (StringUtils.hasText(headerTenantId)) {
                     return Long.parseLong(headerTenantId);

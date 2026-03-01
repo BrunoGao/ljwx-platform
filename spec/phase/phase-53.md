@@ -42,7 +42,7 @@ scope:
 | Phase | 53 |
 | 模块 | ljwx-platform-app (后端) + ljwx-platform-web (前端) |
 | Feature | L0-D07-F01 |
-| 前置依赖 | Phase 52 (API 网关) |
+| 前置依赖 | Phase 52 (消息订阅管理) |
 | 测试契约 | `spec/tests/phase-53-workflow.tests.yml` |
 | 优先级 | 🟡 **P1** |
 

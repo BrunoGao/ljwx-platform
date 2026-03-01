@@ -9,7 +9,7 @@ bundle_with: []
 scope:
   - "ljwx-platform-app/pom.xml"
   - "ljwx-platform-app/src/main/resources/application.yml"
-  - "ljwx-platform-core/src/main/java/com/ljwx/platform/core/metrics/TenantMetricsFilter.java"
+  - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/filter/TenantMetricsFilter.java"
   - "k8s/prometheus-servicemonitor.yaml"
 ---
 # Phase 36 — Prometheus 指标监控
@@ -17,7 +17,7 @@ scope:
 | 项目 | 值 |
 |-----|---|
 | Phase | 36 |
-| 模块 | ljwx-platform-core (后端) + K8s 配置 |
+| 模块 | ljwx-platform-app (后端) + K8s 配置 |
 | Feature | L0-D02-F02 |
 | 前置依赖 | Phase 35 (结构化日志) |
 | 优先级 | 🔴 **P0 - 生产就绪必需** |
@@ -98,8 +98,9 @@ public class TenantMetricsFilter extends OncePerRequestFilter {
                     tenantId, request.getRequestURI(), duration);
 
             // 记录全局指标（写入 Prometheus）
-            Counter.builder("tenant_http_requests_total")
-                   .tag("tenant_id", String.valueOf(tenantId))
+            // 注意: 禁止使用 tenant_id 作为 label（高基数，违反 observability.yml 黑名单）
+            // 租户维度数据通过上方的 Loki 日志查询聚合
+            Counter.builder("http_requests_total")
                    .tag("status", String.valueOf(response.getStatus()))
                    .register(meterRegistry)
                    .increment();
@@ -148,12 +149,12 @@ spec:
         sum(rate(http_server_requests_seconds_count{status=~"5.."}[5m]))
         /
         sum(rate(http_server_requests_seconds_count[5m]))
-        > 0.05
+        > 0.01
       for: 5m
       labels:
         severity: critical
       annotations:
-        summary: "High error rate detected (>5%)"
+        summary: "High error rate detected (>1%)"
     - alert: HighMemoryUsage
       expr: jvm_memory_used_bytes{area="heap"} / jvm_memory_max_bytes{area="heap"} > 0.9
       for: 5m

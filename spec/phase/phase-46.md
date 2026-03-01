@@ -15,8 +15,8 @@ scope:
   - "ljwx-platform-app/src/main/resources/mapper/ImportExportTaskMapper.xml"
   - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/dto/ImportExportTaskDTO.java"
   - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/vo/ImportExportTaskVO.java"
-  - "ljwx-platform-web/src/views/system/import-export/index.vue"
-  - "ljwx-platform-web/src/api/system/import-export.ts"
+  - "ljwx-platform-admin/src/views/system/import-export/index.vue"
+  - "ljwx-platform-admin/src/api/system/import-export.ts"
 ---
 # Phase 46 — 导入导出中心
 

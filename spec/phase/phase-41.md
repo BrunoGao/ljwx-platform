@@ -36,7 +36,7 @@ scope:
 
 ## DB 契约
 
-### sys_tenant 新增字段（V037）
+### sys_tenant 新增字段（V042）
 
 | 列名 | 类型 | 约束 | 说明 |
 |------|------|------|------|
@@ -189,7 +189,7 @@ public class TenantLifecycleFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, ...) {
         Long tenantId = TenantContext.getTenantId();
-        if (tenantId == null || tenantId == 0) {
+        if (tenantId == null || tenantId.longValue() == 0L) {
             chain.doFilter(request, response);
             return;
         }

@@ -8,7 +8,7 @@ depends_on: [34]
 bundle_with: []
 scope:
   - "ljwx-platform-app/src/main/resources/logback-spring.xml"
-  - "ljwx-platform-core/src/main/java/com/ljwx/platform/core/logging/LoggingFilter.java"
+  - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/filter/LoggingFilter.java"
   - "ljwx-platform-core/src/main/java/com/ljwx/platform/core/logging/MDCKeys.java"
   - "ljwx-platform-app/src/main/resources/application.yml"
   - "k8s/fluent-bit-config.yaml"
@@ -18,9 +18,10 @@ scope:
 | 项目 | 值 |
 |-----|---|
 | Phase | 35 |
-| 模块 | ljwx-platform-core (后端) + K8s 配置 |
+| 模块 | ljwx-platform-app (后端, Filter) + ljwx-platform-core (MDCKeys 常量) + K8s 配置 |
 | Feature | L0-D02-F01 |
 | 前置依赖 | Phase 34 (Outbox 事件表) |
+| 测试契约 | `spec/tests/phase-35-logging.tests.yml` |
 | 优先级 | 🔴 **P0 - 生产就绪必需** |
 
 ## 读取清单

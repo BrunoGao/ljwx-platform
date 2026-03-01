@@ -50,7 +50,7 @@ scope:
 
 | 类型 | 规则 | 示例 |
 |------|------|------|
-| **MOBILE** | 保留前 3 后 4 | 138****5678 |
+| **PHONE** | 保留前 3 后 4 | 138****5678 |
 | **ID_CARD** | 保留前 6 后 4 | 110101****1234 |
 | **EMAIL** | 保留前 2 和域名 | ab***@example.com |
 | **NAME** | 保留姓,名脱敏 | 张** |
@@ -127,7 +127,7 @@ public class UserVO {
     private Long id;
     private String username;
 
-    @DataMask(type = MaskType.MOBILE)
+    @DataMask(type = MaskType.PHONE)
     private String mobile;
 
     @DataMask(type = MaskType.EMAIL)
@@ -177,7 +177,7 @@ public class UserVO {
 
 - **BL-39-01**：字段标记 @DataMask → Jackson 序列化时脱敏 → 返回脱敏值
 - **BL-39-02**：用户有 `system:data:unmask` 权限 → 跳过脱敏 → 返回原始值
-- **BL-39-03**：手机号脱敏 → 保留前 3 后 4 → `138****5678`
+- **BL-39-03**：手机号脱敏（PHONE）→ 保留前 3 后 4 → `138****5678`
 - **BL-39-04**：身份证脱敏 → 保留前 6 后 4 → `110101****1234`
 - **BL-39-05**：邮箱脱敏 → 保留前 2 和域名 → `ab***@example.com`
 - **BL-39-06**：姓名脱敏 → 保留姓,名脱敏 → `张**`

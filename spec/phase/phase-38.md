@@ -8,6 +8,7 @@ depends_on: [37]
 bundle_with: []
 scope:
   - "ljwx-platform-app/src/main/resources/db/migration/V038__create_tenant_brand.sql"
+  - "ljwx-platform-app/src/main/resources/db/migration/V039__seed_sys_tenant_brand_defaults.sql"
   - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/domain/entity/TenantBrand.java"
   - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/infra/mapper/TenantBrandMapper.java"
   - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/appservice/TenantBrandAppService.java"
@@ -94,6 +95,7 @@ scope:
 | 文件 | 内容 |
 |------|------|
 | `V038__create_tenant_brand.sql` | 建表 + 索引 |
+| `V039__seed_sys_tenant_brand_defaults.sql` | 默认品牌配置数据 |
 
 禁止：`IF NOT EXISTS`、在建表文件中写 DML。
 
@@ -128,7 +130,6 @@ scope:
 | mobileIconUrl | String | @URL | 移动端图标 |
 | mobileSplashUrl | String | @URL | 移动端启动页 |
 | customCss | String | @Size(max=10000) | 自定义 CSS (需过滤危险代码) |
-| customCss | String | @Size(max=10000) | 自定义 CSS |
 
 **禁止字段**：`id`、`tenantId`、`createdBy`、`createdTime`、`updatedBy`、`updatedTime`、`deleted`、`version`
 

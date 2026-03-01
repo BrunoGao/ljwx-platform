@@ -46,7 +46,7 @@ scope:
 1. 密钥生成 (256-bit 随机密钥)
 2. 密钥轮换 (旧密钥自动过期)
 3. HMAC 签名验证 (HMAC-SHA256)
-4. nonce 防重放 (Redis 5 分钟窗口)
+4. nonce 防重放 (Redis 10 分钟窗口)
 
 ---
 
@@ -105,7 +105,7 @@ scope:
 - **BL-48-01**: 密钥生成 → 使用 SecureRandom 生成 256-bit 随机密钥 → Base64 编码存储
 - **BL-48-02**: 密钥轮换 → 旧密钥标记 EXPIRED → 生成新密钥(版本号+1)
 - **BL-48-03**: HMAC 签名 → HMAC-SHA256(key=secret_key, data=app_key+"\n"+timestamp+"\n"+nonce+"\n"+body_hash) → 验证签名
-- **BL-48-04**: nonce 防重放 → Redis 存储 nonce(TTL=5分钟) → 重复 nonce 拒绝请求
+- **BL-48-04**: nonce 防重放 → Redis 存储 nonce(TTL=10分钟) → 重复 nonce 拒绝请求
 - **BL-48-05**: 密钥过期 → expire_time < NOW() → 自动标记 EXPIRED
 - **BL-48-06**: 每个应用 → 最多保留 3 个 ACTIVE 密钥 → 超过限制拒绝生成
 - **BL-48-07**: 密钥删除 → 软删除(deleted=true) → 保留审计记录
@@ -260,7 +260,7 @@ public class HmacSignatureUtil {
 - **AC-02**: 密钥生成使用 SecureRandom,256-bit 强度
 - **AC-03**: 密钥轮换正常,旧密钥自动标记 EXPIRED
 - **AC-04**: HMAC-SHA256 签名验证通过
-- **AC-05**: nonce 防重放生效,Redis TTL=5 分钟
+- **AC-05**: nonce 防重放生效,Redis TTL=10 分钟
 - **AC-06**: 密钥过期自动标记 EXPIRED
 - **AC-07**: 每个应用最多 3 个 ACTIVE 密钥
 - **AC-08**: 密钥删除为软删除,保留审计记录
@@ -274,6 +274,6 @@ public class HmacSignatureUtil {
 - 密钥生成: 使用 SecureRandom,256-bit 强度
 - 密钥存储: 加密存储,仅创建时返回明文
 - 密钥轮换: 旧密钥标记 EXPIRED,版本号递增
-- nonce 防重放: Redis 存储,TTL=5 分钟
+- nonce 防重放: Redis 存储,TTL=10 分钟
 - 禁止: 在 DTO 中声明 `tenantId`
 
