@@ -1,0 +1,348 @@
+# Flyway Migrations Registry (SSOT)
+# Flyway 版本号分配的唯一来源
+# 所有 Phase spec 中的迁移必须在这里登记
+
+version: "1.0"
+last_updated: "2025-03-01"
+
+# 版本号规则:
+# - 格式: VNNN__description.sql
+# - NNN 必须唯一,不允许重复
+# - DDL 和 DML 必须分开 (不同版本号)
+# - 版本号与 Phase 编号不强制对应,但建议接近
+
+migrations:
+  # ==================== Phase 0-32 (已完成) ====================
+  - version: "001"
+    description: "init_schema"
+    type: "DDL"
+    phase: 1
+    tables: ["sys_tenant", "sys_user", "sys_role", "sys_permission", "sys_user_role", "sys_role_permission"]
+
+  - version: "002"
+    description: "create_user"
+    type: "DDL"
+    phase: 6
+
+  - version: "003"
+    description: "create_role"
+    type: "DDL"
+    phase: 6
+
+  - version: "004"
+    description: "create_permission"
+    type: "DDL"
+    phase: 6
+
+  - version: "005"
+    description: "seed_default_tenant"
+    type: "DML"
+    phase: 5
+
+  - version: "006"
+    description: "seed_admin_user"
+    type: "DML"
+    phase: 6
+
+  - version: "007"
+    description: "seed_permissions"
+    type: "DML"
+    phase: 6
+
+  - version: "008"
+    description: "seed_admin_role"
+    type: "DML"
+    phase: 6
+
+  - version: "009"
+    description: "assign_admin_role"
+    type: "DML"
+    phase: 6
+
+  - version: "010"
+    description: "create_quartz_tables"
+    type: "DDL"
+    phase: 11
+
+  - version: "011"
+    description: "create_sys_job"
+    type: "DDL"
+    phase: 11
+
+  - version: "012"
+    description: "create_sys_dict_type"
+    type: "DDL"
+    phase: 12
+
+  - version: "013"
+    description: "create_sys_dict_data"
+    type: "DDL"
+    phase: 12
+
+  - version: "014"
+    description: "create_sys_config"
+    type: "DDL"
+    phase: 13
+
+  - version: "015"
+    description: "create_sys_operation_log"
+    type: "DDL"
+    phase: 15
+
+  - version: "016"
+    description: "create_sys_login_log"
+    type: "DDL"
+    phase: 16
+
+  - version: "017"
+    description: "create_sys_file"
+    type: "DDL"
+    phase: 14
+
+  - version: "018"
+    description: "create_sys_notice"
+    type: "DDL"
+    phase: 17
+
+  - version: "019"
+    description: "seed_dict_data"
+    type: "DML"
+    phase: 12
+
+  - version: "020"
+    description: "seed_config_data"
+    type: "DML"
+    phase: 13
+
+  - version: "021"
+    description: "create_indexes"
+    type: "DDL"
+    phase: 21
+
+  - version: "022"
+    description: "create_sys_menu"
+    type: "DDL"
+    phase: 20
+
+  - version: "023"
+    description: "seed_sys_menu"
+    type: "DML"
+    phase: 20
+
+  - version: "024"
+    description: "create_sys_dept"
+    type: "DDL"
+    phase: 21
+
+  - version: "025"
+    description: "seed_sys_dept"
+    type: "DML"
+    phase: 21
+
+  - version: "026"
+    description: "create_sys_login_log"
+    type: "DDL"
+    phase: 22
+
+  - version: "027"
+    description: "create_sys_tenant_package"
+    type: "DDL"
+    phase: 5
+
+  - version: "028"
+    description: "create_sys_notice_user"
+    type: "DDL"
+    phase: 17
+
+  - version: "029"
+    description: "seed_phase26_permissions"
+    type: "DML"
+    phase: 26
+
+  - version: "030"
+    description: "create_sys_data_change_log"
+    type: "DDL"
+    phase: 27
+
+  - version: "031"
+    description: "create_sys_frontend_error"
+    type: "DDL"
+    phase: 29
+
+  # ==================== Phase 33-40 (P0 + P1 部分) ====================
+  - version: "033"
+    description: "create_cache_invalidation_event"
+    type: "DDL"
+    phase: 33
+    tables: ["cache_invalidation_event"]
+    status: "planned"
+
+  - version: "034"
+    description: "create_sys_outbox_event"
+    type: "DDL"
+    phase: 34
+    tables: ["sys_outbox_event"]
+    status: "planned"
+
+  - version: "035"
+    description: "create_sys_post"
+    type: "DDL"
+    phase: 40
+    tables: ["sys_post"]
+    status: "planned"
+
+  - version: "036"
+    description: "create_sys_user_post"
+    type: "DDL"
+    phase: 40
+    tables: ["sys_user_post"]
+    status: "planned"
+
+  - version: "037"
+    description: "add_tenant_lifecycle_fields"
+    type: "DDL"
+    phase: 41
+    tables: ["sys_tenant"]
+    status: "planned"
+
+  - version: "038"
+    description: "create_sys_tenant_brand"
+    type: "DDL"
+    phase: 38
+    tables: ["sys_tenant_brand"]
+    status: "planned"
+
+  - version: "039"
+    description: "seed_sys_tenant_brand_defaults"
+    type: "DML"
+    phase: 38
+    status: "planned"
+
+  # ==================== Phase 41-53 (P1 剩余) ====================
+  # 预留版本号,待 Phase spec 生成时填充
+
+  - version: "040"
+    description: "TBD"
+    type: "TBD"
+    phase: "TBD"
+    status: "reserved"
+
+  - version: "041"
+    description: "TBD"
+    type: "TBD"
+    phase: "TBD"
+    status: "reserved"
+
+  - version: "042"
+    description: "TBD"
+    type: "TBD"
+    phase: "TBD"
+    status: "reserved"
+
+  - version: "043"
+    description: "create_tenant_domain"
+    type: "DDL"
+    phase: 43
+    tables:
+      - "sys_tenant_domain"
+    status: "active"
+
+  - version: "044"
+    description: "create_role_data_scope"
+    type: "DDL"
+    phase: 44
+    tables:
+      - "sys_role_data_scope"
+    status: "active"
+
+  - version: "045"
+    description: "create_task_execution_log"
+    type: "DDL"
+    phase: 45
+    tables:
+      - "sys_task_execution_log"
+    status: "active"
+
+  - version: "046"
+    description: "create_import_export_task"
+    type: "DDL"
+    phase: 46
+    tables:
+      - "sys_import_export_task"
+    status: "active"
+
+  - version: "047"
+    description: "create_open_app"
+    type: "DDL"
+    phase: 47
+    tables:
+      - "open_app"
+    status: "active"
+
+  - version: "048"
+    description: "create_open_app_secret"
+    type: "DDL"
+    phase: 48
+    tables:
+      - "open_app_secret"
+    status: "active"
+
+  - version: "049"
+    description: "create_webhook"
+    type: "DDL"
+    phase: 49
+    tables:
+      - "webhook_config"
+      - "webhook_log"
+    status: "active"
+
+  - version: "050"
+    description: "create_msg_template"
+    type: "DDL"
+    phase: 50
+    tables:
+      - "msg_template"
+    status: "active"
+
+  - version: "051"
+    description: "create_msg_record_and_inbox"
+    type: "DDL"
+    phase: 51
+    tables:
+      - "msg_record"
+      - "msg_user_inbox"
+    status: "active"
+
+  - version: "052"
+    description: "create_encrypt_key"
+    type: "DDL"
+    phase: 52
+    tables:
+      - "sys_encrypt_key"
+    status: "active"
+
+  - version: "053"
+    description: "create_workflow"
+    type: "DDL"
+    phase: 53
+    tables:
+      - "wf_definition"
+      - "wf_instance"
+      - "wf_task"
+      - "wf_history"
+    status: "active"
+
+# 迁移规则
+rules:
+  version_format: "VNNN__description.sql"
+  version_uniqueness: "每个版本号全局唯一,不允许重复"
+  ddl_dml_separation: "DDL 和 DML 必须分开,使用不同版本号"
+  no_if_not_exists: "建表语句禁止使用 IF NOT EXISTS"
+  seed_data_separate: "默认数据必须单独迁移文件,不能在建表文件中"
+
+# 版本号分配策略
+allocation_strategy:
+  phase_0_32: "V001-V032 (已完成)"
+  phase_33_40: "V033-V039 (P0 + P1 部分)"
+  phase_41_53: "V040-V060 (P1 剩余,预留)"
+  phase_54_plus: "V061+ (P2 及以后)"

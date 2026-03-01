@@ -1,0 +1,179 @@
+# Observability Registry (SSOT)
+# 可观测性配置的唯一来源: 日志、指标、追踪
+# 所有 Phase spec 中的可观测配置必须符合这里的规范
+
+version: "1.0"
+last_updated: "2025-03-01"
+
+# ==================== Loki 日志配置 ====================
+loki:
+  # Label 白名单 (低基数,允许作为 label)
+  labels_whitelist:
+    - app          # 应用名称 (ljwx-platform)
+    - env          # 环境 (dev/test/prod)
+    - level        # 日志级别 (ERROR/WARN/INFO/DEBUG)
+    - namespace    # K8s 命名空间 (可选)
+    - pod          # Pod 名称 (可选)
+
+  # Label 黑名单 (高基数,禁止作为 label)
+  labels_blacklist:
+    - tenantId     # 租户 ID (高基数)
+    - userId       # 用户 ID (高基数)
+    - traceId      # 链路追踪 ID (高基数)
+    - requestId    # 请求 ID (高基数)
+    - ip           # IP 地址 (高基数)
+    - uri          # 原始 URI (高基数)
+
+  # JSON 字段 (可以作为日志字段,不做 label)
+  json_fields:
+    - time         # 时间戳
+    - level        # 日志级别
+    - logger       # Logger 名称
+    - thread       # 线程名称
+    - message      # 日志消息
+    - traceId      # 链路追踪 ID (字段,不是 label)
+    - tenantId     # 租户 ID (字段,不是 label)
+    - userId       # 用户 ID (字段,不是 label)
+    - method       # HTTP 方法
+    - uri          # 请求 URI
+    - status       # HTTP 状态码
+    - duration     # 请求耗时
+    - exception    # 异常堆栈
+
+  # Logback 配置示例
+  logback_pattern: |
+    {
+      "time": "%d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX}",
+      "level": "%level",
+      "logger": "%logger{36}",
+      "thread": "%thread",
+      "message": "%message",
+      "traceId": "%X{traceId}",
+      "tenantId": "%X{tenantId}",
+      "userId": "%X{userId}",
+      "exception": "%exception{full}"
+    }
+
+# ==================== Prometheus 指标配置 ====================
+prometheus:
+  # Label 白名单 (低基数,允许作为 label)
+  labels_whitelist:
+    - app          # 应用名称
+    - env          # 环境
+    - instance     # 实例 ID
+    - job          # Job 名称
+    - method       # HTTP 方法 (GET/POST/PUT/DELETE)
+    - status       # HTTP 状态码 (200/400/500)
+    - routeTemplate # 路由模板 (/api/v1/users/{id})
+    - exception    # 异常类型 (NullPointerException)
+
+  # Label 黑名单 (高基数,禁止作为 label)
+  labels_blacklist:
+    - tenant_id    # 租户 ID (高基数)
+    - user_id      # 用户 ID (高基数)
+    - trace_id     # 链路追踪 ID (高基数)
+    - request_id   # 请求 ID (高基数)
+    - uri          # 原始 URI (高基数)
+    - ip           # IP 地址 (高基数)
+
+  # 指标命名规范
+  metric_naming:
+    format: "{namespace}_{subsystem}_{name}_{unit}"
+    examples:
+      - "http_server_requests_seconds"
+      - "jvm_memory_used_bytes"
+      - "db_connection_pool_active_connections"
+
+  # 租户维度统计策略
+  tenant_metrics_strategy:
+    prometheus: "禁止使用 tenant_id label,保持低基数"
+    loki: "通过 Loki 日志查询聚合租户维度数据"
+    database: "通过 bill_usage_record 表聚合租户用量"
+
+# ==================== OpenTelemetry 追踪配置 ====================
+opentelemetry:
+  # Span 属性白名单
+  span_attributes_whitelist:
+    - http.method
+    - http.route
+    - http.status_code
+    - db.system
+    - db.operation
+    - messaging.system
+
+  # Span 属性黑名单 (高基数或敏感信息)
+  span_attributes_blacklist:
+    - http.url          # 原始 URL (高基数)
+    - http.target       # 原始 target (高基数)
+    - db.statement      # SQL 语句 (高基数,可能包含敏感信息)
+    - user.id           # 用户 ID (高基数)
+    - tenant.id         # 租户 ID (高基数)
+
+# ==================== 告警规则 ====================
+alerting:
+  # 错误率告警
+  error_rate:
+    expression: |
+      sum(rate(http_server_requests_seconds_count{status=~"5.."}[5m]))
+      /
+      sum(rate(http_server_requests_seconds_count[5m]))
+      > 0.01
+    description: "HTTP 5xx 错误率超过 1%"
+    severity: "critical"
+
+  # P99 延迟告警
+  p99_latency:
+    expression: |
+      histogram_quantile(0.99,
+        sum(rate(http_server_requests_seconds_bucket[5m])) by (le, method, routeTemplate)
+      ) > 3
+    description: "P99 延迟超过 3 秒"
+    severity: "warning"
+
+  # JVM 内存告警
+  jvm_memory:
+    expression: |
+      jvm_memory_used_bytes{area="heap"} / jvm_memory_max_bytes{area="heap"} > 0.9
+    description: "JVM 堆内存使用率超过 90%"
+    severity: "warning"
+
+# ==================== 慢接口监控 ====================
+slow_api:
+  thresholds:
+    warn: 3000   # 3 秒,输出 WARN 日志
+    error: 10000 # 10 秒,输出 ERROR 日志
+
+  # 慢接口日志格式
+  log_format: |
+    {
+      "level": "WARN",
+      "message": "Slow API detected",
+      "traceId": "${traceId}",
+      "method": "${method}",
+      "uri": "${uri}",
+      "duration": ${duration},
+      "threshold": 3000
+    }
+
+# ==================== 规范说明 ====================
+rules:
+  loki_labels:
+    - "仅使用低基数字段作为 label (app/env/level)"
+    - "高基数字段 (tenantId/userId/traceId) 只能作为 JSON 字段"
+    - "租户维度查询通过 Loki 日志字段过滤,不做 label"
+
+  prometheus_labels:
+    - "禁止使用 tenant_id/user_id/trace_id 作为 label"
+    - "使用 routeTemplate 而不是原始 uri"
+    - "租户维度统计通过 Loki 或 PostgreSQL 实现"
+
+  alerting:
+    - "错误率告警必须使用 ratio (分子/分母)"
+    - "避免低流量误判,可加最小请求量门槛"
+    - "P99 延迟使用 histogram_quantile 计算"
+
+# ==================== 相关 ADR ====================
+related_adrs:
+  - "ADR-0003: Prometheus 指标维度坚持低基数"
+  - "ADR-0004: Outbox Pattern"
+  - "ADR-0005: Outbox 投递采用 NOTIFY 触发 + 轮询兜底"

@@ -1,0 +1,48 @@
+name: Spec Quality Gate
+
+on:
+  pull_request:
+    paths:
+      - 'spec/**'
+      - 'docs/**'
+  push:
+    branches:
+      - master
+      - main
+
+jobs:
+  spec-quality-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install pyyaml
+
+      - name: Run Spec Quality Checks
+        run: |
+          python scripts/spec-quality-gate.py
+
+      - name: Check Flyway Migration Uniqueness
+        run: |
+          python scripts/check-flyway-uniqueness.py
+
+      - name: Check Markdown Links
+        uses: gaurav-nelson/github-action-markdown-link-check@v1
+        with:
+          use-quiet-mode: 'yes'
+          config-file: '.markdown-link-check.json'
+
+      - name: Summary
+        if: always()
+        run: |
+          echo "## Spec Quality Gate Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ All checks passed!" >> $GITHUB_STEP_SUMMARY

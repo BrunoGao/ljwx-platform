@@ -1,0 +1,843 @@
+# Permissions Registry (SSOT)
+# 全平台权限字符串的唯一来源
+# 所有 Phase spec 中出现的权限必须来自这里
+
+version: "1.0"
+last_updated: "2025-03-01"
+
+# 权限命名标准: {resource}:{action}
+# 标准动作: list, query, add, edit, delete, export, import
+# 禁止使用: view, update, remove
+
+permissions:
+  # ==================== L1 平台治理层 ====================
+
+  # 租户管理
+  - code: "system:tenant:list"
+    name: "租户列表"
+    description: "查看租户列表"
+    module: "tenant"
+
+  - code: "system:tenant:query"
+    name: "租户详情"
+    description: "查看租户详细信息"
+    module: "tenant"
+
+  - code: "system:tenant:add"
+    name: "新增租户"
+    description: "创建新租户"
+    module: "tenant"
+
+  - code: "system:tenant:edit"
+    name: "编辑租户"
+    description: "修改租户信息"
+    module: "tenant"
+
+  - code: "system:tenant:delete"
+    name: "删除租户"
+    description: "删除租户"
+    module: "tenant"
+
+  - code: "system:tenant:freeze"
+    name: "冻结租户"
+    description: "冻结租户账号"
+    module: "tenant"
+    phase: 41
+
+  - code: "system:tenant:unfreeze"
+    name: "解冻租户"
+    description: "解冻租户账号"
+    module: "tenant"
+    phase: 41
+
+  - code: "system:tenant:cancel"
+    name: "注销租户"
+    description: "注销租户账号"
+    module: "tenant"
+    phase: 41
+
+  - code: "system:tenant:init"
+    name: "初始化租户"
+    description: "初始化租户数据"
+    module: "tenant"
+    phase: 41
+
+  # 租户品牌配置
+  - code: "tenant:brand:list"
+    name: "品牌配置列表"
+    description: "查看品牌配置列表"
+    module: "tenant"
+    phase: 38
+
+  - code: "tenant:brand:edit"
+    name: "编辑品牌配置"
+    description: "修改品牌配置"
+    module: "tenant"
+    phase: 38
+
+  # 租户域名管理
+  - code: "tenant:domain:list"
+    name: "域名列表"
+    description: "查看租户域名列表"
+    module: "tenant"
+    phase: 43
+
+  - code: "tenant:domain:query"
+    name: "域名详情"
+    description: "查看域名详细信息"
+    module: "tenant"
+    phase: 43
+
+  - code: "tenant:domain:add"
+    name: "新增域名"
+    description: "创建新域名"
+    module: "tenant"
+    phase: 43
+
+  - code: "tenant:domain:edit"
+    name: "编辑域名"
+    description: "修改域名信息"
+    module: "tenant"
+    phase: 43
+
+  - code: "tenant:domain:delete"
+    name: "删除域名"
+    description: "删除域名"
+    module: "tenant"
+    phase: 43
+
+  - code: "tenant:domain:verify"
+    name: "验证域名"
+    description: "验证域名所有权"
+    module: "tenant"
+    phase: 43
+
+  - code: "tenant:domain:setPrimary"
+    name: "设置主域名"
+    description: "设置为主域名"
+    module: "tenant"
+    phase: 43
+
+  # 套餐管理
+  - code: "system:package:list"
+    name: "套餐列表"
+    description: "查看套餐列表"
+    module: "tenant"
+
+  - code: "system:package:query"
+    name: "套餐详情"
+    description: "查看套餐详细信息"
+    module: "tenant"
+
+  - code: "system:package:add"
+    name: "新增套餐"
+    description: "创建新套餐"
+    module: "tenant"
+
+  - code: "system:package:edit"
+    name: "编辑套餐"
+    description: "修改套餐信息"
+    module: "tenant"
+
+  - code: "system:package:delete"
+    name: "删除套餐"
+    description: "删除套餐"
+    module: "tenant"
+
+  # ==================== L2 身份与权限层 ====================
+
+  # 用户管理
+  - code: "system:user:list"
+    name: "用户列表"
+    description: "查看用户列表"
+    module: "user"
+
+  - code: "system:user:query"
+    name: "用户详情"
+    description: "查看用户详细信息"
+    module: "user"
+
+  - code: "system:user:add"
+    name: "新增用户"
+    description: "创建新用户"
+    module: "user"
+
+  - code: "system:user:edit"
+    name: "编辑用户"
+    description: "修改用户信息"
+    module: "user"
+
+  - code: "system:user:delete"
+    name: "删除用户"
+    description: "删除用户"
+    module: "user"
+
+  - code: "system:user:resetPwd"
+    name: "重置密码"
+    description: "重置用户密码"
+    module: "user"
+
+  - code: "system:user:export"
+    name: "导出用户"
+    description: "导出用户数据"
+    module: "user"
+
+  - code: "system:user:import"
+    name: "导入用户"
+    description: "导入用户数据"
+    module: "user"
+
+  # 角色管理
+  - code: "system:role:list"
+    name: "角色列表"
+    description: "查看角色列表"
+    module: "role"
+
+  - code: "system:role:query"
+    name: "角色详情"
+    description: "查看角色详细信息"
+    module: "role"
+
+  - code: "system:role:add"
+    name: "新增角色"
+    description: "创建新角色"
+    module: "role"
+
+  - code: "system:role:edit"
+    name: "编辑角色"
+    description: "修改角色信息"
+    module: "role"
+
+  - code: "system:role:delete"
+    name: "删除角色"
+    description: "删除角色"
+    module: "role"
+
+  # 菜单管理
+  - code: "system:menu:list"
+    name: "菜单列表"
+    description: "查看菜单列表"
+    module: "menu"
+
+  - code: "system:menu:query"
+    name: "菜单详情"
+    description: "查看菜单详细信息"
+    module: "menu"
+
+  - code: "system:menu:add"
+    name: "新增菜单"
+    description: "创建新菜单"
+    module: "menu"
+
+  - code: "system:menu:edit"
+    name: "编辑菜单"
+    description: "修改菜单信息"
+    module: "menu"
+
+  - code: "system:menu:delete"
+    name: "删除菜单"
+    description: "删除菜单"
+    module: "menu"
+
+  # 部门管理
+  - code: "system:dept:list"
+    name: "部门列表"
+    description: "查看部门列表"
+    module: "dept"
+
+  - code: "system:dept:query"
+    name: "部门详情"
+    description: "查看部门详细信息"
+    module: "dept"
+
+  - code: "system:dept:add"
+    name: "新增部门"
+    description: "创建新部门"
+    module: "dept"
+
+  - code: "system:dept:edit"
+    name: "编辑部门"
+    description: "修改部门信息"
+    module: "dept"
+
+  - code: "system:dept:delete"
+    name: "删除部门"
+    description: "删除部门"
+    module: "dept"
+
+  # 岗位管理
+  - code: "system:post:list"
+    name: "岗位列表"
+    description: "查看岗位列表"
+    module: "post"
+    phase: 40
+
+  - code: "system:post:query"
+    name: "岗位详情"
+    description: "查看岗位详细信息"
+    module: "post"
+    phase: 40
+
+  - code: "system:post:add"
+    name: "新增岗位"
+    description: "创建新岗位"
+    module: "post"
+    phase: 40
+
+  - code: "system:post:edit"
+    name: "编辑岗位"
+    description: "修改岗位信息"
+    module: "post"
+    phase: 40
+
+  - code: "system:post:delete"
+    name: "删除岗位"
+    description: "删除岗位"
+    module: "post"
+    phase: 40
+
+  - code: "system:post:export"
+    name: "导出岗位"
+    description: "导出岗位数据"
+    module: "post"
+    phase: 40
+
+  - code: "system:post:import"
+    name: "导入岗位"
+    description: "导入岗位数据"
+    module: "post"
+    phase: 40
+
+  # 任务执行日志
+  - code: "system:taskLog:list"
+    name: "任务日志列表"
+    description: "查看任务执行日志列表"
+    module: "task"
+    phase: 45
+
+  - code: "system:taskLog:query"
+    name: "任务日志详情"
+    description: "查看任务日志详细信息"
+    module: "task"
+    phase: 45
+
+  - code: "system:taskLog:delete"
+    name: "删除任务日志"
+    description: "删除任务执行日志"
+    module: "task"
+    phase: 45
+
+  - code: "system:taskLog:clean"
+    name: "清理任务日志"
+    description: "清理历史任务日志"
+    module: "task"
+    phase: 45
+
+  - code: "system:taskLog:stats"
+    name: "任务日志统计"
+    description: "查看任务执行统计"
+    module: "task"
+    phase: 45
+
+  # ==================== L3 基础能力层 ====================
+
+  # 字典管理
+  - code: "system:dict:list"
+    name: "字典列表"
+    description: "查看字典列表"
+    module: "dict"
+
+  - code: "system:dict:query"
+    name: "字典详情"
+    description: "查看字典详细信息"
+    module: "dict"
+
+  - code: "system:dict:add"
+    name: "新增字典"
+    description: "创建新字典"
+    module: "dict"
+
+  - code: "system:dict:edit"
+    name: "编辑字典"
+    description: "修改字典信息"
+    module: "dict"
+
+  - code: "system:dict:delete"
+    name: "删除字典"
+    description: "删除字典"
+    module: "dict"
+
+  - code: "system:dict:export"
+    name: "导出字典"
+    description: "导出字典数据"
+    module: "dict"
+
+  # 参数配置
+  - code: "system:config:list"
+    name: "参数列表"
+    description: "查看参数列表"
+    module: "config"
+
+  - code: "system:config:query"
+    name: "参数详情"
+    description: "查看参数详细信息"
+    module: "config"
+
+  - code: "system:config:add"
+    name: "新增参数"
+    description: "创建新参数"
+    module: "config"
+
+  - code: "system:config:edit"
+    name: "编辑参数"
+    description: "修改参数信息"
+    module: "config"
+
+  - code: "system:config:delete"
+    name: "删除参数"
+    description: "删除参数"
+    module: "config"
+
+  - code: "system:config:export"
+    name: "导出参数"
+    description: "导出参数数据"
+    module: "config"
+
+  # 文件管理
+  - code: "system:file:list"
+    name: "文件列表"
+    description: "查看文件列表"
+    module: "file"
+
+  - code: "system:file:upload"
+    name: "上传文件"
+    description: "上传文件"
+    module: "file"
+
+  - code: "system:file:download"
+    name: "下载文件"
+    description: "下载文件"
+    module: "file"
+
+  - code: "system:file:delete"
+    name: "删除文件"
+    description: "删除文件"
+    module: "file"
+
+  # 公告管理
+  - code: "system:notice:list"
+    name: "公告列表"
+    description: "查看公告列表"
+    module: "notice"
+
+  - code: "system:notice:query"
+    name: "公告详情"
+    description: "查看公告详细信息"
+    module: "notice"
+
+  - code: "system:notice:add"
+    name: "新增公告"
+    description: "创建新公告"
+    module: "notice"
+
+  - code: "system:notice:edit"
+    name: "编辑公告"
+    description: "修改公告信息"
+    module: "notice"
+
+  - code: "system:notice:delete"
+    name: "删除公告"
+    description: "删除公告"
+    module: "notice"
+
+  # 任务调度
+  - code: "system:job:list"
+    name: "任务列表"
+    description: "查看任务列表"
+    module: "job"
+
+  - code: "system:job:query"
+    name: "任务详情"
+    description: "查看任务详细信息"
+    module: "job"
+
+  - code: "system:job:add"
+    name: "新增任务"
+    description: "创建新任务"
+    module: "job"
+
+  - code: "system:job:edit"
+    name: "编辑任务"
+    description: "修改任务信息"
+    module: "job"
+
+  - code: "system:job:delete"
+    name: "删除任务"
+    description: "删除任务"
+    module: "job"
+
+  - code: "system:job:execute"
+    name: "执行任务"
+    description: "手动执行任务"
+    module: "job"
+
+  # 导入导出中心
+  - code: "system:importExport:import"
+    name: "导入数据"
+    description: "导入数据文件"
+    module: "importExport"
+    phase: 46
+
+  - code: "system:importExport:export"
+    name: "导出数据"
+    description: "导出数据文件"
+    module: "importExport"
+    phase: 46
+
+  - code: "system:importExport:query"
+    name: "任务详情"
+    description: "查看导入导出任务详情"
+    module: "importExport"
+    phase: 46
+
+  - code: "system:importExport:list"
+    name: "任务列表"
+    description: "查看导入导出任务列表"
+    module: "importExport"
+    phase: 46
+
+  # ��放 API 管理
+  - code: "system:openApi:app:add"
+    name: "新增应用"
+    description: "创建开放 API 应用"
+    module: "openApi"
+    phase: 47
+
+  - code: "system:openApi:app:edit"
+    name: "编辑应用"
+    description: "修改开放 API 应用"
+    module: "openApi"
+    phase: 47
+
+  - code: "system:openApi:app:delete"
+    name: "删除应用"
+    description: "删除开放 API 应用"
+    module: "openApi"
+    phase: 47
+
+  - code: "system:openApi:app:query"
+    name: "应用详情"
+    description: "查看开放 API 应用详情"
+    module: "openApi"
+    phase: 47
+
+  - code: "system:openApi:app:list"
+    name: "应用列表"
+    description: "查看开放 API 应用列表"
+    module: "openApi"
+    phase: 47
+
+  - code: "system:openApi:secret:add"
+    name: "新增密钥"
+    description: "创建应用密钥"
+    module: "openApi"
+    phase: 48
+
+  - code: "system:openApi:secret:edit"
+    name: "轮换密钥"
+    description: "轮换应用密钥"
+    module: "openApi"
+    phase: 48
+
+  - code: "system:openApi:secret:delete"
+    name: "删除密钥"
+    description: "删除应用密钥"
+    module: "openApi"
+    phase: 48
+
+  - code: "system:openApi:secret:list"
+    name: "密钥列表"
+    description: "查看应用密钥列表"
+    module: "openApi"
+    phase: 48
+
+  # Webhook 管理
+  - code: "system:webhook:add"
+    name: "新增 Webhook"
+    description: "创建 Webhook 配置"
+    module: "webhook"
+    phase: 49
+
+  - code: "system:webhook:edit"
+    name: "编辑 Webhook"
+    description: "修改 Webhook 配置"
+    module: "webhook"
+    phase: 49
+
+  - code: "system:webhook:delete"
+    name: "删除 Webhook"
+    description: "删除 Webhook 配置"
+    module: "webhook"
+    phase: 49
+
+  - code: "system:webhook:query"
+    name: "Webhook 详情"
+    description: "查看 Webhook 详情"
+    module: "webhook"
+    phase: 49
+
+  - code: "system:webhook:list"
+    name: "Webhook 列表"
+    description: "查看 Webhook 列表"
+    module: "webhook"
+    phase: 49
+
+  - code: "system:webhook:log:list"
+    name: "Webhook 日志"
+    description: "查看 Webhook 推送日志"
+    module: "webhook"
+    phase: 49
+
+  # 消息中台
+  - code: "system:message:template:add"
+    name: "新增模板"
+    description: "创建消息模板"
+    module: "message"
+    phase: 50
+
+  - code: "system:message:template:edit"
+    name: "编辑模板"
+    description: "修改消息模板"
+    module: "message"
+    phase: 50
+
+  - code: "system:message:template:delete"
+    name: "删除模板"
+    description: "删除消息模板"
+    module: "message"
+    phase: 50
+
+  - code: "system:message:template:query"
+    name: "模板详情"
+    description: "查看消息模板详情"
+    module: "message"
+    phase: 50
+
+  - code: "system:message:template:list"
+    name: "模板列表"
+    description: "查看消息模板列表"
+    module: "message"
+    phase: 50
+
+  - code: "system:message:send"
+    name: "发送消息"
+    description: "发送消息"
+    module: "message"
+    phase: 51
+
+  - code: "system:message:record:list"
+    name: "消息记录"
+    description: "查看消息发送记录"
+    module: "message"
+    phase: 51
+
+  - code: "system:message:inbox:list"
+    name: "站内信列表"
+    description: "查看站内信列表"
+    module: "message"
+    phase: 51
+
+  - code: "system:message:inbox:read"
+    name: "标记已读"
+    description: "标记站内信已读"
+    module: "message"
+    phase: 51
+
+  # 敏感数据加密
+  - code: "system:encrypt:key:add"
+    name: "新增密钥"
+    description: "创建加密密钥"
+    module: "encrypt"
+    phase: 52
+
+  - code: "system:encrypt:key:edit"
+    name: "轮换密钥"
+    description: "轮换加密密钥"
+    module: "encrypt"
+    phase: 52
+
+  - code: "system:encrypt:key:delete"
+    name: "删除密钥"
+    description: "删除加密密钥"
+    module: "encrypt"
+    phase: 52
+
+  - code: "system:encrypt:key:query"
+    name: "密钥详情"
+    description: "查看加密密钥详情"
+    module: "encrypt"
+    phase: 52
+
+  - code: "system:encrypt:key:list"
+    name: "密钥列表"
+    description: "查看加密密钥列表"
+    module: "encrypt"
+    phase: 52
+
+  # 流程引擎
+  - code: "system:workflow:definition:add"
+    name: "新增流程"
+    description: "创建流程定义"
+    module: "workflow"
+    phase: 53
+
+  - code: "system:workflow:definition:edit"
+    name: "编辑流程"
+    description: "修改流程定义"
+    module: "workflow"
+    phase: 53
+
+  - code: "system:workflow:definition:delete"
+    name: "删除流程"
+    description: "删除流程定义"
+    module: "workflow"
+    phase: 53
+
+  - code: "system:workflow:definition:list"
+    name: "流程列表"
+    description: "查看流程定义列表"
+    module: "workflow"
+    phase: 53
+
+  - code: "system:workflow:instance:add"
+    name: "启动流程"
+    description: "启动流程实例"
+    module: "workflow"
+    phase: 53
+
+  - code: "system:workflow:instance:query"
+    name: "流程详情"
+    description: "查看流程实例详情"
+    module: "workflow"
+    phase: 53
+
+  - code: "system:workflow:task:list"
+    name: "任务列表"
+    description: "查看待办任务列表"
+    module: "workflow"
+    phase: 53
+
+  - code: "system:workflow:task:approve"
+    name: "审批通过"
+    description: "审批通过任务"
+    module: "workflow"
+    phase: 53
+
+  - code: "system:workflow:task:reject"
+    name: "审批拒绝"
+    description: "审批拒绝任务"
+    module: "workflow"
+    phase: 53
+
+  # ==================== L0 横切基础设施 ====================
+
+  # 操作日志
+  - code: "system:operlog:list"
+    name: "操作日志列表"
+    description: "查看操作日志列表"
+    module: "log"
+
+  - code: "system:operlog:query"
+    name: "操作日志详情"
+    description: "查看操作日志详细信息"
+    module: "log"
+
+  - code: "system:operlog:delete"
+    name: "删除操作日志"
+    description: "删除操作日志"
+    module: "log"
+
+  - code: "system:operlog:export"
+    name: "导出操作日志"
+    description: "导出操作日志数据"
+    module: "log"
+
+  # 登录日志
+  - code: "system:loginlog:list"
+    name: "登录日志列表"
+    description: "查看登录日志列表"
+    module: "log"
+
+  - code: "system:loginlog:query"
+    name: "登录日志详情"
+    description: "查看登录日志详细信息"
+    module: "log"
+
+  - code: "system:loginlog:delete"
+    name: "删除登录日志"
+    description: "删除登录日志"
+    module: "log"
+
+  - code: "system:loginlog:export"
+    name: "导出登录日志"
+    description: "导出登录日志数据"
+    module: "log"
+
+  # 在线用户
+  - code: "system:online:list"
+    name: "在线用户列表"
+    description: "查看在线用户列表"
+    module: "online"
+
+  - code: "system:online:forceLogout"
+    name: "强制下线"
+    description: "强制用户下线"
+    module: "online"
+
+  # 数据脱敏
+  - code: "system:data:unmask"
+    name: "数据解脱敏"
+    description: "查看脱敏数据的原文"
+    module: "security"
+    phase: 39
+
+  # Outbox 运维
+  - code: "system:outbox:list"
+    name: "Outbox 事件列表"
+    description: "查看 Outbox 事件列表"
+    module: "outbox"
+    phase: 34
+
+  - code: "system:outbox:retry"
+    name: "重试 Outbox 事件"
+    description: "手动重试失败的 Outbox 事件"
+    module: "outbox"
+    phase: 34
+
+  # 监控
+  - code: "system:monitor:view"
+    name: "监控查看"
+    description: "查看系统监控信息"
+    module: "monitor"
+
+# 权限命名规范
+naming_rules:
+  standard_actions:
+    - list      # 列表查询
+    - query     # 详情查询
+    - add       # 新增
+    - edit      # 编辑
+    - delete    # 删除
+    - export    # 导出
+    - import    # 导入
+
+  deprecated_actions:
+    - view      # 已废弃,使用 list 或 query
+    - update    # 已废弃,使用 edit
+    - remove    # 已废弃,使用 delete
+
+  format: "{resource}:{action}"
+  examples:
+    - "system:user:list"
+    - "system:role:add"
+    - "tenant:brand:edit"

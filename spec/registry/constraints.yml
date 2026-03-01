@@ -1,0 +1,270 @@
+# Constraints Registry (SSOT)
+# 全局硬约束的唯一来源
+# 所有 Phase spec 必须符合这里的约束,违反必须先修改此文件或补充 ADR
+
+version: "1.0"
+last_updated: "2025-03-01"
+
+# ==================== 基础设施约束 ====================
+infrastructure:
+  # 数据库
+  database:
+    type: "PostgreSQL"
+    version: ">=14"
+    required: true
+    notes: "主数据库,所有业务数据存储"
+
+  # 缓存
+  cache:
+    # Redis (允许使用)
+    redis:
+      allowed: true
+      version: ">=7.0"
+      deployment: "Sentinel (1 主 2 从)"
+      use_cases:
+        - "L2 缓存 (与 Caffeine L1 配合)"
+        - "Pub/Sub 缓存失效广播"
+        - "Token 黑名单 (Redis Only)"
+        - "在线用户 (Redis Only)"
+        - "开放 API nonce 防重放 (Redis Only)"
+        - "限流计数器"
+      notes: "ADR-0001, ADR-0002"
+
+    # Caffeine (本地缓存)
+    caffeine:
+      allowed: true
+      use_cases:
+        - "L1 缓存 (与 Redis L2 配合)"
+        - "字典/配置 (短 TTL)"
+        - "静态数据/枚举 (长 TTL)"
+      notes: "ADR-0001"
+
+  # 消息队列
+  message_queue:
+    allowed: false
+    notes: "当前不使用 MQ,使用 Outbox Pattern + PostgreSQL NOTIFY 替代"
+    alternative: "Outbox 表 + 异步投递器 (ADR-0004, ADR-0005)"
+
+  # 对象存储
+  object_storage:
+    allowed: true
+    type: "MinIO / S3"
+    use_cases:
+      - "文件上传/下载"
+      - "附件存储"
+    notes: "Phase 14"
+
+# ==================== 缓存策略约束 ====================
+cache_strategy:
+  # 缓存分档
+  tiers:
+    # 第一档: Redis Only (强一致性)
+    redis_only:
+      description: "强一致性场景,不经过 Caffeine"
+      use_cases:
+        - "Token 黑名单"
+        - "在线用户"
+        - "开放 API nonce"
+        - "限流计数器"
+      ttl: "与业务对象生命周期对齐"
+      notes: "ADR-0002"
+
+    # 第二档: Caffeine L1 + Redis L2 + Pub/Sub (最终一致性)
+    caffeine_redis:
+      description: "短窗口最终一致性,兼顾性能和一致性"
+      use_cases:
+        - "权限缓存"
+        - "菜单缓存"
+        - "字典缓存"
+        - "配置缓存"
+        - "品牌配置"
+        - "域名映射"
+      l1_ttl: "60s"
+      l2_ttl: "300s"
+      consistency_window: "<10ms (Pub/Sub 延迟) + 60s (L1 TTL 兜底)"
+      notes: "ADR-0001"
+
+    # 第三档: Caffeine Only (本地一致性)
+    caffeine_only:
+      description: "静态数据,无需跨 Pod 一致性"
+      use_cases:
+        - "静态枚举"
+        - "不可变配置"
+      ttl: "300s"
+      notes: "ADR-0001"
+
+  # 缓存失效策略
+  invalidation:
+    method: "Redis Pub/Sub 广播"
+    channel: "cache:evict"
+    payload: "{cacheName}:{cacheKey}"
+    fallback: "Caffeine TTL 自然过期"
+    notes: "ADR-0001"
+
+# ==================== 可观测性约束 ====================
+observability:
+  # Loki 日志
+  loki:
+    labels_max_cardinality: 100
+    labels_whitelist: ["app", "env", "level", "namespace", "pod"]
+    labels_blacklist: ["tenantId", "userId", "traceId", "requestId", "ip", "uri"]
+    notes: "ADR-0003, spec/registry/observability.yml"
+
+  # Prometheus 指标
+  prometheus:
+    labels_max_cardinality: 1000
+    labels_whitelist: ["app", "env", "method", "status", "routeTemplate"]
+    labels_blacklist: ["tenant_id", "user_id", "trace_id", "uri", "ip"]
+    tenant_metrics_strategy: "Loki 日志聚合 + PostgreSQL 落库统计"
+    notes: "ADR-0003, spec/registry/observability.yml"
+
+  # OpenTelemetry 追踪
+  opentelemetry:
+    enabled: false
+    notes: "Phase 55 (P2) 引入"
+
+# ==================== 事件驱动约束 ====================
+event_driven:
+  # 内存事件
+  application_event:
+    allowed: true
+    use_cases:
+      - "同步事件处理"
+      - "事务内事件"
+    notes: "Spring ApplicationEventPublisher"
+
+  # Outbox 事件
+  outbox:
+    required: true
+    use_cases:
+      - "写库 + 外部动作 (消息/Webhook/缓存失效)"
+      - "事件最终一致性"
+    table: "sys_outbox_event"
+    delivery: "NOTIFY 触发 + 轮询兜底"
+    notes: "ADR-0004, ADR-0005, Phase 34"
+
+# ==================== 安全约束 ====================
+security:
+  # 认证
+  authentication:
+    jwt:
+      algorithm: "RS256"
+      access_token_ttl: "2h"
+      refresh_token_ttl: "7d"
+      notes: "Phase 8"
+
+    hmac:
+      algorithm: "HMAC-SHA256"
+      timestamp_window: "±5min"
+      nonce_ttl: "10min"
+      notes: "ADR-0006, Phase 47-48"
+
+  # 数据脱敏
+  data_masking:
+    method: "Jackson 序列化层"
+    unmask_permission: "system:data:unmask"
+    mask_types: ["PHONE", "ID_CARD", "BANK_CARD", "EMAIL", "NAME", "ADDRESS"]
+    notes: "ADR-0010, Phase 39"
+
+  # 敏感数据加密
+  data_encryption:
+    method: "AES-256-GCM"
+    key_management: "配置中心 / KMS"
+    notes: "Phase 52 (P1)"
+
+# ==================== 数据库约束 ====================
+database:
+  # 审计字段 (7 个必须字段)
+  audit_fields:
+    required: true
+    fields:
+      - tenant_id      # 租户 ID
+      - created_by     # 创建人
+      - created_time   # 创建时间
+      - updated_by     # 更新人
+      - updated_time   # 更新时间
+      - deleted        # 逻辑删除
+      - version        # 乐观锁
+    notes: "spec/01-constraints.md"
+
+  # Flyway 迁移
+  flyway:
+    version_format: "VNNN__description.sql"
+    ddl_dml_separation: true
+    no_if_not_exists: true
+    seed_data_separate: true
+    notes: "spec/registry/migrations.yml"
+
+  # 索引策略
+  indexes:
+    partial_index: "优先使用 partial index (WHERE deleted = FALSE)"
+    unique_index: "租户级唯一索引必须包含 tenant_id"
+    notes: "spec/01-constraints.md"
+
+# ==================== 开放平台约束 ====================
+open_platform:
+  # 认证
+  authentication:
+    method: "HMAC + timestamp + nonce"
+    signature_algorithm: "HMAC-SHA256"
+    timestamp_window: "±5min"
+    nonce_storage: "Redis SETNX"
+    nonce_ttl: "10min"
+    notes: "ADR-0006, Phase 47-48"
+
+  # 租户绑定
+  tenant_binding:
+    method: "open_app.tenant_id 强绑定"
+    ignore_client_header: true
+    notes: "ADR-0007, Phase 47-48"
+
+  # 限流
+  rate_limiting:
+    levels: ["全局", "租户", "应用"]
+    storage: "Redis"
+    algorithm: "Token Bucket / Sliding Window"
+    notes: "Phase 47-48"
+
+# ==================== 工作流约束 ====================
+workflow:
+  # 可见性模型
+  visibility:
+    model: "6 级可见性"
+    levels:
+      - "发起人"
+      - "当前办理人"
+      - "历史办理人"
+      - "抄送人"
+      - "流程管理员"
+      - "部门范围管理员 (可选)"
+    notes: "ADR-0008, Phase 53"
+
+  # 部门负责人
+  dept_leader:
+    primary_field: "leader_user_id"
+    multi_leader_table: "sys_dept_leader (可选)"
+    notes: "ADR-0009, Phase 40"
+
+# ==================== 相关 ADR ====================
+related_adrs:
+  - "ADR-0001: 多级缓存 (Caffeine L1 + Redis L2 + Pub/Sub)"
+  - "ADR-0002: Token 黑名单与在线用户采用 Redis Only"
+  - "ADR-0003: Prometheus 低基数,租户维度用日志/落库"
+  - "ADR-0004: Outbox Pattern"
+  - "ADR-0005: Outbox 投递采用 NOTIFY 触发 + 轮询兜底"
+  - "ADR-0006: HMAC + timestamp + nonce + 密钥轮换"
+  - "ADR-0007: 开放 API 的 tenantId 绑定 open_app"
+  - "ADR-0008: 工作流 6 级可见性"
+  - "ADR-0009: 部门负责人 leader_user_id"
+  - "ADR-0010: 脱敏在序列化层"
+
+# ==================== 变更历史 ====================
+changelog:
+  - version: "1.0"
+    date: "2025-03-01"
+    changes:
+      - "初始版本"
+      - "明确允许 Redis (L2 缓存 + Pub/Sub + 黑名单 + nonce + 限流)"
+      - "明确不使用 MQ,使用 Outbox Pattern 替代"
+      - "明确 Loki/Prometheus label 白名单和黑名单"
+      - "明确缓存三档策略"
