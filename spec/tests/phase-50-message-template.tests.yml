@@ -14,7 +14,7 @@ tests:
     scenario: "无 Token 访问消息模板 → 401"
     request:
       method: GET
-      path: /api/v1/message/templates
+      path: /api/v1/messages/templates
       auth: none
     expect:
       status: 401
@@ -25,7 +25,7 @@ tests:
     scenario: "无权限 Token 创建模板 → 403"
     request:
       method: POST
-      path: /api/v1/message/templates
+      path: /api/v1/messages/templates
       auth: token_without_permission
     expect:
       status: 403
@@ -38,8 +38,8 @@ tests:
     scenario: "创建消息模板"
     request:
       method: POST
-      path: /api/v1/message/templates
-      auth: token_with_system:message:create
+      path: /api/v1/messages/templates
+      auth: token_with_system:message:template:add
       body:
         templateName: "欢迎消息"
         templateCode: "WELCOME"
@@ -57,8 +57,8 @@ tests:
     scenario: "查询模板列表"
     request:
       method: GET
-      path: /api/v1/message/templates
-      auth: token_with_system:message:list
+      path: /api/v1/messages/templates
+      auth: token_with_system:message:template:list
     expect:
       status: 200
       body:
@@ -71,8 +71,8 @@ tests:
     scenario: "查询模板详情"
     request:
       method: GET
-      path: /api/v1/message/templates/{templateId}
-      auth: token_with_system:message:detail
+      path: /api/v1/messages/templates/{templateId}
+      auth: token_with_system:message:template:query
     expect:
       status: 200
       body:
@@ -85,8 +85,8 @@ tests:
     scenario: "更新模板内容"
     request:
       method: PUT
-      path: /api/v1/message/templates/{templateId}
-      auth: token_with_system:message:update
+      path: /api/v1/messages/templates/{templateId}
+      auth: token_with_system:message:template:edit
       body:
         templateContent: "欢迎 {{userName}}，您的账号已激活"
     expect:
@@ -98,53 +98,47 @@ tests:
     scenario: "删除模板（软删除）"
     request:
       method: DELETE
-      path: /api/v1/message/templates/{templateId}
-      auth: token_with_system:message:delete
+      path: /api/v1/messages/templates/{templateId}
+      auth: token_with_system:message:template:delete
     expect:
       status: 200
       db_assert: "SELECT deleted FROM msg_template WHERE id={templateId} → TRUE"
 
-  # ─── P0：变量替换 ──────────────────────────────────────────────
+  # ─── P0：变量替换（业务规则验证）────────────────────────────────
   - id: TC-50-08
     priority: P0
     category: template
     ac: AC-02
-    scenario: "模板变量替换"
-    setup:
-      - create_template_with_variables
+    scenario: "模板内容包含 {{variable_name}} 格式变量，查询模板详情时验证 content 字段含变量占位符"
     request:
-      method: POST
-      path: /api/v1/message/templates/{templateId}/render
-      auth: token_with_system:message:render
-      body:
-        variables:
-          userName: "张三"
-          orderNo: "ORD123"
+      method: GET
+      path: /api/v1/messages/templates/{templateId}
+      auth: token_with_system:message:template:query
     expect:
       status: 200
       body:
         data:
-          content: "欢迎 张三，您的订单 ORD123 已创建"
+          templateContent: "欢迎 {{userName}}，您的订单 {{orderNo}} 已创建"
 
   - id: TC-50-09
     priority: P0
     category: template
     ac: AC-03
-    scenario: "缺少必需变量 → 400"
-    setup:
-      - create_template_with_required_variables
+    scenario: "创建模板时 templateContent 不能为空 → 400"
     request:
       method: POST
-      path: /api/v1/message/templates/{templateId}/render
-      auth: token_with_system:message:render
+      path: /api/v1/messages/templates
+      auth: token_with_system:message:template:add
       body:
-        variables:
-          userName: "张三"
+        templateName: "无内容模板"
+        templateCode: "EMPTY"
+        templateContent: ""
+        templateType: "INBOX"
     expect:
       status: 400
       body:
         code: 400001
-        message: "缺少必需变量: orderNo"
+        message: "模板内容不能为空"
 
   # ─── P0：业务规则 ──────────────────────────────────────────────
   - id: TC-50-10
@@ -156,8 +150,8 @@ tests:
       - create_template_with_code_WELCOME
     request:
       method: POST
-      path: /api/v1/message/templates
-      auth: token_with_system:message:create
+      path: /api/v1/messages/templates
+      auth: token_with_system:message:template:add
       body:
         templateName: "欢迎消息2"
         templateCode: "WELCOME"
@@ -177,7 +171,7 @@ tests:
       - create_template_for_tenant_B
     request:
       method: GET
-      path: /api/v1/message/templates
+      path: /api/v1/messages/templates
       auth: token_tenant_A
     expect:
       status: 200

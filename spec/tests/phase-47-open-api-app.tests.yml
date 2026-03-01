@@ -39,7 +39,7 @@ tests:
     request:
       method: POST
       path: /api/v1/open-api/apps
-      auth: token_with_system:openapi:create
+      auth: token_with_system:openApi:app:add
       body:
         appName: "测试应用"
         appCode: "TEST_APP"
@@ -57,7 +57,7 @@ tests:
     request:
       method: GET
       path: /api/v1/open-api/apps
-      auth: token_with_system:openapi:list
+      auth: token_with_system:openApi:app:list
     expect:
       status: 200
       body:
@@ -71,7 +71,7 @@ tests:
     request:
       method: GET
       path: /api/v1/open-api/apps/{appId}
-      auth: token_with_system:openapi:detail
+      auth: token_with_system:openApi:app:query
     expect:
       status: 200
       body:
@@ -85,7 +85,7 @@ tests:
     request:
       method: PUT
       path: /api/v1/open-api/apps/{appId}
-      auth: token_with_system:openapi:update
+      auth: token_with_system:openApi:app:edit
       body:
         appName: "测试应用（更新）"
     expect:
@@ -98,7 +98,7 @@ tests:
     request:
       method: DELETE
       path: /api/v1/open-api/apps/{appId}
-      auth: token_with_system:openapi:delete
+      auth: token_with_system:openApi:app:delete
     expect:
       status: 200
       db_assert: "SELECT deleted FROM open_api_app WHERE id={appId} → TRUE"
@@ -114,7 +114,7 @@ tests:
     request:
       method: POST
       path: /api/v1/open-api/apps
-      auth: token_with_system:openapi:create
+      auth: token_with_system:openApi:app:add
       body:
         appName: "测试应用2"
         appCode: "TEST_APP"
@@ -132,7 +132,7 @@ tests:
     request:
       method: POST
       path: /api/v1/open-api/apps
-      auth: token_with_system:openapi:create
+      auth: token_with_system:openApi:app:add
       body:
         appName: "测试应用"
         appCode: "TEST_APP"
@@ -153,7 +153,7 @@ tests:
     request:
       method: POST
       path: /api/v1/open-api/apps/{appId}/reset-secret
-      auth: token_with_system:openapi:update
+      auth: token_with_system:openApi:app:edit
     expect:
       status: 200
       body:

@@ -1,8 +1,9 @@
-# Phase 53 — Workflow Visibility 测试契约
+# Phase 53 — 流程引擎（简化版）测试契约
 # 关联 Spec：spec/phase/phase-53.md
+# API 前缀：/api/v1/workflows
 
 phase: 53
-module: "workflow-visibility"
+module: "workflow-engine"
 ac_ref: "spec/phase/phase-53.md"
 
 tests:
@@ -11,10 +12,10 @@ tests:
   - id: TC-53-01
     priority: P0
     category: security
-    scenario: "无 Token 访问工作流可见性 → 401"
+    scenario: "无 Token 访问流程定义列表 → 401"
     request:
       method: GET
-      path: /api/v1/workflows/{workflowId}/visibility
+      path: /api/v1/workflows/definitions
       auth: none
     expect:
       status: 401
@@ -22,203 +23,268 @@ tests:
   - id: TC-53-02
     priority: P0
     category: security
-    scenario: "无权限 Token 设置可见性 → 403"
+    scenario: "无权限 Token 创建流程定义 → 403"
     request:
-      method: PUT
-      path: /api/v1/workflows/{workflowId}/visibility
+      method: POST
+      path: /api/v1/workflows/definitions
       auth: token_without_permission
     expect:
       status: 403
 
-  # ─── P0：可见性配置 ────────────────────────────────────────────
+  # ─── P0：流程定义 CRUD ─────────────────────────────────────────
   - id: TC-53-03
     priority: P0
-    category: visibility
-    ac: AC-01
-    scenario: "设置工作流对所有人可见"
+    category: definition
+    ac: AC-02
+    scenario: "创建流程定义，初始状态为 DRAFT"
     request:
-      method: PUT
-      path: /api/v1/workflows/{workflowId}/visibility
-      auth: token_with_system:workflow:update
+      method: POST
+      path: /api/v1/workflows/definitions
+      auth: token_with_system:workflow:definition:add
       body:
-        visibilityType: "ALL"
+        flowKey: "leave_approval"
+        flowName: "请假审批"
+        flowConfig: "{\"nodes\":[],\"edges\":[]}"
     expect:
       status: 200
-      db_assert: "SELECT visibility_type FROM workflow_definition WHERE id={workflowId} → ALL"
+      body:
+        code: 200
+        data: "{definitionId}"
+      db_assert: "SELECT status FROM wf_definition WHERE id={definitionId} → DRAFT"
 
   - id: TC-53-04
     priority: P0
-    category: visibility
-    ac: AC-01
-    scenario: "设置工作流对指定角色可见"
+    category: definition
+    ac: AC-02
+    scenario: "查询流程定义列表"
     request:
-      method: PUT
-      path: /api/v1/workflows/{workflowId}/visibility
-      auth: token_with_system:workflow:update
-      body:
-        visibilityType: "ROLE"
-        roleIds: [1, 2, 3]
+      method: GET
+      path: /api/v1/workflows/definitions
+      auth: token_with_system:workflow:definition:list
     expect:
       status: 200
-      db_assert: "SELECT COUNT(*) FROM workflow_role WHERE workflow_id={workflowId} → 3"
+      body:
+        code: 200
+        data:
+          list: "[流程定义列表]"
 
   - id: TC-53-05
     priority: P0
-    category: visibility
-    ac: AC-01
-    scenario: "设置工作流对指定部门可见"
+    category: definition
+    ac: AC-02
+    scenario: "更新流程定义配置"
     request:
       method: PUT
-      path: /api/v1/workflows/{workflowId}/visibility
-      auth: token_with_system:workflow:update
+      path: /api/v1/workflows/definitions/{definitionId}
+      auth: token_with_system:workflow:definition:edit
       body:
-        visibilityType: "DEPT"
-        deptIds: [10, 20]
+        flowName: "请假审批（修订版）"
+        flowConfig: "{\"nodes\":[{\"id\":\"start\"}],\"edges\":[]}"
     expect:
       status: 200
-      db_assert: "SELECT COUNT(*) FROM workflow_dept WHERE workflow_id={workflowId} → 2"
+      body:
+        code: 200
 
   - id: TC-53-06
     priority: P0
-    category: visibility
-    ac: AC-01
-    scenario: "设置工作流对指定用户可见"
+    category: definition
+    scenario: "删除流程定义（软删除）"
     request:
-      method: PUT
-      path: /api/v1/workflows/{workflowId}/visibility
-      auth: token_with_system:workflow:update
-      body:
-        visibilityType: "USER"
-        userIds: [1001, 1002]
+      method: DELETE
+      path: /api/v1/workflows/definitions/{definitionId}
+      auth: token_with_system:workflow:definition:delete
     expect:
       status: 200
-      db_assert: "SELECT COUNT(*) FROM workflow_user WHERE workflow_id={workflowId} → 2"
+      body:
+        code: 200
+      db_assert: "SELECT deleted FROM wf_definition WHERE id={definitionId} → TRUE"
 
-  # ─── P0：可见性过滤 ────────────────────────────────────────────
+  # ─── P0：流程实例 ──────────────────────────────────────────────
   - id: TC-53-07
     priority: P0
-    category: visibility
-    ac: AC-02
-    scenario: "用户仅查看可见的工作流"
+    category: instance
+    ac: AC-03
+    scenario: "启动流程实例：创建 wf_instance（RUNNING）+ 首个 wf_task（PENDING）"
     setup:
-      - create_workflow_visible_to_role_A
-      - create_workflow_visible_to_role_B
-      - create_user_with_role_A
+      - publish_workflow_definition
     request:
-      method: GET
-      path: /api/v1/workflows
-      auth: token_user_role_A
+      method: POST
+      path: /api/v1/workflows/instances
+      auth: token_with_system:workflow:instance:add
+      body:
+        definitionId: "{definitionId}"
+        businessKey: "LEAVE20260301"
+        businessType: "LEAVE"
     expect:
       status: 200
       body:
-        data:
-          list: "[仅包含对角色 A 可见的工作流]"
+        code: 200
+        data: "{instanceId}"
+      db_assert: "SELECT status FROM wf_instance WHERE id={instanceId} → RUNNING；SELECT status FROM wf_task WHERE instance_id={instanceId} → PENDING"
 
   - id: TC-53-08
     priority: P0
-    category: visibility
+    category: instance
     ac: AC-03
-    scenario: "用户无法启动不可见的工作流"
-    setup:
-      - create_workflow_visible_to_role_A
-      - create_user_with_role_B
-    request:
-      method: POST
-      path: /api/v1/workflows/{workflowId}/start
-      auth: token_user_role_B
-    expect:
-      status: 403
-      body:
-        code: 403002
-        message: "无权访问该工作流"
-
-  # ─── P0：业务规则 ──────────────────────────────────────────────
-  - id: TC-53-09
-    priority: P0
-    category: business
-    ac: AC-04
-    scenario: "ALL 类型工作流对所有用户可见"
-    setup:
-      - create_workflow_with_visibility_ALL
-      - create_any_user
+    scenario: "查询流程实例详情"
     request:
       method: GET
-      path: /api/v1/workflows
-      auth: token_any_user
+      path: /api/v1/workflows/instances/{instanceId}
+      auth: token_with_system:workflow:instance:query
     expect:
       status: 200
       body:
+        code: 200
         data:
-          list: "[包含 ALL 类型工作流]"
+          businessKey: "LEAVE20260301"
+          status: "RUNNING"
+
+  # ─── P0：任务管理 ──────────────────────────────────────────────
+  - id: TC-53-09
+    priority: P0
+    category: task
+    ac: AC-04
+    scenario: "查询我的待办任务（仅返回 assignee_id=当前用户 且 status=PENDING 的任务）"
+    request:
+      method: GET
+      path: /api/v1/workflows/tasks/my
+      auth: token_with_system:workflow:task:list
+    expect:
+      status: 200
+      body:
+        code: 200
+        data:
+          list: "[当前用户的待办任务]"
 
   - id: TC-53-10
     priority: P0
-    category: business
-    ac: AC-05
-    scenario: "超管可以查看所有工作流"
+    category: task
+    ac: AC-04
+    scenario: "审批通过：wf_task 状态变为 APPROVED，写 wf_history"
     setup:
-      - create_workflow_with_restricted_visibility
+      - create_pending_task
     request:
-      method: GET
-      path: /api/v1/workflows
-      auth: token_super_admin
+      method: POST
+      path: /api/v1/workflows/tasks/{taskId}/approve
+      auth: token_with_system:workflow:task:approve
+      body:
+        comment: "同意，理由充分"
     expect:
       status: 200
       body:
-        data:
-          list: "[包含所有工作流]"
+        code: 200
+      db_assert: "SELECT status FROM wf_task WHERE id={taskId} → APPROVED；SELECT action FROM wf_history WHERE task_id={taskId} → APPROVE"
 
-  # ─── P0：租户隔离 ───────────────────────────────────────────────
   - id: TC-53-11
     priority: P0
-    category: tenant_isolation
-    scenario: "可见性配置不跨租户"
+    category: task
+    ac: AC-04
+    scenario: "审批拒绝：wf_task 状态变为 REJECTED，wf_instance 状态变为 REJECTED"
     setup:
-      - create_workflow_for_tenant_A_visible_to_role_X
-      - create_user_for_tenant_B_with_role_X
+      - create_pending_task
+    request:
+      method: POST
+      path: /api/v1/workflows/tasks/{taskId}/reject
+      auth: token_with_system:workflow:task:reject
+      body:
+        comment: "理由不充分，拒绝"
+    expect:
+      status: 200
+      body:
+        code: 200
+      db_assert: "SELECT status FROM wf_task WHERE id={taskId} → REJECTED；SELECT status FROM wf_instance WHERE id={instanceId} → REJECTED"
+
+  # ─── P0：业务规则 ──────────────────────────────────────────────
+  - id: TC-53-12
+    priority: P0
+    category: business
+    ac: AC-05
+    scenario: "所有任务审批通过后，wf_instance 状态变为 COMPLETED，记录 end_time"
+    setup:
+      - create_running_instance_with_last_task
+    request:
+      method: POST
+      path: /api/v1/workflows/tasks/{taskId}/approve
+      auth: token_with_system:workflow:task:approve
+      body:
+        comment: "最后一个任务审批通过"
+    expect:
+      status: 200
+      db_assert: "SELECT status, end_time FROM wf_instance WHERE id={instanceId} → COMPLETED, NOT NULL"
+
+  - id: TC-53-13
+    priority: P0
+    category: business
+    ac: AC-05
+    scenario: "每次操作记录到 wf_history，保留完整审计轨迹"
+    expect:
+      note: "启动实例、审批、拒绝操作后，wf_history 均有对应记录（START/APPROVE/REJECT）"
+
+  # ─── P0：租户隔离 ───────────────────────────────────────────────
+  - id: TC-53-14
+    priority: P0
+    category: tenant_isolation
+    scenario: "租户 A 查不到租户 B 的流程定义"
+    setup:
+      - create_definition_for_tenant_A
+      - create_definition_for_tenant_B
     request:
       method: GET
-      path: /api/v1/workflows
-      auth: token_tenant_B_user
+      path: /api/v1/workflows/definitions
+      auth: token_tenant_A
     expect:
       status: 200
       body:
         data:
-          list: "[不包含租户 A 的工作流]"
+          list: "[仅包含租户 A 的流程定义]"
+
+  # ─── P1：uk_flow_key_version 唯一约束 ────────────────────────
+  - id: TC-53-15
+    priority: P1
+    category: business
+    ac: AC-02
+    scenario: "相同 flow_key + flow_version 组合不可重复创建"
+    setup:
+      - create_definition_key_leave_approval_v1
+    request:
+      method: POST
+      path: /api/v1/workflows/definitions
+      auth: token_with_system:workflow:definition:add
+      body:
+        flowKey: "leave_approval"
+        flowName: "请假审批副本"
+        flowConfig: "{}"
+    expect:
+      status: 400
+      body:
+        code: 400002
+        message: "流程标识和版本号已存在"
 
   # ─── P1：数据库结构验证 ─────────────────────────────────────────
-  - id: TC-53-12
+  - id: TC-53-16
     priority: P1
     category: db_schema
-    ac: AC-06
-    scenario: "workflow_role 表包含 7 列审计字段"
+    ac: AC-01
+    scenario: "wf_definition 表包含 7 列审计字段，无 IF NOT EXISTS"
     expect:
-      db_assert: "workflow_role 表包含 tenant_id, created_by, created_time, updated_by, updated_time, deleted, version"
+      db_assert: "wf_definition 表包含 tenant_id, created_by, created_time, updated_by, updated_time, deleted, version"
 
-  - id: TC-53-13
+  - id: TC-53-17
     priority: P1
     category: db_schema
-    ac: AC-06
-    scenario: "workflow_dept 表包含 7 列审计字段"
+    ac: AC-01
+    scenario: "wf_instance、wf_task、wf_history 表均包含 7 列审计字段"
     expect:
-      db_assert: "workflow_dept 表包含 tenant_id, created_by, created_time, updated_by, updated_time, deleted, version"
-
-  - id: TC-53-14
-    priority: P1
-    category: db_schema
-    ac: AC-06
-    scenario: "workflow_user 表包含 7 列审计字段"
-    expect:
-      db_assert: "workflow_user 表包含 tenant_id, created_by, created_time, updated_by, updated_time, deleted, version"
+      db_assert: "wf_instance、wf_task、wf_history 表均包含 tenant_id, created_by, created_time, updated_by, updated_time, deleted, version"
 
 # ─── AC → TC 映射 ──────────────────────────────────────────────────
 ac_tc_map:
-  AC-01: [TC-53-03, TC-53-04, TC-53-05, TC-53-06]
-  AC-02: [TC-53-07]
-  AC-03: [TC-53-08]
-  AC-04: [TC-53-09]
-  AC-05: [TC-53-10]
-  AC-06: [TC-53-12, TC-53-13, TC-53-14]
+  AC-01: [TC-53-16, TC-53-17]
+  AC-02: [TC-53-03, TC-53-04, TC-53-05, TC-53-06, TC-53-15]
+  AC-03: [TC-53-07, TC-53-08]
+  AC-04: [TC-53-09, TC-53-10, TC-53-11]
+  AC-05: [TC-53-12, TC-53-13]
+  AC-06: []  # 前端页面展示由手工验收
   AC-07: []  # 编译检查由 Gate R01 覆盖
 
 # ─── Gate R09 配置 ─────────────────────────────────────────────────
@@ -226,5 +292,5 @@ gate_r09:
   p0_required: true
   p1_coverage_target: 0.7
   p2_skip: true
-  test_class: "WorkflowVisibilityControllerTest"
-  note: "本 Phase 包含可见性配置、过滤、超管权限、租户隔离测试"
+  test_class: "WorkflowControllerTest"
+  note: "本 Phase 包含流程定义 CRUD、实例启动、任务审批/拒绝、历史记录、租户隔离测试"

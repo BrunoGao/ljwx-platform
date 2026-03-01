@@ -1,8 +1,9 @@
-# Phase 51 — Message Send 测试契约
+# Phase 51 — 消息中台 - 消息记录 测试契约
 # 关联 Spec：spec/phase/phase-51.md
+# API 前缀：/api/v1/messages
 
 phase: 51
-module: "message-send"
+module: "message-records"
 ac_ref: "spec/phase/phase-51.md"
 
 tests:
@@ -14,7 +15,7 @@ tests:
     scenario: "无 Token 发送消息 → 401"
     request:
       method: POST
-      path: /api/v1/message/send
+      path: /api/v1/messages/send
       auth: none
     expect:
       status: 401
@@ -25,7 +26,7 @@ tests:
     scenario: "无权限 Token 发送消息 → 403"
     request:
       method: POST
-      path: /api/v1/message/send
+      path: /api/v1/messages/send
       auth: token_without_permission
     expect:
       status: 403
@@ -33,201 +34,230 @@ tests:
   # ─── P0：消息发送 ──────────────────────────────────────────────
   - id: TC-51-03
     priority: P0
-    category: message
-    ac: AC-01
-    scenario: "发送站内信"
+    category: send
+    ac: AC-02
+    scenario: "发送站内信：msg_user_inbox 写入记录，send_status=SUCCESS"
     request:
       method: POST
-      path: /api/v1/message/send
+      path: /api/v1/messages/send
       auth: token_with_system:message:send
       body:
-        messageType: "SYSTEM"
-        templateCode: "WELCOME"
-        receivers: [1001, 1002]
-        variables:
-          userName: "张三"
+        templateId: 1
+        messageType: "INBOX"
+        receiverId: 1001
+        subject: "系统通知"
+        content: "欢迎使用本系统"
     expect:
       status: 200
       body:
         code: 200
-        data: "{messageId}"
+        data: "{msgRecordId}"
+      db_assert: "SELECT is_read FROM msg_user_inbox WHERE user_id=1001 AND message_id={msgRecordId} → FALSE"
 
   - id: TC-51-04
     priority: P0
-    category: message
-    ac: AC-02
-    scenario: "发送邮件"
+    category: send
+    ac: AC-03
+    scenario: "发送邮件：msg_record 状态最终为 SUCCESS 或 FAILURE"
     request:
       method: POST
-      path: /api/v1/message/send
+      path: /api/v1/messages/send
       auth: token_with_system:message:send
       body:
+        templateId: 2
         messageType: "EMAIL"
-        templateCode: "ORDER_CONFIRM"
-        receivers: ["user@example.com"]
-        variables:
-          orderNo: "ORD123"
+        receiverId: 1001
+        receiverAddress: "user@example.com"
+        subject: "邮件测试"
+        content: "测试邮件内容"
     expect:
       status: 200
       body:
         code: 200
+        data: "{msgRecordId}"
 
   - id: TC-51-05
     priority: P0
-    category: message
-    ac: AC-03
-    scenario: "发送短信"
+    category: send
+    ac: AC-04
+    scenario: "发送短信：msg_record 记录含 receiver_address=手机号"
     request:
       method: POST
-      path: /api/v1/message/send
+      path: /api/v1/messages/send
       auth: token_with_system:message:send
       body:
+        templateId: 3
         messageType: "SMS"
-        templateCode: "VERIFY_CODE"
-        receivers: ["13800138000"]
-        variables:
-          code: "123456"
+        receiverId: 1001
+        receiverAddress: "13800138000"
+        subject: "短信验证码"
+        content: "您的验证码是 123456"
     expect:
       status: 200
       body:
         code: 200
+        data: "{msgRecordId}"
 
-  # ─── P0：批量发送 ──────────────────────────────────────────────
+  # ─── P0：消息记录查询 ──────────────────────────────────────────
   - id: TC-51-06
     priority: P0
-    category: message
-    ac: AC-04
-    scenario: "批量发送消息"
+    category: record
+    ac: AC-05
+    scenario: "分页查询消息记录列表"
     request:
-      method: POST
-      path: /api/v1/message/send/batch
-      auth: token_with_system:message:send
-      body:
-        messageType: "SYSTEM"
-        templateCode: "ANNOUNCEMENT"
-        receivers: [1001, 1002, 1003, 1004, 1005]
-        variables:
-          title: "系统维护通知"
+      method: GET
+      path: /api/v1/messages/records
+      auth: token_with_system:message:record:list
     expect:
       status: 200
       body:
         code: 200
         data:
-          successCount: 5
+          list: "[消息记录列表]"
 
-  # ─── P0：业务规则 ──────────────────────────────────────────────
   - id: TC-51-07
     priority: P0
-    category: validation
+    category: record
     ac: AC-05
-    scenario: "接收者不能为空"
+    scenario: "查询消息记录详情"
     request:
-      method: POST
-      path: /api/v1/message/send
-      auth: token_with_system:message:send
-      body:
-        messageType: "SYSTEM"
-        templateCode: "WELCOME"
-        receivers: []
-    expect:
-      status: 400
-      body:
-        code: 400001
-        message: "接收者不能为空"
-
-  - id: TC-51-08
-    priority: P0
-    category: validation
-    ac: AC-06
-    scenario: "模板不存在 → 400"
-    request:
-      method: POST
-      path: /api/v1/message/send
-      auth: token_with_system:message:send
-      body:
-        messageType: "SYSTEM"
-        templateCode: "NON_EXISTENT"
-        receivers: [1001]
-    expect:
-      status: 400
-      body:
-        code: 400002
-        message: "模板不存在"
-
-  # ─── P0：异步发送 ──────────────────────────────────────────────
-  - id: TC-51-09
-    priority: P0
-    category: message
-    ac: AC-07
-    scenario: "异步发送消息"
-    request:
-      method: POST
-      path: /api/v1/message/send/async
-      auth: token_with_system:message:send
-      body:
-        messageType: "EMAIL"
-        templateCode: "REPORT"
-        receivers: ["user@example.com"]
+      method: GET
+      path: /api/v1/messages/records/{msgRecordId}
+      auth: token_with_system:message:record:query
     expect:
       status: 200
       body:
         code: 200
         data:
-          taskId: "{异步任务 ID}"
+          messageType: "INBOX"
+          sendStatus: "{PENDING|SUCCESS|FAILURE}"
 
-  # ─── P0：租户隔离 ───────────────────────────────────────────────
+  # ─── P0：用户收件箱 ────────────────────────────────────────────
+  - id: TC-51-08
+    priority: P0
+    category: inbox
+    ac: AC-06
+    scenario: "查询用户收件箱，仅返回当前用户的消息，按创建时间倒序"
+    request:
+      method: GET
+      path: /api/v1/messages/inbox
+      auth: token_with_system:message:inbox:list
+    expect:
+      status: 200
+      body:
+        code: 200
+        data:
+          list: "[当前用户的收件箱消息]"
+
+  - id: TC-51-09
+    priority: P0
+    category: inbox
+    ac: AC-07
+    scenario: "标记收件箱消息已读：is_read=true，read_time=NOW()"
+    setup:
+      - create_inbox_message
+    request:
+      method: PUT
+      path: /api/v1/messages/inbox/{inboxId}/read
+      auth: token_with_system:message:inbox:read
+    expect:
+      status: 200
+      body:
+        code: 200
+      db_assert: "SELECT is_read FROM msg_user_inbox WHERE id={inboxId} → TRUE"
+
   - id: TC-51-10
     priority: P0
-    category: tenant_isolation
-    scenario: "租户 A 无法向租户 B 的用户发送消息"
+    category: inbox
+    ac: AC-08
+    scenario: "删除收件箱消息（软删除），不影响 msg_record"
     setup:
-      - create_user_for_tenant_B
+      - create_inbox_message
+    request:
+      method: DELETE
+      path: /api/v1/messages/inbox/{inboxId}
+      auth: token_with_system:message:inbox:delete
+    expect:
+      status: 200
+      body:
+        code: 200
+      db_assert: "SELECT deleted FROM msg_user_inbox WHERE id={inboxId} → TRUE；msg_record 记录未受影响"
+
+  # ─── P0：业务规则 ──────────────────────────────────────────────
+  - id: TC-51-11
+    priority: P0
+    category: business
+    ac: AC-09
+    scenario: "发送失败自动重试 3 次，仍失败后 send_status=FAILURE"
+    setup:
+      - mock_email_service_failure
     request:
       method: POST
-      path: /api/v1/message/send
-      auth: token_tenant_A
+      path: /api/v1/messages/send
+      auth: token_with_system:message:send
       body:
-        messageType: "SYSTEM"
-        templateCode: "WELCOME"
-        receivers: ["{tenantBUserId}"]
+        templateId: 2
+        messageType: "EMAIL"
+        receiverId: 1001
+        receiverAddress: "fail@example.com"
+        subject: "失败测试"
+        content: "测试"
     expect:
-      status: 403
+      status: 200
+      db_assert: "SELECT send_status FROM msg_record WHERE id={msgRecordId} （重试 3 次后）→ FAILURE"
+
+  # ─── P0：租户隔离 ───────────────────────────────────────────────
+  - id: TC-51-12
+    priority: P0
+    category: tenant_isolation
+    scenario: "租户 A 查不到租户 B 的消息记录"
+    setup:
+      - send_message_for_tenant_A
+      - send_message_for_tenant_B
+    request:
+      method: GET
+      path: /api/v1/messages/records
+      auth: token_tenant_A
+    expect:
+      status: 200
       body:
-        code: 403001
+        data:
+          list: "[仅包含租户 A 的消息记录]"
 
   # ─── P1：数据库结构验证 ─────────────────────────────────────────
-  - id: TC-51-11
+  - id: TC-51-13
     priority: P1
     category: db_schema
-    ac: AC-08
-    scenario: "msg_send_record 表包含 7 列审计字段"
+    ac: AC-01
+    scenario: "msg_record 表包含 7 列审计字段，无 IF NOT EXISTS"
     expect:
-      db_assert: "msg_send_record 表包含 tenant_id, created_by, created_time, updated_by, updated_time, deleted, version"
+      db_assert: "msg_record 表包含 tenant_id, created_by, created_time, updated_by, updated_time, deleted, version"
 
-  - id: TC-51-12
+  - id: TC-51-14
     priority: P1
     category: db_schema
-    ac: AC-08
-    scenario: "receiver_id 有索引"
+    ac: AC-01
+    scenario: "msg_user_inbox 表包含 7 列审计字段"
     expect:
-      db_assert: "msg_send_record 表 receiver_id 列有索引"
+      db_assert: "msg_user_inbox 表包含 tenant_id, created_by, created_time, updated_by, updated_time, deleted, version"
 
 # ─── AC → TC 映射 ──────────────────────────────────────────────────
 ac_tc_map:
-  AC-01: [TC-51-03]
-  AC-02: [TC-51-04]
-  AC-03: [TC-51-05]
-  AC-04: [TC-51-06]
-  AC-05: [TC-51-07]
+  AC-01: [TC-51-13, TC-51-14]
+  AC-02: [TC-51-03]
+  AC-03: [TC-51-04]
+  AC-04: [TC-51-05]
+  AC-05: [TC-51-06, TC-51-07]
   AC-06: [TC-51-08]
   AC-07: [TC-51-09]
-  AC-08: [TC-51-11, TC-51-12]
-  AC-09: []  # 编译检查由 Gate R01 覆盖
+  AC-08: [TC-51-10]
+  AC-09: [TC-51-11]
+  AC-10: []  # 编译检查由 Gate R01 覆盖
 
 # ─── Gate R09 配置 ─────────────────────────────────────────────────
 gate_r09:
   p0_required: true
   p1_coverage_target: 0.7
   p2_skip: true
-  test_class: "MessageSendControllerTest"
-  note: "本 Phase 包含消息发送、批量发送、异步发送、租户隔离测试"
+  test_class: "MessageControllerTest"
+  note: "本 Phase 包含消息发送（INBOX/EMAIL/SMS）、消息记录查询、收件箱管理、发送失败重试、租户隔离测试"

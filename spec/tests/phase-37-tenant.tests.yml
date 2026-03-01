@@ -1,202 +1,88 @@
-# Phase 37 — Tenant Management 测试契约
+# Phase 37 — Grafana Dashboards & Alerting 测试契约
 # 关联 Spec：spec/phase/phase-37.md
+# Phase 37 为 K8s 配置 Phase（doc/config-only），无业务代码，无后端接口
 
 phase: 37
-module: "tenant"
+module: "grafana-dashboards"
 ac_ref: "spec/phase/phase-37.md"
+
+note: >
+  Phase 37 为 Grafana 仪表盘与告警配置 Phase（config-only），不生成任何业务代码。
+  验证方式：检查 k8s/grafana-*.json 和 k8s/grafana-alerting-rules.yaml 文件存在且内容完整。
 
 tests:
 
-  # ─── P0：安全测试 ───────────────────────────────────────────────
+  # ─── P0：文件存在性验证 ──────────────────────────────────────────
   - id: TC-37-01
     priority: P0
-    category: security
-    scenario: "无 Token 访问租户管理 → 401"
-    request:
-      method: GET
-      path: /api/v1/tenants
-      auth: none
+    category: config
+    ac: AC-01
+    scenario: "grafana-dashboard-global.json 存在且包含全局总览面板"
     expect:
-      status: 401
+      note: "k8s/grafana-dashboard-global.json 文件存在，包含 QPS、错误率、P95 延迟、活跃租户数、在线用户数面板"
 
   - id: TC-37-02
     priority: P0
-    category: security
-    scenario: "无权限 Token 创建租户 → 403"
-    request:
-      method: POST
-      path: /api/v1/tenants
-      auth: token_without_permission
+    category: config
+    ac: AC-02
+    scenario: "grafana-dashboard-jvm.json 存在且包含 JVM 监控面板"
     expect:
-      status: 403
+      note: "k8s/grafana-dashboard-jvm.json 文件存在，包含堆内存使用率、GC 暂停时间、线程数、CPU 使用率、类加载数面板"
 
-  # ─── P0：租户 CRUD ─────────────────────────────────────────────
   - id: TC-37-03
     priority: P0
-    category: crud
-    ac: AC-01
-    scenario: "创建租户成功"
-    request:
-      method: POST
-      path: /api/v1/tenants
-      auth: token_with_system:tenant:create
-      body:
-        tenantName: "测试租户"
-        tenantCode: "TEST001"
-        contactName: "张三"
-        contactPhone: "13800138000"
-        status: 1
+    category: config
+    ac: AC-03
+    scenario: "grafana-dashboard-tenant.json 存在且包含租户视图面板"
     expect:
-      status: 200
-      body:
-        code: 200
-        data: "{tenantId}"
+      note: "k8s/grafana-dashboard-tenant.json 文件存在，包含租户请求量 Top 10、租户错误率 Top 10 面板"
 
   - id: TC-37-04
     priority: P0
-    category: crud
-    scenario: "查询租户列表"
-    request:
-      method: GET
-      path: /api/v1/tenants
-      auth: token_with_system:tenant:list
+    category: config
+    ac: AC-04
+    scenario: "grafana-alerting-rules.yaml 存在且包含五条告警规则"
     expect:
-      status: 200
-      body:
-        code: 200
-        data:
-          list: "[租户列表]"
+      note: "k8s/grafana-alerting-rules.yaml 文件存在，包含 HighErrorRate、HighMemoryUsage、HighGCPause、HighP95Latency、ServiceDown 规则"
 
+  # ─── P0：告警规则验证 ────────────────────────────────────────────
   - id: TC-37-05
     priority: P0
-    category: crud
-    scenario: "查询租户详情"
-    request:
-      method: GET
-      path: /api/v1/tenants/{tenantId}
-      auth: token_with_system:tenant:detail
+    category: alerting
+    ac: AC-04
+    scenario: "HighErrorRate 告警条件：错误率 > 5% 持续 5 分钟，级别 Critical"
     expect:
-      status: 200
-      body:
-        code: 200
-        data:
-          tenantName: "测试租户"
+      note: "手工检查 grafana-alerting-rules.yaml 中 HighErrorRate 规则"
 
   - id: TC-37-06
     priority: P0
-    category: crud
-    scenario: "更新租户信息"
-    request:
-      method: PUT
-      path: /api/v1/tenants/{tenantId}
-      auth: token_with_system:tenant:update
-      body:
-        tenantName: "测试租户（更新）"
-    expect:
-      status: 200
-      body:
-        code: 200
-
-  - id: TC-37-07
-    priority: P0
-    category: crud
-    scenario: "删除租户（软删除）"
-    request:
-      method: DELETE
-      path: /api/v1/tenants/{tenantId}
-      auth: token_with_system:tenant:delete
-    expect:
-      status: 200
-      body:
-        code: 200
-      db_assert: "SELECT deleted FROM sys_tenant WHERE id={tenantId} → TRUE"
-
-  # ─── P0：业务规则 ──────────────────────────────────────────────
-  - id: TC-37-08
-    priority: P0
-    category: validation
-    ac: AC-02
-    scenario: "租户编码唯一性校验"
-    setup:
-      - create_tenant_with_code_TEST001
-    request:
-      method: POST
-      path: /api/v1/tenants
-      auth: token_with_system:tenant:create
-      body:
-        tenantName: "测试租户2"
-        tenantCode: "TEST001"
-    expect:
-      status: 400
-      body:
-        code: 400002
-        message: "租户编码已存在"
-
-  - id: TC-37-09
-    priority: P0
-    category: validation
-    ac: AC-03
-    scenario: "租户状态枚举校验"
-    request:
-      method: POST
-      path: /api/v1/tenants
-      auth: token_with_system:tenant:create
-      body:
-        tenantName: "测试租户"
-        tenantCode: "TEST002"
-        status: 99
-    expect:
-      status: 400
-      body:
-        code: 400001
-        message: "租户状态无效"
-
-  # ─── P0：租户隔离 ───────────────────────────────────────────────
-  - id: TC-37-10
-    priority: P0
-    category: tenant_isolation
-    scenario: "普通租户无法查看其他租户信息"
-    setup:
-      - create_tenant_A
-      - create_tenant_B
-    request:
-      method: GET
-      path: /api/v1/tenants/{tenantBId}
-      auth: token_tenant_A
-    expect:
-      status: 403
-      body:
-        code: 403001
-
-  # ─── P1：数据库结构验证 ─────────────────────────────────────────
-  - id: TC-37-11
-    priority: P1
-    category: db_schema
+    category: alerting
     ac: AC-04
-    scenario: "sys_tenant 表包含 7 列审计字段"
+    scenario: "ServiceDown 告警条件：服务不可用 1 分钟，级别 Critical"
     expect:
-      db_assert: "sys_tenant 表包含 tenant_id, created_by, created_time, updated_by, updated_time, deleted, version"
+      note: "手工检查 grafana-alerting-rules.yaml 中 ServiceDown 规则"
 
-  - id: TC-37-12
+  # ─── P1：仪表盘刷新配置 ─────────────────────────────────────────
+  - id: TC-37-07
     priority: P1
-    category: db_schema
-    ac: AC-02
-    scenario: "tenant_code 有 UNIQUE 约束"
+    category: config
+    ac: AC-01
+    scenario: "仪表盘自动刷新间隔为 30 秒"
     expect:
-      db_assert: "sys_tenant 表 tenant_code 列有 UNIQUE 约束"
+      note: "手工检查 grafana-dashboard-*.json 中 refresh 字段为 30s"
 
 # ─── AC → TC 映射 ──────────────────────────────────────────────────
 ac_tc_map:
-  AC-01: [TC-37-03, TC-37-04, TC-37-05, TC-37-06, TC-37-07]
-  AC-02: [TC-37-08, TC-37-12]
-  AC-03: [TC-37-09]
-  AC-04: [TC-37-11]
-  AC-05: []  # 编译检查由 Gate R01 覆盖
+  AC-01: [TC-37-01, TC-37-07]
+  AC-02: [TC-37-02]
+  AC-03: [TC-37-03]
+  AC-04: [TC-37-04, TC-37-05, TC-37-06]
+  AC-05: []  # 钉钉通知由运维配置，不在自动化测试范围内
 
 # ─── Gate R09 配置 ─────────────────────────────────────────────────
 gate_r09:
   p0_required: true
   p1_coverage_target: 0.7
   p2_skip: true
-  test_class: "TenantControllerTest"
-  note: "本 Phase 包含租户 CRUD、唯一性校验、状态校验、租户隔离测试"
+  test_class: "GrafanaDashboardConfigTest"
+  note: "本 Phase 为配置 Phase，验证 Grafana 仪表盘和告警规则文件存在且内容完整"

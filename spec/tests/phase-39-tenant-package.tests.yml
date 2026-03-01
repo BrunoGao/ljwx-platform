@@ -1,206 +1,131 @@
-# Phase 39 — Tenant Package 测试契约
+# Phase 39 — 数据脱敏 测试契约
 # 关联 Spec：spec/phase/phase-39.md
+# Phase 39 为 Jackson 注解级脱敏 Phase（无新 HTTP 接口），通过单元测试验证脱敏行为
 
 phase: 39
-module: "tenant-package"
+module: "data-masking"
 ac_ref: "spec/phase/phase-39.md"
+
+note: >
+  Phase 39 为数据脱敏注解框架 Phase（annotation-only），不新增 HTTP 接口。
+  验证方式：单元测试 DataMaskSerializer，以及集成测试 UserVO 序列化输出。
 
 tests:
 
-  # ─── P0：安全测试 ───────────────────────────────────────────────
+  # ─── P0：脱敏规则验证 ─────────────────────────────────────────────
   - id: TC-39-01
     priority: P0
-    category: security
-    scenario: "无 Token 访问套餐管理 → 401"
-    request:
-      method: GET
-      path: /api/v1/tenant/packages
-      auth: none
+    category: masking
+    ac: AC-01
+    scenario: "手机号脱敏：138****5678（保留前 3 后 4）"
     expect:
-      status: 401
+      note: "调用 DataMaskSerializer 对手机号 '13812345678' 序列化，输出应为 '138****5678'"
 
   - id: TC-39-02
     priority: P0
-    category: security
-    scenario: "无权限 Token 创建套餐 → 403"
-    request:
-      method: POST
-      path: /api/v1/tenant/packages
-      auth: token_without_permission
+    category: masking
+    ac: AC-01
+    scenario: "身份证脱敏：110101****1234（保留前 6 后 4）"
     expect:
-      status: 403
+      note: "调用 DataMaskSerializer 对身份证 '110101199001011234' 序列化，输出应为 '110101****1234'"
 
-  # ─── P0：套餐 CRUD ─────────────────────────────────────────────
   - id: TC-39-03
     priority: P0
-    category: crud
+    category: masking
     ac: AC-01
-    scenario: "创建租户套餐"
-    request:
-      method: POST
-      path: /api/v1/tenant/packages
-      auth: token_with_system:package:create
-      body:
-        packageName: "基础版"
-        packageCode: "BASIC"
-        maxUsers: 10
-        maxStorage: 1073741824
-        price: 99.00
-        duration: 365
+    scenario: "邮箱脱敏：ab***@example.com（保留前 2 和域名）"
     expect:
-      status: 200
-      body:
-        code: 200
-        data: "{packageId}"
+      note: "调用 DataMaskSerializer 对邮箱 'abcdef@example.com' 序列化，输出应为 'ab***@example.com'"
 
   - id: TC-39-04
     priority: P0
-    category: crud
-    scenario: "查询套餐列表"
-    request:
-      method: GET
-      path: /api/v1/tenant/packages
-      auth: token_with_system:package:list
+    category: masking
+    ac: AC-01
+    scenario: "姓名脱敏：张**（保留姓，名脱敏）"
     expect:
-      status: 200
-      body:
-        code: 200
-        data:
-          list: "[套餐列表]"
+      note: "调用 DataMaskSerializer 对姓名 '张三丰' 序列化，输出应为 '张**'"
 
   - id: TC-39-05
     priority: P0
-    category: crud
-    scenario: "查询套餐详情"
-    request:
-      method: GET
-      path: /api/v1/tenant/packages/{packageId}
-      auth: token_with_system:package:detail
+    category: masking
+    ac: AC-01
+    scenario: "银行卡脱敏：**** **** **** 1234（保留后 4）"
     expect:
-      status: 200
-      body:
-        code: 200
-        data:
-          packageName: "基础版"
+      note: "调用 DataMaskSerializer 对银行卡 '6217003810017568' 序列化，输出应含后 4 位 '7568'"
 
+  # ─── P0：权限控制 ─────────────────────────────────────────────────
   - id: TC-39-06
     priority: P0
-    category: crud
-    scenario: "更新套餐信息"
-    request:
-      method: PUT
-      path: /api/v1/tenant/packages/{packageId}
-      auth: token_with_system:package:update
-      body:
-        packageName: "基础版（更新）"
-        price: 89.00
+    category: permission
+    ac: AC-03
+    scenario: "有 system:data:unmask 权限时返回原始值（不脱敏）"
     expect:
-      status: 200
-      body:
-        code: 200
+      note: >
+        SecurityContext 中当前用户包含权限 'system:data:unmask'，
+        调用 DataMaskSerializer 序列化手机号，输出应为原始值 '13812345678'
 
   - id: TC-39-07
     priority: P0
-    category: crud
-    scenario: "删除套餐（软删除）"
-    request:
-      method: DELETE
-      path: /api/v1/tenant/packages/{packageId}
-      auth: token_with_system:package:delete
+    category: permission
+    ac: AC-04
+    scenario: "无 system:data:unmask 权限时返回脱敏值"
     expect:
-      status: 200
-      body:
-        code: 200
-      db_assert: "SELECT deleted FROM tenant_package WHERE id={packageId} → TRUE"
+      note: >
+        SecurityContext 中当前用户不包含权限 'system:data:unmask'，
+        调用 DataMaskSerializer 序列化手机号，输出应为脱敏值 '138****5678'
 
-  # ─── P0：业务规则 ──────────────────────────────────────────────
+  # ─── P0：UserVO 集成验证 ──────────────────────────────────────────
   - id: TC-39-08
     priority: P0
-    category: validation
+    category: integration
     ac: AC-02
-    scenario: "套餐编码唯一性校验"
-    setup:
-      - create_package_with_code_BASIC
-    request:
-      method: POST
-      path: /api/v1/tenant/packages
-      auth: token_with_system:package:create
-      body:
-        packageName: "基础版2"
-        packageCode: "BASIC"
+    scenario: "UserVO 序列化时 mobile/email/idCard/realName 自动脱敏"
     expect:
-      status: 400
-      body:
-        code: 400002
-        message: "套餐编码已存在"
+      note: >
+        无 unmask 权限时，UserVO JSON 输出：
+        mobile='138****5678', email='zh***@example.com',
+        idCard='110101****1234', realName='张**'
 
+  # ─── P0：空值处理 ─────────────────────────────────────────────────
   - id: TC-39-09
     priority: P0
-    category: validation
-    ac: AC-03
-    scenario: "价格必须大于 0"
-    request:
-      method: POST
-      path: /api/v1/tenant/packages
-      auth: token_with_system:package:create
-      body:
-        packageName: "免费版"
-        packageCode: "FREE"
-        price: -1.00
+    category: masking
+    ac: AC-05
+    scenario: "脱敏字段为 null 时输出 null"
     expect:
-      status: 400
-      body:
-        code: 400001
-        message: "价格必须大于 0"
+      note: "DataMaskSerializer 接收 null 输入时，序列化输出应为 JSON null，不抛出异常"
 
+  # ─── P1：编译验证 ─────────────────────────────────────────────────
   - id: TC-39-10
-    priority: P0
-    category: validation
-    ac: AC-03
-    scenario: "最大用户数必须大于 0"
-    request:
-      method: POST
-      path: /api/v1/tenant/packages
-      auth: token_with_system:package:create
-      body:
-        packageName: "测试版"
-        packageCode: "TEST"
-        maxUsers: 0
+    priority: P1
+    category: compile
+    ac: AC-07
+    scenario: "@DataMask 注解可用于 FIELD 级别，不可用于 TYPE 级别"
     expect:
-      status: 400
-      body:
-        code: 400001
-        message: "最大用户数必须大于 0"
+      note: "DataMask.java 的 @Target({ElementType.FIELD}) 限制注解只能标注字段"
 
-  # ─── P1：数据库结构验证 ─────────────────────────────────────────
   - id: TC-39-11
     priority: P1
-    category: db_schema
-    ac: AC-04
-    scenario: "tenant_package 表包含 7 列审计字段"
+    category: compile
+    ac: AC-07
+    scenario: "MaskType 枚举包含 PHONE/ID_CARD/EMAIL/NAME/BANK_CARD/ADDRESS/CUSTOM"
     expect:
-      db_assert: "tenant_package 表包含 tenant_id, created_by, created_time, updated_by, updated_time, deleted, version"
-
-  - id: TC-39-12
-    priority: P1
-    category: db_schema
-    ac: AC-02
-    scenario: "package_code 有 UNIQUE 约束"
-    expect:
-      db_assert: "tenant_package 表 package_code 列有 UNIQUE 约束"
+      note: "MaskType.java 包含所有规定的枚举值"
 
 # ─── AC → TC 映射 ──────────────────────────────────────────────────
 ac_tc_map:
-  AC-01: [TC-39-03, TC-39-04, TC-39-05, TC-39-06, TC-39-07]
-  AC-02: [TC-39-08, TC-39-12]
-  AC-03: [TC-39-09, TC-39-10]
-  AC-04: [TC-39-11]
-  AC-05: []  # 编译检查由 Gate R01 覆盖
+  AC-01: [TC-39-01, TC-39-02, TC-39-03, TC-39-04, TC-39-05]
+  AC-02: [TC-39-08]
+  AC-03: [TC-39-06]
+  AC-04: [TC-39-07]
+  AC-05: [TC-39-09]
+  AC-06: []  # 开放 API 默认脱敏，由开放平台 Phase 覆盖
+  AC-07: [TC-39-10, TC-39-11]
 
 # ─── Gate R09 配置 ─────────────────────────────────────────────────
 gate_r09:
   p0_required: true
   p1_coverage_target: 0.7
   p2_skip: true
-  test_class: "TenantPackageControllerTest"
-  note: "本 Phase 包含套餐 CRUD、唯一性校验、价格校验、用户数校验测试"
+  test_class: "DataMaskSerializerTest"
+  note: "本 Phase 为注解脱敏框架，验证脱敏规则、权限控制、空值处理，无 HTTP 接口测试"

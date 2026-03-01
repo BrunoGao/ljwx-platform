@@ -1,8 +1,8 @@
-# Phase 46 — Workflow Engine 测试契约
+# Phase 46 — 导入导出中心 测试契约
 # 关联 Spec：spec/phase/phase-46.md
 
 phase: 46
-module: "workflow"
+module: "import-export"
 ac_ref: "spec/phase/phase-46.md"
 
 tests:
@@ -11,10 +11,10 @@ tests:
   - id: TC-46-01
     priority: P0
     category: security
-    scenario: "无 Token 访问工作流 → 401"
+    scenario: "无 Token 访问导入接口 → 401"
     request:
-      method: GET
-      path: /api/v1/workflows
+      method: POST
+      path: /api/v1/import-export/import
       auth: none
     expect:
       status: 401
@@ -22,203 +22,185 @@ tests:
   - id: TC-46-02
     priority: P0
     category: security
-    scenario: "无权限 Token 创建工作流 → 403"
+    scenario: "无权限 Token 执行导入 → 403"
     request:
       method: POST
-      path: /api/v1/workflows
+      path: /api/v1/import-export/import
       auth: token_without_permission
     expect:
       status: 403
 
-  # ─── P0：工作流 CRUD ───────────────────────────────────────────
+  # ─── P0：导入功能 ──────────────────────────────────────────────
   - id: TC-46-03
     priority: P0
-    category: crud
+    category: import
     ac: AC-01
-    scenario: "创建工作流定义"
+    scenario: "提交导入任务 → 返回任务 ID，状态为 PENDING"
     request:
       method: POST
-      path: /api/v1/workflows
-      auth: token_with_system:workflow:create
+      path: /api/v1/import-export/import
+      auth: token_with_system:importExport:import
       body:
-        workflowName: "请假审批"
-        workflowKey: "leave_approval"
-        definition: "{JSON 定义}"
+        taskType: "IMPORT"
+        businessType: "USER"
+        fileName: "users.xlsx"
+        file: "{multipart_file}"
     expect:
       status: 200
       body:
         code: 200
-        data: "{workflowId}"
+        data: "{taskId}"
+      db_assert: "SELECT status FROM sys_import_export_task WHERE id={taskId} → PENDING"
 
   - id: TC-46-04
     priority: P0
-    category: crud
-    scenario: "查询工作流列表"
-    request:
-      method: GET
-      path: /api/v1/workflows
-      auth: token_with_system:workflow:list
+    category: import
+    ac: AC-02
+    scenario: "导入任务异步执行，状态从 PENDING 变为 PROCESSING 再变为 SUCCESS"
+    setup:
+      - submit_import_task
+    steps:
+      - "等待异步处理完成"
     expect:
-      status: 200
-      body:
-        data:
-          list: "[工作流列表]"
+      db_assert: "SELECT status FROM sys_import_export_task WHERE id={taskId} → SUCCESS"
 
+  # ─── P0：导出功能 ──────────────────────────────────────────────
   - id: TC-46-05
     priority: P0
-    category: crud
-    scenario: "查询工作流详情"
+    category: export
+    ac: AC-01
+    scenario: "提交导出任务 → 返回任务 ID"
     request:
-      method: GET
-      path: /api/v1/workflows/{workflowId}
-      auth: token_with_system:workflow:detail
+      method: POST
+      path: /api/v1/import-export/export
+      auth: token_with_system:importExport:export
+      body:
+        taskType: "EXPORT"
+        businessType: "ROLE"
+        fileName: "roles.xlsx"
     expect:
       status: 200
       body:
-        data:
-          workflowName: "请假审批"
+        code: 200
+        data: "{taskId}"
 
   - id: TC-46-06
     priority: P0
-    category: crud
-    scenario: "更新工作流定义"
-    request:
-      method: PUT
-      path: /api/v1/workflows/{workflowId}
-      auth: token_with_system:workflow:update
-      body:
-        workflowName: "请假审批（更新）"
+    category: export
+    ac: AC-02
+    scenario: "导出任务异步生成文件，完成后 file_url 指向 MinIO 文件"
+    setup:
+      - submit_export_task
+    steps:
+      - "等待异步处理完成"
     expect:
-      status: 200
+      db_assert: "SELECT status, file_url FROM sys_import_export_task WHERE id={taskId} → SUCCESS, NOT NULL"
 
-  # ─── P0：工作流实例 ────────────────────────────────────────────
+  # ─── P0：任务查询 ──────────────────────────────────────────────
   - id: TC-46-07
     priority: P0
-    category: workflow
-    ac: AC-02
-    scenario: "启动工作流实例"
-    setup:
-      - create_workflow_definition
+    category: query
+    ac: AC-03
+    scenario: "查询单个任务进度"
     request:
-      method: POST
-      path: /api/v1/workflows/{workflowId}/start
-      auth: token_with_system:workflow:start
-      body:
-        businessKey: "LEAVE001"
-        variables:
-          days: 3
-          reason: "事假"
+      method: GET
+      path: /api/v1/import-export/tasks/{taskId}
+      auth: token_with_system:importExport:query
     expect:
       status: 200
       body:
-        data: "{instanceId}"
+        code: 200
+        data:
+          taskType: "IMPORT"
+          businessType: "USER"
+          status: "{PENDING|PROCESSING|SUCCESS|FAILURE}"
+          totalCount: "{int}"
+          successCount: "{int}"
+          failureCount: "{int}"
 
   - id: TC-46-08
     priority: P0
-    category: workflow
+    category: query
     ac: AC-03
-    scenario: "完成工作流任务"
-    setup:
-      - create_workflow_instance
-      - create_pending_task
-    request:
-      method: POST
-      path: /api/v1/workflows/tasks/{taskId}/complete
-      auth: token_with_system:workflow:task
-      body:
-        approved: true
-        comment: "同意"
-    expect:
-      status: 200
-      db_assert: "SELECT status FROM workflow_task WHERE id={taskId} → COMPLETED"
-
-  - id: TC-46-09
-    priority: P0
-    category: workflow
-    ac: AC-04
-    scenario: "查询待办任务"
-    setup:
-      - create_workflow_instance_with_tasks
+    scenario: "分页查询任务列表"
     request:
       method: GET
-      path: /api/v1/workflows/tasks/pending
-      auth: token_user
+      path: /api/v1/import-export/tasks
+      auth: token_with_system:importExport:list
     expect:
       status: 200
       body:
+        code: 200
         data:
-          list: "[当前用户的待办任务]"
+          list: "[任务列表]"
 
   # ─── P0：业务规则 ──────────────────────────────────────────────
-  - id: TC-46-10
+  - id: TC-46-09
     priority: P0
     category: business
-    ac: AC-05
-    scenario: "工作流 Key 唯一性校验"
+    ac: AC-04
+    scenario: "导入文件包含错误行 → 部分成功，failure_count 大于 0，error_message 记录错误"
     setup:
-      - create_workflow_with_key_leave_approval
+      - prepare_import_file_with_errors
     request:
       method: POST
-      path: /api/v1/workflows
-      auth: token_with_system:workflow:create
+      path: /api/v1/import-export/import
+      auth: token_with_system:importExport:import
       body:
-        workflowName: "请假审批2"
-        workflowKey: "leave_approval"
+        taskType: "IMPORT"
+        businessType: "USER"
+        fileName: "users_with_errors.xlsx"
+        file: "{multipart_file_with_errors}"
     expect:
-      status: 400
-      body:
-        code: 400002
-        message: "工作流 Key 已存在"
+      status: 200
+      db_assert: "SELECT failure_count, error_message FROM sys_import_export_task WHERE id={taskId} → failure_count > 0, NOT NULL"
 
   # ─── P0：租户隔离 ───────────────────────────────────────────────
-  - id: TC-46-11
+  - id: TC-46-10
     priority: P0
     category: tenant_isolation
-    scenario: "租户 A 查不到租户 B 的工作流"
+    scenario: "租户 A 查不到租户 B 的导入导出任务"
     setup:
-      - create_workflow_for_tenant_A
-      - create_workflow_for_tenant_B
+      - submit_task_for_tenant_A
+      - submit_task_for_tenant_B
     request:
       method: GET
-      path: /api/v1/workflows
+      path: /api/v1/import-export/tasks
       auth: token_tenant_A
     expect:
       status: 200
       body:
         data:
-          list: "[仅包含租户 A 的工作流]"
+          list: "[仅包含租户 A 的任务]"
 
   # ─── P1：数据库结构验证 ─────────────────────────────────────────
+  - id: TC-46-11
+    priority: P1
+    category: db_schema
+    ac: AC-01
+    scenario: "sys_import_export_task 表包含 7 列审计字段，无 IF NOT EXISTS"
+    expect:
+      db_assert: "sys_import_export_task 表包含 tenant_id, created_by, created_time, updated_by, updated_time, deleted, version"
+
   - id: TC-46-12
     priority: P1
     category: db_schema
-    ac: AC-06
-    scenario: "workflow_definition 表包含 7 列审计字段"
+    ac: AC-01
+    scenario: "idx_status 索引存在"
     expect:
-      db_assert: "workflow_definition 表包含 tenant_id, created_by, created_time, updated_by, updated_time, deleted, version"
-
-  - id: TC-46-13
-    priority: P1
-    category: db_schema
-    ac: AC-05
-    scenario: "workflow_key 有 UNIQUE 约束"
-    expect:
-      db_assert: "workflow_definition 表 workflow_key 列有 UNIQUE 约束"
+      db_assert: "sys_import_export_task 表有 idx_status (status) 索引"
 
 # ─── AC → TC 映射 ──────────────────────────────────────────────────
 ac_tc_map:
-  AC-01: [TC-46-03, TC-46-04, TC-46-05, TC-46-06]
-  AC-02: [TC-46-07]
-  AC-03: [TC-46-08]
+  AC-01: [TC-46-03, TC-46-05, TC-46-11, TC-46-12]
+  AC-02: [TC-46-04, TC-46-06]
+  AC-03: [TC-46-07, TC-46-08]
   AC-04: [TC-46-09]
-  AC-05: [TC-46-10, TC-46-13]
-  AC-06: [TC-46-12]
-  AC-07: []  # 编译检查由 Gate R01 覆盖
 
 # ─── Gate R09 配置 ─────────────────────────────────────────────────
 gate_r09:
   p0_required: true
   p1_coverage_target: 0.7
   p2_skip: true
-  test_class: "WorkflowControllerTest"
-  note: "本 Phase 包含工作流 CRUD、实例启动、任务完成、租户隔离测试"
+  test_class: "ImportExportControllerTest"
+  note: "本 Phase 包含导入导出任务提交、异步处理状态跟踪、进度查询、错误处理、租户隔离测试"

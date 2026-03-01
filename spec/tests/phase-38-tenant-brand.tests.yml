@@ -39,7 +39,7 @@ tests:
     request:
       method: GET
       path: /api/v1/tenant/brand
-      auth: token_with_tenant:brand:detail
+      auth: token_with_tenant:brand:query
     expect:
       status: 200
       body:
@@ -56,7 +56,7 @@ tests:
     request:
       method: PUT
       path: /api/v1/tenant/brand
-      auth: token_with_tenant:brand:update
+      auth: token_with_tenant:brand:edit
       body:
         tenantName: "测试租户（更新）"
         logo: "https://example.com/new-logo.png"
@@ -74,7 +74,7 @@ tests:
     request:
       method: PUT
       path: /api/v1/tenant/brand
-      auth: token_with_tenant:brand:update
+      auth: token_with_tenant:brand:edit
       body:
         primaryColor: "#409EFF"
         secondaryColor: "#67C23A"
@@ -92,7 +92,7 @@ tests:
     request:
       method: PUT
       path: /api/v1/tenant/brand
-      auth: token_with_tenant:brand:update
+      auth: token_with_tenant:brand:edit
       body:
         loginBgImage: "https://example.com/login-bg.jpg"
         loginSlogan: "欢迎使用"
@@ -111,7 +111,7 @@ tests:
     request:
       method: PUT
       path: /api/v1/tenant/brand
-      auth: token_with_tenant:brand:update
+      auth: token_with_tenant:brand:edit
       body:
         primaryColor: "invalid-color"
     expect:
@@ -128,7 +128,7 @@ tests:
     request:
       method: PUT
       path: /api/v1/tenant/brand
-      auth: token_with_tenant:brand:update
+      auth: token_with_tenant:brand:edit
       body:
         logo: "invalid-url"
     expect:

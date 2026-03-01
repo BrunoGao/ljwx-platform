@@ -39,7 +39,7 @@ tests:
     request:
       method: PUT
       path: /api/v1/roles/{roleId}/data-scope
-      auth: token_with_system:role:update
+      auth: token_with_system:role:edit
       body:
         dataScope: "ALL"
     expect:
@@ -54,7 +54,7 @@ tests:
     request:
       method: PUT
       path: /api/v1/roles/{roleId}/data-scope
-      auth: token_with_system:role:update
+      auth: token_with_system:role:edit
       body:
         dataScope: "DEPT"
     expect:
@@ -69,7 +69,7 @@ tests:
     request:
       method: PUT
       path: /api/v1/roles/{roleId}/data-scope
-      auth: token_with_system:role:update
+      auth: token_with_system:role:edit
       body:
         dataScope: "DEPT_AND_CHILD"
     expect:
@@ -84,7 +84,7 @@ tests:
     request:
       method: PUT
       path: /api/v1/roles/{roleId}/data-scope
-      auth: token_with_system:role:update
+      auth: token_with_system:role:edit
       body:
         dataScope: "SELF"
     expect:
@@ -99,7 +99,7 @@ tests:
     request:
       method: PUT
       path: /api/v1/roles/{roleId}/data-scope
-      auth: token_with_system:role:update
+      auth: token_with_system:role:edit
       body:
         dataScope: "CUSTOM"
         deptIds: [1, 2, 3]

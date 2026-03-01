@@ -1,8 +1,8 @@
-# Phase 40 — Tenant Billing 测试契约
+# Phase 40 — 岗位管理 测试契约
 # 关联 Spec：spec/phase/phase-40.md
 
 phase: 40
-module: "tenant-billing"
+module: "post-management"
 ac_ref: "spec/phase/phase-40.md"
 
 tests:
@@ -11,10 +11,10 @@ tests:
   - id: TC-40-01
     priority: P0
     category: security
-    scenario: "无 Token 访问计费记录 → 401"
+    scenario: "无 Token 访问岗位列表 → 401"
     request:
       method: GET
-      path: /api/v1/tenant/billing
+      path: /api/v1/posts
       auth: none
     expect:
       status: 401
@@ -22,179 +22,223 @@ tests:
   - id: TC-40-02
     priority: P0
     category: security
-    scenario: "无权限 Token 创建账单 → 403"
+    scenario: "无权限 Token 创建岗位 → 403"
     request:
       method: POST
-      path: /api/v1/tenant/billing
+      path: /api/v1/posts
       auth: token_without_permission
     expect:
       status: 403
 
-  # ─── P0：计费 CRUD ─────────────────────────────────────────────
+  # ─── P0：岗位 CRUD ─────────────────────────────────────────────
   - id: TC-40-03
     priority: P0
     category: crud
     ac: AC-01
-    scenario: "创建租户账单"
+    scenario: "创建岗位"
     request:
       method: POST
-      path: /api/v1/tenant/billing
-      auth: token_with_system:billing:create
+      path: /api/v1/posts
+      auth: token_with_system:post:add
       body:
-        tenantId: 1001
-        packageId: 1
-        amount: 99.00
-        billingPeriod: "2026-03"
-        dueDate: "2026-03-31"
+        postCode: "ENGINEER"
+        postName: "工程师"
+        postSort: 1
+        status: "ENABLED"
+        remark: "软件工程师"
     expect:
       status: 200
       body:
         code: 200
-        data: "{billingId}"
+        data: "{postId}"
 
   - id: TC-40-04
     priority: P0
     category: crud
-    scenario: "查询账单列表"
+    ac: AC-01
+    scenario: "查询岗位列表"
     request:
       method: GET
-      path: /api/v1/tenant/billing
-      auth: token_with_system:billing:list
+      path: /api/v1/posts
+      auth: token_with_system:post:list
     expect:
       status: 200
       body:
         code: 200
         data:
-          list: "[账单列表]"
+          list: "[岗位列表]"
 
   - id: TC-40-05
     priority: P0
     category: crud
-    scenario: "查询账单详情"
+    ac: AC-01
+    scenario: "查询岗位详情"
     request:
       method: GET
-      path: /api/v1/tenant/billing/{billingId}
-      auth: token_with_system:billing:detail
+      path: /api/v1/posts/{postId}
+      auth: token_with_system:post:query
     expect:
       status: 200
       body:
         code: 200
         data:
-          amount: 99.00
+          postCode: "ENGINEER"
+          postName: "工程师"
 
   - id: TC-40-06
     priority: P0
     category: crud
-    scenario: "支付账单"
+    ac: AC-01
+    scenario: "更新岗位信息"
     request:
-      method: POST
-      path: /api/v1/tenant/billing/{billingId}/pay
-      auth: token_with_tenant:billing:pay
+      method: PUT
+      path: /api/v1/posts/{postId}
+      auth: token_with_system:post:edit
       body:
-        paymentMethod: "ALIPAY"
-        transactionId: "TXN123456"
+        postName: "高级工程师"
+        postSort: 2
     expect:
       status: 200
       body:
         code: 200
-      db_assert: "SELECT status FROM tenant_billing WHERE id={billingId} → PAID"
 
-  # ─── P0：业务规则 ──────────────────────────────────────────────
   - id: TC-40-07
     priority: P0
-    category: business
-    ac: AC-02
-    scenario: "账单金额必须大于 0"
+    category: crud
+    ac: AC-05
+    scenario: "删除岗位（软删除）"
     request:
-      method: POST
-      path: /api/v1/tenant/billing
-      auth: token_with_system:billing:create
-      body:
-        tenantId: 1001
-        amount: 0
+      method: DELETE
+      path: /api/v1/posts/{postId}
+      auth: token_with_system:post:delete
     expect:
-      status: 400
+      status: 200
       body:
-        code: 400001
-        message: "账单金额必须大于 0"
+        code: 200
+      db_assert: "SELECT deleted FROM sys_post WHERE id={postId} → TRUE"
 
+  # ─── P0：业务规则 ──────────────────────────────────────────────
   - id: TC-40-08
     priority: P0
-    category: business
-    ac: AC-03
-    scenario: "已支付账单不可重复支付"
+    category: validation
+    ac: AC-06
+    scenario: "postCode 唯一性校验：同租户内重复编码 → 400"
     setup:
-      - create_paid_billing
+      - create_post_with_code_ENGINEER
     request:
       method: POST
-      path: /api/v1/tenant/billing/{billingId}/pay
-      auth: token_with_tenant:billing:pay
+      path: /api/v1/posts
+      auth: token_with_system:post:add
+      body:
+        postCode: "ENGINEER"
+        postName: "工程师2"
+        postSort: 3
+        status: "ENABLED"
     expect:
       status: 400
       body:
         code: 400002
-        message: "账单已支付"
+        message: "岗位编码已存在"
 
   - id: TC-40-09
     priority: P0
     category: business
-    ac: AC-04
-    scenario: "账单到期自动标记为逾期"
+    ac: AC-07
+    scenario: "删除有关联用户的岗位 → 400"
     setup:
-      - create_unpaid_billing_with_past_due_date
-    steps:
-      - "执行定时任务"
+      - create_post_with_users
+    request:
+      method: DELETE
+      path: /api/v1/posts/{postId}
+      auth: token_with_system:post:delete
     expect:
-      db_assert: "SELECT status FROM tenant_billing WHERE id={billingId} → OVERDUE"
+      status: 400
+      body:
+        code: 400003
+        message: "岗位下存在关联用户，无法删除"
 
   # ─── P0：租户隔离 ───────────────────────────────────────────────
   - id: TC-40-10
     priority: P0
     category: tenant_isolation
-    scenario: "租户 A 查不到租户 B 的账单"
+    ac: AC-04
+    scenario: "租户 A 查不到租户 B 的岗位"
     setup:
-      - create_billing_for_tenant_A
-      - create_billing_for_tenant_B
+      - create_post_for_tenant_A
+      - create_post_for_tenant_B
     request:
       method: GET
-      path: /api/v1/tenant/billing
+      path: /api/v1/posts
       auth: token_tenant_A
     expect:
       status: 200
       body:
         data:
-          list: "[仅包含租户 A 的账单]"
+          list: "[仅包含租户 A 的岗位]"
+
+  # ─── P0：VO 字段验证 ─────────────────────────────────────────
+  - id: TC-40-11
+    priority: P0
+    category: response
+    ac: AC-03
+    scenario: "PostVO 不包含 tenantId、deleted、createdBy、updatedBy、version"
+    request:
+      method: GET
+      path: /api/v1/posts/{postId}
+      auth: token_with_system:post:query
+    expect:
+      status: 200
+      body:
+        data:
+          id: "{postId}"
+          postCode: "ENGINEER"
+          postName: "工程师"
+          postSort: 1
+          status: "ENABLED"
+          createdTime: "{not null}"
+          updatedTime: "{not null}"
+      note: "响应中不应包含 tenantId、deleted、createdBy、updatedBy、version 字段"
 
   # ─── P1：数据库结构验证 ─────────────────────────────────────────
-  - id: TC-40-11
-    priority: P1
-    category: db_schema
-    ac: AC-05
-    scenario: "tenant_billing 表包含 7 列审计字段"
-    expect:
-      db_assert: "tenant_billing 表包含 tenant_id, created_by, created_time, updated_by, updated_time, deleted, version"
-
   - id: TC-40-12
     priority: P1
     category: db_schema
-    ac: AC-05
-    scenario: "tenant_id 和 billing_period 有复合索引"
+    ac: AC-01
+    scenario: "sys_post 表包含 7 列审计字段，无 IF NOT EXISTS"
     expect:
-      db_assert: "tenant_billing 表有 idx_tenant_billing_period 索引"
+      db_assert: "sys_post 表包含 tenant_id, created_by, created_time, updated_by, updated_time, deleted, version"
+
+  - id: TC-40-13
+    priority: P1
+    category: db_schema
+    ac: AC-01
+    scenario: "sys_user_post 表包含 7 列审计字段"
+    expect:
+      db_assert: "sys_user_post 表包含 tenant_id, created_by, created_time, updated_by, updated_time, deleted, version"
+
+  - id: TC-40-14
+    priority: P1
+    category: db_schema
+    ac: AC-06
+    scenario: "uk_tenant_post_code 唯一索引存在"
+    expect:
+      db_assert: "sys_post 表有 uk_tenant_post_code (tenant_id, post_code, deleted) UNIQUE 索引"
 
 # ─── AC → TC 映射 ──────────────────────────────────────────────────
 ac_tc_map:
-  AC-01: [TC-40-03, TC-40-04, TC-40-05, TC-40-06]
-  AC-02: [TC-40-07]
-  AC-03: [TC-40-08]
-  AC-04: [TC-40-09]
-  AC-05: [TC-40-11, TC-40-12]
-  AC-06: []  # 编译检查由 Gate R01 覆盖
+  AC-01: [TC-40-03, TC-40-04, TC-40-05, TC-40-06, TC-40-07, TC-40-12, TC-40-13]
+  AC-02: [TC-40-02]
+  AC-03: [TC-40-11]
+  AC-04: [TC-40-10]
+  AC-05: [TC-40-07]
+  AC-06: [TC-40-08, TC-40-14]
+  AC-07: [TC-40-09]
+  AC-08: []  # 编译+前端类型检查由 Gate R01/R02 覆盖
 
 # ─── Gate R09 配置 ─────────────────────────────────────────────────
 gate_r09:
   p0_required: true
   p1_coverage_target: 0.7
   p2_skip: true
-  test_class: "TenantBillingControllerTest"
-  note: "本 Phase 包含账单 CRUD、支付、逾期处理、租户隔离测试"
+  test_class: "PostControllerTest"
+  note: "本 Phase 包含岗位 CRUD、postCode 唯一性校验、关联用户删除拦截、租户隔离测试"

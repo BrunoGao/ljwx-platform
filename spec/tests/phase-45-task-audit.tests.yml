@@ -1,8 +1,9 @@
-# Phase 45 — Task Audit 测试契约
+# Phase 45 — 任务执行日志 测试契约
 # 关联 Spec：spec/phase/phase-45.md
+# API 前缀：/api/v1/task-logs
 
 phase: 45
-module: "task-audit"
+module: "task-log"
 ac_ref: "spec/phase/phase-45.md"
 
 tests:
@@ -11,10 +12,10 @@ tests:
   - id: TC-45-01
     priority: P0
     category: security
-    scenario: "无 Token 访问任务审计 → 401"
+    scenario: "无 Token 访问任务执行日志 → 401"
     request:
       method: GET
-      path: /api/v1/tasks/audit
+      path: /api/v1/task-logs
       auth: none
     expect:
       status: 401
@@ -22,33 +23,33 @@ tests:
   - id: TC-45-02
     priority: P0
     category: security
-    scenario: "无权限 Token 查询审计日志 → 403"
+    scenario: "无权限 Token 查询任务执行日志 → 403"
     request:
       method: GET
-      path: /api/v1/tasks/audit
+      path: /api/v1/task-logs
       auth: token_without_permission
     expect:
       status: 403
 
-  # ─── P0：任务审计 ──────────────────────────────────────────────
+  # ─── P0：日志记录验证 ──────────────────────────────────────────
   - id: TC-45-03
     priority: P0
-    category: audit
+    category: log
     ac: AC-01
-    scenario: "任务执行成功记录审计日志"
+    scenario: "任务执行成功后记录日志，status=SUCCESS"
     setup:
       - create_scheduled_task
     steps:
       - "触发任务执行"
       - "任务执行成功"
     expect:
-      db_assert: "SELECT status FROM task_audit_log WHERE task_id={taskId} → SUCCESS"
+      db_assert: "SELECT status FROM sys_task_execution_log WHERE task_name={taskName} AND status='SUCCESS' 存在"
 
   - id: TC-45-04
     priority: P0
-    category: audit
+    category: log
     ac: AC-01
-    scenario: "任务执行失败记录审计日志"
+    scenario: "任务执行失败后记录日志，status=FAILURE，error_message 不为空"
     setup:
       - create_scheduled_task
       - mock_task_failure
@@ -56,137 +57,159 @@ tests:
       - "触发任务执行"
       - "任务执行失败"
     expect:
-      db_assert: "SELECT status, error_message FROM task_audit_log WHERE task_id={taskId} → FAILED, NOT NULL"
+      db_assert: "SELECT status, error_message FROM sys_task_execution_log WHERE task_name={taskName} → FAILURE, NOT NULL"
 
   - id: TC-45-05
     priority: P0
-    category: audit
+    category: log
     ac: AC-02
-    scenario: "审计日志包含执行时长"
+    scenario: "执行日志包含执行耗时（execution_time > 0）"
     setup:
       - create_scheduled_task
     steps:
       - "触发任务执行"
       - "任务执行完成"
     expect:
-      db_assert: "SELECT execution_time FROM task_audit_log WHERE task_id={taskId} → > 0"
+      db_assert: "SELECT execution_time FROM sys_task_execution_log WHERE task_name={taskName} → > 0"
 
   - id: TC-45-06
     priority: P0
-    category: audit
+    category: log
     ac: AC-03
-    scenario: "审计日志包含执行参数"
+    scenario: "执行日志包含执行参数（params 不为空）"
     setup:
       - create_scheduled_task_with_params
     steps:
       - "触发任务执行"
     expect:
-      db_assert: "SELECT params FROM task_audit_log WHERE task_id={taskId} → NOT NULL"
+      db_assert: "SELECT params FROM sys_task_execution_log WHERE task_name={taskName} → NOT NULL"
 
-  # ─── P0：审计查询 ──────────────────────────────────────────────
+  # ─── P0：日志查询 ──────────────────────────────────────────────
   - id: TC-45-07
     priority: P0
-    category: audit
+    category: query
     ac: AC-04
-    scenario: "按任务 ID 查询审计日志"
+    scenario: "分页查询任务执行日志列表"
     request:
       method: GET
-      path: /api/v1/tasks/audit?taskId={taskId}
-      auth: token_with_system:task:audit
+      path: /api/v1/task-logs
+      auth: token_with_system:taskLog:list
     expect:
       status: 200
       body:
+        code: 200
         data:
-          list: "[指定任务的审计日志]"
+          list: "[任务执行日志列表]"
 
   - id: TC-45-08
     priority: P0
-    category: audit
+    category: query
     ac: AC-04
-    scenario: "按时间范围查询审计日志"
+    scenario: "按任务名称查询执行日志"
     request:
       method: GET
-      path: /api/v1/tasks/audit?startTime={start}&endTime={end}
-      auth: token_with_system:task:audit
+      path: /api/v1/task-logs
+      auth: token_with_system:taskLog:list
+      query:
+        taskName: "syncUserTask"
     expect:
       status: 200
       body:
         data:
-          list: "[指定时间范围的审计日志]"
+          list: "[syncUserTask 的执行日志]"
 
   - id: TC-45-09
     priority: P0
-    category: audit
+    category: query
     ac: AC-04
-    scenario: "按状态查询审计日志"
+    scenario: "按状态查询执行日志（status=FAILURE）"
     request:
       method: GET
-      path: /api/v1/tasks/audit?status=FAILED
-      auth: token_with_system:task:audit
+      path: /api/v1/task-logs
+      auth: token_with_system:taskLog:list
+      query:
+        status: "FAILURE"
     expect:
       status: 200
       body:
         data:
-          list: "[所有失败的审计日志]"
+          list: "[所有失败的执行日志]"
 
-  # ─── P0：租户隔离 ───────────────────────────────────────────────
   - id: TC-45-10
     priority: P0
-    category: tenant_isolation
-    scenario: "租户 A 查不到租户 B 的审计日志"
-    setup:
-      - create_task_for_tenant_A
-      - create_task_for_tenant_B
-      - execute_tasks
+    category: query
+    ac: AC-04
+    scenario: "查询单条任务执行日志详情"
     request:
       method: GET
-      path: /api/v1/tasks/audit
+      path: /api/v1/task-logs/{logId}
+      auth: token_with_system:taskLog:query
+    expect:
+      status: 200
+      body:
+        code: 200
+        data:
+          taskName: "{taskName}"
+          status: "{SUCCESS|FAILURE}"
+          executionTime: "{> 0}"
+
+  # ─── P0：租户隔离 ───────────────────────────────────────────────
+  - id: TC-45-11
+    priority: P0
+    category: tenant_isolation
+    scenario: "租户 A 查不到租户 B 的任务执行日志"
+    setup:
+      - create_task_log_for_tenant_A
+      - create_task_log_for_tenant_B
+    request:
+      method: GET
+      path: /api/v1/task-logs
       auth: token_tenant_A
     expect:
       status: 200
       body:
         data:
-          list: "[仅包含租户 A 的审计日志]"
+          list: "[仅包含租户 A 的任务执行日志]"
 
-  # ─── P1：审计日志清理 ──────────────────────────────────────────
-  - id: TC-45-11
+  # ─── P1：日志清理 ──────────────────────────────────────────────
+  - id: TC-45-12
     priority: P1
     category: cleanup
     ac: AC-05
-    scenario: "定期清理 90 天前的审计日志"
+    scenario: "定期清理 90 天前的执行日志"
     setup:
-      - create_audit_log_91_days_ago
-      - create_audit_log_89_days_ago
+      - create_log_91_days_ago
+      - create_log_89_days_ago
     steps:
       - "执行清理任务"
     expect:
-      db_assert: "SELECT COUNT(*) FROM task_audit_log WHERE created_time < NOW() - INTERVAL '90 days' → 0"
+      db_assert: "SELECT COUNT(*) FROM sys_task_execution_log WHERE start_time < NOW() - INTERVAL '90 days' → 0"
 
   # ─── P1：数据库结构验证 ─────────────────────────────────────────
-  - id: TC-45-12
-    priority: P1
-    category: db_schema
-    ac: AC-06
-    scenario: "task_audit_log 表包含 7 列审计字段"
-    expect:
-      db_assert: "task_audit_log 表包含 tenant_id, created_by, created_time, updated_by, updated_time, deleted, version"
-
   - id: TC-45-13
     priority: P1
     category: db_schema
     ac: AC-06
-    scenario: "task_id 有索引"
+    scenario: "sys_task_execution_log 表包含 7 列审计字段，无 IF NOT EXISTS"
     expect:
-      db_assert: "task_audit_log 表 task_id 列有索引"
+      db_assert: "sys_task_execution_log 表包含 tenant_id, created_by, created_time, updated_by, updated_time, deleted, version"
+
+  - id: TC-45-14
+    priority: P1
+    category: db_schema
+    ac: AC-06
+    scenario: "idx_task_name_start_time 索引存在"
+    expect:
+      db_assert: "sys_task_execution_log 表有 idx_task_name_start_time (task_name, start_time DESC) 索引"
 
 # ─── AC → TC 映射 ──────────────────────────────────────────────────
 ac_tc_map:
   AC-01: [TC-45-03, TC-45-04]
   AC-02: [TC-45-05]
   AC-03: [TC-45-06]
-  AC-04: [TC-45-07, TC-45-08, TC-45-09]
-  AC-05: [TC-45-11]
-  AC-06: [TC-45-12, TC-45-13]
+  AC-04: [TC-45-07, TC-45-08, TC-45-09, TC-45-10]
+  AC-05: [TC-45-12]
+  AC-06: [TC-45-13, TC-45-14]
   AC-07: []  # 编译检查由 Gate R01 覆盖
 
 # ─── Gate R09 配置 ─────────────────────────────────────────────────
@@ -194,5 +217,5 @@ gate_r09:
   p0_required: true
   p1_coverage_target: 0.7
   p2_skip: true
-  test_class: "TaskAuditControllerTest"
-  note: "本 Phase 包含任务审计记录、查询、清理、租户隔离测试"
+  test_class: "TaskExecutionLogControllerTest"
+  note: "本 Phase 包含任务执行日志记录（成功/失败）、查询（按名称/状态/时间）、清理、租户隔离测试"
