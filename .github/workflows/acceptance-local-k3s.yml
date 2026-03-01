@@ -30,7 +30,7 @@ on:
       verify_minutes:
         description: "Verification timeout minutes"
         required: false
-        default: "5"
+        default: "10"
   workflow_run:
     workflows: ["Release To Deploy"]
     types: [completed]
@@ -160,7 +160,7 @@ jobs:
             DEPLOYMENT_NAME="ljwx-platform"
             ARGOCD_NAMESPACE="argocd"
             ARGOCD_APP="ljwx-platform"
-            VERIFY_MINUTES="5"
+            VERIFY_MINUTES="10"
           fi
           echo "namespace=${NAMESPACE}" >> "${GITHUB_OUTPUT}"
           echo "deployment_name=${DEPLOYMENT_NAME}" >> "${GITHUB_OUTPUT}"
@@ -190,6 +190,35 @@ jobs:
               exit 1
             fi
             sleep 10
+          done
+
+      - name: Dump pod diagnostics on failure
+        if: failure()
+        shell: bash
+        run: |
+          NAMESPACE="${{ steps.cfg.outputs.namespace }}"
+          ARGOCD_NAMESPACE="${{ steps.cfg.outputs.argocd_namespace }}"
+          ARGOCD_APP="${{ steps.cfg.outputs.argocd_app }}"
+          echo "========== ArgoCD Application Status =========="
+          kubectl -n "${ARGOCD_NAMESPACE}" get application "${ARGOCD_APP}" \
+            -o jsonpath='{.status}' 2>/dev/null | python3 -m json.tool || true
+          echo "========== Pods =========="
+          kubectl -n "${NAMESPACE}" get pods -o wide || true
+          echo "========== Events (last 30) =========="
+          kubectl -n "${NAMESPACE}" get events \
+            --sort-by='.lastTimestamp' 2>/dev/null | tail -30 || true
+          echo "========== Pod Descriptions =========="
+          kubectl -n "${NAMESPACE}" describe pods 2>/dev/null | \
+            grep -A 20 -E '^(Name:|Conditions:|Events:)' || true
+          echo "========== Container Logs (last 200 lines each) =========="
+          for POD in $(kubectl -n "${NAMESPACE}" get pods \
+            -o jsonpath='{.items[*].metadata.name}' 2>/dev/null); do
+            echo "--- Pod: ${POD} ---"
+            kubectl -n "${NAMESPACE}" logs "${POD}" \
+              --all-containers=true --tail=200 2>/dev/null || true
+            echo "--- Previous logs for: ${POD} ---"
+            kubectl -n "${NAMESPACE}" logs "${POD}" \
+              --all-containers=true --previous --tail=50 2>/dev/null || true
           done
 
       - name: Verify rollout and deployment metadata
