@@ -16,5 +16,8 @@
     "build:all": "pnpm run build:shared && pnpm --filter './ljwx-platform-*' build",
     "type-check": "pnpm --filter './ljwx-platform-*' type-check",
     "lint": "pnpm --filter './ljwx-platform-*' lint"
+  },
+  "dependencies": {
+    "ccusage": "^18.0.8"
   }
 }
