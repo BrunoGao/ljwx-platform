@@ -881,11 +881,29 @@ permissions:
     module: "outbox"
     phase: 34
 
-  # 监控（修正：view 为废弃动作，改为 list）
+  # 监控
   - code: "system:monitor:list"
     name: "监控查看"
     description: "查看系统监控信息"
     module: "monitor"
+
+  - code: "system:monitor:server"
+    name: "服务器监控"
+    description: "查看服务器 CPU/内存/磁盘信息"
+    module: "monitor"
+    phase: 25
+
+  - code: "system:monitor:jvm"
+    name: "JVM 监控"
+    description: "查看 JVM 堆内存和 GC 信息"
+    module: "monitor"
+    phase: 25
+
+  - code: "system:monitor:cache"
+    name: "缓存监控"
+    description: "查看 Caffeine 缓存统计"
+    module: "monitor"
+    phase: 25
 
 # 权限命名规范
 naming_rules:

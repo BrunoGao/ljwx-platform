@@ -127,7 +127,7 @@ VITE_APP_BASE_API=http://localhost:8080
 ### gate-manifest.sh
 
 检查：
-- 7 列审计字段（tenant_id, created_by, created_time, updated_by, updated_time, deleted, version）
+- 7 列审计字段（均非空且含默认值，字段名详见 CLAUDE.md §审计字段完整性）
 - 禁止 `^` 版本号（caret）
 - 禁止 `VITE_API_BASE_URL`
 - 禁止 `IF NOT EXISTS` in Flyway SQL

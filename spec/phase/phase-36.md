@@ -63,7 +63,7 @@ scope:
 ### HTTP 指标
 
 - `http_server_requests_seconds_count{status="200"}`
-- `http_server_requests_seconds_sum{uri="/api/v1/users"}`
+- `http_server_requests_seconds_sum{routeTemplate="/api/v1/users"}`
 
 ### 业务指标
 
@@ -91,15 +91,16 @@ public class TenantMetricsFilter extends OncePerRequestFilter {
             filterChain.doFilter(request, response);
         } finally {
             long duration = System.currentTimeMillis() - startTime;
-            Long tenantId = TenantContext.getTenantId();
+            Long tId = TenantContext.getTenantId();
 
-            // 记录租户请求量（写入 Loki,不写 Prometheus）
-            log.info("tenant_request tenant_id={} uri={} duration={}ms",
-                    tenantId, request.getRequestURI(), duration);
+            // 记录租户请求量（写入 Loki JSON 字段，不写 Prometheus label）
+            // 注意: t_id/path 作为 JSON 字段写入日志，禁止作为高基数 Prometheus label
+            log.info("tenant_request t_id={} path={} duration={}ms",
+                    tId, request.getRequestURI(), duration);
 
             // 记录全局指标（写入 Prometheus）
-            // 注意: 禁止使用 tenant_id 作为 label（高基数，违反 observability.yml 黑名单）
-            // 租户维度数据通过上方的 Loki 日志查询聚合
+            // 禁止将租户 ID 作为 label（高基数，违反 observability.yml 黑名单）
+            // 租户维度数据通过上方的 Loki 日志字段查询聚合
             Counter.builder("http_requests_total")
                    .tag("status", String.valueOf(response.getStatus()))
                    .register(meterRegistry)

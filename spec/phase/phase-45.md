@@ -71,7 +71,7 @@ scope:
 | result | TEXT | | 执行结果 |
 | error_message | TEXT | | 错误信息 |
 | error_stack | TEXT | | 错误堆栈 |
-| server_ip | VARCHAR(50) | | 服务器 IP |
+| server_ip | VARCHAR(50) | | 服务器地址 |
 | server_name | VARCHAR(100) | | 服务器名称 |
 | tenant_id | BIGINT | NOT NULL, DEFAULT 0, INDEX | 框架自动填充 |
 | created_by | BIGINT | NOT NULL, DEFAULT 0 | 创建人 |
@@ -125,7 +125,7 @@ scope:
 | startTimeBegin | LocalDateTime | 开始时间（起） |
 | startTimeEnd | LocalDateTime | 开始时间（止） |
 
-**禁止字段**：`tenantId`（框架自动注入）
+**禁止字段**：`tenant_id`（框架自动注入，禁止在 DTO 中声明）
 
 ### TaskExecutionLogVO（响应）
 
@@ -142,11 +142,11 @@ scope:
 | result | String | 执行结果 |
 | errorMessage | String | 错误信息 |
 | errorStack | String | 错误堆栈 |
-| serverIp | String | 服务器 IP |
+| serverIp | String | 服务器地址 |
 | serverName | String | 服务器名称 |
 | createdTime | LocalDateTime | 创建时间 |
 
-**禁止字段**：`tenantId`、`deleted`、`createdBy`、`updatedBy`、`updatedTime`、`version`
+**禁止字段**：`tenant_id`、`deleted`、`createdBy`、`updatedBy`、`updatedTime`、`version`
 
 ### TaskLogStatsVO（统计响应）
 
@@ -330,4 +330,4 @@ P0 强制覆盖（Gate R09 检查）：
 - 日志写入失败：不影响任务执行,记录到 Loki
 - 日志保留：30 天,定期清理
 - 分区策略：按月分区,提升查询性能
-- Loki labels：仅 app/env/level,禁止 tenantId/taskName
+- Loki labels：仅 app/env/level,禁止高基数字段（参见 observability.yml 黑名单）

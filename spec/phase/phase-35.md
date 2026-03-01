@@ -38,7 +38,7 @@ scope:
 
 **解决方案**:
 1. Logback JSON 格式输出
-2. MDC 注入 traceId、tenantId、userId
+2. MDC 注入 trace_id、tenant_id、user_id（JSON 字段，非 Loki label）
 3. Fluent Bit 采集日志到 Loki
 4. Grafana 查询和告警
 
@@ -55,12 +55,12 @@ scope:
 | logger | string | 日志记录器名称 |
 | thread | string | 线程名 |
 | message | string | 日志消息 |
-| traceId | string | 链路追踪 ID |
-| tenantId | long | 租户 ID |
-| userId | long | 用户 ID |
-| requestUri | string | 请求 URI |
+| trace_id | string | 链路追踪 ID（JSON 字段，非 Loki label）|
+| tenant_id | long | 租户 ID（JSON 字段，非 Loki label）|
+| user_id | long | 用户 ID（JSON 字段，非 Loki label）|
+| requestUri | string | 请求路径 |
 | requestMethod | string | 请求方法 |
-| clientIp | string | 客户端 IP |
+| clientIp | string | 客户端地址 |
 | exception | object | 异常堆栈（如有） |
 
 ---
@@ -133,9 +133,9 @@ public class LoggingFilter extends OncePerRequestFilter {
 
 ## 业务规则
 
-- **BL-35-01**：每个请求 → 生成唯一 traceId → 注入 MDC
-- **BL-35-02**：TenantContext 存在 → 注入 tenantId → 方便租户维度查询
-- **BL-35-03**：UserContext 存在 → 注入 userId → 方便用户维度查询
+- **BL-35-01**：每个请求 → 生成唯一 trace_id → 注入 MDC
+- **BL-35-02**：TenantContext 存在 → 注入 tenant_id → 方便租户维度查询（JSON 字段，非 Loki label）
+- **BL-35-03**：UserContext 存在 → 注入 user_id → 方便用户维度查询（JSON 字段，非 Loki label）
 - **BL-35-04**：请求结束 → MDC.clear() → 避免线程池污染
 - **BL-35-05**：异常日志 → 包含完整堆栈 → 方便排查问题
 
@@ -144,9 +144,9 @@ public class LoggingFilter extends OncePerRequestFilter {
 ## 验收条件
 
 - **AC-01**：日志输出为 JSON 格式
-- **AC-02**：MDC 包含 traceId、tenantId、userId
+- **AC-02**：MDC 包含 trace_id、tenant_id、user_id（均为 JSON 字段，不作为 Loki label）
 - **AC-03**：Fluent Bit 正常采集日志到 Loki
-- **AC-04**：Grafana 可按 tenantId 查询日志
+- **AC-04**：Grafana 可按 tenant_id JSON 字段过滤日志
 - **AC-05**：异常日志包含完整堆栈
 
 ---
