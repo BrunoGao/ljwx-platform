@@ -3,7 +3,7 @@
 # 所有 Phase spec 中的可观测配置必须符合这里的规范
 
 version: "1.0"
-last_updated: "2025-03-01"
+last_updated: "2026-03-01"
 
 # ==================== Loki 日志配置 ====================
 loki:
@@ -58,14 +58,16 @@ loki:
 prometheus:
   # Label 白名单 (低基数,允许作为 label)
   labels_whitelist:
-    - app          # 应用名称
-    - env          # 环境
-    - instance     # 实例 ID
-    - job          # Job 名称
-    - method       # HTTP 方法 (GET/POST/PUT/DELETE)
-    - status       # HTTP 状态码 (200/400/500)
+    - app           # 应用名称
+    - env           # 环境
+    - instance      # 实例 ID
+    - job           # Job 名称
+    - method        # HTTP 方法 (GET/POST/PUT/DELETE)
+    - status        # HTTP 状态码 (200/400/500)
     - routeTemplate # 路由模板 (/api/v1/users/{id})
-    - exception    # 异常类型 (NullPointerException)
+                    # 注意: Spring Boot Actuator 默认使用 `uri` label 名称（已含路径参数模板化）
+                    #       自定义 Filter/Interceptor 应将原始 URI 模板化后写入 routeTemplate tag
+    - exception     # 异常类型 (NullPointerException)
 
   # Label 黑名单 (高基数,禁止作为 label)
   labels_blacklist:
@@ -73,7 +75,7 @@ prometheus:
     - user_id      # 用户 ID (高基数)
     - trace_id     # 链路追踪 ID (高基数)
     - request_id   # 请求 ID (高基数)
-    - uri          # 原始 URI (高基数)
+    - uri          # 原始 URI (高基数，必须模板化后才能作为 routeTemplate 使用)
     - ip           # IP 地址 (高基数)
 
   # 指标命名规范
@@ -120,6 +122,7 @@ alerting:
       > 0.01
     description: "HTTP 5xx 错误率超过 1%"
     severity: "critical"
+    note: "阈值为 0.01 (1%)，Phase 36/37 spec 中的 0.05 (5%) 与此 SSOT 冲突，以本文件为准"
 
   # P99 延迟告警
   p99_latency:
@@ -129,6 +132,7 @@ alerting:
       ) > 3
     description: "P99 延迟超过 3 秒"
     severity: "warning"
+    note: "by (le, method, routeTemplate) 与 labels_whitelist 对齐；若使用 Spring Boot Actuator 默认指标，routeTemplate 对应实际的 uri label"
 
   # JVM 内存告警
   jvm_memory:
@@ -144,14 +148,15 @@ slow_api:
     error: 10000 # 10 秒,输出 ERROR 日志
 
   # 慢接口日志格式
+  # 注意: 使用 Logback MDC 占位符语法 %X{key}，禁止使用 Spring EL 的 ${key}
   log_format: |
     {
       "level": "WARN",
       "message": "Slow API detected",
-      "traceId": "${traceId}",
-      "method": "${method}",
-      "uri": "${uri}",
-      "duration": ${duration},
+      "traceId": "%X{traceId}",
+      "method": "%X{method}",
+      "uri": "%X{uri}",
+      "duration": "%X{duration}",
       "threshold": 3000
     }
 
@@ -164,7 +169,7 @@ rules:
 
   prometheus_labels:
     - "禁止使用 tenant_id/user_id/trace_id 作为 label"
-    - "使用 routeTemplate 而不是原始 uri"
+    - "使用 routeTemplate 而不是原始 uri（原始 uri 为高基数黑名单）"
     - "租户维度统计通过 Loki 或 PostgreSQL 实现"
 
   alerting:
@@ -172,8 +177,27 @@ rules:
     - "避免低流量误判,可加最小请求量门槛"
     - "P99 延迟使用 histogram_quantile 计算"
 
+  logging:
+    - "日志占位符必须使用 Logback MDC 语法 %X{key}，禁止使用 ${key}（Spring EL 冲突）"
+
 # ==================== 相关 ADR ====================
 related_adrs:
   - "ADR-0003: Prometheus 指标维度坚持低基数"
   - "ADR-0004: Outbox Pattern"
   - "ADR-0005: Outbox 投递采用 NOTIFY 触发 + 轮询兜底"
+
+# 变更历史
+changelog:
+  - version: "1.0"
+    date: "2025-03-01"
+    changes:
+      - "初始版本"
+
+  - version: "1.1"
+    date: "2026-03-01"
+    changes:
+      - "修正 slow_api.log_format：${traceId} 等 Spring EL 占位符 → %X{traceId} Logback MDC 语法"
+      - "为 error_rate 告警补充 note：阈值 0.01 (1%) 为 SSOT，Phase 36/37 中的 0.05 (5%) 以本文件为准"
+      - "为 routeTemplate label 补充 note：说明与 Spring Boot Actuator 默认 uri label 的对应关系"
+      - "为 p99_latency 补充 note：grouping 维度与 labels_whitelist 对齐说明"
+      - "在 rules 中新增 logging 规范条目"

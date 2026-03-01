@@ -3,11 +3,20 @@
 # 所有 Phase spec 中出现的权限必须来自这里
 
 version: "1.0"
-last_updated: "2025-03-01"
+last_updated: "2026-03-01"
 
 # 权限命名标准: {resource}:{action}
 # 标准动作: list, query, add, edit, delete, export, import
 # 禁止使用: view, update, remove
+#
+# camelCase 例外（历史约定，不再新增）:
+#   - system:user:resetPwd         （重置密码，动词+名词复合）
+#   - system:online:forceLogout    （强制下线，动词+名词复合）
+#   - tenant:domain:setPrimary     （设置主域名，动词+名词复合）
+#   - system:taskLog:*             （任务日志模块，模块名含大写 L）
+#   - system:importExport:*        （导入导出中心，模块名含大写 E）
+#   - system:openApi:*             （开放 API 管理，模块名含大写 A）
+# 新增权限必须使用全小写 snake_case 或全小写 kebab-case。
 
 permissions:
   # ==================== L1 平台治理层 ====================
@@ -117,6 +126,7 @@ permissions:
     description: "设置为主域名"
     module: "tenant"
     phase: 43
+    note: "camelCase 历史约定，见文件顶部说明"
 
   # 套餐管理
   - code: "system:package:list"
@@ -176,6 +186,7 @@ permissions:
     name: "重置密码"
     description: "重置用户密码"
     module: "user"
+    note: "camelCase 历史约定，见文件顶部说明"
 
   - code: "system:user:export"
     name: "导出用户"
@@ -205,7 +216,7 @@ permissions:
 
   - code: "system:role:edit"
     name: "编辑角色"
-    description: "修改角色信息"
+    description: "修改角色信息（含数据范围配置，Phase 44 复用）"
     module: "role"
 
   - code: "system:role:delete"
@@ -314,30 +325,35 @@ permissions:
     description: "查看任务执行日志列表"
     module: "task"
     phase: 45
+    note: "camelCase 历史约定，见文件顶部说明"
 
   - code: "system:taskLog:query"
     name: "任务日志详情"
     description: "查看任务日志详细信息"
     module: "task"
     phase: 45
+    note: "camelCase 历史约定，见文件顶部说明"
 
   - code: "system:taskLog:delete"
     name: "删除任务日志"
     description: "删除任务执行日志"
     module: "task"
     phase: 45
+    note: "camelCase 历史约定，见文件顶部说明"
 
   - code: "system:taskLog:clean"
     name: "清理任务日志"
     description: "清理历史任务日志"
     module: "task"
     phase: 45
+    note: "camelCase 历史约定，见文件顶部说明"
 
   - code: "system:taskLog:stats"
     name: "任务日志统计"
     description: "查看任务执行统计"
     module: "task"
     phase: 45
+    note: "camelCase 历史约定，见文件顶部说明"
 
   # ==================== L3 基础能力层 ====================
 
@@ -487,79 +503,92 @@ permissions:
     description: "导入数据文件"
     module: "importExport"
     phase: 46
+    note: "camelCase 历史约定，见文件顶部说明"
 
   - code: "system:importExport:export"
     name: "导出数据"
     description: "导出数据文件"
     module: "importExport"
     phase: 46
+    note: "camelCase 历史约定，见文件顶部说明"
 
   - code: "system:importExport:query"
     name: "任务详情"
     description: "查看导入导出任务详情"
     module: "importExport"
     phase: 46
+    note: "camelCase 历史约定，见文件顶部说明"
 
   - code: "system:importExport:list"
     name: "任务列表"
     description: "查看导入导出任务列表"
     module: "importExport"
     phase: 46
+    note: "camelCase 历史约定，见文件顶部说明"
 
-  # ��放 API 管理
+  # 开放 API 管理
   - code: "system:openApi:app:add"
     name: "新增应用"
     description: "创建开放 API 应用"
     module: "openApi"
     phase: 47
+    note: "camelCase 历史约定，见文件顶部说明"
 
   - code: "system:openApi:app:edit"
     name: "编辑应用"
     description: "修改开放 API 应用"
     module: "openApi"
     phase: 47
+    note: "camelCase 历史约定，见文件顶部说明"
 
   - code: "system:openApi:app:delete"
     name: "删除应用"
     description: "删除开放 API 应用"
     module: "openApi"
     phase: 47
+    note: "camelCase 历史约定，见文件顶部说明"
 
   - code: "system:openApi:app:query"
     name: "应用详情"
     description: "查看开放 API 应用详情"
     module: "openApi"
     phase: 47
+    note: "camelCase 历史约定，见文件顶部说明"
 
   - code: "system:openApi:app:list"
     name: "应用列表"
     description: "查看开放 API 应用列表"
     module: "openApi"
     phase: 47
+    note: "camelCase 历史约定，见文件顶部说明"
 
   - code: "system:openApi:secret:add"
     name: "新增密钥"
     description: "创建应用密钥"
     module: "openApi"
     phase: 48
+    note: "camelCase 历史约定，见文件顶部说明"
 
   - code: "system:openApi:secret:edit"
     name: "轮换密钥"
     description: "轮换应用密钥"
     module: "openApi"
     phase: 48
+    note: "camelCase 历史约定，见文件顶部说明"
 
   - code: "system:openApi:secret:delete"
     name: "删除密钥"
     description: "删除应用密钥"
     module: "openApi"
     phase: 48
+    note: "camelCase 历史约定，见文件顶部说明"
 
   - code: "system:openApi:secret:list"
     name: "密钥列表"
     description: "查看应用密钥列表"
     module: "openApi"
     phase: 48
+    note: "camelCase 历史约定，见文件顶部说明"
 
   # Webhook 管理
   - code: "system:webhook:add"
@@ -793,6 +822,7 @@ permissions:
     name: "强制下线"
     description: "强制用户下线"
     module: "online"
+    note: "camelCase 历史约定，见文件顶部说明"
 
   # 数据脱敏
   - code: "system:data:unmask"
@@ -814,8 +844,8 @@ permissions:
     module: "outbox"
     phase: 34
 
-  # 监控
-  - code: "system:monitor:view"
+  # 监控（修正：view 为废弃动作，改为 list）
+  - code: "system:monitor:list"
     name: "监控查看"
     description: "查看系统监控信息"
     module: "monitor"
@@ -841,3 +871,18 @@ naming_rules:
     - "system:user:list"
     - "system:role:add"
     - "tenant:brand:edit"
+
+# 变更历史
+changelog:
+  - version: "1.0"
+    date: "2025-03-01"
+    changes:
+      - "初始版本"
+
+  - version: "1.1"
+    date: "2026-03-01"
+    changes:
+      - "修正 system:monitor:view → system:monitor:list（view 为已废弃动作）"
+      - "补充文件顶部 camelCase 例外说明（setPrimary/resetPwd/forceLogout/taskLog/importExport/openApi）"
+      - "为所有 camelCase 权限条目添加 note 字段，说明历史约定"
+      - "system:role:edit 补充说明含数据范围配置（Phase 44 复用此权限）"

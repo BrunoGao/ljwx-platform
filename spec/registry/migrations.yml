@@ -3,7 +3,7 @@
 # 所有 Phase spec 中的迁移必须在这里登记
 
 version: "1.0"
-last_updated: "2025-03-01"
+last_updated: "2026-03-01"
 
 # 版本号规则:
 # - 格式: VNNN__description.sql
@@ -118,6 +118,7 @@ migrations:
     description: "create_indexes"
     type: "DDL"
     phase: 21
+    # 注意: V021 Flyway 顺序先于 V022 (sys_menu)，若索引引用 sys_menu 需确认依赖
 
   - version: "022"
     description: "create_sys_menu"
@@ -140,9 +141,10 @@ migrations:
     phase: 21
 
   - version: "026"
-    description: "create_sys_login_log"
-    type: "DDL"
+    description: "alter_sys_login_log_add_columns"
+    type: "DDL-ALTER"
     phase: 22
+    note: "实际内容为 ALTER TABLE sys_login_log，非 CREATE TABLE；历史描述有误已修正"
 
   - version: "027"
     description: "create_sys_tenant_package"
@@ -169,7 +171,9 @@ migrations:
     type: "DDL"
     phase: 29
 
-  # ==================== Phase 33-40 (P0 + P1 部分) ====================
+  # Phase 32 为纯文档/ADR 阶段，无数据库迁移（V032 保留缺号）
+
+  # ==================== Phase 33-39 (P0 基础设施) ====================
   - version: "033"
     description: "create_cache_invalidation_event"
     type: "DDL"
@@ -184,26 +188,8 @@ migrations:
     tables: ["sys_outbox_event"]
     status: "planned"
 
-  - version: "035"
-    description: "create_sys_prometheus_metrics"
-    type: "DDL"
-    phase: 36
-    tables: ["sys_prometheus_metrics"]
-    status: "planned"
-
-  - version: "036"
-    description: "create_sys_loki_labels"
-    type: "DDL"
-    phase: 35
-    tables: ["sys_loki_labels"]
-    status: "planned"
-
-  - version: "037"
-    description: "create_sys_api_rate_limit"
-    type: "DDL"
-    phase: 37
-    tables: ["sys_api_rate_limit"]
-    status: "planned"
+  # V035-V037 已移除（原为幽灵条目：表不存在于任何 Phase spec，磁盘无对应 SQL 文件）
+  # Phase 35 (结构化日志) / Phase 36 (Prometheus) / Phase 37 (Grafana) 均为纯配置/代码，无数据库迁移
 
   - version: "038"
     description: "create_sys_tenant_brand"
@@ -217,8 +203,9 @@ migrations:
     type: "DML"
     phase: 38
     status: "planned"
+    note: "Phase 38 spec scope 需补充此文件"
 
-  # ==================== Phase 40-53 (P1 剩余) ====================
+  # ==================== Phase 40-53 (P1 业务功能) ====================
 
   - version: "040"
     description: "create_sys_post"
@@ -344,7 +331,24 @@ rules:
 
 # 版本号分配策略
 allocation_strategy:
-  phase_0_32: "V001-V032 (已完成)"
-  phase_33_40: "V033-V039 (P0 + P1 部分)"
-  phase_41_53: "V040-V060 (P1 剩余,预留)"
+  phase_0_32:  "V001-V031 (已完成，V032 无迁移)"
+  phase_33_39: "V033-V039 (P0 基础设施，V035/V036/V037 已释放)"
+  phase_40_53: "V040-V060 (P1 业务功能，预留至 V060)"
   phase_54_plus: "V061+ (P2 及以后)"
+
+# 变更历史
+changelog:
+  - version: "1.0"
+    date: "2025-03-01"
+    changes:
+      - "初始版本"
+
+  - version: "1.1"
+    date: "2026-03-01"
+    changes:
+      - "修正 V026 描述：create_sys_login_log → alter_sys_login_log_add_columns，补充 DDL-ALTER 类型"
+      - "移除幽灵条目 V035/V036/V037（表不存在任何 Phase spec，磁盘无对应文件）"
+      - "修正 allocation_strategy：phase_33_40 拆分为 phase_33_39 / phase_40_53，与实际版本号对应"
+      - "补充 V032 无迁移说明（Phase 32 为纯文档阶段）"
+      - "补充 V039 note：Phase 38 spec scope 需同步更新"
+      - "补充 V021 注释：Flyway 顺序先于 V022，需确认索引无 sys_menu 依赖"

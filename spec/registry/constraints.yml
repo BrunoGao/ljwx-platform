@@ -3,7 +3,7 @@
 # 所有 Phase spec 必须符合这里的约束,违反必须先修改此文件或补充 ADR
 
 version: "1.0"
-last_updated: "2025-03-01"
+last_updated: "2026-03-01"
 
 # ==================== 基础设施约束 ====================
 infrastructure:
@@ -96,7 +96,9 @@ cache_strategy:
   # 缓存失效策略
   invalidation:
     method: "Redis Pub/Sub 广播"
-    channel: "cache:evict"
+    channel: "cache:invalidation"
+    # 修正说明: 原值 "cache:evict" 与 Phase 33 实现的 "cache:invalidation" 冲突，
+    #           统一为 "cache:invalidation"（语义更清晰，Phase 33 已实现）
     payload: "{cacheName}:{cacheKey}"
     fallback: "Caffeine TTL 自然过期"
     notes: "ADR-0001"
@@ -121,7 +123,7 @@ observability:
   # OpenTelemetry 追踪
   opentelemetry:
     enabled: false
-    notes: "Phase 55 (P2) 引入"
+    notes: "Phase 55+ (P2) 引入，当前 Phase 53 范围内不实现"
 
 # ==================== 事件驱动约束 ====================
 event_driven:
@@ -155,6 +157,8 @@ security:
 
     hmac:
       algorithm: "HMAC-SHA256"
+      # 注意: HMAC-SHA256 是 MAC 算法，签名 = HMAC(key=secretKey, data=message)
+      # 禁止使用: SHA256(appKey + timestamp + nonce + body + secretKey)（简单拼接哈希，非 HMAC）
       timestamp_window: "±5min"
       nonce_ttl: "10min"
       notes: "ADR-0006, Phase 47-48"
@@ -163,7 +167,14 @@ security:
   data_masking:
     method: "Jackson 序列化层"
     unmask_permission: "system:data:unmask"
-    mask_types: ["PHONE", "ID_CARD", "BANK_CARD", "EMAIL", "NAME", "ADDRESS"]
+    mask_types:
+      - PHONE    # 手机号（11位，中间4位掩码）；注：代码中枚举名历史上也出现 MOBILE，统一以 PHONE 为准
+      - ID_CARD  # 身份证（中间段掩码）
+      - BANK_CARD # 银行卡（中间段掩码）
+      - EMAIL    # 邮箱（用户名部分掩码）
+      - NAME     # 姓名（中间字掩码）
+      - ADDRESS  # 地址（精确地址部分掩码）
+      - CUSTOM   # 自定义掩码（由 @Mask(type=CUSTOM, pattern=...) 指定）
     notes: "ADR-0010, Phase 39"
 
   # 敏感数据加密
@@ -201,6 +212,12 @@ database:
     unique_index: "租户级唯一索引必须包含 tenant_id"
     notes: "spec/01-constraints.md"
 
+  # PostgreSQL 特有语法
+  postgresql:
+    array_contains: "使用 col @> ARRAY[...]::bigint[] 替代 MySQL 的 FIND_IN_SET()"
+    json_query: "使用 jsonb 类型 + ->> 操作符"
+    notes: "禁止使用 MySQL 方言，所有 SQL 必须兼容 PostgreSQL 14+"
+
 # ==================== 开放平台约束 ====================
 open_platform:
   # 认证
@@ -216,7 +233,7 @@ open_platform:
   tenant_binding:
     method: "open_app.tenant_id 强绑定"
     ignore_client_header: true
-    notes: "ADR-0007, Phase 47-48"
+    notes: "ADR-0007, Phase 47-48；open_app 表必须包含 tenant_id 列（审计字段之一）"
 
   # 限流
   rate_limiting:
@@ -243,13 +260,14 @@ workflow:
   dept_leader:
     primary_field: "leader_user_id"
     multi_leader_table: "sys_dept_leader (可选)"
-    notes: "ADR-0009, Phase 40"
+    notes: "ADR-0009, Phase 21 (sys_dept 表中的 leader_user_id 列)"
+    # 修正说明: 原值引用 Phase 40（岗位管理），有误；leader_user_id 在 Phase 21 的 sys_dept 中定义
 
 # ==================== 相关 ADR ====================
 related_adrs:
   - "ADR-0001: 多级缓存 (Caffeine L1 + Redis L2 + Pub/Sub)"
   - "ADR-0002: Token 黑名单与在线用户采用 Redis Only"
-  - "ADR-0003: Prometheus 低基数,租户维度用日志/落库"
+  - "ADR-0003: Prometheus 指标维度坚持低基数"
   - "ADR-0004: Outbox Pattern"
   - "ADR-0005: Outbox 投递采用 NOTIFY 触发 + 轮询兜底"
   - "ADR-0006: HMAC + timestamp + nonce + 密钥轮换"
@@ -268,3 +286,14 @@ changelog:
       - "明确不使用 MQ,使用 Outbox Pattern 替代"
       - "明确 Loki/Prometheus label 白名单和黑名单"
       - "明确缓存三档策略"
+
+  - version: "1.1"
+    date: "2026-03-01"
+    changes:
+      - "修正 cache_strategy.invalidation.channel: cache:evict → cache:invalidation（与 Phase 33 实现对齐）"
+      - "data_masking.mask_types 新增 CUSTOM 类型；PHONE 为标准枚举名，MOBILE 为历史别名，以 PHONE 为准"
+      - "workflow.dept_leader.notes 修正：Phase 40 → Phase 21（leader_user_id 在 sys_dept 中定义）"
+      - "opentelemetry.notes 修正：Phase 55 (P2) → Phase 55+ (P2)，补充当前范围说明"
+      - "security.authentication.hmac 补充 HMAC 算法说明，明确禁止简单拼接哈希"
+      - "open_platform.tenant_binding 补充 open_app.tenant_id 列要求说明"
+      - "新增 database.postgresql 约束节点，明确 PostgreSQL 方言与 MySQL 方言的替换规则"
