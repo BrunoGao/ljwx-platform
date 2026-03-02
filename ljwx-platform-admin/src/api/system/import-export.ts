@@ -24,12 +24,14 @@ export interface ImportExportTaskQueryDTO {
 }
 
 export interface ImportRequestDTO {
+  taskType: 'IMPORT'
   businessType: 'USER' | 'ROLE' | 'DEPT' | 'MENU'
   fileName: string
   file: File
 }
 
 export interface ExportRequestDTO {
+  taskType: 'EXPORT'
   businessType: 'USER' | 'ROLE' | 'DEPT' | 'MENU'
   fileName: string
 }
