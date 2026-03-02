@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ljwx.platform.app.infra.mapper.RoleDataScopeMapper">
+
+    <resultMap id="BaseResultMap" type="com.ljwx.platform.app.domain.entity.RoleDataScope">
+        <id column="id" property="id"/>
+        <result column="role_id" property="roleId"/>
+        <result column="dept_id" property="deptId"/>
+        <result column="tenant_id" property="tenantId"/>
+        <result column="created_by" property="createdBy"/>
+        <result column="created_time" property="createdTime"/>
+        <result column="updated_by" property="updatedBy"/>
+        <result column="updated_time" property="updatedTime"/>
+        <result column="deleted" property="deleted"/>
+        <result column="version" property="version"/>
+    </resultMap>
+
+    <!-- 根据角色 ID 查询自定义部门列表 -->
+    <select id="selectDeptIdsByRoleId" resultType="java.lang.Long">
+        SELECT dept_id
+        FROM sys_role_data_scope
+        WHERE role_id = #{roleId}
+          AND deleted = FALSE
+    </select>
+
+    <!-- 根据多个角色 ID 查询自定义部门列表（去重） -->
+    <select id="selectDeptIdsByRoleIds" resultType="java.lang.Long">
+        SELECT DISTINCT dept_id
+        FROM sys_role_data_scope
+        WHERE role_id IN
+        <foreach collection="roleIds" item="roleId" open="(" separator="," close=")">
+            #{roleId}
+        </foreach>
+          AND deleted = FALSE
+    </select>
+
+    <!-- 根据角色 ID 删除所有数据范围记录（逻辑删除） -->
+    <update id="deleteByRoleId">
+        UPDATE sys_role_data_scope
+        SET deleted = TRUE,
+            updated_time = CURRENT_TIMESTAMP
+        WHERE role_id = #{roleId}
+          AND deleted = FALSE
+    </update>
+
+    <!-- 批量插入角色数据范围 -->
+    <insert id="batchInsert">
+        INSERT INTO sys_role_data_scope (
+            id, role_id, dept_id, tenant_id, created_by, created_time,
+            updated_by, updated_time, deleted, version
+        ) VALUES
+        <foreach collection="records" item="record" separator=",">
+            (
+                #{record.id}, #{record.roleId}, #{record.deptId}, #{record.tenantId},
+                #{record.createdBy}, #{record.createdTime}, #{record.updatedBy},
+                #{record.updatedTime}, #{record.deleted}, #{record.version}
+            )
+        </foreach>
+    </insert>
+
+    <!-- 根据角色 ID 查询数据范围记录列表 -->
+    <select id="selectByRoleId" resultMap="BaseResultMap">
+        SELECT id, role_id, dept_id, tenant_id, created_by, created_time,
+               updated_by, updated_time, deleted, version
+        FROM sys_role_data_scope
+        WHERE role_id = #{roleId}
+          AND deleted = FALSE
+    </select>
+
+</mapper>
