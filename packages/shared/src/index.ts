@@ -67,6 +67,9 @@ export type {
   TenantPackageQueryDTO,
   TenantPackageCreateDTO,
   TenantPackageUpdateDTO,
+  TaskExecutionLogVO,
+  TaskExecutionLogQueryDTO,
+  TaskLogStatsVO,
 } from './types/common'
 
 // ── Constants ──
