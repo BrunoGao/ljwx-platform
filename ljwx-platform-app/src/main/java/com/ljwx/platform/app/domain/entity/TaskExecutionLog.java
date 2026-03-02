@@ -1,12 +1,10 @@
 package com.ljwx.platform.app.domain.entity;
 
-import com.baomidou.mybatisplus.annotation.TableName;
 import com.ljwx.platform.core.entity.BaseEntity;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import lombok.experimental.SuperBuilder;
 
 import java.time.LocalDateTime;
 
@@ -14,12 +12,15 @@ import java.time.LocalDateTime;
  * 任务执行日志实体
  */
 @Data
-@SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode(callSuper = true)
-@TableName("sys_task_execution_log")
 public class TaskExecutionLog extends BaseEntity {
+
+    /**
+     * Primary Key (Snowflake ID)
+     */
+    private Long id;
 
     /**
      * 任务名称

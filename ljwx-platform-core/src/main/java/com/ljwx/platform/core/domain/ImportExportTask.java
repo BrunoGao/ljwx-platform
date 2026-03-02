@@ -1,6 +1,6 @@
 package com.ljwx.platform.core.domain;
 
-import com.baomidou.mybatisplus.annotation.TableName;
+import com.ljwx.platform.core.entity.BaseEntity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -12,7 +12,6 @@ import lombok.EqualsAndHashCode;
  */
 @Data
 @EqualsAndHashCode(callSuper = true)
-@TableName("sys_import_export_task")
 public class ImportExportTask extends BaseEntity {
 
     /**

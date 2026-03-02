@@ -1,15 +1,14 @@
 package com.ljwx.platform.app.service;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.ljwx.platform.app.dto.ImportExportTaskDTO;
 import com.ljwx.platform.app.dto.ImportExportTaskQueryDTO;
 import com.ljwx.platform.app.infra.mapper.ImportExportTaskMapper;
 import com.ljwx.platform.app.vo.ImportExportTaskVO;
 import com.ljwx.platform.app.domain.entity.ImportExportTask;
-import com.ljwx.platform.core.exception.BusinessException;
+import com.ljwx.platform.web.exception.BusinessException;
+import com.ljwx.platform.core.result.ErrorCode;
 import com.ljwx.platform.core.result.PageResult;
-import com.ljwx.platform.core.util.SnowflakeIdGenerator;
+import com.ljwx.platform.core.id.SnowflakeIdGenerator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
@@ -87,7 +86,7 @@ public class ImportExportService {
     public ImportExportTaskVO getTaskById(Long id) {
         ImportExportTask task = importExportTaskMapper.selectById(id);
         if (task == null) {
-            throw new BusinessException("任务不存在");
+            throw new BusinessException(ErrorCode.RESOURCE_NOT_FOUND, "任务不存在");
         }
         return convertToVO(task);
     }
@@ -96,28 +95,16 @@ public class ImportExportService {
      * List tasks with pagination
      */
     public PageResult<ImportExportTaskVO> listTasks(ImportExportTaskQueryDTO query) {
-        LambdaQueryWrapper<ImportExportTask> wrapper = new LambdaQueryWrapper<>();
+        ImportExportTask queryEntity = new ImportExportTask();
+        // Set query parameters based on DTO
+        List<ImportExportTask> tasks = importExportTaskMapper.selectList(queryEntity);
+        long total = importExportTaskMapper.count(queryEntity);
 
-        if (StringUtils.hasText(query.getTaskType())) {
-            wrapper.eq(ImportExportTask::getTaskType, query.getTaskType());
-        }
-        if (StringUtils.hasText(query.getBusinessType())) {
-            wrapper.eq(ImportExportTask::getBusinessType, query.getBusinessType());
-        }
-        if (StringUtils.hasText(query.getStatus())) {
-            wrapper.eq(ImportExportTask::getStatus, query.getStatus());
-        }
-
-        wrapper.orderByDesc(ImportExportTask::getCreatedTime);
-
-        Page<ImportExportTask> page = new Page<>(query.getPageNum(), query.getPageSize());
-        Page<ImportExportTask> result = importExportTaskMapper.selectPage(page, wrapper);
-
-        List<ImportExportTaskVO> voList = result.getRecords().stream()
+        List<ImportExportTaskVO> voList = tasks.stream()
                 .map(this::convertToVO)
                 .collect(Collectors.toList());
 
-        return new PageResult<>(voList, result.getTotal());
+        return new PageResult<>(voList, total);
     }
 
     /**

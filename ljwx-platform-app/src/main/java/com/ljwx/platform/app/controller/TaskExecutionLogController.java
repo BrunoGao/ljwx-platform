@@ -1,10 +1,10 @@
 package com.ljwx.platform.app.controller;
 
-import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.ljwx.platform.app.appservice.TaskExecutionLogAppService;
 import com.ljwx.platform.app.domain.dto.TaskExecutionLogQueryDTO;
 import com.ljwx.platform.app.domain.vo.TaskExecutionLogVO;
 import com.ljwx.platform.app.domain.vo.TaskLogStatsVO;
+import com.ljwx.platform.core.result.PageResult;
 import com.ljwx.platform.core.result.Result;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -28,7 +28,7 @@ public class TaskExecutionLogController {
      */
     @PreAuthorize("hasAuthority('system:taskLog:list')")
     @GetMapping
-    public Result<IPage<TaskExecutionLogVO>> list(TaskExecutionLogQueryDTO query) {
+    public Result<PageResult<TaskExecutionLogVO>> list(TaskExecutionLogQueryDTO query) {
         return Result.ok(taskExecutionLogAppService.list(query));
     }
 
