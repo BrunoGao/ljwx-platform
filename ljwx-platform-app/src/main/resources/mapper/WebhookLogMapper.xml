@@ -19,6 +19,51 @@
         <result property="createdTime" column="created_time"/>
     </resultMap>
 
+    <!-- Insert webhook log -->
+    <insert id="insert">
+        INSERT INTO sys_webhook_log (
+            id,
+            webhook_id,
+            event_type,
+            event_data,
+            request_url,
+            request_headers,
+            request_body,
+            response_status,
+            response_body,
+            retry_times,
+            status,
+            error_message,
+            tenant_id,
+            created_by,
+            created_time,
+            updated_by,
+            updated_time,
+            deleted,
+            version
+        ) VALUES (
+            #{id},
+            #{webhookId},
+            #{eventType},
+            #{eventData},
+            #{requestUrl},
+            #{requestHeaders},
+            #{requestBody},
+            #{responseStatus},
+            #{responseBody},
+            #{retryTimes},
+            #{status},
+            #{errorMessage},
+            #{tenantId},
+            #{createdBy},
+            #{createdTime},
+            #{updatedBy},
+            #{updatedTime},
+            #{deleted},
+            #{version}
+        )
+    </insert>
+
     <!-- Query webhook log list -->
     <select id="selectWebhookLogList" resultMap="WebhookLogVOMap">
         SELECT
