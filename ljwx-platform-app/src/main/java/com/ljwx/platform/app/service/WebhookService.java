@@ -71,7 +71,38 @@ public class WebhookService {
         try {
             config.setEventTypes(objectMapper.writeValueAsString(dto.getEventTypes()));
         } catch (JsonProcessingException e) {
-            throw new BusinessException(ErrorCode.INTERNAL_ERROR, "事件类型序列化失败");
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "事件类型序列化失败");
+        }
+
+        config.setSecretKey(dto.getSecretKey());
+        config.setStatus(dto.getStatus());
+        config.setRetryCount(dto.getRetryCount() != null ? dto.getRetryCount() : 5);
+        config.setTimeoutSeconds(dto.getTimeoutSeconds() != null ? dto.getTimeoutSeconds() : 5);
+
+        webhookConfigMapper.insert(config);
+        return config.getId();
+    }
+
+    /**
+     * Update webhook config
+     *
+     * @param id webhook config ID
+     * @param dto webhook config DTO
+     */
+    @Transactional
+    public void updateWebhookConfig(Long id, WebhookConfigDTO dto) {
+        WebhookConfig config = webhookConfigMapper.selectById(id);
+        if (config == null || config.getDeleted()) {
+            throw new BusinessException(ErrorCode.RESOURCE_NOT_FOUND, "Webhook 配置不存在");
+        }
+
+        config.setWebhookName(dto.getWebhookName());
+        config.setWebhookUrl(dto.getWebhookUrl());
+
+        try {
+            config.setEventTypes(objectMapper.writeValueAsString(dto.getEventTypes()));
+        } catch (JsonProcessingException e) {
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "事件类型序列化失败");
         }
 
         config.setSecretKey(dto.getSecretKey());
@@ -91,7 +122,7 @@ public class WebhookService {
     public void deleteWebhookConfig(Long id) {
         WebhookConfig config = webhookConfigMapper.selectById(id);
         if (config == null || config.getDeleted()) {
-            throw new BusinessException(ErrorCode.NOT_FOUND, "Webhook 配置不存在");
+            throw new BusinessException(ErrorCode.RESOURCE_NOT_FOUND, "Webhook 配置不存在");
         }
 
         config.setDeleted(true);
@@ -107,7 +138,7 @@ public class WebhookService {
     public WebhookConfigVO getWebhookConfigById(Long id) {
         WebhookConfigVO vo = webhookConfigMapper.selectWebhookConfigById(id);
         if (vo == null) {
-            throw new BusinessException(ErrorCode.NOT_FOUND, "Webhook 配置不存在");
+            throw new BusinessException(ErrorCode.RESOURCE_NOT_FOUND, "Webhook 配置不存在");
         }
         return vo;
     }

@@ -9,6 +9,7 @@ import com.ljwx.platform.app.domain.vo.TenantBrandVO;
 import com.ljwx.platform.app.infra.mapper.TenantBrandMapper;
 import com.ljwx.platform.app.util.CssSanitizer;
 import com.ljwx.platform.core.context.CurrentTenantHolder;
+import com.ljwx.platform.core.result.ErrorCode;
 import com.ljwx.platform.web.exception.BusinessException;
 import com.ljwx.platform.core.id.SnowflakeIdGenerator;
 import lombok.RequiredArgsConstructor;
@@ -33,6 +34,7 @@ public class TenantBrandAppService {
     private final TenantBrandMapper tenantBrandMapper;
     private final SnowflakeIdGenerator idGenerator;
     private final ObjectMapper objectMapper;
+    private final CurrentTenantHolder currentTenantHolder;
 
     /**
      * 查询当前租户品牌配置
@@ -40,9 +42,9 @@ public class TenantBrandAppService {
      * @return 品牌配置 VO
      */
     public TenantBrandVO getBrand() {
-        Long tenantId = CurrentTenantHolder.get();
+        Long tenantId = currentTenantHolder.getTenantId();
         if (tenantId == null) {
-            throw new BusinessException("租户 ID 不能为空");
+            throw new BusinessException(ErrorCode.PARAM_VALIDATION_FAILED, "租户 ID 不能为空");
         }
 
         TenantBrand brand = tenantBrandMapper.selectByTenantId(tenantId);
@@ -62,14 +64,14 @@ public class TenantBrandAppService {
      */
     @Transactional
     public void updateBrand(TenantBrandUpdateDTO dto) {
-        Long tenantId = CurrentTenantHolder.get();
+        Long tenantId = currentTenantHolder.getTenantId();
         if (tenantId == null) {
-            throw new BusinessException("租户 ID 不能为空");
+            throw new BusinessException(ErrorCode.PARAM_VALIDATION_FAILED, "租户 ID 不能为空");
         }
 
         // 校验页脚链接数量
         if (dto.getFooterLinks() != null && dto.getFooterLinks().size() > 10) {
-            throw new BusinessException("页脚链接最多 10 个");
+            throw new BusinessException(ErrorCode.PARAM_VALIDATION_FAILED, "页脚链接最多 10 个");
         }
 
         // 过滤自定义 CSS
@@ -91,7 +93,7 @@ public class TenantBrandAppService {
                 try {
                     brand.setFooterLinks(objectMapper.writeValueAsString(dto.getFooterLinks()));
                 } catch (JsonProcessingException e) {
-                    throw new BusinessException("页脚链接序列化失败");
+                    throw new BusinessException(ErrorCode.SYSTEM_ERROR, "页脚链接序列化失败");
                 }
             }
 
@@ -105,7 +107,7 @@ public class TenantBrandAppService {
                 try {
                     brand.setFooterLinks(objectMapper.writeValueAsString(dto.getFooterLinks()));
                 } catch (JsonProcessingException e) {
-                    throw new BusinessException("页脚链接序列化失败");
+                    throw new BusinessException(ErrorCode.SYSTEM_ERROR, "页脚链接序列化失败");
                 }
             }
 

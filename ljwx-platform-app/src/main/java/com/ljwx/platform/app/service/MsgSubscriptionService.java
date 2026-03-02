@@ -7,6 +7,7 @@ import com.ljwx.platform.app.infra.mapper.MsgSubscriptionMapper;
 import com.ljwx.platform.app.vo.MsgSubscriptionVO;
 import com.ljwx.platform.web.exception.BusinessException;
 import com.ljwx.platform.core.id.SnowflakeIdGenerator;
+import com.ljwx.platform.core.result.ErrorCode;
 import com.ljwx.platform.core.result.PageResult;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -44,7 +45,7 @@ public class MsgSubscriptionService {
 
         long count = msgSubscriptionMapper.selectCount(query);
         if (count > 0) {
-            throw new BusinessException("该用户已订阅此模板的该渠道");
+            throw new BusinessException(ErrorCode.PARAM_VALIDATION_FAILED, "该用户已订阅此模板的该渠道");
         }
 
         MsgSubscription subscription = new MsgSubscription();
@@ -76,7 +77,7 @@ public class MsgSubscriptionService {
     public void update(Long id, MsgSubscriptionDTO dto) {
         MsgSubscription subscription = msgSubscriptionMapper.selectById(id);
         if (subscription == null || subscription.getDeleted()) {
-            throw new BusinessException("订阅不存在");
+            throw new BusinessException(ErrorCode.RESOURCE_NOT_FOUND, "订阅不存在");
         }
 
         // 如果修改了用户、模板或渠道，需要检查唯一性
@@ -93,7 +94,7 @@ public class MsgSubscriptionService {
             // 需要排除当前记录
             if (count > 0) {
                 // 简化处理：如果存在记录，检查是否是当前记录
-                throw new BusinessException("该用户已订阅此模板的该渠道");
+                throw new BusinessException(ErrorCode.PARAM_VALIDATION_FAILED, "该用户已订阅此模板的该渠道");
             }
         }
 
@@ -116,7 +117,7 @@ public class MsgSubscriptionService {
     public void delete(Long id) {
         MsgSubscription subscription = msgSubscriptionMapper.selectById(id);
         if (subscription == null || subscription.getDeleted()) {
-            throw new BusinessException("订阅不存在");
+            throw new BusinessException(ErrorCode.RESOURCE_NOT_FOUND, "订阅不存在");
         }
 
         msgSubscriptionMapper.deleteById(id);
@@ -131,7 +132,7 @@ public class MsgSubscriptionService {
     public MsgSubscriptionVO getById(Long id) {
         MsgSubscriptionVO vo = msgSubscriptionMapper.selectSubscriptionById(id);
         if (vo == null) {
-            throw new BusinessException("订阅不存在");
+            throw new BusinessException(ErrorCode.RESOURCE_NOT_FOUND, "订阅不存在");
         }
         return vo;
     }
@@ -158,7 +159,7 @@ public class MsgSubscriptionService {
     public void updateStatus(Long id, String status) {
         MsgSubscription subscription = msgSubscriptionMapper.selectById(id);
         if (subscription == null || subscription.getDeleted()) {
-            throw new BusinessException("订阅不存在");
+            throw new BusinessException(ErrorCode.RESOURCE_NOT_FOUND, "订阅不存在");
         }
 
         subscription.setStatus(status);

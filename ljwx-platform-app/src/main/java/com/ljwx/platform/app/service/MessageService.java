@@ -9,6 +9,7 @@ import com.ljwx.platform.app.vo.MsgRecordVO;
 import com.ljwx.platform.app.vo.MsgUserInboxVO;
 import com.ljwx.platform.web.exception.BusinessException;
 import com.ljwx.platform.core.id.SnowflakeIdGenerator;
+import com.ljwx.platform.core.result.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -42,13 +43,13 @@ public class MessageService {
     public Long sendMessage(MessageSendDTO dto) {
         // 验证消息类型
         if (!isValidMessageType(dto.getMessageType())) {
-            throw new BusinessException("无效的消息类型: " + dto.getMessageType());
+            throw new BusinessException(ErrorCode.PARAM_VALIDATION_FAILED, "无效的消息类型: " + dto.getMessageType());
         }
 
         // 验证接收地址
         if (("EMAIL".equals(dto.getMessageType()) || "SMS".equals(dto.getMessageType()))
                 && (dto.getReceiverAddress() == null || dto.getReceiverAddress().isBlank())) {
-            throw new BusinessException("邮件或短信发送必须提供接收地址");
+            throw new BusinessException(ErrorCode.PARAM_VALIDATION_FAILED, "邮件或短信发送必须提供接收地址");
         }
 
         // 创建消息记录
@@ -104,7 +105,7 @@ public class MessageService {
     public MsgRecordVO getRecordById(Long id) {
         MsgRecordVO record = msgRecordMapper.selectRecordById(id);
         if (record == null) {
-            throw new BusinessException("消息记录不存在");
+            throw new BusinessException(ErrorCode.RESOURCE_NOT_FOUND, "消息记录不存在");
         }
         return record;
     }
@@ -129,7 +130,7 @@ public class MessageService {
     public void markAsRead(Long id) {
         MsgUserInbox inbox = msgUserInboxMapper.selectById(id);
         if (inbox == null) {
-            throw new BusinessException("收件箱消息不存在");
+            throw new BusinessException(ErrorCode.RESOURCE_NOT_FOUND, "收件箱消息不存在");
         }
 
         if (Boolean.FALSE.equals(inbox.getIsRead())) {
@@ -148,7 +149,7 @@ public class MessageService {
     public void deleteInboxMessage(Long id) {
         MsgUserInbox inbox = msgUserInboxMapper.selectById(id);
         if (inbox == null) {
-            throw new BusinessException("收件箱消息不存在");
+            throw new BusinessException(ErrorCode.RESOURCE_NOT_FOUND, "收件箱消息不存在");
         }
 
         msgUserInboxMapper.deleteById(id);

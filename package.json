@@ -18,6 +18,5 @@
     "lint": "pnpm --filter './ljwx-platform-*' lint"
   },
   "dependencies": {
-    "ccusage": "^18.0.8"
   }
 }
