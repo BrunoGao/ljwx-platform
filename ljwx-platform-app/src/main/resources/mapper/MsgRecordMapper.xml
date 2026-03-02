@@ -3,7 +3,7 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.ljwx.platform.app.infra.mapper.MsgRecordMapper">
 
-    <resultMap id="MsgRecordMap" type="com.ljwx.platform.app.domain.entity.MsgRecord">
+    <resultMap id="MsgRecordMap" type="com.ljwx.platform.core.domain.MsgRecord">
         <id property="id" column="id"/>
         <result property="templateId" column="template_id"/>
         <result property="messageType" column="message_type"/>

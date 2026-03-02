@@ -17,6 +17,11 @@ import java.time.LocalDateTime;
 public class MsgRecord extends BaseEntity {
 
     /**
+     * 主键ID
+     */
+    private Long id;
+
+    /**
      * 消息模板ID
      */
     private Long templateId;

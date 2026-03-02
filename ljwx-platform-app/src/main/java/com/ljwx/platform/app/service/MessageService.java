@@ -1,7 +1,7 @@
 package com.ljwx.platform.app.service;
 
-import com.ljwx.platform.app.domain.entity.MsgRecord;
-import com.ljwx.platform.app.domain.entity.MsgUserInbox;
+import com.ljwx.platform.core.domain.MsgRecord;
+import com.ljwx.platform.core.domain.MsgUserInbox;
 import com.ljwx.platform.app.dto.MessageSendDTO;
 import com.ljwx.platform.app.infra.mapper.MsgRecordMapper;
 import com.ljwx.platform.app.infra.mapper.MsgUserInboxMapper;
