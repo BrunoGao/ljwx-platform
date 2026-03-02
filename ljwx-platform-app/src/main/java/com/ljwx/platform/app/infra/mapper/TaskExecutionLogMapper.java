@@ -1,17 +1,29 @@
 package com.ljwx.platform.app.infra.mapper;
 
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.ljwx.platform.app.domain.entity.TaskExecutionLog;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * 任务执行日志 Mapper
  */
 @Mapper
-public interface TaskExecutionLogMapper extends BaseMapper<TaskExecutionLog> {
+public interface TaskExecutionLogMapper {
+
+    int insert(TaskExecutionLog log);
+
+    int updateById(TaskExecutionLog log);
+
+    int deleteById(Long id);
+
+    TaskExecutionLog selectById(Long id);
+
+    List<TaskExecutionLog> selectList(TaskExecutionLog query);
+
+    long count(TaskExecutionLog query);
 
     /**
      * 删除指定时间之前的日志

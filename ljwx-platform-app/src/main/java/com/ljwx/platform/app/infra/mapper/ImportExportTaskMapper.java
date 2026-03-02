@@ -1,8 +1,9 @@
 package com.ljwx.platform.app.infra.mapper;
 
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.ljwx.platform.app.domain.entity.ImportExportTask;
 import org.apache.ibatis.annotations.Mapper;
+
+import java.util.List;
 
 /**
  * Import/Export Task Mapper
@@ -11,5 +12,17 @@ import org.apache.ibatis.annotations.Mapper;
  * @since Phase 46
  */
 @Mapper
-public interface ImportExportTaskMapper extends BaseMapper<ImportExportTask> {
+public interface ImportExportTaskMapper {
+
+    int insert(ImportExportTask task);
+
+    int updateById(ImportExportTask task);
+
+    int deleteById(Long id);
+
+    ImportExportTask selectById(Long id);
+
+    List<ImportExportTask> selectList(ImportExportTask query);
+
+    long count(ImportExportTask query);
 }

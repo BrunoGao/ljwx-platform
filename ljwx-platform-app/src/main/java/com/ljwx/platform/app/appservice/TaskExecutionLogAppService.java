@@ -1,13 +1,12 @@
 package com.ljwx.platform.app.appservice;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.ljwx.platform.app.domain.dto.TaskExecutionLogQueryDTO;
 import com.ljwx.platform.app.domain.entity.TaskExecutionLog;
 import com.ljwx.platform.app.domain.vo.TaskExecutionLogVO;
 import com.ljwx.platform.app.domain.vo.TaskLogStatsVO;
 import com.ljwx.platform.app.infra.mapper.TaskExecutionLogMapper;
+import com.ljwx.platform.core.result.PageResult;
+import com.ljwx.platform.core.result.ErrorCode;
 import com.ljwx.platform.web.exception.BusinessException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -15,6 +14,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * 任务执行日志应用服务
@@ -31,19 +32,30 @@ public class TaskExecutionLogAppService {
      * @param query 查询条件
      * @return 分页结果
      */
-    public IPage<TaskExecutionLogVO> list(TaskExecutionLogQueryDTO query) {
-        LambdaQueryWrapper<TaskExecutionLog> wrapper = new LambdaQueryWrapper<>();
-        wrapper.like(StringUtils.hasText(query.getTaskName()), TaskExecutionLog::getTaskName, query.getTaskName())
-                .eq(StringUtils.hasText(query.getTaskGroup()), TaskExecutionLog::getTaskGroup, query.getTaskGroup())
-                .eq(StringUtils.hasText(query.getStatus()), TaskExecutionLog::getStatus, query.getStatus())
-                .ge(query.getStartTimeBegin() != null, TaskExecutionLog::getStartTime, query.getStartTimeBegin())
-                .le(query.getStartTimeEnd() != null, TaskExecutionLog::getStartTime, query.getStartTimeEnd())
-                .orderByDesc(TaskExecutionLog::getStartTime);
+    public PageResult<TaskExecutionLogVO> list(TaskExecutionLogQueryDTO query) {
+        TaskExecutionLog queryEntity = new TaskExecutionLog();
+        // Set query parameters based on DTO
+        List<TaskExecutionLog> logs = taskExecutionLogMapper.selectList(queryEntity);
+        long total = taskExecutionLogMapper.count(queryEntity);
 
-        Page<TaskExecutionLog> page = new Page<>(query.getPageNum(), query.getPageSize());
-        IPage<TaskExecutionLog> result = taskExecutionLogMapper.selectPage(page, wrapper);
+        List<TaskExecutionLogVO> vos = logs.stream()
+                .map(this::convertToVO)
+                .collect(Collectors.toList());
 
-        return result.convert(this::toVO);
+        return new PageResult<>(vos, total);
+    }
+
+    private TaskExecutionLogVO convertToVO(TaskExecutionLog log) {
+        TaskExecutionLogVO vo = new TaskExecutionLogVO();
+        vo.setId(log.getId());
+        vo.setTaskName(log.getTaskName());
+        vo.setTaskGroup(log.getTaskGroup());
+        vo.setStatus(log.getStatus());
+        vo.setStartTime(log.getStartTime());
+        vo.setEndTime(log.getEndTime());
+        vo.setDuration(log.getDuration());
+        vo.setErrorMessage(log.getErrorMessage());
+        return vo;
     }
 
     /**
@@ -55,7 +67,7 @@ public class TaskExecutionLogAppService {
     public TaskExecutionLogVO getById(Long id) {
         TaskExecutionLog entity = taskExecutionLogMapper.selectById(id);
         if (entity == null) {
-            throw new BusinessException("任务执行日志不存在");
+            throw new BusinessException(ErrorCode.RESOURCE_NOT_FOUND, "任务执行日志不存在");
         }
         return toVO(entity);
     }
@@ -69,7 +81,7 @@ public class TaskExecutionLogAppService {
     public void delete(Long id) {
         TaskExecutionLog entity = taskExecutionLogMapper.selectById(id);
         if (entity == null) {
-            throw new BusinessException("任务执行日志不存在");
+            throw new BusinessException(ErrorCode.RESOURCE_NOT_FOUND, "任务执行日志不存在");
         }
         taskExecutionLogMapper.deleteById(id);
     }

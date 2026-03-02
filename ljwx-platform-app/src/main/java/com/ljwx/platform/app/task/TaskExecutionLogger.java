@@ -34,16 +34,15 @@ public class TaskExecutionLogger {
      */
     public Long logStart(String taskName, String taskGroup, String taskParams) {
         try {
-            TaskExecutionLog logEntity = TaskExecutionLog.builder()
-                    .id(snowflakeIdGenerator.nextId())
-                    .taskName(taskName)
-                    .taskGroup(taskGroup)
-                    .taskParams(taskParams)
-                    .status("RUNNING")
-                    .startTime(LocalDateTime.now())
-                    .serverIp(getServerIp())
-                    .serverName(getServerName())
-                    .build();
+            TaskExecutionLog logEntity = new TaskExecutionLog();
+            logEntity.setId(snowflakeIdGenerator.nextId());
+            logEntity.setTaskName(taskName);
+            logEntity.setTaskGroup(taskGroup);
+            logEntity.setTaskParams(taskParams);
+            logEntity.setStatus("RUNNING");
+            logEntity.setStartTime(LocalDateTime.now());
+            logEntity.setServerIp(getServerIp());
+            logEntity.setServerName(getServerName());
 
             taskExecutionLogMapper.insert(logEntity);
             return logEntity.getId();
