@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ljwx.platform.app.infra.mapper.WfHistoryMapper">
+
+    <resultMap id="BaseResultMap" type="com.ljwx.platform.core.domain.WfHistory">
+        <id column="id" property="id"/>
+        <result column="instance_id" property="instanceId"/>
+        <result column="task_id" property="taskId"/>
+        <result column="action" property="action"/>
+        <result column="operator_id" property="operatorId"/>
+        <result column="comment" property="comment"/>
+        <result column="tenant_id" property="tenantId"/>
+        <result column="created_by" property="createdBy"/>
+        <result column="created_time" property="createdTime"/>
+        <result column="updated_by" property="updatedBy"/>
+        <result column="updated_time" property="updatedTime"/>
+        <result column="deleted" property="deleted"/>
+        <result column="version" property="version"/>
+    </resultMap>
+
+    <insert id="insert">
+        INSERT INTO wf_history (id, instance_id, task_id, action, operator_id, comment,
+                                 tenant_id, created_by, created_time, updated_by, updated_time, deleted, version)
+        VALUES (#{id}, #{instanceId}, #{taskId}, #{action}, #{operatorId}, #{comment},
+                #{tenantId}, #{createdBy}, #{createdTime}, #{updatedBy}, #{updatedTime}, #{deleted}, #{version})
+    </insert>
+
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT * FROM wf_history WHERE id = #{id} AND deleted = FALSE
+    </select>
+
+    <update id="updateById">
+        UPDATE wf_history
+        SET instance_id = #{instanceId}, task_id = #{taskId}, action = #{action},
+            operator_id = #{operatorId}, comment = #{comment},
+            updated_by = #{updatedBy}, updated_time = #{updatedTime}, version = version + 1
+        WHERE id = #{id} AND deleted = FALSE
+    </update>
+
+    <update id="deleteById">
+        UPDATE wf_history SET deleted = TRUE WHERE id = #{id}
+    </update>
+
+    <select id="selectList" resultMap="BaseResultMap">
+        SELECT * FROM wf_history
+        WHERE deleted = FALSE
+        <if test="instanceId != null">AND instance_id = #{instanceId}</if>
+        <if test="taskId != null">AND task_id = #{taskId}</if>
+        ORDER BY created_time DESC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="countList" resultType="long">
+        SELECT COUNT(*) FROM wf_history
+        WHERE deleted = FALSE
+        <if test="instanceId != null">AND instance_id = #{instanceId}</if>
+        <if test="taskId != null">AND task_id = #{taskId}</if>
+    </select>
+
+</mapper>
