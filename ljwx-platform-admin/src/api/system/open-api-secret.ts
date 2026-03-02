@@ -1,5 +1,4 @@
 import request from '@/api/request'
-import type { Result } from '@ljwx/shared'
 
 export interface OpenAppSecretVO {
   id: number
@@ -16,18 +15,18 @@ export interface OpenAppSecretDTO {
   validDays?: number
 }
 
-export function createSecret(appId: number, data: OpenAppSecretDTO): Promise<Result<OpenAppSecretVO>> {
+export function createSecret(appId: number, data: OpenAppSecretDTO): Promise<OpenAppSecretVO> {
   return request.post(`/api/v1/open-api/apps/${appId}/secrets`, data)
 }
 
-export function rotateSecret(appId: number, id: number): Promise<Result<OpenAppSecretVO>> {
+export function rotateSecret(appId: number, id: number): Promise<OpenAppSecretVO> {
   return request.put(`/api/v1/open-api/apps/${appId}/secrets/${id}/rotate`)
 }
 
-export function deleteSecret(appId: number, id: number): Promise<Result<void>> {
+export function deleteSecret(appId: number, id: number): Promise<void> {
   return request.delete(`/api/v1/open-api/apps/${appId}/secrets/${id}`)
 }
 
-export function listSecrets(appId: number): Promise<Result<OpenAppSecretVO[]>> {
+export function listSecrets(appId: number): Promise<OpenAppSecretVO[]> {
   return request.get(`/api/v1/open-api/apps/${appId}/secrets`)
 }
