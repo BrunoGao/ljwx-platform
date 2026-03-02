@@ -28,7 +28,7 @@ CREATE UNIQUE INDEX uk_app_key ON sys_open_app(app_key);
 CREATE INDEX idx_status ON sys_open_app(status);
 
 -- Create index on tenant_id for multi-tenancy
-CREATE INDEX idx_tenant_id ON sys_open_app(tenant_id);
+CREATE INDEX idx_open_app_tenant_id ON sys_open_app(tenant_id);
 
 COMMENT ON TABLE sys_open_app IS 'Open API Application Management';
 COMMENT ON COLUMN sys_open_app.id IS 'Primary Key (Snowflake ID)';

@@ -25,7 +25,7 @@ CREATE INDEX idx_role_id ON sys_role_data_scope (role_id);
 CREATE INDEX idx_dept_id ON sys_role_data_scope (dept_id);
 
 -- 索引：租户隔离
-CREATE INDEX idx_tenant_id ON sys_role_data_scope (tenant_id);
+CREATE INDEX idx_role_data_scope_tenant_id ON sys_role_data_scope (tenant_id);
 
 COMMENT ON TABLE sys_role_data_scope IS '角色自定义数据范围表';
 COMMENT ON COLUMN sys_role_data_scope.id IS '主键（雪花ID）';
