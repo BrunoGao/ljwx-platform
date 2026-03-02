@@ -3,7 +3,7 @@
 <mapper namespace="com.ljwx.platform.app.infra.mapper.MsgSubscriptionMapper">
 
     <!-- 基础结果映射 -->
-    <resultMap id="BaseResultMap" type="com.ljwx.platform.app.domain.entity.MsgSubscription">
+    <resultMap id="BaseResultMap" type="com.ljwx.platform.core.domain.MsgSubscription">
         <id column="id" property="id" />
         <result column="user_id" property="userId" />
         <result column="template_id" property="templateId" />

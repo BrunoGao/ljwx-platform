@@ -15,6 +15,11 @@ import lombok.EqualsAndHashCode;
 public class MsgSubscription extends BaseEntity {
 
     /**
+     * 主键ID
+     */
+    private Long id;
+
+    /**
      * 用户 ID
      */
     private Long userId;

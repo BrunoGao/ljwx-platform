@@ -1,6 +1,6 @@
 package com.ljwx.platform.app.service;
 
-import com.ljwx.platform.app.domain.entity.MsgSubscription;
+import com.ljwx.platform.core.domain.MsgSubscription;
 import com.ljwx.platform.app.dto.MsgSubscriptionDTO;
 import com.ljwx.platform.app.dto.MsgSubscriptionQueryDTO;
 import com.ljwx.platform.app.infra.mapper.MsgSubscriptionMapper;
