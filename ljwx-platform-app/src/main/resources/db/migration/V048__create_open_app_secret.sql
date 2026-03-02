@@ -24,10 +24,10 @@ CREATE INDEX idx_open_app_secret_tenant_id ON open_app_secret(tenant_id);
 
 DO $$
 BEGIN
-    IF to_regclass('public.open_app') IS NOT NULL THEN
+    IF to_regclass('public.sys_open_app') IS NOT NULL THEN
         ALTER TABLE open_app_secret
             ADD CONSTRAINT fk_open_app_secret_app
-            FOREIGN KEY (app_id) REFERENCES open_app(id);
+            FOREIGN KEY (app_id) REFERENCES sys_open_app(id);
     END IF;
 END $$;
 
