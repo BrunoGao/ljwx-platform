@@ -2,7 +2,7 @@ package com.ljwx.platform.app.infra.mapper;
 
 import com.ljwx.platform.app.dto.WebhookConfigQueryDTO;
 import com.ljwx.platform.app.vo.WebhookConfigVO;
-import com.ljwx.platform.app.domain.entity.WebhookConfig;
+import com.ljwx.platform.core.domain.WebhookConfig;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
