@@ -23,8 +23,8 @@ CREATE TABLE msg_template (
 -- Indexes
 CREATE UNIQUE INDEX uk_template_code ON msg_template(template_code) WHERE deleted = FALSE;
 CREATE INDEX idx_template_type ON msg_template(template_type);
-CREATE INDEX idx_status ON msg_template(status);
-CREATE INDEX idx_tenant_id ON msg_template(tenant_id);
+CREATE INDEX idx_msg_template_status ON msg_template(status);
+CREATE INDEX idx_msg_template_tenant_id ON msg_template(tenant_id);
 
 COMMENT ON TABLE msg_template IS '消息模板表';
 COMMENT ON COLUMN msg_template.id IS '主键（雪花ID）';
