@@ -10,6 +10,7 @@ import 'nprogress/nprogress.css'
 import App from './App.vue'
 import { router } from './router'
 import { vPermission } from './directives'
+import { useErrorMonitor } from './composables/useErrorMonitor'
 import './styles/index.scss'
 
 const app = createApp(App)
@@ -28,5 +29,9 @@ for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
 
 // Register custom directives
 app.directive('permission', vPermission)
+
+// Initialize error monitor (Phase 29)
+const errorMonitor = useErrorMonitor()
+errorMonitor.init()
 
 app.mount('#app')

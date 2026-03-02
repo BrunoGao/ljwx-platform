@@ -9,6 +9,7 @@
 #
 # 注意：集成测试较慢，在 CI 中可选跑。
 #       本地执行时需要 Docker daemon 运行。
+#       在沙箱环境中，设置 SKIP_INTEGRATION_TESTS=1 跳过。
 # ═══════════════════════════════════════════════════════════
 set -uo pipefail
 
@@ -16,6 +17,12 @@ PROJECT_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 cd "$PROJECT_ROOT"
 
 ERRORS=0
+
+# ── Check: Skip if explicitly disabled ──
+if [[ "${SKIP_INTEGRATION_TESTS:-0}" == "1" ]]; then
+  echo "  gate-integration: SKIPPED (SKIP_INTEGRATION_TESTS=1)"
+  exit 0
+fi
 
 # ── Quick check: is this a backend phase? ──
 CURRENT_PHASE=$(sed -n 's/^Phase:[[:space:]]*\([0-9][0-9]*\).*/\1/p' CLAUDE.md 2>/dev/null | head -1 || echo "")

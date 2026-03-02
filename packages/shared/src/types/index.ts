@@ -17,12 +17,16 @@ export type {
   RoleQueryDTO,
   RoleCreateDTO,
   RoleUpdateDTO,
+  RoleDataScopeVO,
+  RoleDataScopeUpdateDTO,
 } from './role'
 export type {
   TenantVO,
   TenantQueryDTO,
   TenantCreateDTO,
   TenantUpdateDTO,
+  TenantFreezeDTO,
+  TenantCancelDTO,
   SysDictTypeVO,
   SysDictDataVO,
   DictTypeQueryDTO,
@@ -54,4 +58,7 @@ export type {
   MenuTreeVO,
   MenuCreateDTO,
   MenuUpdateDTO,
+  TaskExecutionLogVO,
+  TaskExecutionLogQueryDTO,
+  TaskLogStatsVO,
 } from './common'

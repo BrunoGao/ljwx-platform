@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ljwx.platform.app.infra.mapper.OutboxEventMapper">
+
+    <resultMap id="BaseResultMap" type="com.ljwx.platform.core.event.OutboxEvent">
+        <id column="id" property="id"/>
+        <result column="aggregate_type" property="aggregateType"/>
+        <result column="aggregate_id" property="aggregateId"/>
+        <result column="event_type" property="eventType"/>
+        <result column="payload" property="payload"/>
+        <result column="status" property="status"/>
+        <result column="retry_count" property="retryCount"/>
+        <result column="max_retry" property="maxRetry"/>
+        <result column="next_retry_time" property="nextRetryTime"/>
+        <result column="sent_time" property="sentTime"/>
+        <result column="error_message" property="errorMessage"/>
+        <result column="tenant_id" property="tenantId"/>
+        <result column="created_by" property="createdBy"/>
+        <result column="created_time" property="createdTime"/>
+        <result column="updated_by" property="updatedBy"/>
+        <result column="updated_time" property="updatedTime"/>
+        <result column="deleted" property="deleted"/>
+        <result column="version" property="version"/>
+    </resultMap>
+
+    <insert id="insert" parameterType="com.ljwx.platform.core.event.OutboxEvent">
+        INSERT INTO sys_outbox_event (
+            id, aggregate_type, aggregate_id, event_type, payload,
+            status, retry_count, max_retry, next_retry_time,
+            tenant_id, created_by, created_time, updated_by, updated_time, deleted, version
+        ) VALUES (
+            #{id}, #{aggregateType}, #{aggregateId}, #{eventType}, #{payload}::jsonb,
+            #{status}, #{retryCount}, #{maxRetry}, #{nextRetryTime},
+            #{tenantId}, #{createdBy}, #{createdTime}, #{updatedBy}, #{updatedTime}, #{deleted}, #{version}
+        )
+    </insert>
+
+    <update id="updateById" parameterType="com.ljwx.platform.core.event.OutboxEvent">
+        UPDATE sys_outbox_event
+        SET aggregate_type = #{aggregateType},
+            aggregate_id = #{aggregateId},
+            event_type = #{eventType},
+            payload = #{payload}::jsonb,
+            status = #{status},
+            retry_count = #{retryCount},
+            max_retry = #{maxRetry},
+            next_retry_time = #{nextRetryTime},
+            sent_time = #{sentTime},
+            error_message = #{errorMessage},
+            updated_by = #{updatedBy},
+            updated_time = #{updatedTime},
+            version = #{version} + 1
+        WHERE id = #{id}
+          AND version = #{version}
+    </update>
+
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT * FROM sys_outbox_event
+        WHERE id = #{id}
+          AND deleted = FALSE
+    </select>
+
+    <select id="selectPendingEvents" resultMap="BaseResultMap">
+        SELECT * FROM sys_outbox_event
+        WHERE status = 'PENDING'
+          AND next_retry_time &lt;= #{now}
+          AND deleted = FALSE
+        ORDER BY created_time ASC
+        LIMIT #{batchSize}
+    </select>
+
+    <update id="markAsSent">
+        UPDATE sys_outbox_event
+        SET status = 'SENT',
+            sent_time = #{sentTime},
+            updated_time = CURRENT_TIMESTAMP,
+            version = version + 1
+        WHERE id = #{id}
+    </update>
+
+    <update id="markAsFailed">
+        UPDATE sys_outbox_event
+        SET status = 'FAILED',
+            error_message = #{errorMessage},
+            updated_time = CURRENT_TIMESTAMP,
+            version = version + 1
+        WHERE id = #{id}
+    </update>
+
+    <update id="incrementRetry">
+        UPDATE sys_outbox_event
+        SET retry_count = #{retryCount},
+            next_retry_time = #{nextRetryTime},
+            updated_time = CURRENT_TIMESTAMP,
+            version = version + 1
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteSentEventsBefore">
+        DELETE FROM sys_outbox_event
+        WHERE status = 'SENT'
+          AND created_time &lt; #{before}
+    </delete>
+
+</mapper>

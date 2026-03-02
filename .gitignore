@@ -40,3 +40,6 @@ docs/reports/data/history/
 docs/reports/data/history/**
 docs/reports/data/artifacts/
 docs/reports/data/artifacts/**
+
+# ── Local agent worktrees ──
+.claude/worktrees/

@@ -71,7 +71,7 @@ if [[ -n "$IFNE_HITS" ]]; then
 fi
 
 echo "[R05] Audit columns in business tables"
-SQL_FILES=$(find . -name '*.sql' -path '*/migration/*' ! -path '*/node_modules/*' 2>/dev/null || true)
+SQL_FILES=$(find . -name '*.sql' -path '*/migration/*' ! -path '*/node_modules/*' ! -path '*/target/*' 2>/dev/null || true)
 AUDIT_COLS=(tenant_id created_by created_time updated_by updated_time deleted version)
 for sql_file in $SQL_FILES; do
   # Extract CREATE TABLE names using ERE (macOS compatible)
@@ -84,6 +84,10 @@ for sql_file in $SQL_FILES; do
     fi
     # Get the table definition block
     TABLE_BLOCK=$(sed -n "/CREATE TABLE.*${table_name}/I,/);/p" "$sql_file")
+    # Skip PostgreSQL partition tables (PARTITION OF syntax)
+    if echo "$TABLE_BLOCK" | grep -qi 'PARTITION[[:space:]]\+OF'; then
+      continue
+    fi
     for col in "${AUDIT_COLS[@]}"; do
       if [[ -z "$(echo "$TABLE_BLOCK" | grep -i "$col")" ]]; then
         fail "R05 audit-col — $sql_file table $table_name missing column: $col"

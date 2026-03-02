@@ -146,4 +146,3 @@ public class WorkflowInstanceService {
 ## 参考资料
 - [PostgreSQL Row Level Security](https://www.postgresql.org/docs/current/ddl-rowsecurity.html)
 - [MyBatis Interceptor](https://mybatis.org/mybatis-3/configuration.html#plugins)
-- [Multi-tenancy Patterns](https://learn.microsoft.com/en-us/azure/architecture/patterns/multi-tenancy)

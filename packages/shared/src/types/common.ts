@@ -10,6 +10,12 @@ export interface TenantVO {
   code: string
   /** 状态：1-启用 0-禁用 */
   status: number
+  /** 生命周期状态：ACTIVE-活跃 FROZEN-冻结 CANCELLED-注销 */
+  lifecycleStatus: string
+  frozenReason?: string
+  frozenTime?: string
+  cancelledReason?: string
+  cancelledTime?: string
   createdTime: string
   updatedTime: string
 }
@@ -29,6 +35,14 @@ export interface TenantUpdateDTO {
   name?: string
   code?: string
   status?: number
+}
+
+export interface TenantFreezeDTO {
+  reason: string
+}
+
+export interface TenantCancelDTO {
+  reason: string
 }
 
 // ============================================================
@@ -387,3 +401,52 @@ export interface ScreenTrendVO {
   /** 登录趋势（近 7 天） */
   loginTrend: ScreenTrendItem[]
 }
+
+// ============================================================
+// TaskExecutionLog 任务执行日志类型
+// ============================================================
+
+/** 任务执行日志视图对象 */
+export interface TaskExecutionLogVO {
+  id: number
+  taskName: string
+  taskGroup: string
+  taskParams: string
+  /** 状态：SUCCESS-成功 FAILURE-失败 RUNNING-运行中 */
+  status: string
+  startTime: string
+  endTime: string
+  /** 执行耗时（毫秒） */
+  duration: number
+  result: string
+  errorMessage: string
+  errorStack: string
+  serverIp: string
+  serverName: string
+  createdTime: string
+}
+
+export interface TaskExecutionLogQueryDTO extends PageQuery {
+  taskName?: string
+  taskGroup?: string
+  status?: string
+  startTimeBegin?: string
+  startTimeEnd?: string
+}
+
+/** 任务执行统计视图对象 */
+export interface TaskLogStatsVO {
+  /** 总执行次数 */
+  totalCount: number
+  /** 成功次数 */
+  successCount: number
+  /** 失败次数 */
+  failureCount: number
+  /** 平均耗时（毫秒） */
+  avgDuration: number
+  /** 最大耗时（毫秒） */
+  maxDuration: number
+  /** 最小耗时（毫秒） */
+  minDuration: number
+}
+

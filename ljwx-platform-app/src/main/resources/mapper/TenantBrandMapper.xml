@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ljwx.platform.app.infra.mapper.TenantBrandMapper">
+
+    <resultMap id="BaseResultMap" type="com.ljwx.platform.app.domain.entity.TenantBrand">
+        <id     column="id"                 property="id"/>
+        <result column="brand_name"         property="brandName"/>
+        <result column="logo_url"           property="logoUrl"/>
+        <result column="favicon_url"        property="faviconUrl"/>
+        <result column="primary_color"      property="primaryColor"/>
+        <result column="secondary_color"    property="secondaryColor"/>
+        <result column="background_color"   property="backgroundColor"/>
+        <result column="login_bg_url"       property="loginBgUrl"/>
+        <result column="login_slogan"       property="loginSlogan"/>
+        <result column="copyright_text"     property="copyrightText"/>
+        <result column="icp_number"         property="icpNumber"/>
+        <result column="footer_links"       property="footerLinks"/>
+        <result column="mobile_icon_url"    property="mobileIconUrl"/>
+        <result column="mobile_splash_url"  property="mobileSplashUrl"/>
+        <result column="custom_css"         property="customCss"/>
+        <result column="tenant_id"          property="tenantId"/>
+        <result column="created_by"         property="createdBy"/>
+        <result column="created_time"       property="createdTime"/>
+        <result column="updated_by"         property="updatedBy"/>
+        <result column="updated_time"       property="updatedTime"/>
+        <result column="deleted"            property="deleted"/>
+        <result column="version"            property="version"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id, brand_name, logo_url, favicon_url, primary_color, secondary_color,
+        background_color, login_bg_url, login_slogan, copyright_text, icp_number,
+        footer_links, mobile_icon_url, mobile_splash_url, custom_css,
+        tenant_id, created_by, created_time, updated_by, updated_time, deleted, version
+    </sql>
+
+    <select id="selectByTenantId" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM sys_tenant_brand
+        WHERE tenant_id = #{tenantId}
+          AND deleted = FALSE
+    </select>
+
+    <insert id="insert" parameterType="com.ljwx.platform.app.domain.entity.TenantBrand">
+        INSERT INTO sys_tenant_brand (
+            id, brand_name, logo_url, favicon_url, primary_color, secondary_color,
+            background_color, login_bg_url, login_slogan, copyright_text, icp_number,
+            footer_links, mobile_icon_url, mobile_splash_url, custom_css,
+            tenant_id, created_by, created_time, updated_by, updated_time, deleted, version
+        ) VALUES (
+            #{id}, #{brandName}, #{logoUrl}, #{faviconUrl}, #{primaryColor}, #{secondaryColor},
+            #{backgroundColor}, #{loginBgUrl}, #{loginSlogan}, #{copyrightText}, #{icpNumber},
+            #{footerLinks}::jsonb, #{mobileIconUrl}, #{mobileSplashUrl}, #{customCss},
+            #{tenantId}, #{createdBy}, #{createdTime}, #{updatedBy}, #{updatedTime}, #{deleted}, #{version}
+        )
+    </insert>
+
+    <update id="updateById" parameterType="com.ljwx.platform.app.domain.entity.TenantBrand">
+        UPDATE sys_tenant_brand
+        SET brand_name        = #{brandName},
+            logo_url          = #{logoUrl},
+            favicon_url       = #{faviconUrl},
+            primary_color     = #{primaryColor},
+            secondary_color   = #{secondaryColor},
+            background_color  = #{backgroundColor},
+            login_bg_url      = #{loginBgUrl},
+            login_slogan      = #{loginSlogan},
+            copyright_text    = #{copyrightText},
+            icp_number        = #{icpNumber},
+            footer_links      = #{footerLinks}::jsonb,
+            mobile_icon_url   = #{mobileIconUrl},
+            mobile_splash_url = #{mobileSplashUrl},
+            custom_css        = #{customCss},
+            updated_by        = #{updatedBy},
+            updated_time      = #{updatedTime},
+            version           = #{version} + 1
+        WHERE id = #{id}
+          AND deleted = FALSE
+    </update>
+
+</mapper>

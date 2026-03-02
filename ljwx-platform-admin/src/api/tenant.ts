@@ -5,6 +5,8 @@ import type {
   TenantQueryDTO,
   TenantCreateDTO,
   TenantUpdateDTO,
+  TenantFreezeDTO,
+  TenantCancelDTO,
 } from '@ljwx/shared'
 
 /**
@@ -27,3 +29,32 @@ export function createTenant(data: TenantCreateDTO): Promise<number> {
 export function updateTenant(id: number, data: TenantUpdateDTO): Promise<void> {
   return request.put<void>(`/api/tenants/${id}`, data)
 }
+
+/**
+ * 冻结租户
+ */
+export function freezeTenant(id: number, data: TenantFreezeDTO): Promise<void> {
+  return request.post<void>(`/api/v1/tenants/${id}/freeze`, data)
+}
+
+/**
+ * 解冻租户
+ */
+export function unfreezeTenant(id: number): Promise<void> {
+  return request.post<void>(`/api/v1/tenants/${id}/unfreeze`)
+}
+
+/**
+ * 注销租户
+ */
+export function cancelTenant(id: number, data: TenantCancelDTO): Promise<void> {
+  return request.post<void>(`/api/v1/tenants/${id}/cancel`, data)
+}
+
+/**
+ * 初始化租户
+ */
+export function initializeTenant(id: number): Promise<void> {
+  return request.post<void>(`/api/v1/tenants/${id}/initialize`)
+}
+

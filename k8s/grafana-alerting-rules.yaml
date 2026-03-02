@@ -1,0 +1,114 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-alerting-rules
+  namespace: ljwx-platform
+  labels:
+    app: grafana
+data:
+  alerting-rules.yaml: |
+    groups:
+      - name: ljwx-platform-alerts
+        interval: 30s
+        rules:
+          - alert: HighErrorRate
+            expr: |
+              sum(rate(http_server_requests_seconds_count{application="ljwx-platform",status=~"5.."}[5m]))
+              /
+              sum(rate(http_server_requests_seconds_count{application="ljwx-platform"}[5m]))
+              * 100 > 5
+            for: 5m
+            labels:
+              severity: critical
+              service: ljwx-platform
+            annotations:
+              summary: "高错误率告警"
+              description: "应用 {{ $labels.application }} 的错误率为 {{ $value | humanizePercentage }}，超过 5% 阈值，持续 5 分钟"
+              runbook_url: "https://wiki.ljwx.com/runbooks/high-error-rate"
+
+          - alert: HighMemoryUsage
+            expr: |
+              jvm_memory_used_bytes{application="ljwx-platform",area="heap"}
+              /
+              jvm_memory_max_bytes{application="ljwx-platform",area="heap"}
+              * 100 > 90
+            for: 5m
+            labels:
+              severity: warning
+              service: ljwx-platform
+            annotations:
+              summary: "高内存使用率告警"
+              description: "应用 {{ $labels.application }} 的堆内存使用率为 {{ $value | humanizePercentage }}，超过 90% 阈值，持续 5 分钟"
+              runbook_url: "https://wiki.ljwx.com/runbooks/high-memory-usage"
+
+          - alert: HighGCPause
+            expr: |
+              rate(jvm_gc_pause_seconds_sum{application="ljwx-platform"}[1m]) > 1
+            for: 1m
+            labels:
+              severity: warning
+              service: ljwx-platform
+            annotations:
+              summary: "高 GC 暂停时间告警"
+              description: "应用 {{ $labels.application }} 的 GC 暂停时间为 {{ $value | humanizeDuration }}，超过 1 秒阈值，持续 1 分钟"
+              runbook_url: "https://wiki.ljwx.com/runbooks/high-gc-pause"
+
+          - alert: HighP95Latency
+            expr: |
+              histogram_quantile(0.95,
+                sum(rate(http_server_requests_seconds_bucket{application="ljwx-platform"}[5m])) by (le)
+              ) > 3
+            for: 5m
+            labels:
+              severity: warning
+              service: ljwx-platform
+            annotations:
+              summary: "高 P95 延迟告警"
+              description: "应用 {{ $labels.application }} 的 P95 延迟为 {{ $value | humanizeDuration }}，超过 3 秒阈值，持续 5 分钟"
+              runbook_url: "https://wiki.ljwx.com/runbooks/high-p95-latency"
+
+          - alert: ServiceDown
+            expr: |
+              up{job="ljwx-platform"} == 0
+            for: 1m
+            labels:
+              severity: critical
+              service: ljwx-platform
+            annotations:
+              summary: "服务不可用告警"
+              description: "应用 {{ $labels.application }} 在实例 {{ $labels.instance }} 上不可用，持续 1 分钟"
+              runbook_url: "https://wiki.ljwx.com/runbooks/service-down"
+
+      - name: ljwx-platform-tenant-alerts
+        interval: 30s
+        rules:
+          - alert: TenantHighErrorRate
+            expr: |
+              sum by (tenant_id) (rate(http_server_requests_seconds_count{application="ljwx-platform",tenant_id!="0",status=~"5.."}[5m]))
+              /
+              sum by (tenant_id) (rate(http_server_requests_seconds_count{application="ljwx-platform",tenant_id!="0"}[5m]))
+              * 100 > 10
+            for: 5m
+            labels:
+              severity: warning
+              service: ljwx-platform
+              scope: tenant
+            annotations:
+              summary: "租户高错误率告警"
+              description: "租户 {{ $labels.tenant_id }} 的错误率为 {{ $value | humanizePercentage }}，超过 10% 阈值，持续 5 分钟"
+              runbook_url: "https://wiki.ljwx.com/runbooks/tenant-high-error-rate"
+
+          - alert: TenantHighLatency
+            expr: |
+              histogram_quantile(0.95,
+                sum by (tenant_id, le) (rate(http_server_requests_seconds_bucket{application="ljwx-platform",tenant_id!="0"}[5m]))
+              ) > 5
+            for: 5m
+            labels:
+              severity: warning
+              service: ljwx-platform
+              scope: tenant
+            annotations:
+              summary: "租户高延迟告警"
+              description: "租户 {{ $labels.tenant_id }} 的 P95 延迟为 {{ $value | humanizeDuration }}，超过 5 秒阈值，持续 5 分钟"
+              runbook_url: "https://wiki.ljwx.com/runbooks/tenant-high-latency"

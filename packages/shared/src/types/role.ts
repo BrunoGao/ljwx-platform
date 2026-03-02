@@ -72,3 +72,27 @@ export interface RoleUpdateDTO {
   /** 权限 ID 列表 */
   permissionIds?: number[]
 }
+
+// ============================================================
+// Role Data Scope 角色数据范围类型
+// ============================================================
+
+/**
+ * 角色数据范围视图对象
+ */
+export interface RoleDataScopeVO {
+  /** 角色 ID */
+  roleId: number
+  /** 部门 ID 列表 */
+  deptIds: number[]
+  /** 部门名称列表 */
+  deptNames: string[]
+}
+
+/**
+ * 更新角色数据范围 DTO
+ */
+export interface RoleDataScopeUpdateDTO {
+  /** 部门 ID 列表 */
+  deptIds: number[]
+}

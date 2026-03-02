@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.ljwx.platform.app.infra.mapper.OpenAppMapper">
+
+    <resultMap id="BaseResultMap" type="com.ljwx.platform.core.domain.OpenApp">
+        <id column="id" property="id"/>
+        <result column="app_key" property="appKey"/>
+        <result column="app_secret" property="appSecret"/>
+        <result column="app_name" property="appName"/>
+        <result column="app_type" property="appType"/>
+        <result column="status" property="status"/>
+        <result column="rate_limit" property="rateLimit"/>
+        <result column="ip_whitelist" property="ipWhitelist"/>
+        <result column="expire_time" property="expireTime"/>
+        <result column="tenant_id" property="tenantId"/>
+        <result column="created_by" property="createdBy"/>
+        <result column="created_time" property="createdTime"/>
+        <result column="updated_by" property="updatedBy"/>
+        <result column="updated_time" property="updatedTime"/>
+        <result column="deleted" property="deleted"/>
+        <result column="version" property="version"/>
+    </resultMap>
+
+    <insert id="insert">
+        INSERT INTO sys_open_app (
+            id, app_key, app_secret, app_name, app_type, status,
+            rate_limit, ip_whitelist, expire_time
+        ) VALUES (
+            #{id}, #{appKey}, #{appSecret}, #{appName}, #{appType}, #{status},
+            #{rateLimit}, #{ipWhitelist}, #{expireTime}
+        )
+    </insert>
+
+    <update id="updateById">
+        UPDATE sys_open_app
+        SET app_name = #{appName},
+            app_type = #{appType},
+            status = #{status},
+            rate_limit = #{rateLimit},
+            ip_whitelist = #{ipWhitelist},
+            expire_time = #{expireTime}
+        WHERE id = #{id}
+          AND deleted = FALSE
+    </update>
+
+    <update id="deleteById">
+        UPDATE sys_open_app
+        SET deleted = TRUE
+        WHERE id = #{id}
+          AND deleted = FALSE
+    </update>
+
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT id, app_key, app_secret, app_name, app_type, status,
+               rate_limit, ip_whitelist, expire_time,
+               tenant_id, created_by, created_time, updated_by, updated_time,
+               deleted, version
+        FROM sys_open_app
+        WHERE id = #{id}
+          AND deleted = FALSE
+    </select>
+
+    <select id="selectByAppKey" resultMap="BaseResultMap">
+        SELECT id, app_key, app_secret, app_name, app_type, status,
+               rate_limit, ip_whitelist, expire_time,
+               tenant_id, created_by, created_time, updated_by, updated_time,
+               deleted, version
+        FROM sys_open_app
+        WHERE app_key = #{appKey}
+          AND deleted = FALSE
+    </select>
+
+    <select id="selectList" resultMap="BaseResultMap">
+        SELECT id, app_key, app_secret, app_name, app_type, status,
+               rate_limit, ip_whitelist, expire_time,
+               tenant_id, created_by, created_time, updated_by, updated_time,
+               deleted, version
+        FROM sys_open_app
+        WHERE deleted = FALSE
+        <if test="appName != null and appName != ''">
+            AND app_name LIKE CONCAT('%', #{appName}, '%')
+        </if>
+        <if test="appType != null and appType != ''">
+            AND app_type = #{appType}
+        </if>
+        <if test="status != null and status != ''">
+            AND status = #{status}
+        </if>
+        ORDER BY created_time DESC
+        LIMIT #{pageSize} OFFSET #{pageNum} * #{pageSize} - #{pageSize}
+    </select>
+
+    <select id="countList" resultType="long">
+        SELECT COUNT(*)
+        FROM sys_open_app
+        WHERE deleted = FALSE
+        <if test="appName != null and appName != ''">
+            AND app_name LIKE CONCAT('%', #{appName}, '%')
+        </if>
+        <if test="appType != null and appType != ''">
+            AND app_type = #{appType}
+        </if>
+        <if test="status != null and status != ''">
+            AND status = #{status}
+        </if>
+    </select>
+
+</mapper>

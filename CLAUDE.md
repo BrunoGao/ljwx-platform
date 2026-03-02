@@ -1,5 +1,36 @@
 # LJWX Platform Spec 编写指南
 
+## Current Phase
+
+**Phase: 32 (Final Gate v3) — PASSED, ALL PHASES COMPLETE**
+
+## 技术栈版本锁定
+
+### Backend (Java)
+
+| 组件 | 版本 | 说明 |
+|------|------|------|
+| Java | 21 | LTS 版本 |
+| Spring Boot | ~3.5.11 | 主框架 |
+| MyBatis-Plus | ~3.0.5 | ORM |
+| PostgreSQL | 16.12 | 数据库 |
+| BCrypt | (Spring Security 内置) | 密码加密 |
+
+### Frontend (Vue)
+
+| 组件 | 版本 | 说明 |
+|------|------|------|
+| Vue | ~3.5.28 | 主框架 |
+| Vue Router | ~5.0.2 | 路由（v5 内置 unplugin-vue-router） |
+| Pinia | ~3.0.4 | 状态管理 |
+| Element Plus | ~2.13.2 | UI 组件 |
+| Vite | ~7.3.1 | 构建工具 |
+| TypeScript | ~5.9.3 | 类型系统 |
+
+### 环境变量
+
+- **VITE_APP_BASE_API**: 前端 API 基础路径（如 `/api`）
+
 ## 目录
 - [核心原则](#核心原则)
 - [Spec 结构规范](#spec-结构规范)
@@ -34,8 +65,8 @@ core ← {security, data} ← web ← app
 - ❌ 禁止 MySQL 专有函数 (如 `find_in_set()`)
 - ✅ 使用 PostgreSQL 数组: `ancestors @> ARRAY[...]::bigint[]`
 
-### 4. 审计字段完整性
-每个表必须包含 7 个审计字段:
+### 4. 审计字段完整性 (audit fields)
+每个表必须包含 7 个审计字段 (audit fields):
 ```sql
 tenant_id BIGINT NOT NULL DEFAULT 0,
 created_by BIGINT NOT NULL DEFAULT 0,

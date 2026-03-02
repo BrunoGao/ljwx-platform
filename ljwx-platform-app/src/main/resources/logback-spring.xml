@@ -2,7 +2,7 @@
 <configuration>
     <springProperty scope="context" name="APP_NAME" source="spring.application.name" defaultValue="ljwx-platform"/>
 
-    <!-- 开发环境：可读格式 -->
+    <!-- Development environment: human-readable format -->
     <springProfile name="dev,default">
         <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
             <encoder>
@@ -13,14 +13,40 @@
         <root level="INFO">
             <appender-ref ref="CONSOLE"/>
         </root>
+        <logger name="com.ljwx.platform" level="DEBUG"/>
     </springProfile>
 
-    <!-- 生产环境：JSON 格式 -->
+    <!-- Production environment: JSON format for Loki -->
     <springProfile name="prod">
         <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
-            <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
-                <pattern>{"time":"%d{ISO8601}","level":"%level","traceId":"%X{traceId}","tenantId":"%X{tenantId}","userId":"%X{userId}","logger":"%logger{36}","msg":"%message"}%n</pattern>
-                <charset>UTF-8</charset>
+            <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+                <!-- Include MDC fields as JSON fields (NOT Loki labels) -->
+                <includeMdcKeyName>traceId</includeMdcKeyName>
+                <includeMdcKeyName>tenantId</includeMdcKeyName>
+                <includeMdcKeyName>userId</includeMdcKeyName>
+                <includeMdcKeyName>requestUri</includeMdcKeyName>
+                <includeMdcKeyName>requestMethod</includeMdcKeyName>
+                <includeMdcKeyName>clientIp</includeMdcKeyName>
+
+                <!-- Customize field names -->
+                <fieldNames>
+                    <timestamp>timestamp</timestamp>
+                    <message>message</message>
+                    <logger>logger</logger>
+                    <thread>thread</thread>
+                    <level>level</level>
+                    <levelValue>[ignore]</levelValue>
+                </fieldNames>
+
+                <!-- Include stack trace for exceptions -->
+                <throwableConverter class="net.logstash.logback.stacktrace.ShortenedThrowableConverter">
+                    <maxDepthPerThrowable>30</maxDepthPerThrowable>
+                    <maxLength>2048</maxLength>
+                    <shortenedClassNameLength>20</shortenedClassNameLength>
+                    <exclude>^sun\.reflect\..*\.invoke</exclude>
+                    <exclude>^net\.sf\.cglib\.proxy\.MethodProxy\.invoke</exclude>
+                    <rootCauseFirst>true</rootCauseFirst>
+                </throwableConverter>
             </encoder>
         </appender>
 
@@ -33,9 +59,21 @@
                 </timeBasedFileNamingAndTriggeringPolicy>
                 <maxHistory>30</maxHistory>
             </rollingPolicy>
-            <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
-                <pattern>{"time":"%d{ISO8601}","level":"%level","traceId":"%X{traceId}","tenantId":"%X{tenantId}","userId":"%X{userId}","logger":"%logger{36}","msg":"%message"}%n</pattern>
-                <charset>UTF-8</charset>
+            <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+                <includeMdcKeyName>trace_id</includeMdcKeyName>
+                <includeMdcKeyName>tenant_id</includeMdcKeyName>
+                <includeMdcKeyName>user_id</includeMdcKeyName>
+                <includeMdcKeyName>requestUri</includeMdcKeyName>
+                <includeMdcKeyName>requestMethod</includeMdcKeyName>
+                <includeMdcKeyName>clientIp</includeMdcKeyName>
+                <fieldNames>
+                    <timestamp>timestamp</timestamp>
+                    <message>message</message>
+                    <logger>logger</logger>
+                    <thread>thread</thread>
+                    <level>level</level>
+                    <levelValue>[ignore]</levelValue>
+                </fieldNames>
             </encoder>
         </appender>
 
@@ -43,5 +81,16 @@
             <appender-ref ref="CONSOLE"/>
             <appender-ref ref="FILE"/>
         </root>
+        <logger name="com.ljwx.platform" level="INFO"/>
     </springProfile>
+
+    <!-- Application-specific loggers -->
+    <logger name="org.springframework.security" level="INFO"/>
+    <logger name="org.springframework.web" level="INFO"/>
+    <logger name="org.mybatis" level="INFO"/>
+
+    <!-- Reduce noise from common libraries -->
+    <logger name="org.apache.catalina" level="WARN"/>
+    <logger name="org.apache.tomcat" level="WARN"/>
+    <logger name="org.hibernate" level="WARN"/>
 </configuration>

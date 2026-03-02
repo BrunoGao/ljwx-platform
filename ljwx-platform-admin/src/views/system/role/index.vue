@@ -11,6 +11,7 @@ import type {
   PageResult,
 } from '@ljwx/shared'
 import { getRoleList, createRole, updateRole, deleteRole, getPermissionList } from '@/api/role'
+import DataScopeDialog from './components/DataScopeDialog.vue'
 
 // ─── 列表状态 ────────────────────────────────────────────────
 const loading = ref(false)
@@ -163,6 +164,22 @@ async function handleDelete(row: RoleVO): Promise<void> {
   }
 }
 
+// ─── 数据范围弹窗 ────────────────────────────────────────────────
+const dataScopeDialogVisible = ref(false)
+const dataScopeRoleId = ref<number | null>(null)
+const dataScopeRoleName = ref('')
+
+function openDataScope(row: RoleVO): void {
+  dataScopeRoleId.value = row.id
+  dataScopeRoleName.value = row.name
+  dataScopeDialogVisible.value = true
+}
+
+function handleDataScopeSuccess(): void {
+  ElMessage.success('数据范围更新成功')
+  dataScopeDialogVisible.value = false
+}
+
 onMounted(() => {
   loadData()
   loadPermissions()
@@ -219,9 +236,10 @@ onMounted(() => {
           </template>
         </el-table-column>
         <el-table-column prop="createdTime" label="创建时间" width="160" />
-        <el-table-column label="操作" width="160" fixed="right">
+        <el-table-column label="操作" width="220" fixed="right">
           <template #default="{ row }">
             <el-button type="primary" link size="small" @click="openEdit(row)">编辑</el-button>
+            <el-button type="warning" link size="small" @click="openDataScope(row)">数据范围</el-button>
             <el-button type="danger" link size="small" @click="handleDelete(row)">删除</el-button>
           </template>
         </el-table-column>
@@ -283,6 +301,14 @@ onMounted(() => {
         <el-button type="primary" @click="handleSubmit">确定</el-button>
       </template>
     </el-dialog>
+
+    <!-- 数据范围弹窗 -->
+    <DataScopeDialog
+      v-model:visible="dataScopeDialogVisible"
+      :role-id="dataScopeRoleId"
+      :role-name="dataScopeRoleName"
+      @success="handleDataScopeSuccess"
+    />
   </div>
 </template>
 

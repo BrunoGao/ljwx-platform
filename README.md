@@ -4,7 +4,7 @@
 
 ## 项目简介
 
-LJWX Platform 是一个生产就绪的多租户企业平台脚手架，提供：
+LJWX Platform 是一个生产就绪的多租户企业平台脚手架，提供:
 
 - **多租户隔离**：行级隔离，`TenantLineInterceptor` 自动注入 `WHERE tenant_id = ?`
 - **JWT 认证**：HS256 签名，Access Token 30 分钟，Refresh Token 7 天
@@ -18,6 +18,10 @@ LJWX Platform 是一个生产就绪的多租户企业平台脚手架，提供：
 - **系统监控**：服务器 CPU/内存/JVM 信息实时采集
 - **接口限流**：`@RateLimit` 注解，基于令牌桶算法保护高频接口
 - **WebSocket**：实时通知推送，`NotificationWebSocketHandler`
+- **安全加固**：XSS 过滤、幂等 Token、JWT 黑名单、登录锁定、强密码策略
+- **可观测性**：TraceId 链路追踪、结构化 JSON 日志、慢接口监控、前端错误上报
+- **数据变更审计**：字段级变更追踪，`@AuditChange` 注解自动记录 before/after 值
+- **前端权限指令**：`v-permission` 指令，基于权限字符串控制元素显示
 - **三端前端**：管理后台（Element Plus）、移动端（uni-app）、数据大屏（ECharts）
 
 ## 快速启动
@@ -35,26 +39,39 @@ LJWX Platform 是一个生产就绪的多租户企业平台脚手架，提供：
 ### 1. 启动数据库
 
 ```bash
-docker-compose up -d postgres
+# 推荐：本地 PostgreSQL（macOS/Homebrew）
+brew services start postgresql@16
+
+# 首次或迁移变更后：生成 baseline（一次性）
+bash scripts/generate-baseline.sh
+
+# 日常重置：默认重建数据库并导入 baseline
+bash scripts/reset-database.sh
+```
+
+如需仅重置为空库（不导入 baseline）：
+
+```bash
+bash scripts/reset-database.sh --mode empty
 ```
 
 ### 2. 配置环境变量
 
 ```bash
 cp .env.example .env
-# 编辑 .env，填写 JWT_SECRET 等配置
+# 编辑 .env，填写 JWT_SECRET 等配置（可选设置 FLYWAY_BASELINE_VERSION）
 ```
 
 ### 3. 启动后端
 
 ```bash
 ./mvnw clean package -DskipTests
-java -jar ljwx-platform-app/target/ljwx-platform-app-1.0.0-SNAPSHOT.jar
+SPRING_PROFILES_ACTIVE=local java -jar ljwx-platform-app/target/ljwx-platform-app-1.0.0-SNAPSHOT.jar
 ```
 
 后端默认监听 `http://localhost:8080`。
 
-Flyway 会自动执行 `V001`–`V028` 迁移脚本，创建所有表并插入种子数据。
+`local` profile 下 Flyway 使用 baseline 模式（默认 `V052`），仅对 baseline 之后的新迁移执行增量，减少开发阶段因历史迁移导致的失败。
 
 默认管理员账号：`admin` / `Admin@12345`
 
