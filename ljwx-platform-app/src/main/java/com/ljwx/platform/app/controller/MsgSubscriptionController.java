@@ -30,7 +30,7 @@ public class MsgSubscriptionController {
      * @param dto 订阅信息
      * @return 订阅 ID
      */
-    @PreAuthorize("@ss.hasPermission('system:message:subscription:add')")
+    @PreAuthorize("hasAuthority('system:message:subscription:add')")
     @PostMapping
     public Result<Long> create(@Valid @RequestBody MsgSubscriptionDTO dto) {
         Long id = msgSubscriptionService.create(dto);
@@ -44,7 +44,7 @@ public class MsgSubscriptionController {
      * @param dto 订阅信息
      * @return 成功响应
      */
-    @PreAuthorize("@ss.hasPermission('system:message:subscription:edit')")
+    @PreAuthorize("hasAuthority('system:message:subscription:edit')")
     @PutMapping("/{id}")
     public Result<Void> update(@PathVariable Long id, @Valid @RequestBody MsgSubscriptionDTO dto) {
         msgSubscriptionService.update(id, dto);
@@ -57,7 +57,7 @@ public class MsgSubscriptionController {
      * @param id 订阅 ID
      * @return 成功响应
      */
-    @PreAuthorize("@ss.hasPermission('system:message:subscription:delete')")
+    @PreAuthorize("hasAuthority('system:message:subscription:delete')")
     @DeleteMapping("/{id}")
     public Result<Void> delete(@PathVariable Long id) {
         msgSubscriptionService.delete(id);
@@ -70,7 +70,7 @@ public class MsgSubscriptionController {
      * @param id 订阅 ID
      * @return 订阅详情
      */
-    @PreAuthorize("@ss.hasPermission('system:message:subscription:query')")
+    @PreAuthorize("hasAuthority('system:message:subscription:query')")
     @GetMapping("/{id}")
     public Result<MsgSubscriptionVO> getById(@PathVariable Long id) {
         MsgSubscriptionVO vo = msgSubscriptionService.getById(id);
@@ -83,7 +83,7 @@ public class MsgSubscriptionController {
      * @param query 查询条件
      * @return 分页结果
      */
-    @PreAuthorize("@ss.hasPermission('system:message:subscription:list')")
+    @PreAuthorize("hasAuthority('system:message:subscription:list')")
     @GetMapping
     public Result<PageResult<MsgSubscriptionVO>> list(MsgSubscriptionQueryDTO query) {
         PageResult<MsgSubscriptionVO> result = msgSubscriptionService.list(query);
@@ -97,7 +97,7 @@ public class MsgSubscriptionController {
      * @param status 新状态
      * @return 成功响应
      */
-    @PreAuthorize("@ss.hasPermission('system:message:subscription:edit')")
+    @PreAuthorize("hasAuthority('system:message:subscription:edit')")
     @PutMapping("/{id}/status")
     public Result<Void> updateStatus(@PathVariable Long id, @RequestParam String status) {
         msgSubscriptionService.updateStatus(id, status);

@@ -1,6 +1,6 @@
 package com.ljwx.platform.app.infra.mapper;
 
-import com.ljwx.platform.app.domain.entity.MsgSubscription;
+import com.ljwx.platform.core.domain.MsgSubscription;
 import com.ljwx.platform.app.dto.MsgSubscriptionQueryDTO;
 import com.ljwx.platform.app.vo.MsgSubscriptionVO;
 import org.apache.ibatis.annotations.Mapper;
