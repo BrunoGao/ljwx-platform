@@ -37,6 +37,7 @@
         UPDATE sys_open_app
         SET app_name = #{appName},
             app_type = #{appType},
+            app_secret = #{appSecret},
             status = #{status},
             rate_limit = #{rateLimit},
             ip_whitelist = #{ipWhitelist},
@@ -89,7 +90,7 @@
             AND status = #{status}
         </if>
         ORDER BY created_time DESC
-        LIMIT #{pageSize} OFFSET #{pageNum} * #{pageSize} - #{pageSize}
+        LIMIT #{pageSize} OFFSET (#{pageNum} - 1) * #{pageSize}
     </select>
 
     <select id="countList" resultType="long">
