@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ljwx.platform.app.infra.mapper.TaskExecutionLogMapper">
+
+    <delete id="deleteByStartTimeBefore">
+        UPDATE sys_task_execution_log
+        SET deleted = TRUE,
+            updated_time = CURRENT_TIMESTAMP
+        WHERE start_time &lt; #{threshold}
+          AND deleted = FALSE
+    </delete>
+
+    <select id="countTotal" resultType="java.lang.Long">
+        SELECT COUNT(*)
+        FROM sys_task_execution_log
+        WHERE deleted = FALSE
+    </select>
+
+    <select id="countSuccess" resultType="java.lang.Long">
+        SELECT COUNT(*)
+        FROM sys_task_execution_log
+        WHERE status = 'SUCCESS'
+          AND deleted = FALSE
+    </select>
+
+    <select id="countFailure" resultType="java.lang.Long">
+        SELECT COUNT(*)
+        FROM sys_task_execution_log
+        WHERE status = 'FAILURE'
+          AND deleted = FALSE
+    </select>
+
+    <select id="avgDuration" resultType="java.lang.Integer">
+        SELECT COALESCE(AVG(duration), 0)
+        FROM sys_task_execution_log
+        WHERE duration IS NOT NULL
+          AND deleted = FALSE
+    </select>
+
+    <select id="maxDuration" resultType="java.lang.Integer">
+        SELECT COALESCE(MAX(duration), 0)
+        FROM sys_task_execution_log
+        WHERE duration IS NOT NULL
+          AND deleted = FALSE
+    </select>
+
+    <select id="minDuration" resultType="java.lang.Integer">
+        SELECT COALESCE(MIN(duration), 0)
+        FROM sys_task_execution_log
+        WHERE duration IS NOT NULL
+          AND deleted = FALSE
+    </select>
+
+</mapper>
