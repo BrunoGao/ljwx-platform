@@ -4,7 +4,7 @@
 
 ## 项目简介
 
-LJWX Platform 是一个生产就绪的多租户企业平台脚手架，提供：
+LJWX Platform 是一个生产就绪的多租户企业平台脚手架，提供:
 
 - **多租户隔离**：行级隔离，`TenantLineInterceptor` 自动注入 `WHERE tenant_id = ?`
 - **JWT 认证**：HS256 签名，Access Token 30 分钟，Refresh Token 7 天
@@ -18,6 +18,10 @@ LJWX Platform 是一个生产就绪的多租户企业平台脚手架，提供：
 - **系统监控**：服务器 CPU/内存/JVM 信息实时采集
 - **接口限流**：`@RateLimit` 注解，基于令牌桶算法保护高频接口
 - **WebSocket**：实时通知推送，`NotificationWebSocketHandler`
+- **安全加固**：XSS 过滤、幂等 Token、JWT 黑名单、登录锁定、强密码策略
+- **可观测性**：TraceId 链路追踪、结构化 JSON 日志、慢接口监控、前端错误上报
+- **数据变更审计**：字段级变更追踪，`@AuditChange` 注解自动记录 before/after 值
+- **前端权限指令**：`v-permission` 指令，基于权限字符串控制元素显示
 - **三端前端**：管理后台（Element Plus）、移动端（uni-app）、数据大屏（ECharts）
 
 ## 快速启动

@@ -33,16 +33,32 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseBodyAdvice;
 public class ResponseAdvice implements ResponseBodyAdvice<Object> {
 
     /**
-     * Applies this advice to all JSON responses except {@code String} return types.
+     * Applies this advice to all JSON responses except {@code String} return types
+     * and SpringDoc/Swagger endpoints.
      *
      * <p>{@code String} types are excluded to avoid conflicts with the
      * {@code StringHttpMessageConverter}: when a controller returns {@code String},
      * Jackson is not selected, so wrapping it here would cause a conversion error.
+     *
+     * <p>SpringDoc endpoints ({@code /v3/api-docs/**}, {@code /swagger-ui/**})
+     * are excluded to prevent wrapping OpenAPI documentation in {@link Result}.
      */
     @Override
     public boolean supports(MethodParameter returnType,
                             Class<? extends HttpMessageConverter<?>> converterType) {
-        return !String.class.equals(returnType.getParameterType());
+        // Exclude String types to avoid StringHttpMessageConverter conflicts
+        if (String.class.equals(returnType.getParameterType())) {
+            return false;
+        }
+
+        // Exclude SpringDoc/Swagger endpoints
+        String declaringClassName = returnType.getDeclaringClass().getName();
+        if (declaringClassName.startsWith("org.springdoc") ||
+            declaringClassName.startsWith("springfox.documentation")) {
+            return false;
+        }
+
+        return true;
     }
 
     /**

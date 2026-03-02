@@ -1,6 +1,7 @@
 package com.ljwx.platform.app;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.ljwx.platform.security.blacklist.LoginLockoutService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,10 +33,16 @@ class OnlineUserControllerIT {
     @Autowired
     private ObjectMapper objectMapper;
 
+    @Autowired
+    private LoginLockoutService loginLockoutService;
+
     private String adminToken;
 
     @BeforeEach
     void setUp() throws Exception {
+        // Clear any lockout state before login
+        loginLockoutService.clearFailure("admin");
+
         String loginBody = objectMapper.writeValueAsString(Map.of(
                 "username", "admin",
                 "password", "Admin@12345"

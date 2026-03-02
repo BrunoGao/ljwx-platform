@@ -10,6 +10,12 @@ export interface TenantVO {
   code: string
   /** 状态：1-启用 0-禁用 */
   status: number
+  /** 生命周期状态：ACTIVE-活跃 FROZEN-冻结 CANCELLED-注销 */
+  lifecycleStatus: string
+  frozenReason?: string
+  frozenTime?: string
+  cancelledReason?: string
+  cancelledTime?: string
   createdTime: string
   updatedTime: string
 }
@@ -29,6 +35,14 @@ export interface TenantUpdateDTO {
   name?: string
   code?: string
   status?: number
+}
+
+export interface TenantFreezeDTO {
+  reason: string
+}
+
+export interface TenantCancelDTO {
+  reason: string
 }
 
 // ============================================================
@@ -387,3 +401,4 @@ export interface ScreenTrendVO {
   /** 登录趋势（近 7 天） */
   loginTrend: ScreenTrendItem[]
 }
+

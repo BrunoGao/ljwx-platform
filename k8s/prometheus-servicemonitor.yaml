@@ -1,0 +1,124 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: ljwx-platform
+  namespace: ljwx
+  labels:
+    app: ljwx-platform
+    release: prometheus
+spec:
+  selector:
+    matchLabels:
+      app: ljwx-platform
+  endpoints:
+    - port: http
+      path: /actuator/prometheus
+      interval: 30s
+      scrapeTimeout: 10s
+      scheme: http
+      honorLabels: true
+      relabelings:
+        # Add namespace label
+        - sourceLabels: [__meta_kubernetes_namespace]
+          targetLabel: namespace
+        # Add pod name label
+        - sourceLabels: [__meta_kubernetes_pod_name]
+          targetLabel: pod
+        # Add service name label
+        - sourceLabels: [__meta_kubernetes_service_name]
+          targetLabel: service
+  namespaceSelector:
+    matchNames:
+      - ljwx
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: ljwx-platform-alerts
+  namespace: ljwx
+  labels:
+    app: ljwx-platform
+    release: prometheus
+spec:
+  groups:
+    - name: ljwx-platform-availability
+      interval: 30s
+      rules:
+        - alert: HighErrorRate
+          expr: |
+            sum(rate(http_requests_total{status=~"5.."}[5m]))
+            /
+            sum(rate(http_requests_total[5m]))
+            > 0.01
+          for: 5m
+          labels:
+            severity: critical
+            component: ljwx-platform
+          annotations:
+            summary: "High error rate detected (>1%)"
+            description: "Error rate is {{ $value | humanizePercentage }} over the last 5 minutes"
+
+        - alert: HighMemoryUsage
+          expr: |
+            jvm_memory_used_bytes{area="heap"}
+            /
+            jvm_memory_max_bytes{area="heap"}
+            > 0.9
+          for: 5m
+          labels:
+            severity: warning
+            component: ljwx-platform
+          annotations:
+            summary: "High JVM heap memory usage (>90%)"
+            description: "Heap memory usage is {{ $value | humanizePercentage }} on pod {{ $labels.pod }}"
+
+        - alert: HighGCPressure
+          expr: |
+            rate(jvm_gc_pause_seconds_sum[5m])
+            /
+            rate(jvm_gc_pause_seconds_count[5m])
+            > 0.1
+          for: 5m
+          labels:
+            severity: warning
+            component: ljwx-platform
+          annotations:
+            summary: "High GC pause time (>100ms avg)"
+            description: "Average GC pause time is {{ $value | humanizeDuration }} on pod {{ $labels.pod }}"
+
+        - alert: HighRequestLatency
+          expr: |
+            histogram_quantile(0.95,
+              sum(rate(http_request_duration_seconds_bucket[5m])) by (le, uri)
+            ) > 1.0
+          for: 5m
+          labels:
+            severity: warning
+            component: ljwx-platform
+          annotations:
+            summary: "High request latency (P95 >1s)"
+            description: "P95 latency for {{ $labels.uri }} is {{ $value | humanizeDuration }}"
+
+    - name: ljwx-platform-capacity
+      interval: 30s
+      rules:
+        - alert: HighThreadCount
+          expr: jvm_threads_live > 200
+          for: 5m
+          labels:
+            severity: warning
+            component: ljwx-platform
+          annotations:
+            summary: "High thread count (>200)"
+            description: "Thread count is {{ $value }} on pod {{ $labels.pod }}"
+
+        - alert: HighRequestRate
+          expr: |
+            sum(rate(http_requests_total[5m])) > 1000
+          for: 5m
+          labels:
+            severity: info
+            component: ljwx-platform
+          annotations:
+            summary: "High request rate (>1000 req/s)"
+            description: "Request rate is {{ $value | humanize }} req/s"

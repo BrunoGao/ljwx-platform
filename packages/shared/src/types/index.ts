@@ -23,6 +23,8 @@ export type {
   TenantQueryDTO,
   TenantCreateDTO,
   TenantUpdateDTO,
+  TenantFreezeDTO,
+  TenantCancelDTO,
   SysDictTypeVO,
   SysDictDataVO,
   DictTypeQueryDTO,

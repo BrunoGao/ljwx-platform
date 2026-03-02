@@ -1,3 +1,13 @@
+## PHASE 37
+Title: Grafana 仪表盘与告警 (Grafana Dashboards)
+Completed: 2026-03-02T00:00:00Z
+Files:
+  - k8s/grafana-dashboard-global.json
+  - k8s/grafana-dashboard-jvm.json
+  - k8s/grafana-dashboard-tenant.json
+  - k8s/grafana-alerting-rules.yaml
+Status: PASSED
+
 ## PHASE 28
 Title: Security Hardening XSS Idempotency Token Blacklist
 Completed: 2026-02-24T23:59:00Z
@@ -514,6 +524,26 @@ Files:
   - ljwx-platform-admin/src/router/index.ts
 Gate: PASSED
 
+## PHASE 32
+Title: Final Gate v3 — Documentation and Validation
+Completed: 2026-02-25T01:00:00Z
+Files:
+  - FULL_MANIFEST.txt
+  - docs/adr/006-security-hardening.md
+  - docs/adr/007-observability.md
+  - docs/adr/008-data-change-audit.md
+  - README.md
+  - CLAUDE.md
+  - PHASE_MANIFEST.txt
+  - ljwx-platform-security/src/main/java/com/ljwx/platform/security/blacklist/LoginLockoutService.java
+  - ljwx-platform-app/src/test/java/com/ljwx/platform/app/ProfileControllerIT.java
+  - ljwx-platform-app/src/test/java/com/ljwx/platform/app/LoginLogControllerIT.java
+  - ljwx-platform-app/src/test/java/com/ljwx/platform/app/MonitorControllerIT.java
+  - ljwx-platform-app/src/test/java/com/ljwx/platform/app/MenuControllerIT.java
+  - ljwx-platform-app/src/test/java/com/ljwx/platform/app/OnlineUserControllerIT.java
+  - ljwx-platform-app/src/test/java/com/ljwx/platform/app/DeptControllerIT.java
+Gate: PASSED
+
 ## PHASE 0
 Status: PASSED
 
@@ -536,3 +566,78 @@ scripts/gates/gate-nfr.sh
 scripts/tools/export-openapi.sh
 scripts/acceptance/smoke-test.sh
 PHASE_MANIFEST.txt
+
+## PHASE 33
+Title: 多级缓存管理器 (Multi-Level Cache Manager)
+Completed: 2026-03-02T00:00:00Z
+Files:
+  - ljwx-platform-app/src/main/resources/db/migration/V033__create_cache_invalidation_event.sql
+  - ljwx-platform-core/src/main/java/com/ljwx/platform/core/cache/MultiLevelCacheManager.java
+  - ljwx-platform-core/src/main/java/com/ljwx/platform/core/cache/CacheLevel.java
+  - ljwx-platform-core/src/main/java/com/ljwx/platform/core/cache/CacheInvalidationListener.java
+  - ljwx-platform-core/src/main/java/com/ljwx/platform/core/cache/config/CacheConfig.java
+  - ljwx-platform-core/src/main/java/com/ljwx/platform/core/cache/annotation/MultiLevelCacheable.java
+  - ljwx-platform-core/pom.xml
+  - ljwx-platform-app/src/main/resources/application.yml
+  - ljwx-platform-app/src/test/java/com/ljwx/platform/phase33/MultiLevelCacheManagerTest.java
+Gate: PASSED
+
+## PHASE 34
+Title: Outbox 事件表 (Outbox Event Pattern)
+Completed: 2026-03-02T08:00:00Z
+Files:
+  - ljwx-platform-app/src/main/resources/db/migration/V034__create_outbox_event.sql
+  - ljwx-platform-core/src/main/java/com/ljwx/platform/core/event/OutboxEvent.java
+  - ljwx-platform-core/src/main/java/com/ljwx/platform/core/event/OutboxEventPublisher.java
+  - ljwx-platform-app/src/main/java/com/ljwx/platform/app/service/OutboxEventPublisher.java
+  - ljwx-platform-app/src/main/java/com/ljwx/platform/app/service/OutboxEventPoller.java
+  - ljwx-platform-app/src/main/java/com/ljwx/platform/app/infra/mapper/OutboxEventMapper.java
+  - ljwx-platform-app/src/main/resources/mapper/OutboxEventMapper.xml
+  - ljwx-platform-app/src/main/java/com/ljwx/platform/app/listener/OutboxEventNotificationListener.java
+Status: PENDING
+
+## PHASE 35
+Title: 结构化日志与 Loki 集成 (Structured Logging)
+Completed: 2026-03-02T09:00:00Z
+Files:
+  - ljwx-platform-app/src/main/resources/logback-spring.xml
+  - ljwx-platform-app/src/main/java/com/ljwx/platform/app/filter/LoggingFilter.java
+  - ljwx-platform-core/src/main/java/com/ljwx/platform/core/logging/MDCKeys.java
+  - ljwx-platform-app/src/main/resources/application.yml
+  - ljwx-platform-app/pom.xml
+  - k8s/fluent-bit-config.yaml
+  - ljwx-platform-app/src/test/java/com/ljwx/platform/phase35/StructuredLoggingTest.java
+Gate: PASSED
+
+## PHASE 36
+Title: Prometheus 指标监控 (Metrics Monitoring)
+Completed: 2026-03-02T09:30:00Z
+Files:
+  - ljwx-platform-app/pom.xml
+  - ljwx-platform-app/src/main/resources/application.yml
+  - ljwx-platform-app/src/main/java/com/ljwx/platform/app/filter/TenantMetricsFilter.java
+  - k8s/prometheus-servicemonitor.yaml
+Status: PENDING
+
+## PHASE 39
+Title: 数据脱敏 (Data Masking)
+Completed: 2026-03-02T10:00:00Z
+Files:
+  - ljwx-platform-core/pom.xml
+  - ljwx-platform-core/src/main/java/com/ljwx/platform/core/security/MaskType.java
+  - ljwx-platform-core/src/main/java/com/ljwx/platform/core/security/DataMask.java
+  - ljwx-platform-core/src/main/java/com/ljwx/platform/core/security/DataMaskSerializer.java
+  - ljwx-platform-core/src/main/java/com/ljwx/platform/core/security/DataMaskAspect.java
+  - ljwx-platform-app/src/main/java/com/ljwx/platform/app/domain/vo/UserVO.java
+  - ljwx-platform-app/src/test/java/com/ljwx/platform/phase39/DataMaskTest.java
+Status: PASSED
+
+## PHASE 42
+Title: Super Admin Mechanism
+Completed: 2026-03-02T12:00:00Z
+Files:
+  - ljwx-platform-data/src/main/java/com/ljwx/platform/data/interceptor/TenantLineHandler.java
+  - ljwx-platform-security/src/main/java/com/ljwx/platform/security/util/SecurityUtils.java
+  - ljwx-platform-web/src/main/java/com/ljwx/platform/web/filter/TenantContextFilter.java
+Status: PASSED
+

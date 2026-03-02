@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-02-26T08:14:22Z",
+  "generated_at": "2026-03-02T00:07:39Z",
   "matrix": [
     {
       "phase": "00",
@@ -8,7 +8,7 @@
       "method": "POST",
       "controller": "ljwx-platform-app/src/main/java/com/ljwx/platform/app/controller/AuthController.java",
       "service": null,
-      "test": "ljwx-platform-app/src/test/java/com/ljwx/platform/app/DeptControllerIT.java",
+      "test": "ljwx-platform-app/src/test/java/com/ljwx/platform/app/MenuControllerIT.java",
       "test_covered": true,
       "spec": null,
       "gate_status": "PASS"
@@ -236,7 +236,7 @@
       "method": "GET",
       "controller": "ljwx-platform-app/src/main/java/com/ljwx/platform/app/controller/MenuController.java",
       "service": null,
-      "test": "ljwx-platform-app/src/test/java/com/ljwx/platform/phase20/MenuApiIntegrationTest.java",
+      "test": "ljwx-platform-app/src/test/java/com/ljwx/platform/app/MenuControllerIT.java",
       "test_covered": true,
       "spec": null,
       "gate_status": "PASS"
@@ -248,7 +248,7 @@
       "method": "GET",
       "controller": "ljwx-platform-app/src/main/java/com/ljwx/platform/app/controller/MenuController.java",
       "service": null,
-      "test": "ljwx-platform-app/src/test/java/com/ljwx/platform/phase20/MenuApiIntegrationTest.java",
+      "test": "ljwx-platform-app/src/test/java/com/ljwx/platform/app/MenuControllerIT.java",
       "test_covered": true,
       "spec": null,
       "gate_status": "PASS"
@@ -272,7 +272,7 @@
       "method": "DELETE",
       "controller": "ljwx-platform-app/src/main/java/com/ljwx/platform/app/controller/MenuController.java",
       "service": null,
-      "test": "ljwx-platform-app/src/test/java/com/ljwx/platform/phase20/MenuApiIntegrationTest.java",
+      "test": "ljwx-platform-app/src/test/java/com/ljwx/platform/app/MenuControllerIT.java",
       "test_covered": true,
       "spec": null,
       "gate_status": "PASS"

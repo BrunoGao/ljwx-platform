@@ -59,10 +59,10 @@ import java.util.Properties;
 public class TenantLineInterceptor implements Interceptor {
 
     /**
-     * Optional provider for the current-tenant context.
-     * Returns {@code null} when no implementation is registered.
+     * Tenant line handler that determines whether to apply tenant filtering.
+     * Handles super admin logic (tenant_id = 0 skips filtering).
      */
-    private final ObjectProvider<CurrentTenantHolder> tenantHolderProvider;
+    private final TenantLineHandler tenantLineHandler;
 
     @Override
     @SuppressWarnings({"rawtypes", "unchecked"})
@@ -72,9 +72,9 @@ public class TenantLineInterceptor implements Interceptor {
         RowBounds       rowBounds     = (RowBounds) invocation.getArgs()[2];
         ResultHandler   resultHandler = (ResultHandler) invocation.getArgs()[3];
 
-        Long tenantId = resolveTenantId();
+        Long tenantId = tenantLineHandler.getTenantId();
         if (tenantId == null) {
-            // No tenant context (unauthenticated / system operation) — skip filter
+            // No tenant context (unauthenticated / system operation / super admin) — skip filter
             return invocation.proceed();
         }
 
@@ -168,17 +168,12 @@ public class TenantLineInterceptor implements Interceptor {
     /**
      * Resolves the current tenant ID from the security context.
      * Returns {@code null} when no authenticated tenant is present.
+     *
+     * @deprecated Use {@link TenantLineHandler#getTenantId()} instead
      */
+    @Deprecated
     private Long resolveTenantId() {
-        try {
-            CurrentTenantHolder holder = tenantHolderProvider.getIfAvailable();
-            if (holder != null) {
-                return holder.getTenantId();
-            }
-        } catch (Exception ignored) {
-            // Context not available — safe to ignore
-        }
-        return null;
+        return tenantLineHandler.getTenantId();
     }
 
     @Override
