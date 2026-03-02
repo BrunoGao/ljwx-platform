@@ -1,5 +1,5 @@
 import request from '@/api/request'
-import type { Result, PageResult, PageQuery } from '@ljwx/shared'
+import type { PageResult, PageQuery } from '@ljwx/shared'
 
 // ============================================================
 // Message Record Types
@@ -62,26 +62,26 @@ export interface MsgUserInboxQueryDTO extends PageQuery {
 // API Functions
 // ============================================================
 
-export function sendMessage(data: MessageSendDTO): Promise<Result<number>> {
+export function sendMessage(data: MessageSendDTO): Promise<number> {
   return request.post('/api/v1/messages/send', data)
 }
 
-export function listMessageRecords(params?: MsgRecordQueryDTO): Promise<Result<PageResult<MsgRecordVO>>> {
+export function listMessageRecords(params?: MsgRecordQueryDTO): Promise<PageResult<MsgRecordVO>> {
   return request.get('/api/v1/messages/records', { params })
 }
 
-export function getMessageRecord(id: number): Promise<Result<MsgRecordVO>> {
+export function getMessageRecord(id: number): Promise<MsgRecordVO> {
   return request.get(`/api/v1/messages/records/${id}`)
 }
 
-export function listUserInbox(params?: MsgUserInboxQueryDTO): Promise<Result<PageResult<MsgUserInboxVO>>> {
+export function listUserInbox(params?: MsgUserInboxQueryDTO): Promise<PageResult<MsgUserInboxVO>> {
   return request.get('/api/v1/messages/inbox', { params })
 }
 
-export function markInboxAsRead(id: number): Promise<Result<void>> {
+export function markInboxAsRead(id: number): Promise<void> {
   return request.put(`/api/v1/messages/inbox/${id}/read`)
 }
 
-export function deleteInboxMessage(id: number): Promise<Result<void>> {
+export function deleteInboxMessage(id: number): Promise<void> {
   return request.delete(`/api/v1/messages/inbox/${id}`)
 }
