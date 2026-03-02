@@ -56,4 +56,7 @@ export type {
   MenuTreeVO,
   MenuCreateDTO,
   MenuUpdateDTO,
+  TaskExecutionLogVO,
+  TaskExecutionLogQueryDTO,
+  TaskLogStatsVO,
 } from './common'
