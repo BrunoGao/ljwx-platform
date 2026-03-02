@@ -2,7 +2,7 @@ package com.ljwx.platform.app.infra.mapper;
 
 import com.ljwx.platform.app.dto.WebhookLogQueryDTO;
 import com.ljwx.platform.app.vo.WebhookLogVO;
-import com.ljwx.platform.app.domain.entity.WebhookLog;
+import com.ljwx.platform.core.domain.WebhookLog;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
