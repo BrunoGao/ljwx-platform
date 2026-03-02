@@ -6,7 +6,7 @@
     <springProfile name="dev,default">
         <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
             <encoder>
-                <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} [traceId=%X{trace_id}] [tenantId=%X{tenant_id}] [userId=%X{user_id}] - %msg%n</pattern>
+                <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} [traceId=%X{traceId}] [tenantId=%X{tenantId}] [userId=%X{userId}] - %msg%n</pattern>
                 <charset>UTF-8</charset>
             </encoder>
         </appender>
@@ -21,9 +21,9 @@
         <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
             <encoder class="net.logstash.logback.encoder.LogstashEncoder">
                 <!-- Include MDC fields as JSON fields (NOT Loki labels) -->
-                <includeMdcKeyName>trace_id</includeMdcKeyName>
-                <includeMdcKeyName>tenant_id</includeMdcKeyName>
-                <includeMdcKeyName>user_id</includeMdcKeyName>
+                <includeMdcKeyName>traceId</includeMdcKeyName>
+                <includeMdcKeyName>tenantId</includeMdcKeyName>
+                <includeMdcKeyName>userId</includeMdcKeyName>
                 <includeMdcKeyName>requestUri</includeMdcKeyName>
                 <includeMdcKeyName>requestMethod</includeMdcKeyName>
                 <includeMdcKeyName>clientIp</includeMdcKeyName>
