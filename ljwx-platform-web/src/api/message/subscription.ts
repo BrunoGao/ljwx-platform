@@ -49,3 +49,7 @@ export function getSubscription(id: number): Promise<Result<MsgSubscriptionVO>> 
 export function listSubscriptions(params?: MsgSubscriptionQueryDTO): Promise<Result<PageResult<MsgSubscriptionVO>>> {
   return request.get('/api/v1/message/subscriptions', { params })
 }
+
+export function updateSubscriptionStatus(id: number, status: string): Promise<Result<void>> {
+  return request.put(`/api/v1/message/subscriptions/${id}/status`, null, { params: { status } })
+}
