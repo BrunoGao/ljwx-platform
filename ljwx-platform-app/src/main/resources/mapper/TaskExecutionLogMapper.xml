@@ -2,6 +2,116 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.ljwx.platform.app.infra.mapper.TaskExecutionLogMapper">
 
+    <resultMap id="BaseResultMap" type="com.ljwx.platform.app.domain.entity.TaskExecutionLog">
+        <id     column="id"              property="id"/>
+        <result column="task_name"       property="taskName"/>
+        <result column="task_group"      property="taskGroup"/>
+        <result column="task_params"     property="taskParams"/>
+        <result column="status"          property="status"/>
+        <result column="start_time"      property="startTime"/>
+        <result column="end_time"        property="endTime"/>
+        <result column="duration"        property="duration"/>
+        <result column="result"          property="result"/>
+        <result column="error_message"   property="errorMessage"/>
+        <result column="error_stack"     property="errorStack"/>
+        <result column="server_ip"       property="serverIp"/>
+        <result column="server_name"     property="serverName"/>
+        <result column="tenant_id"       property="tenantId"/>
+        <result column="created_by"      property="createdBy"/>
+        <result column="created_time"    property="createdTime"/>
+        <result column="updated_by"      property="updatedBy"/>
+        <result column="updated_time"    property="updatedTime"/>
+        <result column="deleted"         property="deleted"/>
+        <result column="version"         property="version"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id, task_name, task_group, task_params, status, start_time, end_time, duration,
+        result, error_message, error_stack, server_ip, server_name,
+        tenant_id, created_by, created_time, updated_by, updated_time, deleted, version
+    </sql>
+
+    <insert id="insert" parameterType="com.ljwx.platform.app.domain.entity.TaskExecutionLog">
+        INSERT INTO sys_task_execution_log (
+            id, task_name, task_group, task_params, status, start_time, end_time, duration,
+            result, error_message, error_stack, server_ip, server_name,
+            tenant_id, created_by, created_time, updated_by, updated_time, deleted, version
+        ) VALUES (
+            #{id}, #{taskName}, #{taskGroup}, #{taskParams}, #{status}, #{startTime}, #{endTime}, #{duration},
+            #{result}, #{errorMessage}, #{errorStack}, #{serverIp}, #{serverName},
+            #{tenantId}, #{createdBy}, #{createdTime}, #{updatedBy}, #{updatedTime}, #{deleted}, #{version}
+        )
+    </insert>
+
+    <update id="updateById" parameterType="com.ljwx.platform.app.domain.entity.TaskExecutionLog">
+        UPDATE sys_task_execution_log
+        SET task_name = #{taskName},
+            task_group = #{taskGroup},
+            task_params = #{taskParams},
+            status = #{status},
+            start_time = #{startTime},
+            end_time = #{endTime},
+            duration = #{duration},
+            result = #{result},
+            error_message = #{errorMessage},
+            error_stack = #{errorStack},
+            server_ip = #{serverIp},
+            server_name = #{serverName},
+            updated_by = #{updatedBy},
+            updated_time = #{updatedTime},
+            version = #{version} + 1
+        WHERE id = #{id}
+          AND deleted = FALSE
+    </update>
+
+    <delete id="deleteById">
+        UPDATE sys_task_execution_log
+        SET deleted = TRUE,
+            updated_time = CURRENT_TIMESTAMP
+        WHERE id = #{id}
+          AND deleted = FALSE
+    </delete>
+
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM sys_task_execution_log
+        WHERE id = #{id}
+          AND deleted = FALSE
+    </select>
+
+    <select id="selectList" parameterType="com.ljwx.platform.app.domain.entity.TaskExecutionLog"
+            resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM sys_task_execution_log
+        WHERE deleted = FALSE
+        <if test="taskName != null and taskName != ''">
+            AND task_name LIKE CONCAT('%', #{taskName}, '%')
+        </if>
+        <if test="taskGroup != null and taskGroup != ''">
+            AND task_group = #{taskGroup}
+        </if>
+        <if test="status != null and status != ''">
+            AND status = #{status}
+        </if>
+        ORDER BY start_time DESC
+    </select>
+
+    <select id="count" parameterType="com.ljwx.platform.app.domain.entity.TaskExecutionLog"
+            resultType="long">
+        SELECT COUNT(*)
+        FROM sys_task_execution_log
+        WHERE deleted = FALSE
+        <if test="taskName != null and taskName != ''">
+            AND task_name LIKE CONCAT('%', #{taskName}, '%')
+        </if>
+        <if test="taskGroup != null and taskGroup != ''">
+            AND task_group = #{taskGroup}
+        </if>
+        <if test="status != null and status != ''">
+            AND status = #{status}
+        </if>
+    </select>
+
     <delete id="deleteByStartTimeBefore">
         UPDATE sys_task_execution_log
         SET deleted = TRUE,
