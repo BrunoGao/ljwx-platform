@@ -16,6 +16,82 @@
         <result property="updatedTime" column="updated_time"/>
     </resultMap>
 
+    <!-- Insert webhook config -->
+    <insert id="insert">
+        INSERT INTO sys_webhook_config (
+            id,
+            webhook_name,
+            webhook_url,
+            event_types,
+            secret_key,
+            status,
+            retry_count,
+            timeout_seconds,
+            tenant_id,
+            created_by,
+            created_time,
+            updated_by,
+            updated_time,
+            deleted,
+            version
+        ) VALUES (
+            #{id},
+            #{webhookName},
+            #{webhookUrl},
+            #{eventTypes},
+            #{secretKey},
+            #{status},
+            #{retryCount},
+            #{timeoutSeconds},
+            #{tenantId},
+            #{createdBy},
+            #{createdTime},
+            #{updatedBy},
+            #{updatedTime},
+            #{deleted},
+            #{version}
+        )
+    </insert>
+
+    <!-- Update webhook config by ID -->
+    <update id="updateById">
+        UPDATE sys_webhook_config
+        SET webhook_name = #{webhookName},
+            webhook_url = #{webhookUrl},
+            event_types = #{eventTypes},
+            secret_key = #{secretKey},
+            status = #{status},
+            retry_count = #{retryCount},
+            timeout_seconds = #{timeoutSeconds},
+            updated_by = #{updatedBy},
+            updated_time = #{updatedTime},
+            deleted = #{deleted},
+            version = version + 1
+        WHERE id = #{id}
+    </update>
+
+    <!-- Select webhook config by ID -->
+    <select id="selectById" resultType="com.ljwx.platform.app.domain.entity.WebhookConfig">
+        SELECT
+            id,
+            webhook_name,
+            webhook_url,
+            event_types,
+            secret_key,
+            status,
+            retry_count,
+            timeout_seconds,
+            tenant_id,
+            created_by,
+            created_time,
+            updated_by,
+            updated_time,
+            deleted,
+            version
+        FROM sys_webhook_config
+        WHERE id = #{id}
+    </select>
+
     <!-- Query webhook config list -->
     <select id="selectWebhookConfigList" resultMap="WebhookConfigVOMap">
         SELECT
