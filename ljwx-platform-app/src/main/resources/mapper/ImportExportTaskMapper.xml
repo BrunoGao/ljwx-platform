@@ -2,7 +2,7 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.ljwx.platform.app.infra.mapper.ImportExportTaskMapper">
 
-    <resultMap id="BaseResultMap" type="com.ljwx.platform.app.domain.entity.ImportExportTask">
+    <resultMap id="BaseResultMap" type="com.ljwx.platform.core.domain.ImportExportTask">
         <id column="id" property="id" />
         <result column="task_type" property="taskType" />
         <result column="business_type" property="businessType" />
@@ -28,7 +28,7 @@
         tenant_id, created_by, created_time, updated_by, updated_time, deleted, version
     </sql>
 
-    <insert id="insert" parameterType="com.ljwx.platform.app.domain.entity.ImportExportTask">
+    <insert id="insert" parameterType="com.ljwx.platform.core.domain.ImportExportTask">
         INSERT INTO sys_import_export_task (
             id, task_type, business_type, file_name, file_url, status,
             total_count, success_count, failure_count, error_message,
@@ -40,7 +40,7 @@
         )
     </insert>
 
-    <update id="updateById" parameterType="com.ljwx.platform.app.domain.entity.ImportExportTask">
+    <update id="updateById" parameterType="com.ljwx.platform.core.domain.ImportExportTask">
         UPDATE sys_import_export_task
         SET task_type = #{taskType},
             business_type = #{businessType},
@@ -73,7 +73,7 @@
           AND deleted = FALSE
     </select>
 
-    <select id="selectList" parameterType="com.ljwx.platform.app.domain.entity.ImportExportTask" resultMap="BaseResultMap">
+    <select id="selectList" parameterType="com.ljwx.platform.core.domain.ImportExportTask" resultMap="BaseResultMap">
         SELECT <include refid="Base_Column_List"/>
         FROM sys_import_export_task
         WHERE deleted = FALSE
@@ -89,7 +89,7 @@
         ORDER BY created_time DESC
     </select>
 
-    <select id="count" parameterType="com.ljwx.platform.app.domain.entity.ImportExportTask" resultType="long">
+    <select id="count" parameterType="com.ljwx.platform.core.domain.ImportExportTask" resultType="long">
         SELECT COUNT(*)
         FROM sys_import_export_task
         WHERE deleted = FALSE
