@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ljwx.platform.app.infra.mapper.ImportExportTaskMapper">
+
+    <resultMap id="BaseResultMap" type="com.ljwx.platform.app.domain.entity.ImportExportTask">
+        <id column="id" property="id" />
+        <result column="task_type" property="taskType" />
+        <result column="business_type" property="businessType" />
+        <result column="file_name" property="fileName" />
+        <result column="file_url" property="fileUrl" />
+        <result column="status" property="status" />
+        <result column="total_count" property="totalCount" />
+        <result column="success_count" property="successCount" />
+        <result column="failure_count" property="failureCount" />
+        <result column="error_message" property="errorMessage" />
+        <result column="tenant_id" property="tenantId" />
+        <result column="created_by" property="createdBy" />
+        <result column="created_time" property="createdTime" />
+        <result column="updated_by" property="updatedBy" />
+        <result column="updated_time" property="updatedTime" />
+        <result column="deleted" property="deleted" />
+        <result column="version" property="version" />
+    </resultMap>
+
+</mapper>
