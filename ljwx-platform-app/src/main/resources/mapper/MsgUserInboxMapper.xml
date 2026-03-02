@@ -3,7 +3,7 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.ljwx.platform.app.infra.mapper.MsgUserInboxMapper">
 
-    <resultMap id="MsgUserInboxMap" type="com.ljwx.platform.core.domain.MsgUserInbox">
+    <resultMap id="MsgUserInboxMap" type="com.ljwx.platform.app.domain.entity.MsgUserInbox">
         <id property="id" column="id"/>
         <result property="userId" column="user_id"/>
         <result property="messageId" column="message_id"/>
