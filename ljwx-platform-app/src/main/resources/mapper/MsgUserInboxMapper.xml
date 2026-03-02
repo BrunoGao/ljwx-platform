@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ljwx.platform.app.infra.mapper.MsgUserInboxMapper">
+
+    <resultMap id="MsgUserInboxMap" type="com.ljwx.platform.app.domain.entity.MsgUserInbox">
+        <id property="id" column="id"/>
+        <result property="userId" column="user_id"/>
+        <result property="messageId" column="message_id"/>
+        <result property="title" column="title"/>
+        <result property="content" column="content"/>
+        <result property="isRead" column="is_read"/>
+        <result property="readTime" column="read_time"/>
+        <result property="tenantId" column="tenant_id"/>
+        <result property="createdBy" column="created_by"/>
+        <result property="createdTime" column="created_time"/>
+        <result property="updatedBy" column="updated_by"/>
+        <result property="updatedTime" column="updated_time"/>
+        <result property="deleted" column="deleted"/>
+        <result property="version" column="version"/>
+    </resultMap>
+
+    <resultMap id="MsgUserInboxVOMap" type="com.ljwx.platform.app.vo.MsgUserInboxVO">
+        <id property="id" column="id"/>
+        <result property="userId" column="user_id"/>
+        <result property="messageId" column="message_id"/>
+        <result property="title" column="title"/>
+        <result property="content" column="content"/>
+        <result property="isRead" column="is_read"/>
+        <result property="readTime" column="read_time"/>
+        <result property="createdTime" column="created_time"/>
+    </resultMap>
+
+    <insert id="insert">
+        INSERT INTO msg_user_inbox (
+            id, user_id, message_id, title, content, is_read, read_time,
+            tenant_id, created_by, created_time, updated_by, updated_time, deleted, version
+        ) VALUES (
+            #{id}, #{userId}, #{messageId}, #{title}, #{content}, #{isRead}, #{readTime},
+            #{tenantId}, #{createdBy}, #{createdTime}, #{updatedBy}, #{updatedTime}, #{deleted}, #{version}
+        )
+    </insert>
+
+    <select id="selectById" resultMap="MsgUserInboxMap">
+        SELECT * FROM msg_user_inbox
+        WHERE id = #{id} AND deleted = FALSE
+    </select>
+
+    <update id="updateById">
+        UPDATE msg_user_inbox
+        SET user_id = #{userId},
+            message_id = #{messageId},
+            title = #{title},
+            content = #{content},
+            is_read = #{isRead},
+            read_time = #{readTime},
+            updated_by = #{updatedBy},
+            updated_time = #{updatedTime},
+            version = #{version} + 1
+        WHERE id = #{id} AND deleted = FALSE
+    </update>
+
+    <update id="deleteById">
+        UPDATE msg_user_inbox
+        SET deleted = TRUE
+        WHERE id = #{id}
+    </update>
+
+    <select id="selectInboxList" resultMap="MsgUserInboxVOMap">
+        SELECT
+            id,
+            user_id,
+            message_id,
+            title,
+            content,
+            is_read,
+            read_time,
+            created_time
+        FROM msg_user_inbox
+        WHERE deleted = FALSE
+          AND user_id = #{userId}
+        <if test="isRead != null">
+            AND is_read = #{isRead}
+        </if>
+        ORDER BY created_time DESC
+    </select>
+
+    <select id="selectInboxById" resultMap="MsgUserInboxVOMap">
+        SELECT
+            id,
+            user_id,
+            message_id,
+            title,
+            content,
+            is_read,
+            read_time,
+            created_time
+        FROM msg_user_inbox
+        WHERE id = #{id}
+          AND deleted = FALSE
+    </select>
+
+</mapper>
