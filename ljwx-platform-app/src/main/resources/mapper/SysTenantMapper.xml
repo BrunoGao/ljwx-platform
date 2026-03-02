@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ljwx.platform.app.infra.mapper.SysTenantMapper">
+
+    <resultMap id="BaseResultMap" type="com.ljwx.platform.app.domain.entity.SysTenant">
+        <id column="id" property="id"/>
+        <result column="name" property="name"/>
+        <result column="code" property="code"/>
+        <result column="status" property="status"/>
+        <result column="remark" property="remark"/>
+        <result column="package_id" property="packageId"/>
+        <result column="lifecycle_status" property="lifecycleStatus"/>
+        <result column="frozen_reason" property="frozenReason"/>
+        <result column="frozen_time" property="frozenTime"/>
+        <result column="cancelled_reason" property="cancelledReason"/>
+        <result column="cancelled_time" property="cancelledTime"/>
+        <result column="tenant_id" property="tenantId"/>
+        <result column="created_by" property="createdBy"/>
+        <result column="created_time" property="createdTime"/>
+        <result column="updated_by" property="updatedBy"/>
+        <result column="updated_time" property="updatedTime"/>
+        <result column="deleted" property="deleted"/>
+        <result column="version" property="version"/>
+    </resultMap>
+
+    <insert id="insert" parameterType="com.ljwx.platform.app.domain.entity.SysTenant">
+        INSERT INTO sys_tenant (
+            id, name, code, status, remark, package_id,
+            lifecycle_status, frozen_reason, frozen_time,
+            cancelled_reason, cancelled_time,
+            tenant_id, created_by, created_time,
+            updated_by, updated_time, deleted, version
+        ) VALUES (
+            #{id}, #{name}, #{code}, #{status}, #{remark}, #{packageId},
+            #{lifecycleStatus}, #{frozenReason}, #{frozenTime},
+            #{cancelledReason}, #{cancelledTime},
+            #{tenantId}, #{createdBy}, #{createdTime},
+            #{updatedBy}, #{updatedTime}, #{deleted}, #{version}
+        )
+    </insert>
+
+    <update id="updateById" parameterType="com.ljwx.platform.app.domain.entity.SysTenant">
+        UPDATE sys_tenant
+        SET name = #{name},
+            code = #{code},
+            status = #{status},
+            remark = #{remark},
+            package_id = #{packageId},
+            lifecycle_status = #{lifecycleStatus},
+            frozen_reason = #{frozenReason},
+            frozen_time = #{frozenTime},
+            cancelled_reason = #{cancelledReason},
+            cancelled_time = #{cancelledTime},
+            updated_by = #{updatedBy},
+            updated_time = #{updatedTime},
+            version = version + 1
+        WHERE id = #{id}
+          AND deleted = false
+    </update>
+
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT id, name, code, status, remark, package_id,
+               lifecycle_status, frozen_reason, frozen_time,
+               cancelled_reason, cancelled_time,
+               tenant_id, created_by, created_time,
+               updated_by, updated_time, deleted, version
+        FROM sys_tenant
+        WHERE id = #{id}
+          AND deleted = false
+    </select>
+
+    <update id="updateToFrozen">
+        UPDATE sys_tenant
+        SET lifecycle_status = 'FROZEN',
+            frozen_reason = #{reason},
+            frozen_time = #{frozenTime},
+            updated_time = CURRENT_TIMESTAMP,
+            version = version + 1
+        WHERE id = #{id}
+          AND deleted = false
+    </update>
+
+    <update id="updateToActive">
+        UPDATE sys_tenant
+        SET lifecycle_status = 'ACTIVE',
+            frozen_reason = NULL,
+            frozen_time = NULL,
+            updated_time = CURRENT_TIMESTAMP,
+            version = version + 1
+        WHERE id = #{id}
+          AND deleted = false
+    </update>
+
+    <update id="updateToCancelled">
+        UPDATE sys_tenant
+        SET lifecycle_status = 'CANCELLED',
+            cancelled_reason = #{reason},
+            cancelled_time = #{cancelledTime},
+            updated_time = CURRENT_TIMESTAMP,
+            version = version + 1
+        WHERE id = #{id}
+          AND deleted = false
+    </update>
+
+</mapper>
