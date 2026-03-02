@@ -4,7 +4,7 @@ import com.ljwx.platform.app.dto.ImportExportTaskDTO;
 import com.ljwx.platform.app.dto.ImportExportTaskQueryDTO;
 import com.ljwx.platform.app.infra.mapper.ImportExportTaskMapper;
 import com.ljwx.platform.app.vo.ImportExportTaskVO;
-import com.ljwx.platform.app.domain.entity.ImportExportTask;
+import com.ljwx.platform.core.domain.ImportExportTask;
 import com.ljwx.platform.web.exception.BusinessException;
 import com.ljwx.platform.core.result.ErrorCode;
 import com.ljwx.platform.core.result.PageResult;

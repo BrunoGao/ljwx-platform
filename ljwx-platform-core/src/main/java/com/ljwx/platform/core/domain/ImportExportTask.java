@@ -15,6 +15,11 @@ import lombok.EqualsAndHashCode;
 public class ImportExportTask extends BaseEntity {
 
     /**
+     * Primary key (Snowflake ID)
+     */
+    private Long id;
+
+    /**
      * Task type: IMPORT / EXPORT
      */
     private String taskType;

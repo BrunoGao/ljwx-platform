@@ -1,6 +1,6 @@
 package com.ljwx.platform.app.infra.mapper;
 
-import com.ljwx.platform.app.domain.entity.ImportExportTask;
+import com.ljwx.platform.core.domain.ImportExportTask;
 import org.apache.ibatis.annotations.Mapper;
 
 import java.util.List;
