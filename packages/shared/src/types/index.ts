@@ -17,6 +17,8 @@ export type {
   RoleQueryDTO,
   RoleCreateDTO,
   RoleUpdateDTO,
+  RoleDataScopeVO,
+  RoleDataScopeUpdateDTO,
 } from './role'
 export type {
   TenantVO,

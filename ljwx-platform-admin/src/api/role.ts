@@ -6,6 +6,8 @@ import type {
   RoleCreateDTO,
   RoleUpdateDTO,
   PermissionVO,
+  RoleDataScopeVO,
+  RoleDataScopeUpdateDTO,
 } from '@ljwx/shared'
 
 /**
@@ -41,4 +43,18 @@ export function deleteRole(id: number): Promise<void> {
  */
 export function getPermissionList(): Promise<PermissionVO[]> {
   return request.get<PermissionVO[]>('/api/permissions')
+}
+
+/**
+ * 获取角色数据范围
+ */
+export function getRoleDataScope(roleId: number): Promise<RoleDataScopeVO> {
+  return request.get<RoleDataScopeVO>(`/api/v1/roles/${roleId}/data-scope`)
+}
+
+/**
+ * 更新角色数据范围
+ */
+export function updateRoleDataScope(roleId: number, data: RoleDataScopeUpdateDTO): Promise<void> {
+  return request.put<void>(`/api/v1/roles/${roleId}/data-scope`, data)
 }
