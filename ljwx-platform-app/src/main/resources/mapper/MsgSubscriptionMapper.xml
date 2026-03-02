@@ -95,7 +95,7 @@
             ms.user_id,
             u.username AS user_name,
             ms.template_id,
-            mt.name AS template_name,
+            mt.template_name AS template_name,
             ms.channel,
             ms.status,
             ms.preference,
@@ -117,6 +117,7 @@
             AND ms.status = #{query.status}
         </if>
         ORDER BY ms.created_time DESC
+        LIMIT #{query.pageSize} OFFSET (#{query.pageNum} - 1) * #{query.pageSize}
     </select>
 
     <!-- 统计订阅数量 -->
@@ -145,7 +146,7 @@
             ms.user_id,
             u.username AS user_name,
             ms.template_id,
-            mt.name AS template_name,
+            mt.template_name AS template_name,
             ms.channel,
             ms.status,
             ms.preference,
