@@ -22,3 +22,6 @@ COMMENT ON COLUMN sys_frontend_error.error_message IS '错误信息';
 COMMENT ON COLUMN sys_frontend_error.stack_trace IS '堆栈信息';
 COMMENT ON COLUMN sys_frontend_error.page_url IS '发生页面';
 COMMENT ON COLUMN sys_frontend_error.user_agent IS '浏览器信息';
+
+CREATE INDEX idx_sys_frontend_error_tenant_id ON sys_frontend_error(tenant_id);
+CREATE INDEX idx_sys_frontend_error_created_time ON sys_frontend_error(created_time);
