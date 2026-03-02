@@ -1,7 +1,5 @@
 package com.ljwx.platform.core.entity;
 
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -13,13 +11,11 @@ import lombok.EqualsAndHashCode;
  */
 @Data
 @EqualsAndHashCode(callSuper = true)
-@TableName("sys_webhook_config")
 public class WebhookConfig extends BaseEntity {
 
     /**
      * Primary Key (Snowflake ID)
      */
-    @TableId
     private Long id;
 
     /**

@@ -1,6 +1,5 @@
 package com.ljwx.platform.app.infra.mapper;
 
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.ljwx.platform.app.dto.WebhookLogQueryDTO;
 import com.ljwx.platform.app.vo.WebhookLogVO;
 import com.ljwx.platform.app.domain.entity.WebhookLog;
@@ -16,7 +15,12 @@ import java.util.List;
  * @since Phase 49
  */
 @Mapper
-public interface WebhookLogMapper extends BaseMapper<WebhookLog> {
+public interface WebhookLogMapper {
+
+    /**
+     * Insert webhook log
+     */
+    void insert(WebhookLog log);
 
     /**
      * Query webhook log list
