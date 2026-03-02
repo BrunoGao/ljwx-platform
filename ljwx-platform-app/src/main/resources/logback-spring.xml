@@ -60,9 +60,9 @@
                 <maxHistory>30</maxHistory>
             </rollingPolicy>
             <encoder class="net.logstash.logback.encoder.LogstashEncoder">
-                <includeMdcKeyName>trace_id</includeMdcKeyName>
-                <includeMdcKeyName>tenant_id</includeMdcKeyName>
-                <includeMdcKeyName>user_id</includeMdcKeyName>
+                <includeMdcKeyName>traceId</includeMdcKeyName>
+                <includeMdcKeyName>tenantId</includeMdcKeyName>
+                <includeMdcKeyName>userId</includeMdcKeyName>
                 <includeMdcKeyName>requestUri</includeMdcKeyName>
                 <includeMdcKeyName>requestMethod</includeMdcKeyName>
                 <includeMdcKeyName>clientIp</includeMdcKeyName>
