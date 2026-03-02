@@ -289,7 +289,7 @@ ORDER BY dcl.created_time DESC;
 ## References
 
 - [GDPR Article 30: Records of Processing Activities](https://gdpr-info.eu/art-30-gdpr/)
-- [SOX Section 404: Internal Controls](https://www.soxlaw.com/s404.htm)
+- SOX Section 404: Internal Controls
 - [MyBatis Interceptor Documentation](https://mybatis.org/mybatis-3/configuration.html#plugins)
 - Phase 30 Implementation: `spec/phase/phase-30.md`
 
