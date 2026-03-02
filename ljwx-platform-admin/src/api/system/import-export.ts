@@ -4,7 +4,7 @@ import type { Result, PageResult } from '@ljwx/shared'
 export interface ImportExportTaskVO {
   id: number
   taskType: 'IMPORT' | 'EXPORT'
-  businessType: string
+  businessType: 'USER' | 'ROLE' | 'DEPT' | 'MENU'
   fileName: string
   fileUrl?: string
   status: 'PENDING' | 'PROCESSING' | 'SUCCESS' | 'FAILURE'
@@ -17,34 +17,38 @@ export interface ImportExportTaskVO {
 
 export interface ImportExportTaskQueryDTO {
   taskType?: 'IMPORT' | 'EXPORT'
-  businessType?: string
+  businessType?: 'USER' | 'ROLE' | 'DEPT' | 'MENU'
   status?: 'PENDING' | 'PROCESSING' | 'SUCCESS' | 'FAILURE'
   pageNum?: number
   pageSize?: number
 }
 
-export interface ImportTaskDTO {
-  taskType: 'IMPORT'
-  businessType: string
+export interface ImportRequestDTO {
+  businessType: 'USER' | 'ROLE' | 'DEPT' | 'MENU'
   fileName: string
   file: File
 }
 
-export interface ExportTaskDTO {
-  taskType: 'EXPORT'
-  businessType: string
+export interface ExportRequestDTO {
+  businessType: 'USER' | 'ROLE' | 'DEPT' | 'MENU'
   fileName: string
 }
 
-export function importData(data: FormData): Promise<Result<number>> {
-  return request.post('/api/v1/import-export/import', data, {
+/**
+ * 导入数据
+ */
+export function importData(formData: FormData): Promise<Result<number>> {
+  return request.post('/api/v1/import-export/import', formData, {
     headers: {
       'Content-Type': 'multipart/form-data'
     }
   })
 }
 
-export function exportData(data: ExportTaskDTO): Promise<Result<number>> {
+/**
+ * 导出数据
+ */
+export function exportData(data: ExportRequestDTO): Promise<Result<number>> {
   return request.post('/api/v1/import-export/export', data)
 }
 
