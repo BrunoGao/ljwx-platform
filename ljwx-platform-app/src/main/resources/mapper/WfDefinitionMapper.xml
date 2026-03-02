@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ljwx.platform.app.infra.mapper.WfDefinitionMapper">
+
+    <resultMap id="BaseResultMap" type="com.ljwx.platform.core.domain.WfDefinition">
+        <id column="id" property="id"/>
+        <result column="flow_key" property="flowKey"/>
+        <result column="flow_name" property="flowName"/>
+        <result column="flow_version" property="flowVersion"/>
+        <result column="flow_config" property="flowConfig"/>
+        <result column="status" property="status"/>
+        <result column="tenant_id" property="tenantId"/>
+        <result column="created_by" property="createdBy"/>
+        <result column="created_time" property="createdTime"/>
+        <result column="updated_by" property="updatedBy"/>
+        <result column="updated_time" property="updatedTime"/>
+        <result column="deleted" property="deleted"/>
+        <result column="version" property="version"/>
+    </resultMap>
+
+    <insert id="insert">
+        INSERT INTO wf_definition (id, flow_key, flow_name, flow_version, flow_config, status,
+                                    tenant_id, created_by, created_time, updated_by, updated_time, deleted, version)
+        VALUES (#{id}, #{flowKey}, #{flowName}, #{flowVersion}, #{flowConfig}, #{status},
+                #{tenantId}, #{createdBy}, #{createdTime}, #{updatedBy}, #{updatedTime}, #{deleted}, #{version})
+    </insert>
+
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT * FROM wf_definition WHERE id = #{id} AND deleted = FALSE
+    </select>
+
+    <update id="updateById">
+        UPDATE wf_definition
+        SET flow_key = #{flowKey}, flow_name = #{flowName}, flow_version = #{flowVersion},
+            flow_config = #{flowConfig}, status = #{status},
+            updated_by = #{updatedBy}, updated_time = #{updatedTime}, version = version + 1
+        WHERE id = #{id} AND deleted = FALSE
+    </update>
+
+    <update id="deleteById">
+        UPDATE wf_definition SET deleted = TRUE WHERE id = #{id}
+    </update>
+
+    <select id="selectList" resultMap="BaseResultMap">
+        SELECT * FROM wf_definition
+        WHERE deleted = FALSE
+        <if test="flowKey != null">AND flow_key = #{flowKey}</if>
+        <if test="status != null">AND status = #{status}</if>
+        ORDER BY created_time DESC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="countList" resultType="long">
+        SELECT COUNT(*) FROM wf_definition
+        WHERE deleted = FALSE
+        <if test="flowKey != null">AND flow_key = #{flowKey}</if>
+        <if test="status != null">AND status = #{status}</if>
+    </select>
+
+</mapper>

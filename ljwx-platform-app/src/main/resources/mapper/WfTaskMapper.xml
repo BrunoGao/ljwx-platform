@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ljwx.platform.app.infra.mapper.WfTaskMapper">
+
+    <resultMap id="BaseResultMap" type="com.ljwx.platform.core.domain.WfTask">
+        <id column="id" property="id"/>
+        <result column="instance_id" property="instanceId"/>
+        <result column="task_name" property="taskName"/>
+        <result column="task_type" property="taskType"/>
+        <result column="assignee_id" property="assigneeId"/>
+        <result column="status" property="status"/>
+        <result column="comment" property="comment"/>
+        <result column="handle_time" property="handleTime"/>
+        <result column="tenant_id" property="tenantId"/>
+        <result column="created_by" property="createdBy"/>
+        <result column="created_time" property="createdTime"/>
+        <result column="updated_by" property="updatedBy"/>
+        <result column="updated_time" property="updatedTime"/>
+        <result column="deleted" property="deleted"/>
+        <result column="version" property="version"/>
+    </resultMap>
+
+    <insert id="insert">
+        INSERT INTO wf_task (id, instance_id, task_name, task_type, assignee_id, status, comment, handle_time,
+                              tenant_id, created_by, created_time, updated_by, updated_time, deleted, version)
+        VALUES (#{id}, #{instanceId}, #{taskName}, #{taskType}, #{assigneeId}, #{status}, #{comment}, #{handleTime},
+                #{tenantId}, #{createdBy}, #{createdTime}, #{updatedBy}, #{updatedTime}, #{deleted}, #{version})
+    </insert>
+
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT * FROM wf_task WHERE id = #{id} AND deleted = FALSE
+    </select>
+
+    <update id="updateById">
+        UPDATE wf_task
+        SET instance_id = #{instanceId}, task_name = #{taskName}, task_type = #{taskType},
+            assignee_id = #{assigneeId}, status = #{status}, comment = #{comment}, handle_time = #{handleTime},
+            updated_by = #{updatedBy}, updated_time = #{updatedTime}, version = version + 1
+        WHERE id = #{id} AND deleted = FALSE
+    </update>
+
+    <update id="deleteById">
+        UPDATE wf_task SET deleted = TRUE WHERE id = #{id}
+    </update>
+
+    <select id="selectList" resultMap="BaseResultMap">
+        SELECT * FROM wf_task
+        WHERE deleted = FALSE
+        <if test="instanceId != null">AND instance_id = #{instanceId}</if>
+        <if test="assigneeId != null">AND assignee_id = #{assigneeId}</if>
+        <if test="status != null">AND status = #{status}</if>
+        ORDER BY created_time DESC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="countList" resultType="long">
+        SELECT COUNT(*) FROM wf_task
+        WHERE deleted = FALSE
+        <if test="instanceId != null">AND instance_id = #{instanceId}</if>
+        <if test="assigneeId != null">AND assignee_id = #{assigneeId}</if>
+        <if test="status != null">AND status = #{status}</if>
+    </select>
+
+</mapper>
