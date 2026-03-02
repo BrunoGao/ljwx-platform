@@ -1,5 +1,5 @@
 import request from '@/api/request'
-import type { Result, PageResult, PageQuery } from '@ljwx/shared'
+import type { PageResult, PageQuery } from '@ljwx/shared'
 
 export interface WebhookConfigVO {
   id: number
@@ -50,26 +50,26 @@ export interface WebhookLogQueryDTO extends PageQuery {
   endTime?: string
 }
 
-export function createWebhook(data: WebhookConfigDTO): Promise<Result<number>> {
-  return request.post('/api/v1/webhooks', data)
+export function createWebhook(data: WebhookConfigDTO): Promise<number> {
+  return request.post<number>('/api/v1/webhooks', data)
 }
 
-export function updateWebhook(id: number, data: WebhookConfigDTO): Promise<Result<void>> {
-  return request.put(`/api/v1/webhooks/${id}`, data)
+export function updateWebhook(id: number, data: WebhookConfigDTO): Promise<void> {
+  return request.put<void>(`/api/v1/webhooks/${id}`, data)
 }
 
-export function deleteWebhook(id: number): Promise<Result<void>> {
-  return request.delete(`/api/v1/webhooks/${id}`)
+export function deleteWebhook(id: number): Promise<void> {
+  return request.delete<void>(`/api/v1/webhooks/${id}`)
 }
 
-export function getWebhook(id: number): Promise<Result<WebhookConfigVO>> {
-  return request.get(`/api/v1/webhooks/${id}`)
+export function getWebhook(id: number): Promise<WebhookConfigVO> {
+  return request.get<WebhookConfigVO>(`/api/v1/webhooks/${id}`)
 }
 
-export function listWebhooks(params?: WebhookConfigQueryDTO): Promise<Result<PageResult<WebhookConfigVO>>> {
-  return request.get('/api/v1/webhooks', { params })
+export function listWebhooks(params?: WebhookConfigQueryDTO): Promise<PageResult<WebhookConfigVO>> {
+  return request.get<PageResult<WebhookConfigVO>>('/api/v1/webhooks', { params })
 }
 
-export function listWebhookLogs(id: number, params?: WebhookLogQueryDTO): Promise<Result<PageResult<WebhookLogVO>>> {
-  return request.get(`/api/v1/webhooks/${id}/logs`, { params })
+export function listWebhookLogs(id: number, params?: WebhookLogQueryDTO): Promise<PageResult<WebhookLogVO>> {
+  return request.get<PageResult<WebhookLogVO>>(`/api/v1/webhooks/${id}/logs`, { params })
 }
