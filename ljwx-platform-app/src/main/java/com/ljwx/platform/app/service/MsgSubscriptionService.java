@@ -10,10 +10,10 @@ import com.ljwx.platform.core.id.SnowflakeIdGenerator;
 import com.ljwx.platform.core.result.ErrorCode;
 import com.ljwx.platform.core.result.PageResult;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -50,18 +50,8 @@ public class MsgSubscriptionService {
 
         MsgSubscription subscription = new MsgSubscription();
         subscription.setId(idGenerator.nextId());
-        subscription.setUserId(dto.getUserId());
-        subscription.setTemplateId(dto.getTemplateId());
-        subscription.setChannel(dto.getChannel());
-        subscription.setStatus(dto.getStatus());
-        subscription.setPreference(dto.getPreference());
-        subscription.setTenantId(0L);
-        subscription.setCreatedBy(0L);
-        subscription.setCreatedTime(LocalDateTime.now());
-        subscription.setUpdatedBy(0L);
-        subscription.setUpdatedTime(LocalDateTime.now());
-        subscription.setDeleted(false);
-        subscription.setVersion(1);
+        BeanUtils.copyProperties(dto, subscription);
+        // 审计字段由 AuditFieldInterceptor 和 TenantLineInterceptor 自动填充
 
         msgSubscriptionMapper.insert(subscription);
         return subscription.getId();
@@ -91,19 +81,13 @@ public class MsgSubscriptionService {
             query.setChannel(dto.getChannel());
 
             long count = msgSubscriptionMapper.selectCount(query);
-            // 需要排除当前记录
             if (count > 0) {
-                // 简化处理：如果存在记录，检查是否是当前记录
                 throw new BusinessException(ErrorCode.PARAM_VALIDATION_FAILED, "该用户已订阅此模板的该渠道");
             }
         }
 
-        subscription.setUserId(dto.getUserId());
-        subscription.setTemplateId(dto.getTemplateId());
-        subscription.setChannel(dto.getChannel());
-        subscription.setStatus(dto.getStatus());
-        subscription.setPreference(dto.getPreference());
-        subscription.setUpdatedTime(LocalDateTime.now());
+        BeanUtils.copyProperties(dto, subscription);
+        // 审计字段由 AuditFieldInterceptor 自动更新
 
         msgSubscriptionMapper.updateById(subscription);
     }
@@ -150,7 +134,7 @@ public class MsgSubscriptionService {
     }
 
     /**
-     * 更新订阅状态
+     * 更��订阅状态
      *
      * @param id     订阅 ID
      * @param status 新状态
@@ -163,7 +147,7 @@ public class MsgSubscriptionService {
         }
 
         subscription.setStatus(status);
-        subscription.setUpdatedTime(LocalDateTime.now());
+        // 审计字段由 AuditFieldInterceptor 自动更新
         msgSubscriptionMapper.updateById(subscription);
     }
 }
