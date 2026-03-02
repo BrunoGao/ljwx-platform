@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ljwx.platform.app.infra.mapper.WebhookLogMapper">
+
+    <!-- Result Map -->
+    <resultMap id="WebhookLogVOMap" type="com.ljwx.platform.app.vo.WebhookLogVO">
+        <id property="id" column="id"/>
+        <result property="webhookId" column="webhook_id"/>
+        <result property="webhookName" column="webhook_name"/>
+        <result property="eventType" column="event_type"/>
+        <result property="eventData" column="event_data"/>
+        <result property="requestUrl" column="request_url"/>
+        <result property="responseStatus" column="response_status"/>
+        <result property="responseBody" column="response_body"/>
+        <result property="retryTimes" column="retry_times"/>
+        <result property="status" column="status"/>
+        <result property="errorMessage" column="error_message"/>
+        <result property="createdTime" column="created_time"/>
+    </resultMap>
+
+    <!-- Query webhook log list -->
+    <select id="selectWebhookLogList" resultMap="WebhookLogVOMap">
+        SELECT
+            l.id,
+            l.webhook_id,
+            c.webhook_name,
+            l.event_type,
+            l.event_data,
+            l.request_url,
+            l.response_status,
+            l.response_body,
+            l.retry_times,
+            l.status,
+            l.error_message,
+            l.created_time
+        FROM sys_webhook_log l
+        LEFT JOIN sys_webhook_config c ON l.webhook_id = c.id AND c.deleted = FALSE
+        WHERE l.deleted = FALSE
+        <if test="query.webhookId != null">
+            AND l.webhook_id = #{query.webhookId}
+        </if>
+        <if test="query.eventType != null and query.eventType != ''">
+            AND l.event_type = #{query.eventType}
+        </if>
+        <if test="query.status != null and query.status != ''">
+            AND l.status = #{query.status}
+        </if>
+        ORDER BY l.created_time DESC
+        LIMIT #{query.pageSize} OFFSET #{query.pageNum} * #{query.pageSize} - #{query.pageSize}
+    </select>
+
+    <!-- Count webhook logs -->
+    <select id="countWebhookLogs" resultType="long">
+        SELECT COUNT(*)
+        FROM sys_webhook_log l
+        WHERE l.deleted = FALSE
+        <if test="query.webhookId != null">
+            AND l.webhook_id = #{query.webhookId}
+        </if>
+        <if test="query.eventType != null and query.eventType != ''">
+            AND l.event_type = #{query.eventType}
+        </if>
+        <if test="query.status != null and query.status != ''">
+            AND l.status = #{query.status}
+        </if>
+    </select>
+
+</mapper>

@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ljwx.platform.app.infra.mapper.WebhookConfigMapper">
+
+    <!-- Result Map -->
+    <resultMap id="WebhookConfigVOMap" type="com.ljwx.platform.app.vo.WebhookConfigVO">
+        <id property="id" column="id"/>
+        <result property="webhookName" column="webhook_name"/>
+        <result property="webhookUrl" column="webhook_url"/>
+        <result property="eventTypes" column="event_types" typeHandler="com.ljwx.platform.app.infra.typehandler.JsonListTypeHandler"/>
+        <result property="status" column="status"/>
+        <result property="retryCount" column="retry_count"/>
+        <result property="timeoutSeconds" column="timeout_seconds"/>
+        <result property="createdTime" column="created_time"/>
+        <result property="updatedTime" column="updated_time"/>
+    </resultMap>
+
+    <!-- Query webhook config list -->
+    <select id="selectWebhookConfigList" resultMap="WebhookConfigVOMap">
+        SELECT
+            id,
+            webhook_name,
+            webhook_url,
+            event_types,
+            status,
+            retry_count,
+            timeout_seconds,
+            created_time,
+            updated_time
+        FROM sys_webhook_config
+        WHERE deleted = FALSE
+        <if test="query.webhookName != null and query.webhookName != ''">
+            AND webhook_name LIKE CONCAT('%', #{query.webhookName}, '%')
+        </if>
+        <if test="query.status != null and query.status != ''">
+            AND status = #{query.status}
+        </if>
+        ORDER BY created_time DESC
+        LIMIT #{query.pageSize} OFFSET #{query.pageNum} * #{query.pageSize} - #{query.pageSize}
+    </select>
+
+    <!-- Count webhook configs -->
+    <select id="countWebhookConfigs" resultType="long">
+        SELECT COUNT(*)
+        FROM sys_webhook_config
+        WHERE deleted = FALSE
+        <if test="query.webhookName != null and query.webhookName != ''">
+            AND webhook_name LIKE CONCAT('%', #{query.webhookName}, '%')
+        </if>
+        <if test="query.status != null and query.status != ''">
+            AND status = #{query.status}
+        </if>
+    </select>
+
+    <!-- Query webhook config by ID -->
+    <select id="selectWebhookConfigById" resultMap="WebhookConfigVOMap">
+        SELECT
+            id,
+            webhook_name,
+            webhook_url,
+            event_types,
+            status,
+            retry_count,
+            timeout_seconds,
+            created_time,
+            updated_time
+        FROM sys_webhook_config
+        WHERE id = #{id}
+          AND deleted = FALSE
+    </select>
+
+    <!-- Query enabled webhook configs by event type -->
+    <select id="selectEnabledByEventType" resultType="com.ljwx.platform.app.domain.entity.WebhookConfig">
+        SELECT
+            id,
+            webhook_name,
+            webhook_url,
+            event_types,
+            secret_key,
+            status,
+            retry_count,
+            timeout_seconds,
+            tenant_id
+        FROM sys_webhook_config
+        WHERE deleted = FALSE
+          AND status = 'ENABLED'
+          AND event_types LIKE CONCAT('%', #{eventType}, '%')
+    </select>
+
+</mapper>
