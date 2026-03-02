@@ -40,7 +40,7 @@
             </if>
         </where>
         ORDER BY created_time DESC
-        LIMIT #{query.pageSize} OFFSET #{query.pageNum}
+        LIMIT #{query.pageSize} OFFSET (#{query.pageNum} - 1) * #{query.pageSize}
     </select>
 
     <select id="countTemplates" resultType="long">
