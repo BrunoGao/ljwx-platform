@@ -182,6 +182,8 @@ else
 fi
 echo ""
 
+run_rule "R11" "Baseline" "scripts/gates/gate-baseline.sh" "false"
+
 if [[ -x "scripts/reports/collect-artifacts.sh" ]]; then
   bash scripts/reports/collect-artifacts.sh "$PHASE" >/dev/null 2>&1 || true
 fi

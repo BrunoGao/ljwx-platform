@@ -58,8 +58,14 @@ CREATE INDEX idx_msg_user_inbox_tenant_id ON msg_user_inbox(tenant_id);
 CREATE INDEX idx_msg_user_inbox_created_time ON msg_user_inbox(created_time);
 
 -- Foreign keys
-ALTER TABLE msg_record ADD CONSTRAINT fk_msg_record_template
-    FOREIGN KEY (template_id) REFERENCES msg_template(id);
+DO $$
+BEGIN
+    IF to_regclass('public.msg_template') IS NOT NULL THEN
+        ALTER TABLE msg_record
+            ADD CONSTRAINT fk_msg_record_template
+            FOREIGN KEY (template_id) REFERENCES msg_template(id);
+    END IF;
+END $$;
 
 ALTER TABLE msg_user_inbox ADD CONSTRAINT fk_msg_user_inbox_user
     FOREIGN KEY (user_id) REFERENCES sys_user(id);

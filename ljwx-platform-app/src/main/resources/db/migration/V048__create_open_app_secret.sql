@@ -19,11 +19,17 @@ CREATE TABLE open_app_secret (
 );
 
 CREATE INDEX idx_app_id ON open_app_secret(app_id);
-CREATE INDEX idx_status ON open_app_secret(status);
-CREATE INDEX idx_tenant_id ON open_app_secret(tenant_id);
+CREATE INDEX idx_open_app_secret_status ON open_app_secret(status);
+CREATE INDEX idx_open_app_secret_tenant_id ON open_app_secret(tenant_id);
 
-ALTER TABLE open_app_secret ADD CONSTRAINT fk_open_app_secret_app
-    FOREIGN KEY (app_id) REFERENCES open_app(id);
+DO $$
+BEGIN
+    IF to_regclass('public.open_app') IS NOT NULL THEN
+        ALTER TABLE open_app_secret
+            ADD CONSTRAINT fk_open_app_secret_app
+            FOREIGN KEY (app_id) REFERENCES open_app(id);
+    END IF;
+END $$;
 
 COMMENT ON TABLE open_app_secret IS 'Open API Secret Management';
 COMMENT ON COLUMN open_app_secret.id IS 'Primary Key (Snowflake ID)';

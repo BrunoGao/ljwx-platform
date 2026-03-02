@@ -103,6 +103,16 @@ jobs:
           java-version: "21"
           cache: maven
 
+      - name: Install PostgreSQL client
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! command -v psql >/dev/null 2>&1; then
+            sudo apt-get update
+            sudo apt-get install -y postgresql-client
+          fi
+          psql --version
+
       - name: Wait for PostgreSQL
         shell: bash
         run: |
@@ -122,6 +132,12 @@ jobs:
         env:
           CHANGED_FILES_FILE: changed_files.txt
           R09_STRATIFIED: ${{ github.event_name == 'pull_request' || github.event_name == 'merge_group' }}
+          BASELINE_RUNTIME_VERIFY: "true"
+          DB_HOST: 127.0.0.1
+          DB_PORT: 5432
+          DB_NAME: ljwx_platform
+          DB_USERNAME: postgres
+          DB_PASSWORD: postgres
         run: |
           set -euo pipefail
           phase="${{ steps.phase.outputs.phase }}"

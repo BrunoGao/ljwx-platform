@@ -19,7 +19,7 @@ CREATE TABLE cache_invalidation_event (
 
 -- Create indexes
 CREATE INDEX idx_cache_name_created_time ON cache_invalidation_event (cache_name, created_time DESC);
-CREATE INDEX idx_tenant_id ON cache_invalidation_event (tenant_id);
+CREATE INDEX idx_cache_invalidation_event_tenant_id ON cache_invalidation_event (tenant_id);
 
 -- Add comments
 COMMENT ON TABLE cache_invalidation_event IS 'Cache invalidation event log for multi-level cache synchronization';

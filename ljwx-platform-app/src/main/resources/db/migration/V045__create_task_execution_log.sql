@@ -26,7 +26,7 @@ CREATE TABLE sys_task_execution_log (
 -- 创建索引
 CREATE INDEX idx_task_name_start_time ON sys_task_execution_log (task_name, start_time DESC);
 CREATE INDEX idx_status_start_time ON sys_task_execution_log (status, start_time DESC);
-CREATE INDEX idx_tenant_id ON sys_task_execution_log (tenant_id);
+CREATE INDEX idx_task_execution_log_tenant_id ON sys_task_execution_log (tenant_id);
 CREATE INDEX idx_start_time ON sys_task_execution_log (start_time DESC);
 
 -- 创建分区（当前月及未来 3 个月）
