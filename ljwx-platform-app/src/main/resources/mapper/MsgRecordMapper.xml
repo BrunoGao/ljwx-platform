@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ljwx.platform.app.infra.mapper.MsgRecordMapper">
+
+    <resultMap id="MsgRecordMap" type="com.ljwx.platform.app.domain.entity.MsgRecord">
+        <id property="id" column="id"/>
+        <result property="templateId" column="template_id"/>
+        <result property="messageType" column="message_type"/>
+        <result property="receiverId" column="receiver_id"/>
+        <result property="receiverAddress" column="receiver_address"/>
+        <result property="subject" column="subject"/>
+        <result property="content" column="content"/>
+        <result property="sendStatus" column="send_status"/>
+        <result property="sendTime" column="send_time"/>
+        <result property="errorMessage" column="error_message"/>
+        <result property="tenantId" column="tenant_id"/>
+        <result property="createdBy" column="created_by"/>
+        <result property="createdTime" column="created_time"/>
+        <result property="updatedBy" column="updated_by"/>
+        <result property="updatedTime" column="updated_time"/>
+        <result property="deleted" column="deleted"/>
+        <result property="version" column="version"/>
+    </resultMap>
+
+    <resultMap id="MsgRecordVOMap" type="com.ljwx.platform.app.vo.MsgRecordVO">
+        <id property="id" column="id"/>
+        <result property="templateId" column="template_id"/>
+        <result property="messageType" column="message_type"/>
+        <result property="receiverId" column="receiver_id"/>
+        <result property="receiverAddress" column="receiver_address"/>
+        <result property="subject" column="subject"/>
+        <result property="content" column="content"/>
+        <result property="sendStatus" column="send_status"/>
+        <result property="sendTime" column="send_time"/>
+        <result property="errorMessage" column="error_message"/>
+        <result property="createdTime" column="created_time"/>
+    </resultMap>
+
+    <insert id="insert">
+        INSERT INTO msg_record (
+            id, template_id, message_type, receiver_id, receiver_address,
+            subject, content, send_status, send_time, error_message,
+            tenant_id, created_by, created_time, updated_by, updated_time, deleted, version
+        ) VALUES (
+            #{id}, #{templateId}, #{messageType}, #{receiverId}, #{receiverAddress},
+            #{subject}, #{content}, #{sendStatus}, #{sendTime}, #{errorMessage},
+            #{tenantId}, #{createdBy}, #{createdTime}, #{updatedBy}, #{updatedTime}, #{deleted}, #{version}
+        )
+    </insert>
+
+    <select id="selectById" resultMap="MsgRecordMap">
+        SELECT * FROM msg_record
+        WHERE id = #{id} AND deleted = FALSE
+    </select>
+
+    <update id="updateById">
+        UPDATE msg_record
+        SET template_id = #{templateId},
+            message_type = #{messageType},
+            receiver_id = #{receiverId},
+            receiver_address = #{receiverAddress},
+            subject = #{subject},
+            content = #{content},
+            send_status = #{sendStatus},
+            send_time = #{sendTime},
+            error_message = #{errorMessage},
+            updated_by = #{updatedBy},
+            updated_time = #{updatedTime},
+            version = #{version} + 1
+        WHERE id = #{id} AND deleted = FALSE
+    </update>
+
+    <select id="selectRecordList" resultMap="MsgRecordVOMap">
+        SELECT
+            id,
+            template_id,
+            message_type,
+            receiver_id,
+            receiver_address,
+            subject,
+            content,
+            send_status,
+            send_time,
+            error_message,
+            created_time
+        FROM msg_record
+        WHERE deleted = FALSE
+        <if test="messageType != null and messageType != ''">
+            AND message_type = #{messageType}
+        </if>
+        <if test="sendStatus != null and sendStatus != ''">
+            AND send_status = #{sendStatus}
+        </if>
+        <if test="receiverId != null">
+            AND receiver_id = #{receiverId}
+        </if>
+        ORDER BY created_time DESC
+    </select>
+
+    <select id="selectRecordById" resultMap="MsgRecordVOMap">
+        SELECT
+            id,
+            template_id,
+            message_type,
+            receiver_id,
+            receiver_address,
+            subject,
+            content,
+            send_status,
+            send_time,
+            error_message,
+            created_time
+        FROM msg_record
+        WHERE id = #{id}
+          AND deleted = FALSE
+    </select>
+
+</mapper>
