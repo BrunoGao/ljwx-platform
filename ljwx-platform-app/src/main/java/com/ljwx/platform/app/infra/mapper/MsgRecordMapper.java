@@ -1,6 +1,6 @@
 package com.ljwx.platform.app.infra.mapper;
 
-import com.ljwx.platform.core.domain.MsgRecord;
+import com.ljwx.platform.app.domain.entity.MsgRecord;
 import com.ljwx.platform.app.vo.MsgRecordVO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;

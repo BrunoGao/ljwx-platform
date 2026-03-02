@@ -1,6 +1,6 @@
 package com.ljwx.platform.app.infra.mapper;
 
-import com.ljwx.platform.core.domain.MsgUserInbox;
+import com.ljwx.platform.app.domain.entity.MsgUserInbox;
 import com.ljwx.platform.app.vo.MsgUserInboxVO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
