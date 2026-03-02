@@ -17,6 +17,11 @@ import java.time.LocalDateTime;
 public class MsgUserInbox extends BaseEntity {
 
     /**
+     * 主键ID
+     */
+    private Long id;
+
+    /**
      * 用户ID
      */
     private Long userId;
