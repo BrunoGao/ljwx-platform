@@ -1,6 +1,6 @@
 package com.ljwx.platform.core.domain;
 
-import com.baomidou.mybatisplus.annotation.TableName;
+import com.ljwx.platform.core.entity.BaseEntity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -14,7 +14,6 @@ import java.time.LocalDateTime;
  */
 @Data
 @EqualsAndHashCode(callSuper = true)
-@TableName("msg_record")
 public class MsgRecord extends BaseEntity {
 
     /**

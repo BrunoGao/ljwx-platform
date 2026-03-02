@@ -1,6 +1,5 @@
 package com.ljwx.platform.app.infra.mapper;
 
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.ljwx.platform.app.dto.WebhookConfigQueryDTO;
 import com.ljwx.platform.app.vo.WebhookConfigVO;
 import com.ljwx.platform.app.domain.entity.WebhookConfig;
@@ -16,7 +15,27 @@ import java.util.List;
  * @since Phase 49
  */
 @Mapper
-public interface WebhookConfigMapper extends BaseMapper<WebhookConfig> {
+public interface WebhookConfigMapper {
+
+    /**
+     * Insert webhook config
+     */
+    void insert(WebhookConfig config);
+
+    /**
+     * Update webhook config by ID
+     */
+    void updateById(WebhookConfig config);
+
+    /**
+     * Delete webhook config by ID (soft delete)
+     */
+    void deleteById(@Param("id") Long id);
+
+    /**
+     * Select webhook config by ID
+     */
+    WebhookConfig selectById(@Param("id") Long id);
 
     /**
      * Query webhook config list
