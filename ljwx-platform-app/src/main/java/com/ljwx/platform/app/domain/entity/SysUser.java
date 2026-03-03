@@ -1,6 +1,6 @@
 package com.ljwx.platform.app.domain.entity;
 
-import com.ljwx.platform.core.entity.BaseEntity;
+import com.ljwx.platform.data.domain.BaseEntity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 

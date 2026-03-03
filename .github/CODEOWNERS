@@ -1,19 +1,19 @@
 # Replace @org/* with actual GitHub teams
 
 # Gate and governance
-/scripts/gates/ @org/architects
-/CLAUDE.md @org/architects
-/.claude/** @org/architects
-/spec/** @org/architects @org/product
+/scripts/gates/ @BrunoGao
+/CLAUDE.md @BrunoGao
+/.claude/** @BrunoGao
+/spec/** @BrunoGao @BrunoGao
 
 # Security
-/security/ @org/security
-/auth/ @org/security
-**/security/** @org/security
-**/auth/** @org/security
-application*.yml @org/security
+/security/ @BrunoGao
+/auth/ @BrunoGao
+**/security/** @BrunoGao
+**/auth/** @BrunoGao
+application*.yml @BrunoGao
 
 # Database migration safety
-/db/migration/ @org/architects @org/dba
-**/db/migration/** @org/architects @org/dba
-**/resources/db/migration/** @org/architects @org/dba
+/db/migration/ @BrunoGao @BrunoGao
+**/db/migration/** @BrunoGao @BrunoGao
+**/resources/db/migration/** @BrunoGao @BrunoGao

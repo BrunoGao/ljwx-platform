@@ -57,7 +57,7 @@ detect_phase_range() {
   if [[ -n "$max_phase" ]]; then
     PHASE_RANGE="00-$((10#$max_phase))"
   else
-    PHASE_RANGE="00-27"
+    PHASE_RANGE="00-53"
   fi
 }
 

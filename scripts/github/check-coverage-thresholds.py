@@ -155,6 +155,11 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--base-sha", default="", help="Base git SHA for diff coverage")
     parser.add_argument("--head-sha", default="", help="Head git SHA for diff coverage")
+    parser.add_argument(
+        "--soft-fail",
+        action="store_true",
+        help="Do not fail the process when threshold violations exist",
+    )
     return parser.parse_args()
 
 
@@ -204,6 +209,11 @@ def main() -> int:
         print("[信息] 缺少 base/head SHA，跳过 diff 覆盖率判定")
 
     if violations:
+        if args.soft_fail:
+            print("[警告] 覆盖率阈值未达标，当前软失败模式不阻塞")
+            for violation in violations:
+                print(f"  - {violation}")
+            return 0
         print("[结论] 覆盖率阈值校验失败:", file=sys.stderr)
         for violation in violations:
             print(f"  - {violation}", file=sys.stderr)

@@ -133,6 +133,7 @@ jobs:
           CHANGED_FILES_FILE: changed_files.txt
           R09_STRATIFIED: ${{ github.event_name == 'pull_request' || github.event_name == 'merge_group' }}
           BASELINE_RUNTIME_VERIFY: "true"
+          SKIP_HEAVY_GATES: ${{ github.event_name == 'pull_request' }}
           DB_HOST: 127.0.0.1
           DB_PORT: 5432
           DB_NAME: ljwx_platform

@@ -30,3 +30,8 @@ Paste gate summary output here
 - [ ] PR links Issue(s) with `Closes #` or `Relates #`
 - [ ] Changes are within approved Phase scope
 - [ ] Docs/spec updated if behavior changed
+- [ ] CHANGELOG updated (or explicitly not needed)
+- [ ] CLA policy acknowledged (`CLA.md`)
+- [ ] Security impact reviewed (dependencies/secrets/auth/data access)
+- [ ] Test evidence attached (unit/integration/e2e/coverage as applicable)
+- [ ] Deployment/environment impact documented (`dev`/`staging`/`production`)

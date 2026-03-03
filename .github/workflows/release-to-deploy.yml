@@ -39,6 +39,8 @@ jobs:
   enqueue:
     if: ${{ github.event_name == 'workflow_dispatch' || (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success') }}
     runs-on: ubuntu-latest
+    environment:
+      name: ${{ github.event_name == 'workflow_dispatch' && ((inputs.environment == 'prod' || inputs.environment == 'production') && 'production' || 'staging') || 'production' }}
     timeout-minutes: 15
     steps:
       - name: Resolve config

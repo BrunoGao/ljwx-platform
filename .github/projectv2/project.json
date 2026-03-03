@@ -1,11 +1,11 @@
 {
-  "generated_at": "2026-02-26T13:15:12Z",
+  "generated_at": "2026-03-03T14:09:24Z",
   "repo": {
     "owner": "BrunoGao",
     "name": "ljwx-platform"
   },
   "projectId": "PVT_kwHOAgn-Ls4BQO6g",
-  "projectTitle": "@BrunoGao's untitled project",
+  "projectTitle": "@BrunoGao's platform project",
   "projectUrl": "https://github.com/users/BrunoGao/projects/2",
   "fields": {
     "Title": {
@@ -150,6 +150,18 @@
         "OpenAPI": "13bf390e",
         "Perf": "a5ca8bb7",
         "Other": "1194d134"
+      }
+    },
+    "Iteration": {
+      "id": "PVTSSF_lAHOAgn-Ls4BQO6gzg-uHEA",
+      "name": "Iteration",
+      "dataType": "SINGLE_SELECT",
+      "type": "ProjectV2SingleSelectField",
+      "options": {
+        "Backlog": "887f073d",
+        "2026-W10": "12681d62",
+        "2026-W11": "0a9615d2",
+        "2026-W12": "574b2c00"
       }
     }
   },
@@ -398,6 +410,30 @@
         {
           "id": "1194d134",
           "name": "Other"
+        }
+      ]
+    },
+    {
+      "__typename": "ProjectV2SingleSelectField",
+      "id": "PVTSSF_lAHOAgn-Ls4BQO6gzg-uHEA",
+      "name": "Iteration",
+      "dataType": "SINGLE_SELECT",
+      "options": [
+        {
+          "id": "887f073d",
+          "name": "Backlog"
+        },
+        {
+          "id": "12681d62",
+          "name": "2026-W10"
+        },
+        {
+          "id": "0a9615d2",
+          "name": "2026-W11"
+        },
+        {
+          "id": "574b2c00",
+          "name": "2026-W12"
         }
       ]
     }

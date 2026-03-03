@@ -103,6 +103,34 @@ bash scripts/gates/gate-all.sh 27
 
 ## 技术栈
 
+## SSH 断线会话保活（Codex / Claude）
+
+当你从 MacBook SSH 到本机开发时，推荐使用 `tmux` 持久会话机制，确保 SSH 断开后 `codex/claude` 进程不退出，重连后可直接恢复原会话。
+
+快速使用：
+
+```bash
+# 启动或恢复 codex 持久会话
+bash scripts/tools/agent-session.sh start codex
+
+# 启动或恢复 claude 持久会话
+bash scripts/tools/agent-session.sh start claude ljwx-agent-claude
+
+# 查看会话
+bash scripts/tools/agent-session.sh status
+
+# 重新连接默认会话
+bash scripts/tools/agent-session.sh attach
+```
+
+可选：启用 SSH 登录自动回连（默认写入 `~/.zshrc`）
+
+```bash
+bash scripts/tools/install-ssh-autoreattach.sh
+```
+
+完整说明见：`docs/ops/ssh-resilient-agent-session.md`
+
 ### 后端
 
 | 层 | 技术 | 版本 |
@@ -209,35 +237,43 @@ ljwx-platform/
 - 提交仪表盘数据（PR 模式，不直推主分支）：
   - `bash scripts/deploy-dashboard.sh 20`
 
+## GitHub 项目治理骨架
+
+- 全生命周期配置文档：`docs/setup/github-config.md`
+- 关键初始化脚本：
+  - `bash scripts/setup-github.sh --apply --phase-range 00-53 --init-milestones`
+  - `bash scripts/github/apply-branch-protection.sh --apply`
+  - `bash scripts/github/setup-environments.sh --apply`
+- 安全与治理工作流：
+  - `dependabot` / `CodeQL` / `Dependency Review` / `Secret Scan` / `SBOM`
+  - `PR Policy` / `Governance Drift`（流程准入与配置漂移检测）
+  - 覆盖率工作流：`Coverage`（默认阈值：line>=40%、diff>=70%，支持可选 Codecov）
+
 ## GitHub Workflow 发布到本地 k3s（极简链路）
 
-业务仓内提供 workflow：`.github/workflows/release-to-deploy.yml`，流程为：
+业务仓内提供两条 workflow，形成 `GHCR -> Harbor Pull Replication -> queue -> promoter -> Argo`：
 
-1. 构建并推送服务镜像到 Harbor（默认 `harbor.eu.lingjingwanxiang.cn/ljwx/ljwx-platform`），产出 `image`、`imageDigest`
-2. 生成 `serviceVersion=git_sha` 与 `deploymentId=sha_short-digest_short`
-3. 自动给 `ljwx-deploy` 提 PR，仅更新该服务 `release-values.yaml` 的 4 个字段：
-   `image`、`deploymentId`、`serviceVersion`、`imageDigest`
-
-硬规则校验脚本：`scripts/ci/validate-deploy-values.sh`
-
-- 缺失 `deploymentId/serviceVersion/imageDigest` 直接失败
-- 检测到 `OTEL_EXPORTER_OTLP_ENDPOINT` 变化直接失败
-- 检测到除 `image/deploymentId/serviceVersion/imageDigest` 之外的字段变化直接失败
-- 固定 OTLP endpoint：
-  `otel-collector-opentelemetry-collector.tracing.svc.cluster.local:4317`
+1. `.github/workflows/build-and-notify.yml`
+   - 在 GitHub-hosted runner 构建并推送 backend/admin-ui/screen 到 GHCR
+   - 产出 `release-metadata` artifact（包含 backend digest/tag）
+   - 通知 sync-service（由它负责 GHCR -> Harbor 同步）
+2. `.github/workflows/release-to-deploy.yml`
+   - 读取 `build-and-notify` 的 `release-metadata` artifact
+   - 自动给 `ljwx-deploy` 提 PR，仅更新 `release/queue.yaml`（新增 pending 条目）
+   - 不等待 Harbor 同步完成（异步由 deploy-promoter 处理）
 
 ### 必要 Secrets
 
 - `DEPLOY_REPO_TOKEN`：可写 `ljwx-deploy` 的 GitHub Token
-- `HARBOR_USERNAME`：Harbor 用户名
-- `HARBOR_PASSWORD`：Harbor 密码
+- `SYNC_WEBHOOK_URL` / `SYNC_WEBHOOK_SECRET` / `SYNC_BEARER_TOKEN`：sync-service 回调密钥（用于 GHCR -> Harbor 同步事件）
+- `HARBOR_USERNAME` / `HARBOR_PASSWORD`：仅 `acceptance-local-k3s` 需要（自动注入 imagePullSecret）
 
 ### 手动触发推荐参数
 
-- `service_name`: `ljwx-platform`
+- `service`: `ljwx-platform`
+- `environment`: `prod`
 - `deploy_repo`: `BrunoGaoSZ/ljwx-deploy`
-- `deploy_values_file`: `apps/ljwx-platform/overlays/prod/kustomization.yaml`
-- `image_repo`: 留空时默认 `harbor.eu.lingjingwanxiang.cn/ljwx/ljwx-platform`
+- `queue_file`: `release/queue.yaml`
 
 ## 本地 k3s 验收 Workflow
 

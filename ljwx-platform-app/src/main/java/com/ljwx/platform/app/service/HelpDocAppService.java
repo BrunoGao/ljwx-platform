@@ -9,7 +9,7 @@ import com.ljwx.platform.app.vo.help.HelpDocVO;
 import com.ljwx.platform.core.context.CurrentTenantHolder;
 import com.ljwx.platform.core.context.CurrentUserHolder;
 import com.ljwx.platform.core.exception.BusinessException;
-import com.ljwx.platform.core.snowflake.SnowflakeIdGenerator;
+import com.ljwx.platform.core.id.SnowflakeIdGenerator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.dao.DuplicateKeyException;
@@ -103,9 +103,9 @@ public class HelpDocAppService {
 
         doc.setId(idGenerator.nextId());
         doc.setStatus(1);
-        doc.setCreatedBy(CurrentUserHolder.getUserId());
+        doc.setCreatedBy(CurrentUserHolder.get());
         doc.setCreatedTime(LocalDateTime.now());
-        doc.setUpdatedBy(CurrentUserHolder.getUserId());
+        doc.setUpdatedBy(CurrentUserHolder.get());
         doc.setUpdatedTime(LocalDateTime.now());
         doc.setDeleted(false);
         doc.setVersion(1);
@@ -133,7 +133,7 @@ public class HelpDocAppService {
         }
 
         BeanUtils.copyProperties(dto, doc);
-        doc.setUpdatedBy(CurrentUserHolder.getUserId());
+        doc.setUpdatedBy(CurrentUserHolder.get());
         doc.setUpdatedTime(LocalDateTime.now());
 
         helpDocMapper.updateById(doc);
@@ -152,7 +152,7 @@ public class HelpDocAppService {
         }
 
         doc.setDeleted(true);
-        doc.setUpdatedBy(CurrentUserHolder.getUserId());
+        doc.setUpdatedBy(CurrentUserHolder.get());
         doc.setUpdatedTime(LocalDateTime.now());
 
         helpDocMapper.updateById(doc);

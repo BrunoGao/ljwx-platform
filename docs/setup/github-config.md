@@ -1,97 +1,189 @@
-# GitHub Native DevEx Setup (Aligned with Current LJWX Deployment)
+# GitHub Lifecycle Governance (LJWX Platform)
 
-This guide is optimized for the repository's real workflows today:
+This document defines a complete GitHub-native operating model for LJWX Platform,
+covering requirement intake, implementation, release, operations, and compliance.
 
-- CI workflow: `.github/workflows/ci.yml`
-- Build workflow: `.github/workflows/build-and-notify.yml` (GHCR only)
-- Deploy-queue workflow: `.github/workflows/release-to-deploy.yml` (enqueue to `ljwx-deploy/release/queue.yaml`)
-- Gate workflow: `.github/workflows/gate-check.yml`
+Current repository baseline is aligned as of 2026-03-03.
 
-## 1. Bootstrap GitHub resources
+## 1. One-Command Bootstrap Entry
 
-Run from repo root:
+Run from repository root:
 
 ```bash
-bash scripts/setup-github.sh --dry-run --phase-range 20-27
-bash scripts/setup-github.sh --apply --phase-range 20-27 \
-  --architect-team @BrunoGaoSZ/architects \
-  --security-team @BrunoGaoSZ/security \
-  --dba-team @BrunoGaoSZ/dba \
-  --product-team @BrunoGaoSZ/product
+# Labels / milestones / CODEOWNERS team placeholders
+bash scripts/setup-github.sh --dry-run --phase-range 00-53
+bash scripts/setup-github.sh --apply --phase-range 00-53 --init-milestones
+
+# Protected branch policy (main + master)
+bash scripts/github/apply-branch-protection.sh --dry-run
+bash scripts/github/apply-branch-protection.sh --apply
+
+# Environment bootstrap (staging + production)
+bash scripts/github/setup-environments.sh --dry-run
+bash scripts/github/setup-environments.sh --apply
 ```
 
-Optional milestones:
+## 2. Full Lifecycle Map
+
+| Stage | Scope | GitHub capability in this repo |
+|------|------|---------------------------------|
+| Requirement intake | feedback, proposals | Issue templates + Discussions |
+| Requirement management | priority, roadmap | Projects V2 + Labels + Milestones |
+| Task decomposition | executable tasks | Sub-issues + task lists |
+| Design and decision | architecture and RFC | Discussions RFC template + `docs/adr/` |
+| Development | coding workflow | branches + PR template + CODEOWNERS |
+| Code quality | review and merge guard | branch protection + required checks |
+| Testing | unit/integration/e2e/coverage | CI + gate + E2E + coverage workflow |
+| Security | vuln and secret governance | Dependabot + CodeQL + dependency review + secret scan + SBOM |
+| Build and delivery | images/packages/release | Actions + GHCR + Releases + tags |
+| Environment governance | staged rollout and approvals | GitHub Environments (`staging`, `production`) |
+| Version and changes | semantic release visibility | SemVer tags + `CHANGELOG.md` |
+| Documentation | implementation/ops docs | `docs/` + optional GitHub Pages |
+| Monitoring feedback | production signal return | `production-incident` issue template + postmortem discussion template |
+| Team and access | ownership and authorization | Teams + repo roles + CODEOWNERS |
+| Compliance | legal and contribution policy | `LICENSE` + `CONTRIBUTING.md` + `CODE_OF_CONDUCT.md` + `SECURITY.md` |
+
+## 3. Branching, PR, and Protection
+
+### Branch strategy
+
+- Protected branches: `main`, `master`
+- Development branches: `feature/*`, `fix/*`, `chore/*`, `hotfix/*`
+- Keep linear history (squash/rebase)
+
+### Required protection policies
+
+`apply-branch-protection.sh` configures:
+
+- PR required before merge
+- minimum approvals (default 1, configurable)
+- CODEOWNERS review required
+- stale review dismissal
+- conversation resolution required
+- linear history required
+- block force-push and deletion
+- required status checks
+
+Default checks in script:
+
+- `Lint`
+- `Backend`
+- `Frontend`
+- `gate`
+- `pr-policy`
+- `dependency-review`
+- `Gitleaks`
+- `Backend JaCoCo`
+
+Adjust checks via:
 
 ```bash
-bash scripts/setup-github.sh --apply --phase-range 20-27 --init-milestones
+bash scripts/github/apply-branch-protection.sh \
+  --apply \
+  --checks "Lint,Backend,Frontend,gate,pr-policy,dependency-review,Gitleaks,Backend JaCoCo,Analyze (java),Analyze (javascript-typescript)"
 ```
 
-## 2. Branch Protection (manual in GitHub UI)
+## 4. Security Baseline
 
-Apply protection rules on `master` (and `main` if used):
+### Dependency and code security
 
-- Require a pull request before merging
-- Require approvals (at least 1)
-- Require review from Code Owners
-- Require status checks to pass:
-  - `Lint`
-  - `Backend`
-  - `Frontend`
-  - `Run Gate Suite`
-- Require conversation resolution
-- Require linear history
-- Block force-push and deletion
+- `.github/dependabot.yml`: weekly dependency updates
+- `.github/workflows/codeql.yml`: CodeQL static analysis
+- `.github/workflows/dependency-review.yml`: PR dependency risk gate
+- `.github/workflows/secret-scan.yml`: gitleaks secret scan
+- `.github/workflows/sbom.yml`: SPDX SBOM artifact generation
+- `.github/workflows/dependabot-auto-merge.yml`: patch update auto-merge (after required checks pass)
 
-## 3. Release and traceability
+### Vulnerability intake
 
-- `.github/workflows/release.yml` creates GitHub Releases from tags
-- `.github/release.yml` controls generated changelog categories by labels
-- Keep tag format as: `vX.Y.Z-phaseNN`
+- Private reporting channel in `.github/ISSUE_TEMPLATE/config.yml`
+- Process policy in `SECURITY.md`
 
-## 4. Gate-to-Issue automation
+## 5. Testing and Coverage
 
-Workflow: `.github/workflows/gate-check.yml`
+### Existing checks
 
-- Gate key format: `<phase>:<ruleset>:<commit_sha>`
-- On `push` to `master/main`:
-  - `FAIL`: upsert gate issue with labels (`gate:fail`, `type:gate-fix`, `phase-XX`, `priority:P0`)
-  - `PASS`: close matching open issue by exact Gate-Key marker
-- Optional Project V2 sync:
-  - set repository variable `PROJECT_V2_ID`
-  - failed gate issues are added to that Project
+- `.github/workflows/ci.yml`
+- `.github/workflows/pr-policy.yml`
+- `.github/workflows/gate-check.yml`
+- `.github/workflows/post-merge-e2e.yml`
+- `.github/workflows/nightly-regression.yml`
+- `.github/workflows/governance-drift.yml`
 
-## 5. Project V2 setup (manual first)
+### Coverage
 
-Recommended fields:
+- `ljwx-platform-app/pom.xml` includes JaCoCo plugin
+- `.github/workflows/coverage.yml` builds and uploads coverage artifacts
+- optional Codecov upload when `CODECOV_TOKEN` is configured
+- default thresholds: overall line `>= 40%`, diff line `>= 70%`
+- thresholds can be overridden via repository variables:
+  - `MIN_LINE_COVERAGE`
+  - `MIN_DIFF_COVERAGE`
 
-- `Phase` (single select)
-- `Priority` (P0/P1/P2)
-- `Type` (feature/bugfix/refactor/test/docs/gate-fix)
-- `Gate Status` (PASS/FAIL/PENDING)
+## 6. Release, Versioning, and Artifacts
 
-Recommended views:
+- Release workflow: `.github/workflows/release.yml`
+- Release note categories: `.github/release.yml`
+- Build and push containers to GHCR: `.github/workflows/build-and-notify.yml`
+- Deploy queue handoff: `.github/workflows/release-to-deploy.yml`
+- Versioning convention: SemVer + repo tagging policy (e.g. `v1.2.3-phase27`)
+- Changelog source of truth: `CHANGELOG.md`
 
-- Board: Backlog -> In Progress -> Gate -> Review -> Done
-- Table: grouped by phase
-- Roadmap: grouped by milestone
+## 7. Documentation and Decision Traceability
 
-## 6. Discussions and Environments
+- Architecture decisions: `docs/adr/`
+- Setup and ops runbooks: `docs/setup/`
+- Optional static publishing: GitHub Pages from `docs/`
+- Discussion templates:
+  - `.github/DISCUSSION_TEMPLATE/rfc.yml`
+  - `.github/DISCUSSION_TEMPLATE/incident-postmortem.yml`
 
-- Enable Discussions categories: RFC, Q&A, Incident Postmortem
-- Configure Environments:
-  - `staging`
-  - `production`
-- Set required reviewers and environment secrets for deploy jobs
+## 8. Monitoring Feedback Loop
 
-## 7. GitHub Pages (optional)
+When online alerts are triggered:
 
-If docs publishing is needed:
+1. Open `Production Incident` issue template.
+2. Link monitoring URL, impact window, and mitigation.
+3. Open postmortem discussion.
+4. Track follow-up items via sub-issues and Project fields.
 
-- Source: `docs/` (or generated static site)
-- Protect the publish branch
-- Add a dedicated Pages deployment workflow only after content structure is stable
+Templates used:
 
-## 8. Runtime Policy (Formal, no emergency defaults)
+- `.github/ISSUE_TEMPLATE/production-incident.yml`
+- `.github/DISCUSSION_TEMPLATE/incident-postmortem.yml`
+
+## 9. Team Access and Ownership
+
+- CODEOWNERS governs review ownership on critical paths.
+- Branch protection enforces mandatory review and checks.
+- Use GitHub Teams and repository roles for least-privilege access.
+
+## 10. Compliance Files
+
+Repository-level mandatory files:
+
+- `LICENSE`
+- `CONTRIBUTING.md`
+- `CODE_OF_CONDUCT.md`
+- `SECURITY.md`
+- `CHANGELOG.md`
+- `CLA.md`
+
+## 11. Operations Checklist
+
+For each new repository setup or major reset:
+
+1. Run `scripts/setup-github.sh`.
+2. Apply branch protection via script.
+3. Create `staging` and `production` environments.
+4. Add required secrets (repo + environment scoped).
+5. Add governance and quality configuration:
+   - optional secret: `GOVERNANCE_TOKEN` (read branch protection/environment settings reliably)
+   - optional variables: `MIN_LINE_COVERAGE`, `MIN_DIFF_COVERAGE`
+6. Validate all security and coverage workflows are green.
+7. Confirm Issue/PR templates and Discussions categories are active.
+
+## 12. Runtime Policy (Preserved)
 
 ### Database target
 

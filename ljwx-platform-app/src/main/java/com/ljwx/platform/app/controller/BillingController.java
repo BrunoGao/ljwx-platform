@@ -5,7 +5,7 @@ import com.ljwx.platform.app.service.BillUsageAppService;
 import com.ljwx.platform.app.vo.billing.TenantUsageSummaryVO;
 import com.ljwx.platform.app.vo.billing.UsageRecordVO;
 import com.ljwx.platform.core.context.CurrentTenantHolder;
-import com.ljwx.platform.web.result.Result;
+import com.ljwx.platform.core.result.Result;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.AccessDeniedException;

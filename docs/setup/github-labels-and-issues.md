@@ -20,6 +20,7 @@
 - Suite-specific work uses `test-suite` issues.
 - Coverage gap backlogs use `test-debt` issues.
 - Regression failures use `regression-bug` issues and must include run URL.
+- Online production alerts use `production-incident` issues.
 
 ## Regression Run Record
 
@@ -34,7 +35,7 @@ For each regression run:
 
 Labels are secondary metadata for search and back-compat:
 
-- Phase: `phase-00` ... `phase-32`
+- Phase: `phase-00` ... `phase-53` (expand with `scripts/setup-github.sh --phase-range`)
 - Workflow: `workflow:brief/spec/coding/gate/review/done`
 - Priority: `priority:P0/P1/P2`
 - Optional: `suite:*`, `workstream:*`, `gate:*`

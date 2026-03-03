@@ -4,12 +4,12 @@ Phase 29-53 Implementation Completeness Checker
 Analyzes phase specifications vs actual implementation
 """
 
-import os
 import re
 import yaml
 from pathlib import Path
-from typing import Dict, List, Set, Tuple
+from typing import Dict, List, Tuple
 from dataclasses import dataclass
+
 
 @dataclass
 class PhaseInfo:
@@ -23,35 +23,39 @@ class PhaseInfo:
     missing_files: List[str]
     extra_files: List[str]
 
+
 def parse_phase_spec(spec_path: Path) -> Tuple[bool, bool, List[str]]:
     """Parse phase spec file to extract backend/frontend requirements and scope"""
-    with open(spec_path, 'r', encoding='utf-8') as f:
+    with open(spec_path, "r", encoding="utf-8") as f:
         content = f.read()
 
     # Extract YAML frontmatter
-    match = re.search(r'^---\n(.*?)\n---', content, re.DOTALL | re.MULTILINE)
+    match = re.search(r"^---\n(.*?)\n---", content, re.DOTALL | re.MULTILINE)
     if not match:
         return False, False, []
 
     try:
         frontmatter = yaml.safe_load(match.group(1))
-        backend = frontmatter.get('targets', {}).get('backend', False)
-        frontend = frontmatter.get('targets', {}).get('frontend', False)
-        scope = frontmatter.get('scope', [])
+        backend = frontmatter.get("targets", {}).get("backend", False)
+        frontend = frontmatter.get("targets", {}).get("frontend", False)
+        scope = frontmatter.get("scope", [])
         return backend, frontend, scope
-    except:
+    except Exception:
         return False, False, []
+
 
 def parse_manifest() -> Dict[int, Tuple[str, str, List[str]]]:
     """Parse PHASE_MANIFEST.txt to extract phase info"""
-    manifest_path = Path('/Users/brunogao/work/codes/ljwx/ljwx-platform/PHASE_MANIFEST.txt')
+    manifest_path = Path(
+        "/Users/brunogao/work/codes/ljwx/ljwx-platform/PHASE_MANIFEST.txt"
+    )
     phases = {}
 
-    with open(manifest_path, 'r', encoding='utf-8') as f:
+    with open(manifest_path, "r", encoding="utf-8") as f:
         content = f.read()
 
     # Split by phase sections
-    phase_sections = re.split(r'\n## PHASE (\d+)\n', content)
+    phase_sections = re.split(r"\n## PHASE (\d+)\n", content)
 
     for i in range(1, len(phase_sections), 2):
         phase_num = int(phase_sections[i])
@@ -61,41 +65,47 @@ def parse_manifest() -> Dict[int, Tuple[str, str, List[str]]]:
         section = phase_sections[i + 1]
 
         # Extract title
-        title_match = re.search(r'Title: (.+)', section)
+        title_match = re.search(r"Title: (.+)", section)
         title = title_match.group(1) if title_match else "Unknown"
 
         # Extract status
-        status_match = re.search(r'Status: (\w+)', section)
+        status_match = re.search(r"Status: (\w+)", section)
         status = status_match.group(1) if status_match else "UNKNOWN"
 
         # Extract files
         files = []
         in_files_section = False
-        for line in section.split('\n'):
-            if line.startswith('Files:'):
+        for line in section.split("\n"):
+            if line.startswith("Files:"):
                 in_files_section = True
                 continue
             if in_files_section:
-                if line.startswith('Status:') or line.startswith('Gate:') or line.startswith('##'):
+                if (
+                    line.startswith("Status:")
+                    or line.startswith("Gate:")
+                    or line.startswith("##")
+                ):
                     break
-                if line.strip().startswith('- '):
+                if line.strip().startswith("- "):
                     # Remove quotes and leading dash
                     file_path = line.strip()[2:].strip('"')
-                    if file_path and file_path != '--':
+                    if file_path and file_path != "--":
                         files.append(file_path)
 
         phases[phase_num] = (title, status, files)
 
     return phases
 
+
 def check_file_exists(file_path: str, base_dir: Path) -> bool:
     """Check if a file exists relative to base directory"""
     full_path = base_dir / file_path
     return full_path.exists()
 
+
 def analyze_phase(phase_num: int, base_dir: Path) -> PhaseInfo:
     """Analyze a single phase for completeness"""
-    spec_path = base_dir / f'spec/phase/phase-{phase_num}.md'
+    spec_path = base_dir / f"spec/phase/phase-{phase_num}.md"
 
     # Parse spec file
     if not spec_path.exists():
@@ -108,7 +118,7 @@ def analyze_phase(phase_num: int, base_dir: Path) -> PhaseInfo:
             spec_files=[],
             manifest_files=[],
             missing_files=[],
-            extra_files=[]
+            extra_files=[],
         )
 
     backend_req, frontend_req, spec_files = parse_phase_spec(spec_path)
@@ -125,7 +135,7 @@ def analyze_phase(phase_num: int, base_dir: Path) -> PhaseInfo:
             spec_files=spec_files,
             manifest_files=[],
             missing_files=spec_files,
-            extra_files=[]
+            extra_files=[],
         )
 
     title, status, manifest_files = manifest_data[phase_num]
@@ -150,11 +160,12 @@ def analyze_phase(phase_num: int, base_dir: Path) -> PhaseInfo:
         spec_files=spec_files,
         manifest_files=manifest_files,
         missing_files=missing_files,
-        extra_files=extra_files
+        extra_files=extra_files,
     )
 
+
 def main():
-    base_dir = Path('/Users/brunogao/work/codes/ljwx/ljwx-platform')
+    base_dir = Path("/Users/brunogao/work/codes/ljwx/ljwx-platform")
 
     print("=" * 80)
     print("Phase 29-53 Implementation Completeness Analysis")
@@ -186,7 +197,9 @@ def main():
         print(f"  Status: {info.status}")
         print(f"  Backend: {'required' if info.backend_required else 'not required'}")
         print(f"  Frontend: {'required' if info.frontend_required else 'not required'}")
-        print(f"  Files: {len(info.spec_files)} specified, {len(info.manifest_files)} in manifest")
+        print(
+            f"  Files: {len(info.spec_files)} specified, {len(info.manifest_files)} in manifest"
+        )
 
         if info.missing_files:
             print(f"  ⚠️  Missing files ({len(info.missing_files)}):")
@@ -220,5 +233,6 @@ def main():
     if not_started_count > 0:
         print(f"❌ {not_started_count} phases have not been started")
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()
