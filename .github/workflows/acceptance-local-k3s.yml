@@ -120,20 +120,28 @@ jobs:
           SERVICE_VERSION="$(sed -n 's/^serviceVersion:[[:space:]]*//p' "${VALUES_FILE}" | head -n1 | tr -d '"' | xargs || true)"
           IMAGE_DIGEST="$(sed -n 's/^imageDigest:[[:space:]]*//p' "${VALUES_FILE}" | head -n1 | tr -d '"' | xargs || true)"
 
-          # Compatibility for kustomization overlays using images.newName/newTag.
+          # Compatibility for kustomization overlays using images.newName/newTag or images.newName+digest.
           if [ -z "${IMAGE}" ]; then
             NEW_NAME="$(sed -n 's/^[[:space:]]*newName:[[:space:]]*//p' "${VALUES_FILE}" | head -n1 | tr -d '"' | xargs || true)"
             NEW_TAG="$(sed -n 's/^[[:space:]]*newTag:[[:space:]]*//p' "${VALUES_FILE}" | head -n1 | tr -d '"' | xargs || true)"
+            NEW_DIGEST="$(sed -n 's/^[[:space:]]*digest:[[:space:]]*//p' "${VALUES_FILE}" | head -n1 | tr -d '"' | xargs || true)"
             if [ -n "${NEW_NAME}" ] && [ -n "${NEW_TAG}" ]; then
               IMAGE="${NEW_NAME}:${NEW_TAG}"
               [ -z "${DEPLOYMENT_ID}" ] && DEPLOYMENT_ID="${NEW_TAG}"
               [ -z "${SERVICE_VERSION}" ] && SERVICE_VERSION="${NEW_TAG}"
               [ -z "${IMAGE_DIGEST}" ] && IMAGE_DIGEST="unknown"
+            elif [ -n "${NEW_NAME}" ] && [ -n "${NEW_DIGEST}" ]; then
+              IMAGE="${NEW_NAME}@${NEW_DIGEST}"
+              SHORT_DIGEST="${NEW_DIGEST#sha256:}"
+              SHORT_DIGEST="${SHORT_DIGEST:0:12}"
+              [ -z "${DEPLOYMENT_ID}" ] && DEPLOYMENT_ID="digest-${SHORT_DIGEST}"
+              [ -z "${SERVICE_VERSION}" ] && SERVICE_VERSION="digest-${SHORT_DIGEST}"
+              [ -z "${IMAGE_DIGEST}" ] && IMAGE_DIGEST="${NEW_DIGEST}"
             fi
           fi
 
           if [ -z "${IMAGE}" ]; then
-            echo "[FATAL] image/newName+newTag not found in ${VALUES_FILE}"
+            echo "[FATAL] image/newName+newTag/newName+digest not found in ${VALUES_FILE}"
             exit 1
           fi
 
