@@ -191,7 +191,8 @@ if [[ -z "$TEST_PATTERN" ]]; then
 fi
 
 MVN_OUT="$(mktemp)"
-if mvn test -pl "$MODULE" -am -Dtest="$TEST_PATTERN" -Dspring.profiles.active=test -DfailIfNoTests=false -Dsurefire.failIfNoSpecifiedTests=false >"$MVN_OUT" 2>&1; then
+export TESTCONTAINERS_RYUK_DISABLED=true
+if mvn test -pl "$MODULE" -am -Dtest="$TEST_PATTERN" -Dspring.profiles.active=test -Dtestcontainers.ryuk.disabled=true -DfailIfNoTests=false -Dsurefire.failIfNoSpecifiedTests=false >"$MVN_OUT" 2>&1; then
   TEST_EXIT=0
 else
   TEST_EXIT=$?

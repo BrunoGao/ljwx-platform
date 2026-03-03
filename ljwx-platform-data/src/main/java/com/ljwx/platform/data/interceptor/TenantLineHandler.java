@@ -28,8 +28,13 @@ import java.util.Set;
 public class TenantLineHandler {
 
     /**
-     * Platform-level tables that do not have a tenant_id column.
-     * These tables are excluded from tenant filtering.
+     * Platform-level tables excluded from tenant filtering.
+     *
+     * <p>Includes:
+     * <ul>
+     *   <li>Infrastructure tables without tenant_id (Quartz)</li>
+     *   <li>System registry tables that must be globally readable (sys_tenant)</li>
+     * </ul>
      */
     private static final Set<String> PLATFORM_TABLES = Set.of(
             // Quartz scheduler tables
@@ -43,7 +48,10 @@ public class TenantLineHandler {
             "qrtz_paused_trigger_grps",
             "qrtz_fired_triggers",
             "qrtz_scheduler_state",
-            "qrtz_locks"
+            "qrtz_locks",
+
+            // Tenant registry table: rows are system-level (tenant_id=0)
+            "sys_tenant"
     );
 
     /**

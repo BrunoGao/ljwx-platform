@@ -1,15 +1,15 @@
 {
   "phase": "48",
-  "status": "FAIL",
-  "timestamp": "2026-03-02T19:02:32Z",
+  "status": "PASS",
+  "timestamp": "2026-03-03T05:22:06Z",
   "repo": {
     "owner": "unknown",
     "name": "unknown",
     "default_branch": "master"
   },
   "git": {
-    "commit": "deb593c",
-    "branch": "feat-baseline-gate-workflow"
+    "commit": "2b50bfe",
+    "branch": "master"
   },
   "ci": {
     "run_id": null,
@@ -26,26 +26,26 @@
     {
       "id": "R01",
       "name": "Compile",
-      "status": "FAIL",
-      "critical": 1,
+      "status": "PASS",
+      "critical": 0,
       "warnings": 0,
-      "message": "failed"
+      "message": "passed"
     },
     {
       "id": "R02",
       "name": "Manifest",
-      "status": "FAIL",
-      "critical": 1,
+      "status": "PASS",
+      "critical": 0,
       "warnings": 0,
-      "message": "failed"
+      "message": "passed"
     },
     {
       "id": "R03",
       "name": "Rules",
-      "status": "FAIL",
-      "critical": 1,
+      "status": "PASS",
+      "critical": 0,
       "warnings": 0,
-      "message": "failed"
+      "message": "passed"
     },
     {
       "id": "R04",
@@ -58,10 +58,10 @@
     {
       "id": "R05",
       "name": "Integration",
-      "status": "FAIL",
-      "critical": 1,
+      "status": "PASS",
+      "critical": 0,
       "warnings": 0,
-      "message": "failed"
+      "message": "passed"
     },
     {
       "id": "R06",
@@ -114,41 +114,12 @@
   ],
   "summary": {
     "total": 11,
-    "pass": 6,
-    "fail": 4,
+    "pass": 10,
+    "fail": 0,
     "skip": 1,
-    "critical": 4,
+    "critical": 0,
     "warnings": 0,
-    "pass_rate": 54.55
+    "pass_rate": 90.91
   },
-  "violations": [
-    {
-      "rule": "R01",
-      "severity": "CRITICAL",
-      "file": null,
-      "line": null,
-      "message": "failed"
-    },
-    {
-      "rule": "R02",
-      "severity": "CRITICAL",
-      "file": null,
-      "line": null,
-      "message": "failed"
-    },
-    {
-      "rule": "R03",
-      "severity": "CRITICAL",
-      "file": null,
-      "line": null,
-      "message": "failed"
-    },
-    {
-      "rule": "R05",
-      "severity": "CRITICAL",
-      "file": null,
-      "line": null,
-      "message": "failed"
-    }
-  ]
+  "violations": []
 }

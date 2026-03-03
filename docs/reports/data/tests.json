@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-03-02T23:54:56Z",
+  "generated_at": "2026-03-03T05:31:21Z",
   "ci": {
     "run_id": null,
     "run_attempt": 1,
@@ -7,10 +7,939 @@
     "run_url": null
   },
   "summary": {
-    "total": 0,
-    "pass": 0,
+    "total": 116,
+    "pass": 116,
     "fail": 0,
     "skip": 0
   },
-  "tests": []
+  "tests": [
+    {
+      "phase": null,
+      "suite": "com.ljwx.platform.contract.protocol.ProtocolContractSecurityTest",
+      "testcase": "protectedEndpointWithoutTokenReturns401(ProtocolEndpoint)[1]",
+      "status": "PASS",
+      "time_seconds": 0.388,
+      "message": ""
+    },
+    {
+      "phase": null,
+      "suite": "com.ljwx.platform.contract.protocol.ProtocolContractSecurityTest",
+      "testcase": "protectedEndpointWithoutTokenReturns401(ProtocolEndpoint)[2]",
+      "status": "PASS",
+      "time_seconds": 0.005,
+      "message": ""
+    },
+    {
+      "phase": null,
+      "suite": "com.ljwx.platform.contract.protocol.ProtocolContractSecurityTest",
+      "testcase": "protectedEndpointWithoutTokenReturns401(ProtocolEndpoint)[3]",
+      "status": "PASS",
+      "time_seconds": 0.005,
+      "message": ""
+    },
+    {
+      "phase": null,
+      "suite": "com.ljwx.platform.contract.protocol.ProtocolContractSecurityTest",
+      "testcase": "protectedEndpointWithoutTokenReturns401(ProtocolEndpoint)[4]",
+      "status": "PASS",
+      "time_seconds": 0.005,
+      "message": ""
+    },
+    {
+      "phase": null,
+      "suite": "com.ljwx.platform.contract.protocol.ProtocolContractSecurityTest",
+      "testcase": "protectedEndpointWithoutTokenReturns401(ProtocolEndpoint)[5]",
+      "status": "PASS",
+      "time_seconds": 0.004,
+      "message": ""
+    },
+    {
+      "phase": null,
+      "suite": "com.ljwx.platform.contract.protocol.ProtocolContractSecurityTest",
+      "testcase": "protectedEndpointWithoutTokenReturns401(ProtocolEndpoint)[6]",
+      "status": "PASS",
+      "time_seconds": 0.004,
+      "message": ""
+    },
+    {
+      "phase": null,
+      "suite": "com.ljwx.platform.contract.protocol.ProtocolContractSecurityTest",
+      "testcase": "protectedEndpointWithoutTokenReturns401(ProtocolEndpoint)[7]",
+      "status": "PASS",
+      "time_seconds": 0.003,
+      "message": ""
+    },
+    {
+      "phase": null,
+      "suite": "com.ljwx.platform.contract.protocol.ProtocolContractSecurityTest",
+      "testcase": "protectedEndpointWithoutTokenReturns401(ProtocolEndpoint)[8]",
+      "status": "PASS",
+      "time_seconds": 0.003,
+      "message": ""
+    },
+    {
+      "phase": null,
+      "suite": "com.ljwx.platform.contract.protocol.ProtocolContractSecurityTest",
+      "testcase": "protectedEndpointWithoutTokenReturns401(ProtocolEndpoint)[9]",
+      "status": "PASS",
+      "time_seconds": 0.003,
+      "message": ""
+    },
+    {
+      "phase": null,
+      "suite": "com.ljwx.platform.contract.protocol.ProtocolContractSecurityTest",
+      "testcase": "protectedEndpointWithoutTokenReturns401(ProtocolEndpoint)[10]",
+      "status": "PASS",
+      "time_seconds": 0.003,
+      "message": ""
+    },
+    {
+      "phase": null,
+      "suite": "com.ljwx.platform.contract.protocol.ProtocolContractSecurityTest",
+      "testcase": "protectedEndpointWithoutTokenReturns401(ProtocolEndpoint)[11]",
+      "status": "PASS",
+      "time_seconds": 0.004,
+      "message": ""
+    },
+    {
+      "phase": null,
+      "suite": "com.ljwx.platform.contract.protocol.ProtocolContractSecurityTest",
+      "testcase": "protectedEndpointWithoutTokenReturns401(ProtocolEndpoint)[12]",
+      "status": "PASS",
+      "time_seconds": 0.004,
+      "message": ""
+    },
+    {
+      "phase": null,
+      "suite": "com.ljwx.platform.contract.protocol.ProtocolContractSecurityTest",
+      "testcase": "protectedEndpointWithoutTokenReturns401(ProtocolEndpoint)[13]",
+      "status": "PASS",
+      "time_seconds": 0.003,
+      "message": ""
+    },
+    {
+      "phase": null,
+      "suite": "com.ljwx.platform.contract.protocol.ProtocolContractSecurityTest",
+      "testcase": "protectedEndpointWithoutTokenReturns401(ProtocolEndpoint)[14]",
+      "status": "PASS",
+      "time_seconds": 0.003,
+      "message": ""
+    },
+    {
+      "phase": null,
+      "suite": "com.ljwx.platform.contract.protocol.ProtocolContractSecurityTest",
+      "testcase": "protectedEndpointWithoutTokenReturns401(ProtocolEndpoint)[15]",
+      "status": "PASS",
+      "time_seconds": 0.003,
+      "message": ""
+    },
+    {
+      "phase": null,
+      "suite": "com.ljwx.platform.contract.protocol.ProtocolContractSecurityTest",
+      "testcase": "protectedEndpointWithoutTokenReturns401(ProtocolEndpoint)[16]",
+      "status": "PASS",
+      "time_seconds": 0.004,
+      "message": ""
+    },
+    {
+      "phase": null,
+      "suite": "com.ljwx.platform.contract.protocol.ProtocolContractSecurityTest",
+      "testcase": "protectedEndpointWithoutTokenReturns401(ProtocolEndpoint)[17]",
+      "status": "PASS",
+      "time_seconds": 0.003,
+      "message": ""
+    },
+    {
+      "phase": null,
+      "suite": "com.ljwx.platform.contract.protocol.ProtocolContractSecurityTest",
+      "testcase": "protectedEndpointWithoutTokenReturns401(ProtocolEndpoint)[18]",
+      "status": "PASS",
+      "time_seconds": 0.003,
+      "message": ""
+    },
+    {
+      "phase": null,
+      "suite": "com.ljwx.platform.contract.protocol.ProtocolContractSecurityTest",
+      "testcase": "protectedEndpointWithoutTokenReturns401(ProtocolEndpoint)[19]",
+      "status": "PASS",
+      "time_seconds": 0.003,
+      "message": ""
+    },
+    {
+      "phase": null,
+      "suite": "com.ljwx.platform.contract.protocol.ProtocolContractSecurityTest",
+      "testcase": "protectedEndpointWithoutTokenReturns401(ProtocolEndpoint)[20]",
+      "status": "PASS",
+      "time_seconds": 0.002,
+      "message": ""
+    },
+    {
+      "phase": null,
+      "suite": "com.ljwx.platform.contract.protocol.ProtocolContractSecurityTest",
+      "testcase": "protectedEndpointWithoutTokenReturns401(ProtocolEndpoint)[21]",
+      "status": "PASS",
+      "time_seconds": 0.002,
+      "message": ""
+    },
+    {
+      "phase": null,
+      "suite": "com.ljwx.platform.contract.protocol.ProtocolContractSecurityTest",
+      "testcase": "protectedEndpointWithoutTokenReturns401(ProtocolEndpoint)[22]",
+      "status": "PASS",
+      "time_seconds": 0.005,
+      "message": ""
+    },
+    {
+      "phase": null,
+      "suite": "com.ljwx.platform.contract.protocol.ProtocolContractSecurityTest",
+      "testcase": "protectedEndpointWithoutTokenReturns401(ProtocolEndpoint)[23]",
+      "status": "PASS",
+      "time_seconds": 0.003,
+      "message": ""
+    },
+    {
+      "phase": null,
+      "suite": "com.ljwx.platform.contract.protocol.ProtocolContractSecurityTest",
+      "testcase": "protectedEndpointWithoutTokenReturns401(ProtocolEndpoint)[24]",
+      "status": "PASS",
+      "time_seconds": 0.002,
+      "message": ""
+    },
+    {
+      "phase": null,
+      "suite": "com.ljwx.platform.contract.protocol.ProtocolContractSecurityTest",
+      "testcase": "protectedEndpointWithoutTokenReturns401(ProtocolEndpoint)[25]",
+      "status": "PASS",
+      "time_seconds": 0.003,
+      "message": ""
+    },
+    {
+      "phase": null,
+      "suite": "com.ljwx.platform.contract.protocol.ProtocolContractSecurityTest",
+      "testcase": "protectedEndpointWithoutTokenReturns401(ProtocolEndpoint)[26]",
+      "status": "PASS",
+      "time_seconds": 0.003,
+      "message": ""
+    },
+    {
+      "phase": null,
+      "suite": "com.ljwx.platform.contract.protocol.ProtocolContractSecurityTest",
+      "testcase": "protectedEndpointWithoutTokenReturns401(ProtocolEndpoint)[27]",
+      "status": "PASS",
+      "time_seconds": 0.002,
+      "message": ""
+    },
+    {
+      "phase": null,
+      "suite": "com.ljwx.platform.contract.protocol.ProtocolContractSecurityTest",
+      "testcase": "protectedEndpointWithoutTokenReturns401(ProtocolEndpoint)[28]",
+      "status": "PASS",
+      "time_seconds": 0.002,
+      "message": ""
+    },
+    {
+      "phase": null,
+      "suite": "com.ljwx.platform.contract.protocol.ProtocolContractSecurityTest",
+      "testcase": "protectedEndpointWithoutTokenReturns401(ProtocolEndpoint)[29]",
+      "status": "PASS",
+      "time_seconds": 0.003,
+      "message": ""
+    },
+    {
+      "phase": null,
+      "suite": "com.ljwx.platform.contract.protocol.ProtocolContractSecurityTest",
+      "testcase": "protectedEndpointWithoutTokenReturns401(ProtocolEndpoint)[30]",
+      "status": "PASS",
+      "time_seconds": 0.003,
+      "message": ""
+    },
+    {
+      "phase": null,
+      "suite": "com.ljwx.platform.contract.protocol.ProtocolContractSecurityTest",
+      "testcase": "protectedEndpointWithoutTokenReturns401(ProtocolEndpoint)[31]",
+      "status": "PASS",
+      "time_seconds": 0.002,
+      "message": ""
+    },
+    {
+      "phase": null,
+      "suite": "com.ljwx.platform.contract.protocol.ProtocolContractSecurityTest",
+      "testcase": "protectedEndpointWithoutTokenReturns401(ProtocolEndpoint)[32]",
+      "status": "PASS",
+      "time_seconds": 0.004,
+      "message": ""
+    },
+    {
+      "phase": null,
+      "suite": "com.ljwx.platform.contract.protocol.ProtocolContractSecurityTest",
+      "testcase": "protectedEndpointWithoutTokenReturns401(ProtocolEndpoint)[33]",
+      "status": "PASS",
+      "time_seconds": 0.003,
+      "message": ""
+    },
+    {
+      "phase": null,
+      "suite": "com.ljwx.platform.contract.protocol.ProtocolContractSecurityTest",
+      "testcase": "protectedEndpointWithoutTokenReturns401(ProtocolEndpoint)[34]",
+      "status": "PASS",
+      "time_seconds": 0.003,
+      "message": ""
+    },
+    {
+      "phase": null,
+      "suite": "com.ljwx.platform.contract.protocol.ProtocolContractSecurityTest",
+      "testcase": "protectedEndpointWithoutTokenReturns401(ProtocolEndpoint)[35]",
+      "status": "PASS",
+      "time_seconds": 0.002,
+      "message": ""
+    },
+    {
+      "phase": null,
+      "suite": "com.ljwx.platform.contract.protocol.ProtocolContractSecurityTest",
+      "testcase": "protectedEndpointWithoutTokenReturns401(ProtocolEndpoint)[36]",
+      "status": "PASS",
+      "time_seconds": 0.003,
+      "message": ""
+    },
+    {
+      "phase": null,
+      "suite": "com.ljwx.platform.contract.protocol.ProtocolContractSecurityTest",
+      "testcase": "protectedEndpointWithoutTokenReturns401(ProtocolEndpoint)[37]",
+      "status": "PASS",
+      "time_seconds": 0.003,
+      "message": ""
+    },
+    {
+      "phase": null,
+      "suite": "com.ljwx.platform.contract.protocol.ProtocolContractSecurityTest",
+      "testcase": "protectedEndpointWithoutTokenReturns401(ProtocolEndpoint)[38]",
+      "status": "PASS",
+      "time_seconds": 0.002,
+      "message": ""
+    },
+    {
+      "phase": null,
+      "suite": "com.ljwx.platform.contract.protocol.ProtocolContractSecurityTest",
+      "testcase": "protectedEndpointWithoutTokenReturns401(ProtocolEndpoint)[39]",
+      "status": "PASS",
+      "time_seconds": 0.001,
+      "message": ""
+    },
+    {
+      "phase": null,
+      "suite": "com.ljwx.platform.contract.protocol.ProtocolContractSecurityTest",
+      "testcase": "protectedEndpointWithoutTokenReturns401(ProtocolEndpoint)[40]",
+      "status": "PASS",
+      "time_seconds": 0.003,
+      "message": ""
+    },
+    {
+      "phase": null,
+      "suite": "com.ljwx.platform.contract.protocol.ProtocolContractSecurityTest",
+      "testcase": "protectedEndpointWithoutTokenReturns401(ProtocolEndpoint)[41]",
+      "status": "PASS",
+      "time_seconds": 0.004,
+      "message": ""
+    },
+    {
+      "phase": null,
+      "suite": "com.ljwx.platform.contract.protocol.ProtocolContractSecurityTest",
+      "testcase": "protectedEndpointWithoutTokenReturns401(ProtocolEndpoint)[42]",
+      "status": "PASS",
+      "time_seconds": 0.003,
+      "message": ""
+    },
+    {
+      "phase": null,
+      "suite": "com.ljwx.platform.contract.protocol.ProtocolContractSecurityTest",
+      "testcase": "protectedEndpointWithoutTokenReturns401(ProtocolEndpoint)[43]",
+      "status": "PASS",
+      "time_seconds": 0.004,
+      "message": ""
+    },
+    {
+      "phase": null,
+      "suite": "com.ljwx.platform.contract.protocol.ProtocolContractSecurityTest",
+      "testcase": "protectedEndpointWithoutTokenReturns401(ProtocolEndpoint)[44]",
+      "status": "PASS",
+      "time_seconds": 0.003,
+      "message": ""
+    },
+    {
+      "phase": null,
+      "suite": "com.ljwx.platform.contract.protocol.ProtocolContractSecurityTest",
+      "testcase": "protectedEndpointWithoutTokenReturns401(ProtocolEndpoint)[45]",
+      "status": "PASS",
+      "time_seconds": 0.003,
+      "message": ""
+    },
+    {
+      "phase": null,
+      "suite": "com.ljwx.platform.contract.protocol.ProtocolContractSecurityTest",
+      "testcase": "protectedEndpointWithoutTokenReturns401(ProtocolEndpoint)[46]",
+      "status": "PASS",
+      "time_seconds": 0.001,
+      "message": ""
+    },
+    {
+      "phase": null,
+      "suite": "com.ljwx.platform.contract.protocol.ProtocolContractSecurityTest",
+      "testcase": "protectedEndpointWithoutTokenReturns401(ProtocolEndpoint)[47]",
+      "status": "PASS",
+      "time_seconds": 0.001,
+      "message": ""
+    },
+    {
+      "phase": null,
+      "suite": "com.ljwx.platform.contract.protocol.ProtocolContractSecurityTest",
+      "testcase": "protectedEndpointWithoutTokenReturns401(ProtocolEndpoint)[48]",
+      "status": "PASS",
+      "time_seconds": 0.003,
+      "message": ""
+    },
+    {
+      "phase": null,
+      "suite": "com.ljwx.platform.contract.protocol.ProtocolContractSecurityTest",
+      "testcase": "protectedEndpointWithoutTokenReturns401(ProtocolEndpoint)[49]",
+      "status": "PASS",
+      "time_seconds": 0.002,
+      "message": ""
+    },
+    {
+      "phase": null,
+      "suite": "com.ljwx.platform.contract.protocol.ProtocolContractSecurityTest",
+      "testcase": "protectedEndpointWithoutTokenReturns401(ProtocolEndpoint)[50]",
+      "status": "PASS",
+      "time_seconds": 0.004,
+      "message": ""
+    },
+    {
+      "phase": null,
+      "suite": "com.ljwx.platform.contract.protocol.ProtocolContractSecurityTest",
+      "testcase": "protectedEndpointWithoutTokenReturns401(ProtocolEndpoint)[51]",
+      "status": "PASS",
+      "time_seconds": 0.003,
+      "message": ""
+    },
+    {
+      "phase": null,
+      "suite": "com.ljwx.platform.contract.protocol.ProtocolContractSecurityTest",
+      "testcase": "protectedEndpointWithoutTokenReturns401(ProtocolEndpoint)[52]",
+      "status": "PASS",
+      "time_seconds": 0.003,
+      "message": ""
+    },
+    {
+      "phase": null,
+      "suite": "com.ljwx.platform.contract.protocol.ProtocolContractSecurityTest",
+      "testcase": "protectedEndpointWithoutTokenReturns401(ProtocolEndpoint)[53]",
+      "status": "PASS",
+      "time_seconds": 0.002,
+      "message": ""
+    },
+    {
+      "phase": null,
+      "suite": "com.ljwx.platform.contract.protocol.ProtocolContractSecurityTest",
+      "testcase": "protectedEndpointWithoutTokenReturns401(ProtocolEndpoint)[54]",
+      "status": "PASS",
+      "time_seconds": 0.002,
+      "message": ""
+    },
+    {
+      "phase": null,
+      "suite": "com.ljwx.platform.contract.protocol.ProtocolContractSecurityTest",
+      "testcase": "protectedEndpointWithoutTokenReturns401(ProtocolEndpoint)[55]",
+      "status": "PASS",
+      "time_seconds": 0.002,
+      "message": ""
+    },
+    {
+      "phase": null,
+      "suite": "com.ljwx.platform.contract.protocol.ProtocolContractSecurityTest",
+      "testcase": "protectedEndpointWithoutTokenReturns401(ProtocolEndpoint)[56]",
+      "status": "PASS",
+      "time_seconds": 0.001,
+      "message": ""
+    },
+    {
+      "phase": null,
+      "suite": "com.ljwx.platform.contract.protocol.ProtocolContractSecurityTest",
+      "testcase": "protectedEndpointWithoutTokenReturns401(ProtocolEndpoint)[57]",
+      "status": "PASS",
+      "time_seconds": 0.001,
+      "message": ""
+    },
+    {
+      "phase": null,
+      "suite": "com.ljwx.platform.contract.protocol.ProtocolContractSecurityTest",
+      "testcase": "protectedEndpointWithoutTokenReturns401(ProtocolEndpoint)[58]",
+      "status": "PASS",
+      "time_seconds": 0.001,
+      "message": ""
+    },
+    {
+      "phase": null,
+      "suite": "com.ljwx.platform.contract.protocol.ProtocolContractSecurityTest",
+      "testcase": "protectedEndpointWithoutTokenReturns401(ProtocolEndpoint)[59]",
+      "status": "PASS",
+      "time_seconds": 0.001,
+      "message": ""
+    },
+    {
+      "phase": null,
+      "suite": "com.ljwx.platform.contract.protocol.ProtocolContractSecurityTest",
+      "testcase": "authorityEndpointWithNoPermissionTokenReturns403(ProtocolEndpoint)[1]",
+      "status": "PASS",
+      "time_seconds": 0.085,
+      "message": ""
+    },
+    {
+      "phase": null,
+      "suite": "com.ljwx.platform.contract.protocol.ProtocolContractSecurityTest",
+      "testcase": "authorityEndpointWithNoPermissionTokenReturns403(ProtocolEndpoint)[2]",
+      "status": "PASS",
+      "time_seconds": 0.01,
+      "message": ""
+    },
+    {
+      "phase": null,
+      "suite": "com.ljwx.platform.contract.protocol.ProtocolContractSecurityTest",
+      "testcase": "authorityEndpointWithNoPermissionTokenReturns403(ProtocolEndpoint)[3]",
+      "status": "PASS",
+      "time_seconds": 0.007,
+      "message": ""
+    },
+    {
+      "phase": null,
+      "suite": "com.ljwx.platform.contract.protocol.ProtocolContractSecurityTest",
+      "testcase": "authorityEndpointWithNoPermissionTokenReturns403(ProtocolEndpoint)[4]",
+      "status": "PASS",
+      "time_seconds": 0.007,
+      "message": ""
+    },
+    {
+      "phase": null,
+      "suite": "com.ljwx.platform.contract.protocol.ProtocolContractSecurityTest",
+      "testcase": "authorityEndpointWithNoPermissionTokenReturns403(ProtocolEndpoint)[5]",
+      "status": "PASS",
+      "time_seconds": 0.008,
+      "message": ""
+    },
+    {
+      "phase": null,
+      "suite": "com.ljwx.platform.contract.protocol.ProtocolContractSecurityTest",
+      "testcase": "authorityEndpointWithNoPermissionTokenReturns403(ProtocolEndpoint)[6]",
+      "status": "PASS",
+      "time_seconds": 0.006,
+      "message": ""
+    },
+    {
+      "phase": null,
+      "suite": "com.ljwx.platform.contract.protocol.ProtocolContractSecurityTest",
+      "testcase": "authorityEndpointWithNoPermissionTokenReturns403(ProtocolEndpoint)[7]",
+      "status": "PASS",
+      "time_seconds": 0.004,
+      "message": ""
+    },
+    {
+      "phase": null,
+      "suite": "com.ljwx.platform.contract.protocol.ProtocolContractSecurityTest",
+      "testcase": "authorityEndpointWithNoPermissionTokenReturns403(ProtocolEndpoint)[8]",
+      "status": "PASS",
+      "time_seconds": 0.005,
+      "message": ""
+    },
+    {
+      "phase": null,
+      "suite": "com.ljwx.platform.contract.protocol.ProtocolContractSecurityTest",
+      "testcase": "authorityEndpointWithNoPermissionTokenReturns403(ProtocolEndpoint)[9]",
+      "status": "PASS",
+      "time_seconds": 0.005,
+      "message": ""
+    },
+    {
+      "phase": null,
+      "suite": "com.ljwx.platform.contract.protocol.ProtocolContractSecurityTest",
+      "testcase": "authorityEndpointWithNoPermissionTokenReturns403(ProtocolEndpoint)[10]",
+      "status": "PASS",
+      "time_seconds": 0.005,
+      "message": ""
+    },
+    {
+      "phase": null,
+      "suite": "com.ljwx.platform.contract.protocol.ProtocolContractSecurityTest",
+      "testcase": "authorityEndpointWithNoPermissionTokenReturns403(ProtocolEndpoint)[11]",
+      "status": "PASS",
+      "time_seconds": 0.004,
+      "message": ""
+    },
+    {
+      "phase": null,
+      "suite": "com.ljwx.platform.contract.protocol.ProtocolContractSecurityTest",
+      "testcase": "authorityEndpointWithNoPermissionTokenReturns403(ProtocolEndpoint)[12]",
+      "status": "PASS",
+      "time_seconds": 0.005,
+      "message": ""
+    },
+    {
+      "phase": null,
+      "suite": "com.ljwx.platform.contract.protocol.ProtocolContractSecurityTest",
+      "testcase": "authorityEndpointWithNoPermissionTokenReturns403(ProtocolEndpoint)[13]",
+      "status": "PASS",
+      "time_seconds": 0.005,
+      "message": ""
+    },
+    {
+      "phase": null,
+      "suite": "com.ljwx.platform.contract.protocol.ProtocolContractSecurityTest",
+      "testcase": "authorityEndpointWithNoPermissionTokenReturns403(ProtocolEndpoint)[14]",
+      "status": "PASS",
+      "time_seconds": 0.004,
+      "message": ""
+    },
+    {
+      "phase": null,
+      "suite": "com.ljwx.platform.contract.protocol.ProtocolContractSecurityTest",
+      "testcase": "authorityEndpointWithNoPermissionTokenReturns403(ProtocolEndpoint)[15]",
+      "status": "PASS",
+      "time_seconds": 0.005,
+      "message": ""
+    },
+    {
+      "phase": null,
+      "suite": "com.ljwx.platform.contract.protocol.ProtocolContractSecurityTest",
+      "testcase": "authorityEndpointWithNoPermissionTokenReturns403(ProtocolEndpoint)[16]",
+      "status": "PASS",
+      "time_seconds": 0.006,
+      "message": ""
+    },
+    {
+      "phase": null,
+      "suite": "com.ljwx.platform.contract.protocol.ProtocolContractSecurityTest",
+      "testcase": "authorityEndpointWithNoPermissionTokenReturns403(ProtocolEndpoint)[17]",
+      "status": "PASS",
+      "time_seconds": 0.006,
+      "message": ""
+    },
+    {
+      "phase": null,
+      "suite": "com.ljwx.platform.contract.protocol.ProtocolContractSecurityTest",
+      "testcase": "authorityEndpointWithNoPermissionTokenReturns403(ProtocolEndpoint)[18]",
+      "status": "PASS",
+      "time_seconds": 0.006,
+      "message": ""
+    },
+    {
+      "phase": null,
+      "suite": "com.ljwx.platform.contract.protocol.ProtocolContractSecurityTest",
+      "testcase": "authorityEndpointWithNoPermissionTokenReturns403(ProtocolEndpoint)[19]",
+      "status": "PASS",
+      "time_seconds": 0.005,
+      "message": ""
+    },
+    {
+      "phase": null,
+      "suite": "com.ljwx.platform.contract.protocol.ProtocolContractSecurityTest",
+      "testcase": "authorityEndpointWithNoPermissionTokenReturns403(ProtocolEndpoint)[20]",
+      "status": "PASS",
+      "time_seconds": 0.006,
+      "message": ""
+    },
+    {
+      "phase": null,
+      "suite": "com.ljwx.platform.contract.protocol.ProtocolContractSecurityTest",
+      "testcase": "authorityEndpointWithNoPermissionTokenReturns403(ProtocolEndpoint)[21]",
+      "status": "PASS",
+      "time_seconds": 0.006,
+      "message": ""
+    },
+    {
+      "phase": null,
+      "suite": "com.ljwx.platform.contract.protocol.ProtocolContractSecurityTest",
+      "testcase": "authorityEndpointWithNoPermissionTokenReturns403(ProtocolEndpoint)[22]",
+      "status": "PASS",
+      "time_seconds": 0.007,
+      "message": ""
+    },
+    {
+      "phase": null,
+      "suite": "com.ljwx.platform.contract.protocol.ProtocolContractSecurityTest",
+      "testcase": "authorityEndpointWithNoPermissionTokenReturns403(ProtocolEndpoint)[23]",
+      "status": "PASS",
+      "time_seconds": 0.007,
+      "message": ""
+    },
+    {
+      "phase": null,
+      "suite": "com.ljwx.platform.contract.protocol.ProtocolContractSecurityTest",
+      "testcase": "authorityEndpointWithNoPermissionTokenReturns403(ProtocolEndpoint)[24]",
+      "status": "PASS",
+      "time_seconds": 0.006,
+      "message": ""
+    },
+    {
+      "phase": null,
+      "suite": "com.ljwx.platform.contract.protocol.ProtocolContractSecurityTest",
+      "testcase": "authorityEndpointWithNoPermissionTokenReturns403(ProtocolEndpoint)[25]",
+      "status": "PASS",
+      "time_seconds": 0.007,
+      "message": ""
+    },
+    {
+      "phase": null,
+      "suite": "com.ljwx.platform.contract.protocol.ProtocolContractSecurityTest",
+      "testcase": "authorityEndpointWithNoPermissionTokenReturns403(ProtocolEndpoint)[26]",
+      "status": "PASS",
+      "time_seconds": 0.006,
+      "message": ""
+    },
+    {
+      "phase": null,
+      "suite": "com.ljwx.platform.contract.protocol.ProtocolContractSecurityTest",
+      "testcase": "authorityEndpointWithNoPermissionTokenReturns403(ProtocolEndpoint)[27]",
+      "status": "PASS",
+      "time_seconds": 0.006,
+      "message": ""
+    },
+    {
+      "phase": null,
+      "suite": "com.ljwx.platform.contract.protocol.ProtocolContractSecurityTest",
+      "testcase": "authorityEndpointWithNoPermissionTokenReturns403(ProtocolEndpoint)[28]",
+      "status": "PASS",
+      "time_seconds": 0.005,
+      "message": ""
+    },
+    {
+      "phase": null,
+      "suite": "com.ljwx.platform.contract.protocol.ProtocolContractSecurityTest",
+      "testcase": "authorityEndpointWithNoPermissionTokenReturns403(ProtocolEndpoint)[29]",
+      "status": "PASS",
+      "time_seconds": 0.005,
+      "message": ""
+    },
+    {
+      "phase": null,
+      "suite": "com.ljwx.platform.contract.protocol.ProtocolContractSecurityTest",
+      "testcase": "authorityEndpointWithNoPermissionTokenReturns403(ProtocolEndpoint)[30]",
+      "status": "PASS",
+      "time_seconds": 0.004,
+      "message": ""
+    },
+    {
+      "phase": null,
+      "suite": "com.ljwx.platform.contract.protocol.ProtocolContractSecurityTest",
+      "testcase": "authorityEndpointWithNoPermissionTokenReturns403(ProtocolEndpoint)[31]",
+      "status": "PASS",
+      "time_seconds": 0.004,
+      "message": ""
+    },
+    {
+      "phase": null,
+      "suite": "com.ljwx.platform.contract.protocol.ProtocolContractSecurityTest",
+      "testcase": "authorityEndpointWithNoPermissionTokenReturns403(ProtocolEndpoint)[32]",
+      "status": "PASS",
+      "time_seconds": 0.006,
+      "message": ""
+    },
+    {
+      "phase": null,
+      "suite": "com.ljwx.platform.contract.protocol.ProtocolContractSecurityTest",
+      "testcase": "authorityEndpointWithNoPermissionTokenReturns403(ProtocolEndpoint)[33]",
+      "status": "PASS",
+      "time_seconds": 0.004,
+      "message": ""
+    },
+    {
+      "phase": null,
+      "suite": "com.ljwx.platform.contract.protocol.ProtocolContractSecurityTest",
+      "testcase": "authorityEndpointWithNoPermissionTokenReturns403(ProtocolEndpoint)[34]",
+      "status": "PASS",
+      "time_seconds": 0.004,
+      "message": ""
+    },
+    {
+      "phase": null,
+      "suite": "com.ljwx.platform.contract.protocol.ProtocolContractSecurityTest",
+      "testcase": "authorityEndpointWithNoPermissionTokenReturns403(ProtocolEndpoint)[35]",
+      "status": "PASS",
+      "time_seconds": 0.004,
+      "message": ""
+    },
+    {
+      "phase": null,
+      "suite": "com.ljwx.platform.contract.protocol.ProtocolContractSecurityTest",
+      "testcase": "authorityEndpointWithNoPermissionTokenReturns403(ProtocolEndpoint)[36]",
+      "status": "PASS",
+      "time_seconds": 0.004,
+      "message": ""
+    },
+    {
+      "phase": null,
+      "suite": "com.ljwx.platform.contract.protocol.ProtocolContractSecurityTest",
+      "testcase": "authorityEndpointWithNoPermissionTokenReturns403(ProtocolEndpoint)[37]",
+      "status": "PASS",
+      "time_seconds": 0.006,
+      "message": ""
+    },
+    {
+      "phase": null,
+      "suite": "com.ljwx.platform.contract.protocol.ProtocolContractSecurityTest",
+      "testcase": "authorityEndpointWithNoPermissionTokenReturns403(ProtocolEndpoint)[38]",
+      "status": "PASS",
+      "time_seconds": 0.006,
+      "message": ""
+    },
+    {
+      "phase": null,
+      "suite": "com.ljwx.platform.contract.protocol.ProtocolContractSecurityTest",
+      "testcase": "authorityEndpointWithNoPermissionTokenReturns403(ProtocolEndpoint)[39]",
+      "status": "PASS",
+      "time_seconds": 0.005,
+      "message": ""
+    },
+    {
+      "phase": null,
+      "suite": "com.ljwx.platform.contract.protocol.ProtocolContractSecurityTest",
+      "testcase": "authorityEndpointWithNoPermissionTokenReturns403(ProtocolEndpoint)[40]",
+      "status": "PASS",
+      "time_seconds": 0.005,
+      "message": ""
+    },
+    {
+      "phase": null,
+      "suite": "com.ljwx.platform.contract.protocol.ProtocolContractSecurityTest",
+      "testcase": "authorityEndpointWithNoPermissionTokenReturns403(ProtocolEndpoint)[41]",
+      "status": "PASS",
+      "time_seconds": 0.005,
+      "message": ""
+    },
+    {
+      "phase": null,
+      "suite": "com.ljwx.platform.contract.protocol.ProtocolContractSecurityTest",
+      "testcase": "authorityEndpointWithNoPermissionTokenReturns403(ProtocolEndpoint)[42]",
+      "status": "PASS",
+      "time_seconds": 0.005,
+      "message": ""
+    },
+    {
+      "phase": null,
+      "suite": "com.ljwx.platform.contract.protocol.ProtocolContractSecurityTest",
+      "testcase": "authorityEndpointWithNoPermissionTokenReturns403(ProtocolEndpoint)[43]",
+      "status": "PASS",
+      "time_seconds": 0.006,
+      "message": ""
+    },
+    {
+      "phase": null,
+      "suite": "com.ljwx.platform.contract.protocol.ProtocolContractSecurityTest",
+      "testcase": "authorityEndpointWithNoPermissionTokenReturns403(ProtocolEndpoint)[44]",
+      "status": "PASS",
+      "time_seconds": 0.005,
+      "message": ""
+    },
+    {
+      "phase": null,
+      "suite": "com.ljwx.platform.contract.protocol.ProtocolContractSecurityTest",
+      "testcase": "authorityEndpointWithNoPermissionTokenReturns403(ProtocolEndpoint)[45]",
+      "status": "PASS",
+      "time_seconds": 0.004,
+      "message": ""
+    },
+    {
+      "phase": null,
+      "suite": "com.ljwx.platform.contract.protocol.ProtocolContractSecurityTest",
+      "testcase": "authorityEndpointWithNoPermissionTokenReturns403(ProtocolEndpoint)[46]",
+      "status": "PASS",
+      "time_seconds": 0.004,
+      "message": ""
+    },
+    {
+      "phase": null,
+      "suite": "com.ljwx.platform.contract.protocol.ProtocolContractSecurityTest",
+      "testcase": "authorityEndpointWithNoPermissionTokenReturns403(ProtocolEndpoint)[47]",
+      "status": "PASS",
+      "time_seconds": 0.004,
+      "message": ""
+    },
+    {
+      "phase": null,
+      "suite": "com.ljwx.platform.contract.protocol.ProtocolContractSecurityTest",
+      "testcase": "authorityEndpointWithNoPermissionTokenReturns403(ProtocolEndpoint)[48]",
+      "status": "PASS",
+      "time_seconds": 0.004,
+      "message": ""
+    },
+    {
+      "phase": null,
+      "suite": "com.ljwx.platform.contract.protocol.ProtocolContractSecurityTest",
+      "testcase": "authorityEndpointWithNoPermissionTokenReturns403(ProtocolEndpoint)[49]",
+      "status": "PASS",
+      "time_seconds": 0.005,
+      "message": ""
+    },
+    {
+      "phase": null,
+      "suite": "com.ljwx.platform.contract.protocol.ProtocolContractSecurityTest",
+      "testcase": "authorityEndpointWithNoPermissionTokenReturns403(ProtocolEndpoint)[50]",
+      "status": "PASS",
+      "time_seconds": 0.004,
+      "message": ""
+    },
+    {
+      "phase": null,
+      "suite": "com.ljwx.platform.contract.protocol.ProtocolContractSecurityTest",
+      "testcase": "authorityEndpointWithNoPermissionTokenReturns403(ProtocolEndpoint)[51]",
+      "status": "PASS",
+      "time_seconds": 0.003,
+      "message": ""
+    },
+    {
+      "phase": null,
+      "suite": "com.ljwx.platform.contract.protocol.ProtocolContractSecurityTest",
+      "testcase": "authorityEndpointWithNoPermissionTokenReturns403(ProtocolEndpoint)[52]",
+      "status": "PASS",
+      "time_seconds": 0.005,
+      "message": ""
+    },
+    {
+      "phase": null,
+      "suite": "com.ljwx.platform.contract.protocol.ProtocolContractSecurityTest",
+      "testcase": "authorityEndpointWithNoPermissionTokenReturns403(ProtocolEndpoint)[53]",
+      "status": "PASS",
+      "time_seconds": 0.005,
+      "message": ""
+    },
+    {
+      "phase": null,
+      "suite": "com.ljwx.platform.contract.protocol.ProtocolContractSecurityTest",
+      "testcase": "authorityEndpointWithNoPermissionTokenReturns403(ProtocolEndpoint)[54]",
+      "status": "PASS",
+      "time_seconds": 0.005,
+      "message": ""
+    },
+    {
+      "phase": null,
+      "suite": "com.ljwx.platform.contract.protocol.ProtocolContractSecurityTest",
+      "testcase": "authorityEndpointWithNoPermissionTokenReturns403(ProtocolEndpoint)[55]",
+      "status": "PASS",
+      "time_seconds": 0.005,
+      "message": ""
+    },
+    {
+      "phase": null,
+      "suite": "com.ljwx.platform.contract.protocol.ProtocolContractSecurityTest",
+      "testcase": "authorityEndpointWithNoPermissionTokenReturns403(ProtocolEndpoint)[56]",
+      "status": "PASS",
+      "time_seconds": 0.005,
+      "message": ""
+    },
+    {
+      "phase": null,
+      "suite": "com.ljwx.platform.contract.protocol.ProtocolContractSecurityTest",
+      "testcase": "authorityEndpointWithNoPermissionTokenReturns403(ProtocolEndpoint)[57]",
+      "status": "PASS",
+      "time_seconds": 0.004,
+      "message": ""
+    }
+  ]
 }

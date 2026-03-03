@@ -131,6 +131,61 @@ is_completed() {
   ' "$MANIFEST" | grep -qE "(Status|Gate): PASSED"
 }
 
+phase_has_manifest_entry() {
+  local phase="$1"
+  [[ -f "$MANIFEST" ]] || return 1
+  grep -q "^## PHASE $phase$" "$MANIFEST"
+}
+
+mark_phase_passed() {
+  local phase="$1"
+  local padded phase_brief title marker
+  padded="$(printf '%02d' "$phase")"
+  phase_brief="spec/phase/phase-${padded}.md"
+  marker="## PHASE $phase"
+  title="$(grep -m1 '^title:' "$phase_brief" 2>/dev/null | sed 's/title:[[:space:]]*//' | tr -d '"' || true)"
+  [[ -z "$title" ]] && title="Phase $phase"
+
+  if phase_has_manifest_entry "$phase"; then
+    awk -v marker="$marker" '
+      BEGIN { in_phase=0; status_set=0 }
+      $0 == marker { in_phase=1; print; next }
+      in_phase && /^## PHASE / {
+        if (!status_set) {
+          print "Status: PASSED"
+        }
+        in_phase=0
+      }
+      in_phase && /^(Status|Gate): / {
+        print "Status: PASSED"
+        status_set=1
+        next
+      }
+      { print }
+      END {
+        if (in_phase && !status_set) {
+          print "Status: PASSED"
+        }
+      }
+    ' "$MANIFEST" > "${MANIFEST}.tmp" && mv "${MANIFEST}.tmp" "$MANIFEST"
+    echo "[ClosedLoop][Local] Manifest updated: ${marker} -> PASSED"
+    return 0
+  fi
+
+  {
+    echo ""
+    echo "$marker"
+    echo "Title: $title"
+    echo "Completed: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+    echo "Files:"
+    awk '/^scope:/,/^---$/' "$phase_brief" \
+      | sed -n 's/^[[:space:]]*-[[:space:]]*//p' \
+      | sed 's/^/  - /'
+    echo "Status: PASSED"
+  } >> "$MANIFEST"
+  echo "[ClosedLoop][Local] Manifest appended: ${marker} -> PASSED"
+}
+
 phase_exists() {
   local phase="$1"
   local padded
@@ -248,11 +303,70 @@ execute_phase_with_closed_loop() {
   padded="$(printf '%02d' "$phase")"
   local phase_artifact_dir="${RUN_ARTIFACT_DIR}/phase-${padded}"
   local attempt=1
+  local resume_mode=false
+
+  if phase_has_manifest_entry "$phase" || [[ -f "logs/phase-${padded}/run.log" ]]; then
+    resume_mode=true
+    echo "[ClosedLoop][Local] Resume mode enabled for phase $phase (existing outputs detected)."
+  fi
 
   while (( attempt <= MAX_REPAIR_ATTEMPTS + 1 )); do
     local attempt_dir="${phase_artifact_dir}/local-attempt-${attempt}"
     mkdir -p "$attempt_dir"
     echo "[ClosedLoop][Local] Phase $phase attempt $attempt/$((MAX_REPAIR_ATTEMPTS + 1))"
+
+    if $resume_mode; then
+      if run_structured_check \
+        "phase-${padded}-precheck-gate" \
+        "$padded" \
+        "$attempt" \
+        "local" \
+        "$attempt_dir" \
+        bash scripts/gates/gate-all.sh "$phase"; then
+        echo "[ClosedLoop][Local] Gate already PASS on existing code, skip regeneration."
+        mark_phase_passed "$phase"
+        return 0
+      fi
+
+      if ! $ENABLE_AUTO_REPAIR || (( attempt > MAX_REPAIR_ATTEMPTS )); then
+        echo "[ClosedLoop][Local] Resume mode: 自动修复未启用或已达到最大尝试次数，跳过重新生成。"
+        return 1
+      fi
+
+      echo "[ClosedLoop][Local] Resume mode: Collect -> Diagnose -> Repair (no regeneration)"
+      local resume_repair_rc=0
+      if ! collect_diagnose_repair "$padded" "$attempt" "$attempt_dir"; then
+        resume_repair_rc=$?
+      fi
+
+      local resume_applied=0
+      if [[ -f "${attempt_dir}/repair.json" ]]; then
+        resume_applied="$(jq -r '.summary.applied // 0' "${attempt_dir}/repair.json" 2>/dev/null || echo 0)"
+      fi
+
+      if [[ "$resume_repair_rc" -eq 11 || "$resume_applied" -eq 0 ]]; then
+        echo "[ClosedLoop][Local] Resume mode: 没有匹配的 repair recipe，停止自动修复。"
+        return 1
+      fi
+      if [[ "$resume_repair_rc" -ne 0 && "$resume_repair_rc" -ne 11 ]]; then
+        echo "[ClosedLoop][Local] Resume mode: repair recipe 执行失败（rc=${resume_repair_rc}）。"
+      fi
+
+      if run_structured_check \
+        "phase-${padded}-gate-verify" \
+        "$padded" \
+        "$attempt" \
+        "local" \
+        "$attempt_dir" \
+        bash scripts/gates/gate-all.sh "$phase"; then
+        echo "[ClosedLoop][Local] Resume mode: repair verified by gate, skip regeneration."
+        mark_phase_passed "$phase"
+        return 0
+      fi
+
+      attempt=$((attempt + 1))
+      continue
+    fi
 
     if run_structured_check \
       "phase-${padded}-execute" \
@@ -292,13 +406,17 @@ execute_phase_with_closed_loop() {
     fi
 
     # 修复后先做一次相关 gate 复检，保留证据链。
-    run_structured_check \
+    if run_structured_check \
       "phase-${padded}-gate-verify" \
       "$padded" \
       "$attempt" \
       "local" \
       "$attempt_dir" \
-      bash scripts/gates/gate-all.sh "$phase" || true
+      bash scripts/gates/gate-all.sh "$phase"; then
+      echo "[ClosedLoop][Local] Repair verified by gate, skip regeneration."
+      mark_phase_passed "$phase"
+      return 0
+    fi
 
     attempt=$((attempt + 1))
   done

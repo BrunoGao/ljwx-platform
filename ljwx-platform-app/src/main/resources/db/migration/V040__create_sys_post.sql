@@ -17,7 +17,7 @@ CREATE TABLE sys_post (
 );
 
 CREATE UNIQUE INDEX uk_tenant_post_code ON sys_post (tenant_id, post_code, deleted);
-CREATE INDEX idx_tenant_id ON sys_post (tenant_id);
+CREATE INDEX idx_sys_post_tenant_id ON sys_post (tenant_id);
 
 COMMENT ON TABLE sys_post IS '岗位表';
 COMMENT ON COLUMN sys_post.id IS '主键（雪花 ID）';

@@ -14,9 +14,9 @@ CREATE TABLE sys_user_post (
 );
 
 CREATE UNIQUE INDEX uk_user_post ON sys_user_post (tenant_id, user_id, post_id, deleted);
-CREATE INDEX idx_user_id ON sys_user_post (user_id);
-CREATE INDEX idx_post_id ON sys_user_post (post_id);
-CREATE INDEX idx_tenant_id ON sys_user_post (tenant_id);
+CREATE INDEX idx_sys_user_post_user_id ON sys_user_post (user_id);
+CREATE INDEX idx_sys_user_post_post_id ON sys_user_post (post_id);
+CREATE INDEX idx_sys_user_post_tenant_id ON sys_user_post (tenant_id);
 
 COMMENT ON TABLE sys_user_post IS '用户岗位关联表';
 COMMENT ON COLUMN sys_user_post.id IS '主键（雪花 ID）';

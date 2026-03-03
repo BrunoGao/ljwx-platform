@@ -1,15 +1,15 @@
 {
   "phase": "51",
-  "status": "FAIL",
-  "timestamp": "2026-03-02T20:28:53Z",
+  "status": "PASS",
+  "timestamp": "2026-03-03T05:27:41Z",
   "repo": {
     "owner": "unknown",
     "name": "unknown",
     "default_branch": "master"
   },
   "git": {
-    "commit": "1c90fc4",
-    "branch": "feat-baseline-gate-workflow"
+    "commit": "2b50bfe",
+    "branch": "master"
   },
   "ci": {
     "run_id": null,
@@ -26,10 +26,10 @@
     {
       "id": "R01",
       "name": "Compile",
-      "status": "FAIL",
-      "critical": 1,
+      "status": "PASS",
+      "critical": 0,
       "warnings": 0,
-      "message": "failed"
+      "message": "passed"
     },
     {
       "id": "R02",
@@ -42,10 +42,10 @@
     {
       "id": "R03",
       "name": "Rules",
-      "status": "FAIL",
-      "critical": 1,
+      "status": "PASS",
+      "critical": 0,
       "warnings": 0,
-      "message": "failed"
+      "message": "passed"
     },
     {
       "id": "R04",
@@ -58,10 +58,10 @@
     {
       "id": "R05",
       "name": "Integration",
-      "status": "FAIL",
-      "critical": 1,
+      "status": "PASS",
+      "critical": 0,
       "warnings": 0,
-      "message": "failed"
+      "message": "passed"
     },
     {
       "id": "R06",
@@ -114,34 +114,12 @@
   ],
   "summary": {
     "total": 11,
-    "pass": 7,
-    "fail": 3,
+    "pass": 10,
+    "fail": 0,
     "skip": 1,
-    "critical": 3,
+    "critical": 0,
     "warnings": 0,
-    "pass_rate": 63.64
+    "pass_rate": 90.91
   },
-  "violations": [
-    {
-      "rule": "R01",
-      "severity": "CRITICAL",
-      "file": null,
-      "line": null,
-      "message": "failed"
-    },
-    {
-      "rule": "R03",
-      "severity": "CRITICAL",
-      "file": null,
-      "line": null,
-      "message": "failed"
-    },
-    {
-      "rule": "R05",
-      "severity": "CRITICAL",
-      "file": null,
-      "line": null,
-      "message": "failed"
-    }
-  ]
+  "violations": []
 }

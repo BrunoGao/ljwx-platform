@@ -668,3 +668,269 @@ Files:
   - ljwx-platform-web/src/main/java/com/ljwx/platform/web/filter/TenantContextFilter.java
 Status: PASSED
 
+
+## PHASE 29
+Title: Observability TraceId Structured Logging Slow API
+Completed: 2026-03-03T05:03:04Z
+Files:
+  - "ljwx-platform-web/src/main/java/com/ljwx/platform/web/filter/TraceIdFilter.java"
+  - "ljwx-platform-web/src/main/java/com/ljwx/platform/web/aop/SlowApiAspect.java"
+  - "ljwx-platform-app/src/main/resources/logback-spring.xml"
+  - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/controller/FrontendErrorController.java"
+  - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/domain/dto/FrontendErrorDTO.java"
+  - "ljwx-platform-app/src/main/resources/db/migration/V031__create_sys_frontend_error.sql"
+  - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/domain/entity/SysFrontendError.java"
+  - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/infra/mapper/SysFrontendErrorMapper.java"
+  - "ljwx-platform-app/src/main/resources/mapper/SysFrontendErrorMapper.xml"
+  - "ljwx-platform-admin/src/composables/useErrorMonitor.ts"
+  - --
+Status: PASSED
+
+## PHASE 38
+Title: 租户品牌配置 (Tenant Branding)
+Completed: 2026-03-03T05:04:54Z
+Files:
+  - "ljwx-platform-app/src/main/resources/db/migration/V038__create_tenant_brand.sql"
+  - "ljwx-platform-app/src/main/resources/db/migration/V039__seed_sys_tenant_brand_defaults.sql"
+  - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/domain/entity/TenantBrand.java"
+  - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/infra/mapper/TenantBrandMapper.java"
+  - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/appservice/TenantBrandAppService.java"
+  - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/controller/TenantBrandController.java"
+  - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/domain/dto/TenantBrandUpdateDTO.java"
+  - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/domain/vo/TenantBrandVO.java"
+  - "ljwx-platform-admin/src/api/tenantBrand.ts"
+  - "ljwx-platform-admin/src/stores/tenantBrand.ts"
+  - "ljwx-platform-admin/src/views/tenant/brand/index.vue"
+  - --
+Status: PASSED
+
+## PHASE 40
+Title: 岗位管理 (Position Management)
+Completed: 2026-03-03T05:06:48Z
+Files:
+  - "ljwx-platform-app/src/main/resources/db/migration/V040__create_sys_post.sql"
+  - "ljwx-platform-app/src/main/resources/db/migration/V041__create_sys_user_post.sql"
+  - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/domain/entity/Post.java"
+  - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/domain/entity/UserPost.java"
+  - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/infra/mapper/PostMapper.java"
+  - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/infra/mapper/UserPostMapper.java"
+  - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/appservice/PostAppService.java"
+  - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/controller/PostController.java"
+  - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/domain/dto/PostCreateDTO.java"
+  - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/domain/dto/PostUpdateDTO.java"
+  - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/domain/dto/PostQueryDTO.java"
+  - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/domain/vo/PostVO.java"
+  - "ljwx-platform-admin/src/api/post.ts"
+  - "ljwx-platform-admin/src/stores/post.ts"
+  - "ljwx-platform-admin/src/views/system/post/index.vue"
+  - --
+Status: PASSED
+
+## PHASE 41
+Title: Tenant Lifecycle Management
+Completed: 2026-03-03T05:08:41Z
+Files:
+  - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/service/TenantInitializer.java"
+  - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/service/TenantLifecycleService.java"
+  - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/controller/TenantLifecycleController.java"
+  - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/filter/TenantLifecycleFilter.java"
+  - "ljwx-platform-app/src/main/resources/db/migration/V042__add_tenant_lifecycle_fields.sql"
+  - "ljwx-platform-admin/src/views/system/tenant/lifecycle.vue"
+  - --
+Status: PASSED
+
+## PHASE 44
+Title: 角色-自定义数据范围 (Role Custom Data Scope)
+Completed: 2026-03-03T05:10:34Z
+Files:
+  - "ljwx-platform-app/src/main/resources/db/migration/V044__add_role_custom_data_scope.sql"
+  - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/domain/entity/RoleDataScope.java"
+  - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/infra/mapper/RoleDataScopeMapper.java"
+  - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/appservice/RoleDataScopeAppService.java"
+  - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/controller/RoleDataScopeController.java"
+  - "ljwx-platform-data/src/main/java/com/ljwx/platform/data/interceptor/DataScopeInterceptor.java"
+  - "ljwx-platform-data/src/main/java/com/ljwx/platform/data/context/DataScopeContext.java"
+  - "ljwx-platform-web/src/main/java/com/ljwx/platform/web/filter/DataScopeContextFilter.java"
+  - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/domain/dto/RoleDataScopeUpdateDTO.java"
+  - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/domain/vo/RoleDataScopeVO.java"
+  - --
+Status: PASSED
+
+## PHASE 45
+Title: 任务执行日志 (Task Execution Log)
+Completed: 2026-03-03T05:12:26Z
+Files:
+  - "ljwx-platform-app/src/main/resources/db/migration/V045__create_task_execution_log.sql"
+  - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/domain/entity/TaskExecutionLog.java"
+  - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/infra/mapper/TaskExecutionLogMapper.java"
+  - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/appservice/TaskExecutionLogAppService.java"
+  - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/controller/TaskExecutionLogController.java"
+  - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/task/TaskExecutionLogger.java"
+  - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/domain/dto/TaskExecutionLogQueryDTO.java"
+  - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/domain/vo/TaskExecutionLogVO.java"
+  - "ljwx-platform-admin/src/api/taskLog.ts"
+  - "ljwx-platform-admin/src/views/system/task-log/index.vue"
+  - --
+Status: PASSED
+
+## PHASE 46
+Title: 导入导出中心 (Import/Export Center)
+Completed: 2026-03-03T05:14:21Z
+Files:
+  - "ljwx-platform-app/src/main/resources/db/migration/V046__create_import_export_task.sql"
+  - "ljwx-platform-core/src/main/java/com/ljwx/platform/core/domain/ImportExportTask.java"
+  - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/controller/ImportExportController.java"
+  - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/service/ImportExportService.java"
+  - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/infra/mapper/ImportExportTaskMapper.java"
+  - "ljwx-platform-app/src/main/resources/mapper/ImportExportTaskMapper.xml"
+  - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/dto/ImportExportTaskDTO.java"
+  - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/vo/ImportExportTaskVO.java"
+  - "ljwx-platform-admin/src/views/system/import-export/index.vue"
+  - "ljwx-platform-admin/src/api/system/import-export.ts"
+  - --
+Status: PASSED
+
+## PHASE 47
+Title: 开放 API 管理 - 应用管理 (Open API - App Management)
+Completed: 2026-03-03T05:19:17Z
+Files:
+  - "ljwx-platform-app/src/main/resources/db/migration/V047__create_open_app.sql"
+  - "ljwx-platform-core/src/main/java/com/ljwx/platform/core/domain/OpenApp.java"
+  - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/controller/OpenApiAppController.java"
+  - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/service/OpenApiAppService.java"
+  - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/infra/mapper/OpenAppMapper.java"
+  - "ljwx-platform-app/src/main/resources/mapper/OpenAppMapper.xml"
+  - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/dto/OpenAppDTO.java"
+  - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/vo/OpenAppVO.java"
+  - "ljwx-platform-web/src/views/system/open-api/app/index.vue"
+  - "ljwx-platform-web/src/api/system/open-api-app.ts"
+  - --
+Status: PASSED
+
+## PHASE 48
+Title: 开放 API 管理 - 密钥管理 (Open API - Secret Management)
+Completed: 2026-03-03T05:22:07Z
+Files:
+  - "ljwx-platform-app/src/main/resources/db/migration/V048__create_open_app_secret.sql"
+  - "ljwx-platform-core/src/main/java/com/ljwx/platform/core/domain/OpenAppSecret.java"
+  - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/controller/OpenAppSecretController.java"
+  - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/service/OpenAppSecretService.java"
+  - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/infra/mapper/OpenAppSecretMapper.java"
+  - "ljwx-platform-app/src/main/resources/mapper/OpenAppSecretMapper.xml"
+  - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/dto/OpenAppSecretDTO.java"
+  - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/vo/OpenAppSecretVO.java"
+  - "ljwx-platform-web/src/views/system/open-api/secret/index.vue"
+  - "ljwx-platform-web/src/api/system/open-api-secret.ts"
+  - --
+Status: PASSED
+
+## PHASE 49
+Title: Webhook 事件推送 (Webhook Event Push)
+Completed: 2026-03-03T05:23:59Z
+Files:
+  - "ljwx-platform-app/src/main/resources/db/migration/V049__create_webhook.sql"
+  - "ljwx-platform-core/src/main/java/com/ljwx/platform/core/domain/WebhookConfig.java"
+  - "ljwx-platform-core/src/main/java/com/ljwx/platform/core/domain/WebhookLog.java"
+  - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/controller/WebhookController.java"
+  - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/service/WebhookService.java"
+  - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/infra/mapper/WebhookConfigMapper.java"
+  - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/infra/mapper/WebhookLogMapper.java"
+  - "ljwx-platform-app/src/main/resources/mapper/WebhookConfigMapper.xml"
+  - "ljwx-platform-app/src/main/resources/mapper/WebhookLogMapper.xml"
+  - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/dto/WebhookConfigDTO.java"
+  - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/vo/WebhookConfigVO.java"
+  - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/vo/WebhookLogVO.java"
+  - "ljwx-platform-admin/src/views/system/webhook/index.vue"
+  - "ljwx-platform-admin/src/api/system/webhook.ts"
+  - --
+Status: PASSED
+
+## PHASE 50
+Title: 消息中台 - 模板管理 (Message Center - Template)
+Completed: 2026-03-03T05:25:50Z
+Files:
+  - "ljwx-platform-app/src/main/resources/db/migration/V050__create_msg_template.sql"
+  - "ljwx-platform-core/src/main/java/com/ljwx/platform/core/domain/MsgTemplate.java"
+  - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/controller/MsgTemplateController.java"
+  - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/service/MsgTemplateService.java"
+  - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/infra/mapper/MsgTemplateMapper.java"
+  - "ljwx-platform-app/src/main/resources/mapper/MsgTemplateMapper.xml"
+  - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/dto/MsgTemplateDTO.java"
+  - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/vo/MsgTemplateVO.java"
+  - "ljwx-platform-web/src/views/message/template/index.vue"
+  - "ljwx-platform-web/src/api/message/template.ts"
+  - --
+Status: PASSED
+
+## PHASE 51
+Title: 消息中台 - 消息记录 (Message Center - Records)
+Completed: 2026-03-03T05:27:42Z
+Files:
+  - "ljwx-platform-app/src/main/resources/db/migration/V051__create_msg_record_and_inbox.sql"
+  - "ljwx-platform-core/src/main/java/com/ljwx/platform/core/domain/MsgRecord.java"
+  - "ljwx-platform-core/src/main/java/com/ljwx/platform/core/domain/MsgUserInbox.java"
+  - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/controller/MessageController.java"
+  - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/service/MessageService.java"
+  - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/infra/mapper/MsgRecordMapper.java"
+  - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/infra/mapper/MsgUserInboxMapper.java"
+  - "ljwx-platform-app/src/main/resources/mapper/MsgRecordMapper.xml"
+  - "ljwx-platform-app/src/main/resources/mapper/MsgUserInboxMapper.xml"
+  - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/dto/MessageSendDTO.java"
+  - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/vo/MsgRecordVO.java"
+  - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/vo/MsgUserInboxVO.java"
+  - "ljwx-platform-admin/src/views/system/message/records.vue"
+  - "ljwx-platform-admin/src/views/system/message/inbox.vue"
+  - "ljwx-platform-admin/src/api/system/message.ts"
+  - --
+Status: PASSED
+
+## PHASE 52
+Title: 消息中台 - 订阅管理 (Message Center - Subscription Management)
+Completed: 2026-03-03T05:29:31Z
+Files:
+  - "ljwx-platform-app/src/main/resources/db/migration/V052__create_msg_subscription.sql"
+  - "ljwx-platform-core/src/main/java/com/ljwx/platform/core/domain/MsgSubscription.java"
+  - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/controller/MsgSubscriptionController.java"
+  - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/service/MsgSubscriptionService.java"
+  - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/infra/mapper/MsgSubscriptionMapper.java"
+  - "ljwx-platform-app/src/main/resources/mapper/MsgSubscriptionMapper.xml"
+  - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/dto/MsgSubscriptionDTO.java"
+  - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/vo/MsgSubscriptionVO.java"
+  - "ljwx-platform-web/src/views/message/subscription/index.vue"
+  - "ljwx-platform-web/src/api/message/subscription.ts"
+  - --
+Status: PASSED
+
+## PHASE 53
+Title: 流程引擎 (简化版) (Workflow Engine - Simplified)
+Completed: 2026-03-03T05:31:21Z
+Files:
+  - "ljwx-platform-app/src/main/resources/db/migration/V053__create_workflow.sql"
+  - "ljwx-platform-core/src/main/java/com/ljwx/platform/core/domain/WfDefinition.java"
+  - "ljwx-platform-core/src/main/java/com/ljwx/platform/core/domain/WfInstance.java"
+  - "ljwx-platform-core/src/main/java/com/ljwx/platform/core/domain/WfTask.java"
+  - "ljwx-platform-core/src/main/java/com/ljwx/platform/core/domain/WfHistory.java"
+  - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/controller/WorkflowController.java"
+  - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/service/WorkflowService.java"
+  - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/infra/mapper/WfDefinitionMapper.java"
+  - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/infra/mapper/WfInstanceMapper.java"
+  - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/infra/mapper/WfTaskMapper.java"
+  - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/infra/mapper/WfHistoryMapper.java"
+  - "ljwx-platform-app/src/main/resources/mapper/WfDefinitionMapper.xml"
+  - "ljwx-platform-app/src/main/resources/mapper/WfInstanceMapper.xml"
+  - "ljwx-platform-app/src/main/resources/mapper/WfTaskMapper.xml"
+  - "ljwx-platform-app/src/main/resources/mapper/WfHistoryMapper.xml"
+  - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/dto/WfDefinitionDTO.java"
+  - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/dto/WfInstanceDTO.java"
+  - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/dto/WfTaskDTO.java"
+  - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/vo/WfDefinitionVO.java"
+  - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/vo/WfInstanceVO.java"
+  - "ljwx-platform-app/src/main/java/com/ljwx/platform/app/vo/WfTaskVO.java"
+  - "ljwx-platform-web/src/views/workflow/definition/index.vue"
+  - "ljwx-platform-web/src/views/workflow/instance/index.vue"
+  - "ljwx-platform-web/src/views/workflow/task/index.vue"
+  - "ljwx-platform-web/src/api/workflow/definition.ts"
+  - "ljwx-platform-web/src/api/workflow/instance.ts"
+  - "ljwx-platform-web/src/api/workflow/task.ts"
+  - --
+Status: PASSED
