@@ -1,0 +1,121 @@
+name: Coverage
+
+on:
+  pull_request:
+    branches: [main, master, develop]
+  push:
+    branches: [main, master, develop]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  backend-jacoco:
+    name: Backend JaCoCo
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: ljwx_platform
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d ljwx_platform"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 20
+    env:
+      MIN_LINE_COVERAGE: ${{ vars.MIN_LINE_COVERAGE != '' && vars.MIN_LINE_COVERAGE || '40' }}
+      MIN_DIFF_COVERAGE: ${{ vars.MIN_DIFF_COVERAGE != '' && vars.MIN_DIFF_COVERAGE || '70' }}
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+      DB_HOST: 127.0.0.1
+      DB_PORT: 5432
+      DB_NAME: ljwx_platform
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+
+      - name: Install PostgreSQL client
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! command -v psql >/dev/null 2>&1; then
+            sudo apt-get update
+            sudo apt-get install -y postgresql-client
+          fi
+          psql --version
+
+      - name: Wait for PostgreSQL
+        shell: bash
+        run: |
+          set -euo pipefail
+          for i in {1..30}; do
+            if (echo > /dev/tcp/127.0.0.1/5432) >/dev/null 2>&1; then
+              echo "PostgreSQL is ready"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "PostgreSQL is not reachable on 127.0.0.1:5432" >&2
+          exit 1
+
+      - name: Run tests with JaCoCo
+        run: mvn -B -ntp -pl ljwx-platform-app -am clean verify
+
+      - name: Resolve base/head sha
+        id: sha
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "${GITHUB_EVENT_NAME}" == "pull_request" ]]; then
+            echo "base_sha=${{ github.event.pull_request.base.sha }}" >> "$GITHUB_OUTPUT"
+            echo "head_sha=${{ github.event.pull_request.head.sha }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "base_sha=${{ github.event.before }}" >> "$GITHUB_OUTPUT"
+            echo "head_sha=${{ github.sha }}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Enforce coverage thresholds
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/github/check-coverage-thresholds.py \
+            --jacoco-xml "ljwx-platform-app/target/site/jacoco/jacoco.xml" \
+            --min-line "${MIN_LINE_COVERAGE}" \
+            --min-diff "${MIN_DIFF_COVERAGE}" \
+            --base-sha "${{ steps.sha.outputs.base_sha }}" \
+            --head-sha "${{ steps.sha.outputs.head_sha }}"
+
+      - name: Upload coverage artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: jacoco-report
+          path: |
+            ljwx-platform-app/target/site/jacoco/**
+            ljwx-platform-app/target/jacoco.exec
+
+      - name: Upload to Codecov
+        if: ${{ env.CODECOV_TOKEN != '' }}
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ env.CODECOV_TOKEN }}
+          files: ljwx-platform-app/target/site/jacoco/jacoco.xml
+          fail_ci_if_error: false
+          flags: backend
