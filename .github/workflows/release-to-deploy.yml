@@ -307,5 +307,6 @@ jobs:
           **Screen** \`${{ needs.release-screen.outputs.image_ref }}\`
           digest: ${{ needs.release-screen.outputs.image_digest }}
           " \
+            --label "platform-admin" \
             --base main \
             --head "${BRANCH}"
