@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-03-03T05:31:21Z",
+  "generated_at": "2026-03-03T07:45:51Z",
   "repo": {
     "owner": "unknown",
     "name": "unknown",
@@ -7,8 +7,8 @@
   },
   "git": {
     "branch": "master",
-    "commit": "2b50bfe",
-    "short": "2b50bfe"
+    "commit": "d4b5a14",
+    "short": "d4b5a14"
   },
   "ci": {
     "run_id": null,
@@ -17,10 +17,10 @@
     "run_url": null
   },
   "totals": {
-    "pass": 33,
-    "fail": 0,
+    "pass": 32,
+    "fail": 1,
     "pending": 0,
-    "critical": 0,
+    "critical": 3,
     "warnings": 0
   },
   "phases": [
@@ -677,19 +677,19 @@
     },
     {
       "phase": "32",
-      "status": "PASS",
-      "pass_rate": 90.91,
-      "critical": 0,
+      "status": "FAIL",
+      "pass_rate": 63.64,
+      "critical": 3,
       "warnings": 0,
-      "timestamp": "2026-03-02T23:54:54Z",
-      "git_commit": "638a3f1",
+      "timestamp": "2026-03-03T07:45:50Z",
+      "git_commit": "d4b5a14",
       "r09_status": "PASS",
       "gate_status": {
-        "R01": "PASS",
+        "R01": "FAIL",
         "R02": "PASS",
-        "R03": "PASS",
+        "R03": "FAIL",
         "R04": "PASS",
-        "R05": "PASS",
+        "R05": "FAIL",
         "R06": "PASS",
         "R07": "PASS",
         "R08": "PASS",
@@ -700,6 +700,50 @@
     }
   ],
   "history": [
+    {
+      "timestamp": "2026-03-03T07:45:50Z",
+      "phase": "32",
+      "status": "FAIL",
+      "pass_rate": 63.64,
+      "git_commit": "d4b5a14",
+      "critical": 3,
+      "warnings": 0,
+      "run_id": null,
+      "run_url": null
+    },
+    {
+      "timestamp": "2026-03-03T07:24:18Z",
+      "phase": "32",
+      "status": "FAIL",
+      "pass_rate": 72.73,
+      "git_commit": "2cafe9b",
+      "critical": 2,
+      "warnings": 0,
+      "run_id": null,
+      "run_url": null
+    },
+    {
+      "timestamp": "2026-03-03T07:06:45Z",
+      "phase": "32",
+      "status": "FAIL",
+      "pass_rate": 72.73,
+      "git_commit": "2e371c0",
+      "critical": 2,
+      "warnings": 0,
+      "run_id": null,
+      "run_url": null
+    },
+    {
+      "timestamp": "2026-03-03T06:50:12Z",
+      "phase": "32",
+      "status": "FAIL",
+      "pass_rate": 72.73,
+      "git_commit": "215cfa7",
+      "critical": 2,
+      "warnings": 0,
+      "run_id": null,
+      "run_url": null
+    },
     {
       "timestamp": "2026-03-03T05:31:20Z",
       "phase": "53",
@@ -1201,50 +1245,6 @@
       "status": "FAIL",
       "pass_rate": 63.64,
       "git_commit": "9e0cc83",
-      "critical": 3,
-      "warnings": 0,
-      "run_id": null,
-      "run_url": null
-    },
-    {
-      "timestamp": "2026-03-02T19:45:37Z",
-      "phase": "50",
-      "status": "FAIL",
-      "pass_rate": 63.64,
-      "git_commit": "417be25",
-      "critical": 3,
-      "warnings": 0,
-      "run_id": null,
-      "run_url": null
-    },
-    {
-      "timestamp": "2026-03-02T19:43:38Z",
-      "phase": "32",
-      "status": "FAIL",
-      "pass_rate": 63.64,
-      "git_commit": "417be25",
-      "critical": 3,
-      "warnings": 0,
-      "run_id": null,
-      "run_url": null
-    },
-    {
-      "timestamp": "2026-03-02T19:38:49Z",
-      "phase": "32",
-      "status": "FAIL",
-      "pass_rate": 63.64,
-      "git_commit": "54c9b76",
-      "critical": 3,
-      "warnings": 0,
-      "run_id": null,
-      "run_url": null
-    },
-    {
-      "timestamp": "2026-03-02T19:32:15Z",
-      "phase": "49",
-      "status": "FAIL",
-      "pass_rate": 63.64,
-      "git_commit": "ecf759d",
       "critical": 3,
       "warnings": 0,
       "run_id": null,

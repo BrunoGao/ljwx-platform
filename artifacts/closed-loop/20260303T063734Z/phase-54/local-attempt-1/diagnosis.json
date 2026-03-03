@@ -1,0 +1,24 @@
+{
+  "phase": "54",
+  "attempt": 1,
+  "generatedAt": "2026-03-03T06:50:14Z",
+  "input": {
+    "collect": "artifacts/closed-loop/20260303T063734Z/phase-54/local-attempt-1/collect.json"
+  },
+  "summary": {
+    "failedChecks": 0,
+    "categoryCounts": {
+      "A": 0,
+      "B": 0,
+      "C": 0,
+      "D": 0
+    },
+    "repairabilityCounts": {
+      "auto": 0,
+      "suggest": 0,
+      "mitigate": 0,
+      "manual": 0
+    }
+  },
+  "diagnoses": []
+}

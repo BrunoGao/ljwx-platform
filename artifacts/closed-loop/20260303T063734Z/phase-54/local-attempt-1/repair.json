@@ -1,0 +1,15 @@
+{
+  "generatedAt": "2026-03-03T06:50:14Z",
+  "input": {
+    "diagnosis": "artifacts/closed-loop/20260303T063734Z/phase-54/local-attempt-1/diagnosis.json",
+    "recipes": "scripts/ci/repair-recipes.yaml"
+  },
+  "summary": {
+    "planned": 0,
+    "applied": 0,
+    "passed": 0,
+    "failed": 0
+  },
+  "actions": [],
+  "patchPath": null
+}
