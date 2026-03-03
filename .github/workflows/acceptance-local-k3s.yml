@@ -176,6 +176,40 @@ jobs:
           echo "argocd_app=${ARGOCD_APP}" >> "${GITHUB_OUTPUT}"
           echo "verify_minutes=${VERIFY_MINUTES}" >> "${GITHUB_OUTPUT}"
 
+      - name: Ensure Harbor pull secret
+        env:
+          HARBOR_USERNAME: ${{ secrets.HARBOR_USERNAME }}
+          HARBOR_PASSWORD: ${{ secrets.HARBOR_PASSWORD }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          NAMESPACE="${{ steps.cfg.outputs.namespace }}"
+          DEPLOYMENT_NAME="${{ steps.cfg.outputs.deployment_name }}"
+          IMAGE_REF="${{ steps.release.outputs.image }}"
+
+          if [ -z "${HARBOR_USERNAME:-}" ] || [ -z "${HARBOR_PASSWORD:-}" ]; then
+            echo "[WARN] HARBOR_USERNAME/HARBOR_PASSWORD missing, skip pull-secret provisioning"
+            exit 0
+          fi
+
+          REGISTRY_HOST="${IMAGE_REF%%/*}"
+          if [ -z "${REGISTRY_HOST}" ] || [ "${REGISTRY_HOST}" = "${IMAGE_REF}" ]; then
+            echo "[WARN] Cannot infer registry host from image: ${IMAGE_REF}"
+            exit 0
+          fi
+
+          kubectl -n "${NAMESPACE}" create secret docker-registry harbor-pull \
+            --docker-server="${REGISTRY_HOST}" \
+            --docker-username="${HARBOR_USERNAME}" \
+            --docker-password="${HARBOR_PASSWORD}" \
+            --dry-run=client -o yaml | kubectl apply -f -
+
+          kubectl -n "${NAMESPACE}" patch serviceaccount default \
+            --type=merge \
+            -p '{"imagePullSecrets":[{"name":"harbor-pull"}]}'
+
+          kubectl -n "${NAMESPACE}" rollout restart deployment/"${DEPLOYMENT_NAME}" || true
+
       - name: Wait for Argo app synced/healthy
         shell: bash
         run: |
