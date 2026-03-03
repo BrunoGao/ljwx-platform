@@ -134,9 +134,9 @@ run_rule() {
   echo ""
 }
 
-run_rule "R01" "Compile" "scripts/gates/gate-compile.sh" "false"
+run_rule "R01" "Compile" "scripts/gates/gate-compile.sh" "false" "true"
 run_rule "R02" "Manifest" "scripts/gates/gate-manifest.sh" "true"
-run_rule "R03" "Rules" "scripts/gates/gate-rules.sh" "false"
+run_rule "R03" "Rules" "scripts/gates/gate-rules.sh" "false" "true"
 run_rule "R04" "Flyway Governance" "scripts/gates/gate-flyway-governance.sh" "false"
 run_rule "R05" "Integration" "scripts/gates/gate-integration.sh" "false" "true"
 run_rule "R06" "Contract" "scripts/gates/gate-contract.sh" "false" "true"
