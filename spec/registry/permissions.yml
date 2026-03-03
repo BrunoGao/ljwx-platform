@@ -3,7 +3,7 @@
 # 所有 Phase spec 中出现的权限必须来自这里
 
 version: "1.0"
-last_updated: "2026-03-01"
+last_updated: "2026-03-02"
 
 # 权限命名标准: {resource}:{action}
 # 标准动作: list, query, add, edit, delete, export, import
@@ -805,6 +805,12 @@ permissions:
     module: "workflow"
     phase: 53
 
+  - code: "system:workflow:task:transfer"
+    name: "转办任务"
+    description: "将待办任务转办给其他用户"
+    module: "workflow"
+    phase: 57
+
   # ==================== L0 横切基础设施 ====================
 
   # 操作日志
@@ -905,6 +911,198 @@ permissions:
     module: "monitor"
     phase: 25
 
+  # ==================== L5 业务扩展层 ====================
+
+  # 表单定义管理 (Phase 54)
+  - code: "form:def:list"
+    name: "表单定义列表"
+    description: "查看表单定义列表"
+    module: "form"
+    phase: 54
+
+  - code: "form:def:query"
+    name: "表单定义详情"
+    description: "查看表单定义详细信息"
+    module: "form"
+    phase: 54
+
+  - code: "form:def:add"
+    name: "新增表单"
+    description: "创建新表单定义"
+    module: "form"
+    phase: 54
+
+  - code: "form:def:edit"
+    name: "编辑表单"
+    description: "修改表单定义"
+    module: "form"
+    phase: 54
+
+  - code: "form:def:delete"
+    name: "删除表单"
+    description: "删除表单定义"
+    module: "form"
+    phase: 54
+
+  # 表单数据管理 (Phase 54)
+  - code: "form:data:list"
+    name: "表单数据列表"
+    description: "查看表单数据列表"
+    module: "form"
+    phase: 54
+
+  - code: "form:data:query"
+    name: "表单数据详情"
+    description: "查看表单数据详细信息"
+    module: "form"
+    phase: 54
+
+  - code: "form:data:add"
+    name: "提交表单"
+    description: "提交新的表单数据"
+    module: "form"
+    phase: 54
+
+  - code: "form:data:edit"
+    name: "编辑表单数据"
+    description: "修改表单数据"
+    module: "form"
+    phase: 54
+
+  # 自定义字段 (Phase 54)
+  - code: "system:customfield:list"
+    name: "自定义字段列表"
+    description: "查看自定义字段定义列表"
+    module: "customfield"
+    phase: 54
+
+  - code: "system:customfield:add"
+    name: "新增自定义字段"
+    description: "创建自定义字段"
+    module: "customfield"
+    phase: 54
+
+  - code: "system:customfield:edit"
+    name: "编辑自定义字段"
+    description: "修改自定义字段"
+    module: "customfield"
+    phase: 54
+
+  - code: "system:customfield:delete"
+    name: "删除自定义字段"
+    description: "删除自定义字段"
+    module: "customfield"
+    phase: 54
+
+  # 报表引擎 (Phase 55)
+  - code: "report:def:list"
+    name: "报表列表"
+    description: "查看报表定义列表"
+    module: "report"
+    phase: 55
+
+  - code: "report:def:query"
+    name: "报表详情"
+    description: "查看报表定义详细信息"
+    module: "report"
+    phase: 55
+
+  - code: "report:def:add"
+    name: "新增报表"
+    description: "创建新报表定义"
+    module: "report"
+    phase: 55
+
+  - code: "report:def:edit"
+    name: "编辑报表"
+    description: "修改报表定义"
+    module: "report"
+    phase: 55
+
+  - code: "report:def:delete"
+    name: "删除报表"
+    description: "删除报表定义"
+    module: "report"
+    phase: 55
+
+  - code: "report:def:execute"
+    name: "执行报表"
+    description: "执行报表查询"
+    module: "report"
+    phase: 55
+
+  # AI 智能助手 (Phase 56)
+  - code: "system:ai:chat"
+    name: "AI 对话"
+    description: "使用 AI 运维助手对话"
+    module: "ai"
+    phase: 56
+
+  - code: "system:ai:config:query"
+    name: "查看 AI 配置"
+    description: "查看 AI 配置信息（不含 API Key 明文）"
+    module: "ai"
+    phase: 56
+    note: "冒号分隔子资源+动作的复合格式，与 system:openApi:app:* 对齐"
+
+  - code: "system:ai:config:edit"
+    name: "编辑 AI 配置"
+    description: "修改 AI 配置（含 API Key 轮换）"
+    module: "ai"
+    phase: 56
+    note: "冒号分隔子资源+动作的复合格式，与 system:openApi:app:* 对齐"
+
+  - code: "system:ai:log:list"
+    name: "AI 对话日志"
+    description: "查看 AI 对话历史记录"
+    module: "ai"
+    phase: 56
+
+  # 计量计费 (Phase 58)
+  - code: "system:billing:list"
+    name: "用量统计"
+    description: "查看租户用量记录（tenant 维度，自身用量）"
+    module: "billing"
+    phase: 58
+
+  # 运营仪表盘 (Phase 58) — 仅超管可访问
+  - code: "system:ops:dashboard"
+    name: "运营仪表盘"
+    description: "查看全平台运营仪表盘（跨租户汇总，仅超管可访问，需 Service 层二次验证 tenantId=0）"
+    module: "ops"
+    phase: 58
+
+  # 帮助中心 (Phase 58)
+  - code: "system:help:list"
+    name: "帮助文档列表"
+    description: "查看帮助文档列表"
+    module: "help"
+    phase: 58
+
+  - code: "system:help:query"
+    name: "帮助文档详情"
+    description: "查看帮助文档详细信息"
+    module: "help"
+    phase: 58
+
+  - code: "system:help:add"
+    name: "新增帮助文档"
+    description: "创建新帮助文档"
+    module: "help"
+    phase: 58
+
+  - code: "system:help:edit"
+    name: "编辑帮助文档"
+    description: "修改帮助文档"
+    module: "help"
+    phase: 58
+
+  - code: "system:help:delete"
+    name: "删除帮助文档"
+    description: "删除帮助文档"
+    module: "help"
+    phase: 58
+
 # 权限命名规范
 naming_rules:
   standard_actions:
@@ -920,6 +1118,21 @@ naming_rules:
     - view      # 已废弃,使用 list 或 query
     - update    # 已废弃,使用 edit
     - remove    # 已废弃,使用 delete
+
+  # 非标准动作例外（经评审确认，不再新增）
+  non_standard_action_exceptions:
+    - code: "report:def:execute"
+      reason: "报表执行动作，无标准对应词"
+    - code: "system:ai:chat"
+      reason: "AI 对话动作，业务语义明确"
+    - code: "system:ai:config:query"
+      reason: "子资源+动作复合格式，对齐 system:openApi:app:*"
+    - code: "system:ai:config:edit"
+      reason: "子资源+动作复合格式，对齐 system:openApi:app:*"
+    - code: "system:ai:log:list"
+      reason: "子资源+动作复合格式"
+    - code: "system:ops:dashboard"
+      reason: "模块入口权限，无 CRUD 语义"
 
   format: "{resource}:{action}"
   examples:
@@ -941,3 +1154,18 @@ changelog:
       - "补充文件顶部 camelCase 例外说明（setPrimary/resetPwd/forceLogout/taskLog/importExport/openApi）"
       - "为所有 camelCase 权限条目添加 note 字段，说明历史约定"
       - "system:role:edit 补充说明含数据范围配置（Phase 44 复用此权限）"
+
+  - version: "1.2"
+    date: "2026-03-02"
+    changes:
+      - "Phase 54: 新增 form:def:*（5）、form:data:*（4）、system:customfield:*（4）"
+      - "Phase 55: 新增 report:def:*（6，含 execute 非标准动作）"
+      - "Phase 56: 新增 system:ai:chat、system:ai:log:list；拆分 system:ai:config → system:ai:config:query + system:ai:config:edit（GET/PUT 权限分离）"
+      - "Phase 57: 新增 system:workflow:task:transfer（移动端转办场景）"
+      - "Phase 58: 新增 system:billing:list、system:ops:dashboard（运营仪表盘仅超管）、system:help:*（5，含 query）"
+      - "新增 naming_rules.non_standard_action_exceptions 记录例外说明"
+
+  - version: "1.3"
+    date: "2026-03-03"
+    changes:
+      - "Phase 58: 补充 system:help:query（帮助文档详情），修复 SSOT 缺失"
