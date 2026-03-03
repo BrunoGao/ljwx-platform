@@ -44,8 +44,6 @@ def is_label_context(content: str, label: str) -> bool:
         rf"\b(?:label|labels)\b[^\n]{{0,60}}\b{escaped}\b",
     ]
     return any(re.search(p, content, re.IGNORECASE) for p in patterns)
-
-
 # 加载 Registry 文件
 def load_registry(registry_path: str) -> dict:
     """加载 YAML registry 文件"""
