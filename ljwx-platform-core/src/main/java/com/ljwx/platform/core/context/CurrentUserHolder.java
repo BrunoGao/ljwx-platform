@@ -1,5 +1,10 @@
 package com.ljwx.platform.core.context;
 
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+
+import java.util.Map;
+
 /**
  * 当前登录用户上下文接口。
  *
@@ -25,4 +30,38 @@ public interface CurrentUserHolder {
      * @return 用户名，未登录时返回 {@code null}
      */
     String getUsername();
+
+    /**
+     * Legacy static accessor for historical call sites.
+     *
+     * <p>Reads user ID from Spring Security details map:
+     * {@code details.userId}.
+     *
+     * @return user ID or {@code null} when unavailable
+     */
+    static Long get() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null) {
+            return null;
+        }
+        Object details = authentication.getDetails();
+        if (details instanceof Map<?, ?> detailsMap) {
+            return toLong(detailsMap.get("userId"));
+        }
+        return null;
+    }
+
+    private static Long toLong(Object value) {
+        if (value == null) {
+            return null;
+        }
+        if (value instanceof Number number) {
+            return number.longValue();
+        }
+        try {
+            return Long.parseLong(String.valueOf(value));
+        } catch (NumberFormatException ex) {
+            return null;
+        }
+    }
 }

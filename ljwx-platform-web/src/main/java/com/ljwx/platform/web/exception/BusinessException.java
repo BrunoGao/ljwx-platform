@@ -21,6 +21,27 @@ public class BusinessException extends RuntimeException {
     private final ErrorCode errorCode;
 
     /**
+     * Creates a BusinessException with SYSTEM_ERROR code and custom message.
+     *
+     * @param message custom message
+     */
+    public BusinessException(String message) {
+        super(message);
+        this.errorCode = ErrorCode.SYSTEM_ERROR;
+    }
+
+    /**
+     * Creates a BusinessException with SYSTEM_ERROR code, custom message and cause.
+     *
+     * @param message custom message
+     * @param cause root cause
+     */
+    public BusinessException(String message, Throwable cause) {
+        super(message, cause);
+        this.errorCode = ErrorCode.SYSTEM_ERROR;
+    }
+
+    /**
      * Creates a BusinessException using the default message from the given error code.
      *
      * @param errorCode the error code describing this error
@@ -39,6 +60,23 @@ public class BusinessException extends RuntimeException {
     public BusinessException(ErrorCode errorCode, String message) {
         super(message);
         this.errorCode = errorCode;
+    }
+
+    /**
+     * Creates a BusinessException using a raw HTTP-like code and custom message.
+     *
+     * <p>This keeps backward compatibility with historical call sites that
+     * used {@code new BusinessException(400, "...")}.
+     */
+    public BusinessException(int code, String message) {
+        super(message);
+        this.errorCode = switch (code) {
+            case 400 -> ErrorCode.PARAM_VALIDATION_FAILED;
+            case 401 -> ErrorCode.TOKEN_INVALID;
+            case 403 -> ErrorCode.PERMISSION_DENIED;
+            case 404 -> ErrorCode.RESOURCE_NOT_FOUND;
+            default -> ErrorCode.SYSTEM_ERROR;
+        };
     }
 
     /**

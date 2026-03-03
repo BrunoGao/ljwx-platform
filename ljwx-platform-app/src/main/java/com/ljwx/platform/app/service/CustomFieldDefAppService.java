@@ -7,7 +7,7 @@ import com.ljwx.platform.app.dto.form.CustomFieldDefUpdateDTO;
 import com.ljwx.platform.app.mapper.CustomFieldDefMapper;
 import com.ljwx.platform.app.vo.form.CustomFieldDefVO;
 import com.ljwx.platform.core.exception.BusinessException;
-import com.ljwx.platform.data.snowflake.SnowflakeIdGenerator;
+import com.ljwx.platform.core.id.SnowflakeIdGenerator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;

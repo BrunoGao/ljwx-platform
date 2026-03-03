@@ -4,7 +4,7 @@ import com.ljwx.platform.app.dto.help.HelpDocCreateDTO;
 import com.ljwx.platform.app.dto.help.HelpDocUpdateDTO;
 import com.ljwx.platform.app.service.HelpDocAppService;
 import com.ljwx.platform.app.vo.help.HelpDocVO;
-import com.ljwx.platform.web.result.Result;
+import com.ljwx.platform.core.result.Result;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;

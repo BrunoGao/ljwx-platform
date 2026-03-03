@@ -11,7 +11,7 @@ import com.ljwx.platform.app.mapper.FormDefMapper;
 import com.ljwx.platform.app.vo.form.FormDefVO;
 import com.ljwx.platform.core.exception.BusinessException;
 import com.ljwx.platform.core.result.PageResult;
-import com.ljwx.platform.data.snowflake.SnowflakeIdGenerator;
+import com.ljwx.platform.core.id.SnowflakeIdGenerator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
