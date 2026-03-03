@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ljwx.platform.app.mapper.AiConversationLogMapper">
+
+    <resultMap id="AiConversationLogVOMap" type="com.ljwx.platform.app.vo.ai.AiConversationLogVO">
+        <id property="id" column="id"/>
+        <result property="sessionId" column="session_id"/>
+        <result property="question" column="question"/>
+        <result property="answer" column="answer"/>
+        <result property="tokensUsed" column="tokens_used"/>
+        <result property="durationMs" column="duration_ms"/>
+        <result property="modelName" column="model_name"/>
+        <result property="createdTime" column="created_time"/>
+    </resultMap>
+
+    <select id="selectLogList" resultMap="AiConversationLogVOMap">
+        SELECT
+            id,
+            session_id,
+            question,
+            answer,
+            tokens_used,
+            duration_ms,
+            model_name,
+            created_time
+        FROM sys_ai_conversation_log
+        WHERE deleted = FALSE
+        <if test="query.sessionId != null and query.sessionId != ''">
+            AND session_id = #{query.sessionId}
+        </if>
+        <if test="query.userId != null">
+            AND user_id = #{query.userId}
+        </if>
+        <if test="query.startTime != null">
+            AND created_time &gt;= #{query.startTime}
+        </if>
+        <if test="query.endTime != null">
+            AND created_time &lt;= #{query.endTime}
+        </if>
+        ORDER BY created_time DESC
+        <if test="query.pageSize != null and query.pageNum != null">
+            LIMIT #{query.pageSize} OFFSET #{query.offset}
+        </if>
+    </select>
+
+    <select id="countLogs" resultType="long">
+        SELECT COUNT(*)
+        FROM sys_ai_conversation_log
+        WHERE deleted = FALSE
+        <if test="query.sessionId != null and query.sessionId != ''">
+            AND session_id = #{query.sessionId}
+        </if>
+        <if test="query.userId != null">
+            AND user_id = #{query.userId}
+        </if>
+        <if test="query.startTime != null">
+            AND created_time &gt;= #{query.startTime}
+        </if>
+        <if test="query.endTime != null">
+            AND created_time &lt;= #{query.endTime}
+        </if>
+    </select>
+
+</mapper>
