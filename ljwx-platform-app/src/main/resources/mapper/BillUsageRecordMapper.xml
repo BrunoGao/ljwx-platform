@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ljwx.platform.app.mapper.BillUsageRecordMapper">
+
+    <resultMap id="BaseResultMap" type="com.ljwx.platform.app.domain.BillUsageRecord">
+        <id column="id" property="id"/>
+        <result column="tenant_id" property="tenantId"/>
+        <result column="metric_type" property="metricType"/>
+        <result column="usage_value" property="usageValue"/>
+        <result column="record_date" property="recordDate"/>
+        <result column="created_by" property="createdBy"/>
+        <result column="created_time" property="createdTime"/>
+        <result column="updated_by" property="updatedBy"/>
+        <result column="updated_time" property="updatedTime"/>
+        <result column="deleted" property="deleted"/>
+        <result column="version" property="version"/>
+    </resultMap>
+
+    <insert id="batchUpsertUsageRecords">
+        INSERT INTO bill_usage_record (
+            id, tenant_id, metric_type, usage_value, record_date,
+            created_by, created_time, updated_by, updated_time, deleted, version
+        ) VALUES
+        <foreach collection="records" item="record" separator=",">
+            (
+                #{record.id}, #{record.tenantId}, #{record.metricType}, #{record.usageValue}, #{record.recordDate},
+                #{record.createdBy}, #{record.createdTime}, #{record.updatedBy}, #{record.updatedTime},
+                #{record.deleted}, #{record.version}
+            )
+        </foreach>
+        ON CONFLICT (tenant_id, metric_type, record_date)
+        WHERE deleted = FALSE
+        DO UPDATE SET
+            usage_value = EXCLUDED.usage_value,
+            updated_by = EXCLUDED.updated_by,
+            updated_time = EXCLUDED.updated_time,
+            version = bill_usage_record.version + 1
+    </insert>
+
+    <select id="countActiveTenants" resultType="java.lang.Long">
+        SELECT COUNT(DISTINCT tenant_id)
+        FROM bill_usage_record
+        WHERE metric_type = 'LOGIN_COUNT'
+          AND record_date >= CURRENT_DATE - INTERVAL '#{recentDays} days'
+          AND deleted = FALSE
+    </select>
+
+    <select id="getDailyActiveUsers" resultType="com.ljwx.platform.app.vo.billing.DailyStatVO">
+        SELECT
+            record_date AS date,
+            SUM(usage_value)::BIGINT AS count
+        FROM bill_usage_record
+        WHERE metric_type = 'LOGIN_COUNT'
+          AND record_date >= CURRENT_DATE - INTERVAL '#{recentDays} days'
+          AND deleted = FALSE
+        GROUP BY record_date
+        ORDER BY record_date DESC
+    </select>
+
+    <select id="sumStorageMb" resultType="java.math.BigDecimal">
+        SELECT COALESCE(SUM(usage_value), 0)
+        FROM (
+            SELECT DISTINCT ON (tenant_id) usage_value
+            FROM bill_usage_record
+            WHERE metric_type = 'STORAGE_MB'
+              AND deleted = FALSE
+            ORDER BY tenant_id, record_date DESC
+        ) latest_storage
+    </select>
+
+    <select id="sumApiCallsToday" resultType="java.lang.Long">
+        SELECT COALESCE(SUM(usage_value)::BIGINT, 0)
+        FROM bill_usage_record
+        WHERE metric_type = 'API_CALLS'
+          AND record_date = CURRENT_DATE
+          AND deleted = FALSE
+    </select>
+
+    <select id="getTenantUsageSummaryList" resultType="com.ljwx.platform.app.vo.billing.TenantUsageSummaryVO">
+        SELECT
+            t.id AS tenantId,
+            t.tenant_name AS tenantName,
+            t.expire_time AS expireTime,
+            COALESCE(u.user_count, 0) AS userCount,
+            COALESCE(s.storage_mb, 0) AS storageMb,
+            COALESCE(a.api_calls_total, 0) AS apiCallsTotal,
+            COALESCE(l.login_count_last30d, 0) AS loginCountLast30d,
+            CASE WHEN t.expire_time IS NOT NULL AND t.expire_time <= CURRENT_TIMESTAMP + INTERVAL '30 days' THEN TRUE ELSE FALSE END AS isExpiringSoon
+        FROM sys_tenant t
+        LEFT JOIN (
+            SELECT tenant_id, usage_value AS user_count
+            FROM bill_usage_record
+            WHERE metric_type = 'USER_COUNT'
+              AND deleted = FALSE
+              AND (tenant_id, record_date) IN (
+                  SELECT tenant_id, MAX(record_date)
+                  FROM bill_usage_record
+                  WHERE metric_type = 'USER_COUNT' AND deleted = FALSE
+                  GROUP BY tenant_id
+              )
+        ) u ON t.id = u.tenant_id
+        LEFT JOIN (
+            SELECT tenant_id, usage_value AS storage_mb
+            FROM bill_usage_record
+            WHERE metric_type = 'STORAGE_MB'
+              AND deleted = FALSE
+              AND (tenant_id, record_date) IN (
+                  SELECT tenant_id, MAX(record_date)
+                  FROM bill_usage_record
+                  WHERE metric_type = 'STORAGE_MB' AND deleted = FALSE
+                  GROUP BY tenant_id
+              )
+        ) s ON t.id = s.tenant_id
+        LEFT JOIN (
+            SELECT tenant_id, SUM(usage_value)::BIGINT AS api_calls_total
+            FROM bill_usage_record
+            WHERE metric_type = 'API_CALLS'
+              AND record_date >= CURRENT_DATE - INTERVAL '30 days'
+              AND deleted = FALSE
+            GROUP BY tenant_id
+        ) a ON t.id = a.tenant_id
+        LEFT JOIN (
+            SELECT tenant_id, SUM(usage_value)::BIGINT AS login_count_last30d
+            FROM bill_usage_record
+            WHERE metric_type = 'LOGIN_COUNT'
+              AND record_date >= CURRENT_DATE - INTERVAL '30 days'
+              AND deleted = FALSE
+            GROUP BY tenant_id
+        ) l ON t.id = l.tenant_id
+        WHERE t.deleted = FALSE
+        ORDER BY t.id
+    </select>
+
+</mapper>
