@@ -200,7 +200,8 @@ jobs:
 
           echo "queue_entry_id=$(cat /tmp/queue_entry_id)" >> "$GITHUB_OUTPUT"
 
-      - name: Create queue PR in deploy repo
+      - name: Create and merge queue PR in deploy repo
+        id: queue_pr
         working-directory: deploy-repo
         env:
           GH_TOKEN: ${{ secrets.DEPLOY_REPO_TOKEN }}
@@ -235,9 +236,17 @@ jobs:
           Promoter will check Harbor digest readiness asynchronously.
           EOF
 
-          gh pr create \
+          PR_URL="$(gh pr create \
             --repo "${{ steps.cfg.outputs.deploy_repo }}" \
             --title "queue(${SERVICE}): ${QUEUE_ENTRY_ID}" \
             --body-file /tmp/queue-pr-body.md \
             --base main \
-            --head "${BRANCH}"
+            --head "${BRANCH}")"
+          echo "queue_pr_url=${PR_URL}" >> "$GITHUB_OUTPUT"
+
+          # Temporarily run full-auto: queue PR is merged immediately once created.
+          gh pr merge "${PR_URL}" \
+            --repo "${{ steps.cfg.outputs.deploy_repo }}" \
+            --merge \
+            --delete-branch
+          echo "queue_pr_merged=true" >> "$GITHUB_OUTPUT"
