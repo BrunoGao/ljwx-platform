@@ -1,205 +1,128 @@
 name: Release To Deploy
 
 on:
-  push:
-    branches: [master, main]
+  workflow_run:
+    workflows: ["build-and-notify"]
+    types: [completed]
   workflow_dispatch:
     inputs:
+      source_run_id:
+        description: "build-and-notify run id (optional; defaults to latest successful run on current branch)"
+        required: false
+        default: ""
       deploy_repo:
         description: "owner/repo of deploy repository"
         required: false
         default: "BrunoGaoSZ/ljwx-deploy"
-      overlay_file:
-        description: "Path of overlay kustomization inside deploy repo"
+      queue_file:
+        description: "Queue file path in deploy repo"
         required: false
-        default: "apps/ljwx-platform/overlays/prod/kustomization.yaml"
+        default: "release/queue.yaml"
+      service:
+        description: "service name in deploy queue"
+        required: false
+        default: "ljwx-platform"
+      environment:
+        description: "target environment in deploy queue"
+        required: false
+        default: "prod"
 
 permissions:
   contents: read
+  actions: read
 
 concurrency:
   group: release-to-deploy-${{ github.ref }}
   cancel-in-progress: true
 
-env:
-  HARBOR_HOST: harbor.eu.lingjingwanxiang.cn
-  HARBOR_PROJECT: ljwx
-
 jobs:
-  # ── Job 1: Build & push backend image (Spring Boot buildpacks) ──────────────
-  release-backend:
-    name: Release Backend
+  enqueue:
+    if: ${{ github.event_name == 'workflow_dispatch' || (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success') }}
     runs-on: ubuntu-latest
-    timeout-minutes: 30
-    outputs:
-      image_name: ${{ steps.meta.outputs.image_name }}
-      image_ref: ${{ steps.meta.outputs.image_ref }}
-      image_tag: ${{ steps.meta.outputs.image_tag }}
-      image_digest: ${{ steps.release.outputs.image_digest }}
+    timeout-minutes: 15
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Resolve metadata
-        id: meta
-        shell: bash
-        run: |
-          set -euo pipefail
-          IMAGE_NAME="${HARBOR_HOST}/${HARBOR_PROJECT}/ljwx-platform"
-          IMAGE_TAG="${GITHUB_SHA}"
-          {
-            echo "image_name=${IMAGE_NAME}"
-            echo "image_ref=${IMAGE_NAME}:${IMAGE_TAG}"
-            echo "image_tag=${IMAGE_TAG}"
-          } >> "$GITHUB_OUTPUT"
-
-      - name: Login Harbor
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ env.HARBOR_HOST }}
-          username: ${{ secrets.HARBOR_USERNAME }}
-          password: ${{ secrets.HARBOR_PASSWORD }}
-
-      - name: Build and push backend
-        id: build
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: ljwx-platform-app/Dockerfile
-          push: true
-          tags: ${{ steps.meta.outputs.image_ref }}
-          cache-from: type=gha,scope=backend
-          cache-to: type=gha,scope=backend,mode=max
-
-      - name: Resolve digest
-        id: release
-        shell: bash
-        run: |
-          set -euo pipefail
-          echo "image_digest=${{ steps.build.outputs.digest }}" >> "$GITHUB_OUTPUT"
-
-  # ── Job 2: Build & push admin UI image (Dockerfile multi-stage) ────────────
-  release-admin-ui:
-    name: Release Admin UI
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-    outputs:
-      image_name: ${{ steps.meta.outputs.image_name }}
-      image_ref: ${{ steps.meta.outputs.image_ref }}
-      image_tag: ${{ steps.meta.outputs.image_tag }}
-      image_digest: ${{ steps.build.outputs.digest }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Resolve metadata
-        id: meta
-        shell: bash
-        run: |
-          set -euo pipefail
-          IMAGE_NAME="${HARBOR_HOST}/${HARBOR_PROJECT}/ljwx-platform-admin-ui"
-          IMAGE_TAG="${GITHUB_SHA}"
-          {
-            echo "image_name=${IMAGE_NAME}"
-            echo "image_ref=${IMAGE_NAME}:${IMAGE_TAG}"
-            echo "image_tag=${IMAGE_TAG}"
-          } >> "$GITHUB_OUTPUT"
-
-      - name: Login Harbor
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ env.HARBOR_HOST }}
-          username: ${{ secrets.HARBOR_USERNAME }}
-          password: ${{ secrets.HARBOR_PASSWORD }}
-
-      - name: Build and push
-        uses: docker/build-push-action@v6
-        id: build
-        with:
-          context: .
-          file: ljwx-platform-admin/Dockerfile
-          push: true
-          tags: ${{ steps.meta.outputs.image_ref }}
-          cache-from: type=gha,scope=admin-ui
-          cache-to: type=gha,scope=admin-ui,mode=max
-
-  # ── Job 3: Build & push screen image (Dockerfile multi-stage) ──────────────
-  release-screen:
-    name: Release Screen
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-    outputs:
-      image_name: ${{ steps.meta.outputs.image_name }}
-      image_ref: ${{ steps.meta.outputs.image_ref }}
-      image_tag: ${{ steps.meta.outputs.image_tag }}
-      image_digest: ${{ steps.build.outputs.digest }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Resolve metadata
-        id: meta
-        shell: bash
-        run: |
-          set -euo pipefail
-          IMAGE_NAME="${HARBOR_HOST}/${HARBOR_PROJECT}/ljwx-platform-screen"
-          IMAGE_TAG="${GITHUB_SHA}"
-          {
-            echo "image_name=${IMAGE_NAME}"
-            echo "image_ref=${IMAGE_NAME}:${IMAGE_TAG}"
-            echo "image_tag=${IMAGE_TAG}"
-          } >> "$GITHUB_OUTPUT"
-
-      - name: Login Harbor
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ env.HARBOR_HOST }}
-          username: ${{ secrets.HARBOR_USERNAME }}
-          password: ${{ secrets.HARBOR_PASSWORD }}
-
-      - name: Build and push
-        uses: docker/build-push-action@v6
-        id: build
-        with:
-          context: .
-          file: ljwx-platform-screen/Dockerfile
-          push: true
-          tags: ${{ steps.meta.outputs.image_ref }}
-          cache-from: type=gha,scope=screen
-          cache-to: type=gha,scope=screen,mode=max
-
-  # ── Job 4: Single deploy PR updating all three images in the overlay ────────
-  deploy-pr:
-    name: Create Deploy PR
-    runs-on: ubuntu-latest
-    needs: [release-backend, release-admin-ui, release-screen]
-    timeout-minutes: 10
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Install PyYAML
-        shell: bash
-        run: python3 -m pip install --quiet pyyaml
-
-      - name: Resolve deploy config
+      - name: Resolve config
         id: cfg
         shell: bash
         run: |
           set -euo pipefail
-          {
-            echo "deploy_repo=${{ github.event.inputs.deploy_repo || 'BrunoGaoSZ/ljwx-deploy' }}"
-            echo "overlay_file=${{ github.event.inputs.overlay_file || 'apps/ljwx-platform/overlays/prod/kustomization.yaml' }}"
-          } >> "$GITHUB_OUTPUT"
+          if [ "${{ github.event_name }}" = "workflow_run" ]; then
+            echo "source_run_id=${{ github.event.workflow_run.id }}" >> "$GITHUB_OUTPUT"
+            echo "deploy_repo=BrunoGaoSZ/ljwx-deploy" >> "$GITHUB_OUTPUT"
+            echo "queue_file=release/queue.yaml" >> "$GITHUB_OUTPUT"
+            echo "service=ljwx-platform" >> "$GITHUB_OUTPUT"
+            echo "environment=prod" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          SOURCE_RUN_ID="${{ github.event.inputs.source_run_id }}"
+          if [ -z "${SOURCE_RUN_ID}" ]; then
+            SOURCE_RUN_ID="$(gh run list \
+              --repo "${GITHUB_REPOSITORY}" \
+              --workflow "build-and-notify.yml" \
+              --branch "${GITHUB_REF_NAME}" \
+              --status success \
+              --limit 1 \
+              --json databaseId \
+              --jq '.[0].databaseId')"
+          fi
+
+          if [ -z "${SOURCE_RUN_ID}" ] || [ "${SOURCE_RUN_ID}" = "null" ]; then
+            echo "failed to resolve source_run_id" >&2
+            exit 1
+          fi
+
+          echo "source_run_id=${SOURCE_RUN_ID}" >> "$GITHUB_OUTPUT"
+          echo "deploy_repo=${{ github.event.inputs.deploy_repo || 'BrunoGaoSZ/ljwx-deploy' }}" >> "$GITHUB_OUTPUT"
+          echo "queue_file=${{ github.event.inputs.queue_file || 'release/queue.yaml' }}" >> "$GITHUB_OUTPUT"
+          echo "service=${{ github.event.inputs.service || 'ljwx-platform' }}" >> "$GITHUB_OUTPUT"
+          echo "environment=${{ github.event.inputs.environment || 'prod' }}" >> "$GITHUB_OUTPUT"
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - name: Download build release metadata
+        uses: actions/download-artifact@v4
+        with:
+          name: release-metadata
+          run-id: ${{ steps.cfg.outputs.source_run_id }}
+          github-token: ${{ github.token }}
+          path: _meta
+
+      - name: Parse backend release metadata
+        id: meta
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          payload = json.loads(Path("_meta/release-metadata.json").read_text(encoding="utf-8"))
+          backend = payload["components"]["backend"]
+          digest = str(backend["digest"])
+          if not digest.startswith("sha256:"):
+              raise SystemExit("backend digest is invalid")
+
+          out = Path("/tmp/meta.out")
+          out.write_text(
+              "\n".join(
+                  [
+                      f"ghcr_image={backend['image']}",
+                      f"ghcr_digest={digest}",
+                      f"ghcr_ref={backend['image']}@{digest}",
+                      f"release_tag={backend['tag']}",
+                      f"source_git_sha={payload['git_sha']}",
+                  ]
+              )
+              + "\n",
+              encoding="utf-8",
+          )
+          PY
+          cat /tmp/meta.out >> "$GITHUB_OUTPUT"
+
+      - name: Install PyYAML
+        shell: bash
+        run: python3 -m pip install --quiet pyyaml
 
       - name: Clone deploy repo
         env:
@@ -208,105 +131,107 @@ jobs:
         run: |
           set -euo pipefail
           if [ -z "${DEPLOY_REPO_TOKEN:-}" ]; then
-            echo "DEPLOY_REPO_TOKEN is required" && exit 1
+            echo "DEPLOY_REPO_TOKEN is required" >&2
+            exit 1
           fi
           git clone \
             "https://x-access-token:${DEPLOY_REPO_TOKEN}@github.com/${{ steps.cfg.outputs.deploy_repo }}.git" \
             deploy-repo
 
-      - name: Update overlay kustomization
-        env:
-          OVERLAY_FILE: ${{ steps.cfg.outputs.overlay_file }}
-          BACKEND_IMAGE_NAME: ${{ needs.release-backend.outputs.image_name }}
-          BACKEND_IMAGE_TAG: ${{ needs.release-backend.outputs.image_tag }}
-          ADMIN_UI_IMAGE_NAME: ${{ needs.release-admin-ui.outputs.image_name }}
-          ADMIN_UI_IMAGE_TAG: ${{ needs.release-admin-ui.outputs.image_tag }}
-          SCREEN_IMAGE_NAME: ${{ needs.release-screen.outputs.image_name }}
-          SCREEN_IMAGE_TAG: ${{ needs.release-screen.outputs.image_tag }}
+      - name: Enqueue release entry
+        id: enqueue
         shell: bash
+        env:
+          QUEUE_FILE: ${{ steps.cfg.outputs.queue_file }}
+          SERVICE: ${{ steps.cfg.outputs.service }}
+          ENVIRONMENT: ${{ steps.cfg.outputs.environment }}
+          GHCR_REF: ${{ steps.meta.outputs.ghcr_ref }}
+          GHCR_DIGEST: ${{ steps.meta.outputs.ghcr_digest }}
+          RELEASE_TAG: ${{ steps.meta.outputs.release_tag }}
+          SOURCE_GIT_SHA: ${{ steps.meta.outputs.source_git_sha }}
         run: |
           set -euo pipefail
           python3 - <<'PY'
+          import datetime as dt
           import os
           from pathlib import Path
+
           import yaml
 
-          overlay = Path("deploy-repo") / os.environ["OVERLAY_FILE"]
-          data = yaml.safe_load(overlay.read_text()) or {}
+          queue_path = Path("deploy-repo") / os.environ["QUEUE_FILE"]
+          if not queue_path.exists():
+              raise SystemExit(f"queue file not found: {queue_path}")
 
-          targets = {
-              "ljwx-platform": (
-                  os.environ["BACKEND_IMAGE_NAME"],
-                  os.environ["BACKEND_IMAGE_TAG"],
-              ),
-              "ljwx-platform-admin-ui": (
-                  os.environ["ADMIN_UI_IMAGE_NAME"],
-                  os.environ["ADMIN_UI_IMAGE_TAG"],
-              ),
-              "ljwx-platform-screen": (
-                  os.environ["SCREEN_IMAGE_NAME"],
-                  os.environ["SCREEN_IMAGE_TAG"],
-              ),
+          payload = yaml.safe_load(queue_path.read_text(encoding="utf-8")) or {}
+          for key in ("pending", "promoted", "failed", "superseded"):
+              payload.setdefault(key, [])
+
+          now = dt.datetime.now(dt.timezone.utc)
+          created_at = now.strftime("%Y-%m-%dT%H:%M:%SZ")
+          compact_ts = now.strftime("%Y%m%dT%H%M%SZ")
+          queue_id = f"{compact_ts}-{os.environ['SERVICE']}-{os.environ['RELEASE_TAG']}"
+
+          entry = {
+              "id": queue_id,
+              "service": os.environ["SERVICE"],
+              "env": os.environ["ENVIRONMENT"],
+              "source": {
+                  "ghcr": os.environ["GHCR_REF"],
+                  "tag": os.environ["RELEASE_TAG"],
+                  "digest": os.environ["GHCR_DIGEST"],
+                  "gitSha": os.environ["SOURCE_GIT_SHA"],
+              },
+              "createdAt": created_at,
+              "status": "pending",
+              "attempts": 0,
+              "lastError": "",
+              "promotedAt": "",
+              "supersededAt": "",
+              "failedAt": "",
           }
 
-          def infer_component(image_key: str) -> str:
-              normalized = image_key.strip()
-              for component in targets:
-                  if normalized.endswith(f"/{component}") or normalized == component:
-                      return component
-              return ""
+          payload["pending"].append(entry)
+          queue_path.write_text(yaml.safe_dump(payload, sort_keys=False), encoding="utf-8")
 
-          touched = 0
-          for img in data.get("images", []):
-              key = str(img.get("newName") or img.get("name") or "")
-              component = infer_component(key)
-              if not component:
-                  continue
-              new_name, new_tag = targets[component]
-              img["newName"] = new_name
-              img["newTag"] = new_tag
-              if "digest" in img:
-                  del img["digest"]
-              touched += 1
-
-          if touched == 0:
-              raise SystemExit(
-                  f"no images entry matched ljwx-platform components in {overlay}"
-              )
-
-          overlay.write_text(yaml.safe_dump(data, sort_keys=False))
+          Path("/tmp/queue_entry_id").write_text(queue_id, encoding="utf-8")
           PY
 
-      - name: Create deploy PR
+          echo "queue_entry_id=$(cat /tmp/queue_entry_id)" >> "$GITHUB_OUTPUT"
+
+      - name: Create queue PR in deploy repo
         working-directory: deploy-repo
         env:
           GH_TOKEN: ${{ secrets.DEPLOY_REPO_TOKEN }}
-          GIT_SHA: ${{ github.sha }}
+          QUEUE_FILE: ${{ steps.cfg.outputs.queue_file }}
+          QUEUE_ENTRY_ID: ${{ steps.enqueue.outputs.queue_entry_id }}
+          SERVICE: ${{ steps.cfg.outputs.service }}
+          ENVIRONMENT: ${{ steps.cfg.outputs.environment }}
+          SOURCE_RUN_ID: ${{ steps.cfg.outputs.source_run_id }}
+          SOURCE_GIT_SHA: ${{ steps.meta.outputs.source_git_sha }}
+          GHCR_REF: ${{ steps.meta.outputs.ghcr_ref }}
         shell: bash
         run: |
           set -euo pipefail
-          SHA_SHORT="${GIT_SHA:0:7}"
-          BRANCH="bot/release-ljwx-platform-${GITHUB_RUN_ID}"
+          BRANCH="bot/queue-${SERVICE}-${GITHUB_RUN_ID}"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git checkout -b "${BRANCH}"
-          git add "${{ steps.cfg.outputs.overlay_file }}"
-          git commit -m "release(ljwx-platform): ${SHA_SHORT}"
+          git add "${QUEUE_FILE}"
+          git commit -m "queue(${SERVICE}): ${QUEUE_ENTRY_ID}"
           git push origin "${BRANCH}"
+
           gh pr create \
             --repo "${{ steps.cfg.outputs.deploy_repo }}" \
-            --title "release(ljwx-platform): ${SHA_SHORT}" \
-            --body "Automated release PR from ${{ github.repository }}@${GIT_SHA}
+            --title "queue(${SERVICE}): ${QUEUE_ENTRY_ID}" \
+            --body "Automated queue enqueue from ${GITHUB_REPOSITORY}@${SOURCE_GIT_SHA}
 
-          **Backend** \`${{ needs.release-backend.outputs.image_ref }}\`
-          digest: ${{ needs.release-backend.outputs.image_digest }}
+- service: \\`${SERVICE}\\`
+- env: \\`${ENVIRONMENT}\\`
+- queue id: \\`${QUEUE_ENTRY_ID}\\`
+- source run: [${SOURCE_RUN_ID}](https://github.com/${GITHUB_REPOSITORY}/actions/runs/${SOURCE_RUN_ID})
+- backend ghcr: \\`${GHCR_REF}\\`
 
-          **Admin UI** \`${{ needs.release-admin-ui.outputs.image_ref }}\`
-          digest: ${{ needs.release-admin-ui.outputs.image_digest }}
-
-          **Screen** \`${{ needs.release-screen.outputs.image_ref }}\`
-          digest: ${{ needs.release-screen.outputs.image_digest }}
-          " \
-            --label "platform-admin" \
+This PR only updates \\`${QUEUE_FILE}\\` and does not wait for Harbor replication.
+Promoter will check Harbor digest readiness asynchronously." \
             --base main \
             --head "${BRANCH}"

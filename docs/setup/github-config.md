@@ -3,7 +3,8 @@
 This guide is optimized for the repository's real workflows today:
 
 - CI workflow: `.github/workflows/ci.yml`
-- Deploy workflow: `.github/workflows/release-to-deploy.yml`
+- Build workflow: `.github/workflows/build-and-notify.yml` (GHCR only)
+- Deploy-queue workflow: `.github/workflows/release-to-deploy.yml` (enqueue to `ljwx-deploy/release/queue.yaml`)
 - Gate workflow: `.github/workflows/gate-check.yml`
 
 ## 1. Bootstrap GitHub resources

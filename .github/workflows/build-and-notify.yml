@@ -3,6 +3,7 @@ name: build-and-notify
 on:
   push:
     branches:
+      - master
       - main
       - develop
   workflow_dispatch:
@@ -277,3 +278,82 @@ jobs:
           send_event "backend" "${BACKEND_IMAGE}" "${BACKEND_DIGEST}" "${BACKEND_SHORT_SHA}" "${BACKEND_BRANCH}"
           send_event "admin-ui" "${ADMIN_IMAGE}" "${ADMIN_DIGEST}" "${ADMIN_SHORT_SHA}" "${ADMIN_BRANCH}"
           send_event "screen" "${SCREEN_IMAGE}" "${SCREEN_DIGEST}" "${SCREEN_SHORT_SHA}" "${SCREEN_BRANCH}"
+
+  publish-release-metadata:
+    name: Publish Release Metadata
+    runs-on: ubuntu-latest
+    needs:
+      - build-backend
+      - build-admin-ui
+      - build-screen
+    timeout-minutes: 5
+    steps:
+      - name: Build metadata json
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p out
+          jq -n \
+            --arg repository "${GITHUB_REPOSITORY}" \
+            --arg git_sha "${GITHUB_SHA}" \
+            --arg created_at "${CREATED_AT}" \
+            --arg backend_image "${BACKEND_IMAGE}" \
+            --arg backend_digest "${BACKEND_DIGEST}" \
+            --arg backend_short_sha "${BACKEND_SHORT_SHA}" \
+            --arg backend_branch "${BACKEND_BRANCH}" \
+            --arg admin_image "${ADMIN_IMAGE}" \
+            --arg admin_digest "${ADMIN_DIGEST}" \
+            --arg admin_short_sha "${ADMIN_SHORT_SHA}" \
+            --arg admin_branch "${ADMIN_BRANCH}" \
+            --arg screen_image "${SCREEN_IMAGE}" \
+            --arg screen_digest "${SCREEN_DIGEST}" \
+            --arg screen_short_sha "${SCREEN_SHORT_SHA}" \
+            --arg screen_branch "${SCREEN_BRANCH}" \
+            '{
+              repository: $repository,
+              git_sha: $git_sha,
+              created_at: $created_at,
+              components: {
+                backend: {
+                  image: $backend_image,
+                  digest: $backend_digest,
+                  short_sha: $backend_short_sha,
+                  branch: $backend_branch,
+                  tag: ("sha-" + $backend_short_sha)
+                },
+                admin_ui: {
+                  image: $admin_image,
+                  digest: $admin_digest,
+                  short_sha: $admin_short_sha,
+                  branch: $admin_branch,
+                  tag: ("sha-" + $admin_short_sha)
+                },
+                screen: {
+                  image: $screen_image,
+                  digest: $screen_digest,
+                  short_sha: $screen_short_sha,
+                  branch: $screen_branch,
+                  tag: ("sha-" + $screen_short_sha)
+                }
+              }
+            }' > out/release-metadata.json
+        env:
+          CREATED_AT: ${{ github.run_started_at }}
+          BACKEND_IMAGE: ${{ needs.build-backend.outputs.image }}
+          BACKEND_DIGEST: ${{ needs.build-backend.outputs.digest }}
+          BACKEND_SHORT_SHA: ${{ needs.build-backend.outputs.short_sha }}
+          BACKEND_BRANCH: ${{ needs.build-backend.outputs.branch }}
+          ADMIN_IMAGE: ${{ needs.build-admin-ui.outputs.image }}
+          ADMIN_DIGEST: ${{ needs.build-admin-ui.outputs.digest }}
+          ADMIN_SHORT_SHA: ${{ needs.build-admin-ui.outputs.short_sha }}
+          ADMIN_BRANCH: ${{ needs.build-admin-ui.outputs.branch }}
+          SCREEN_IMAGE: ${{ needs.build-screen.outputs.image }}
+          SCREEN_DIGEST: ${{ needs.build-screen.outputs.digest }}
+          SCREEN_SHORT_SHA: ${{ needs.build-screen.outputs.short_sha }}
+          SCREEN_BRANCH: ${{ needs.build-screen.outputs.branch }}
+
+      - name: Upload release metadata artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-metadata
+          path: out/release-metadata.json
