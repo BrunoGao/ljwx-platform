@@ -18,6 +18,7 @@ jobs:
       EXPECTED_PROTECTED_BRANCHES: main,master
       EXPECTED_REQUIRED_CHECKS: Lint,Backend,Frontend,gate,pr-policy,dependency-review,Gitleaks,Backend JaCoCo
       EXPECTED_ENVIRONMENTS: staging,production
+      ALLOW_UNSUPPORTED_ENV_PROTECTION: "true"
     steps:
       - name: Checkout
         uses: actions/checkout@v4

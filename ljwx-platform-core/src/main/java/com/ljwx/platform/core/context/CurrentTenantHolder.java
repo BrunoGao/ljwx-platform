@@ -1,5 +1,10 @@
 package com.ljwx.platform.core.context;
 
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+
+import java.util.Map;
+
 /**
  * 当前租户上下文接口。
  *
@@ -18,4 +23,38 @@ public interface CurrentTenantHolder {
      * @return 租户 ID，未认证时返回 {@code null}
      */
     Long getTenantId();
+
+    /**
+     * Legacy static accessor for historical call sites.
+     *
+     * <p>Reads tenant ID from Spring Security authentication details map:
+     * {@code details.tenantId}.
+     *
+     * @return tenant ID or {@code null} when unavailable
+     */
+    static Long get() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null) {
+            return null;
+        }
+        Object details = authentication.getDetails();
+        if (details instanceof Map<?, ?> detailsMap) {
+            return toLong(detailsMap.get("tenantId"));
+        }
+        return null;
+    }
+
+    private static Long toLong(Object value) {
+        if (value == null) {
+            return null;
+        }
+        if (value instanceof Number number) {
+            return number.longValue();
+        }
+        try {
+            return Long.parseLong(String.valueOf(value));
+        } catch (NumberFormatException ex) {
+            return null;
+        }
+    }
 }

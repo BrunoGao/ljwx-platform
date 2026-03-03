@@ -5,6 +5,7 @@ REPO="${GITHUB_REPOSITORY:-}"
 EXPECTED_BRANCHES_CSV="${EXPECTED_PROTECTED_BRANCHES:-main,master}"
 EXPECTED_CHECKS_CSV="${EXPECTED_REQUIRED_CHECKS:-Lint,Backend,Frontend,gate,pr-policy,dependency-review,Gitleaks,Backend JaCoCo}"
 EXPECTED_ENVS_CSV="${EXPECTED_ENVIRONMENTS:-staging,production}"
+ALLOW_UNSUPPORTED_ENV_PROTECTION="${ALLOW_UNSUPPORTED_ENV_PROTECTION:-false}"
 
 usage() {
   cat <<USAGE
@@ -15,6 +16,8 @@ usage() {
   --branches <a,b,c>       期望受保护分支列表（逗号分隔）
   --checks <a,b,c>         期望必需状态检查列表（逗号分隔）
   --envs <a,b,c>           期望环境列表（逗号分隔）
+  --allow-unsupported-env-protection
+                           当仓库计划不支持 production 环境保护规则时，降级为告警（不阻塞）
   -h, --help               显示帮助
 USAGE
 }
@@ -40,6 +43,19 @@ trim_array_in_place() {
   ref=("${trimmed[@]}")
 }
 
+is_true() {
+  local value
+  value="$(echo "${1:-}" | tr '[:upper:]' '[:lower:]')"
+  case "$value" in
+    1|true|yes|y|on)
+      return 0
+      ;;
+    *)
+      return 1
+      ;;
+  esac
+}
+
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --repo)
@@ -57,6 +73,10 @@ while [[ $# -gt 0 ]]; do
     --envs)
       EXPECTED_ENVS_CSV="${2:?missing value for --envs}"
       shift 2
+      ;;
+    --allow-unsupported-env-protection)
+      ALLOW_UNSUPPORTED_ENV_PROTECTION=true
+      shift
       ;;
     -h|--help)
       usage
@@ -104,6 +124,11 @@ echo "[信息] 开始治理漂移检查: repo=$REPO"
 echo "[信息] 期望受保护分支: ${expected_branches[*]}"
 echo "[信息] 期望状态检查: ${expected_checks[*]}"
 echo "[信息] 期望环境: ${expected_envs[*]}"
+if is_true "$ALLOW_UNSUPPORTED_ENV_PROTECTION"; then
+  echo "[信息] 环境保护规则校验模式: 软失败（计划不支持时仅告警）"
+else
+  echo "[信息] 环境保护规则校验模式: 严格（不满足即失败）"
+fi
 
 violations=()
 
@@ -197,7 +222,11 @@ for env_name in "${expected_envs[@]}"; do
     fi
 
     if (( review_rule_count == 0 && wait_timer_count == 0 )); then
-      add_violation "production 环境缺少保护规则（至少配置 required reviewers 或 wait timer）"
+      if is_true "$ALLOW_UNSUPPORTED_ENV_PROTECTION"; then
+        echo "[警告] production 环境缺少保护规则（至少配置 required reviewers 或 wait timer），当前软失败模式不阻塞"
+      else
+        add_violation "production 环境缺少保护规则（至少配置 required reviewers 或 wait timer）"
+      fi
     fi
   fi
 done

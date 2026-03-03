@@ -56,6 +56,19 @@ public class GlobalExceptionHandler {
                 .body(Result.fail(ex.getErrorCode().getCode(), ex.getMessage()));
     }
 
+    /**
+     * Handles legacy business exceptions from historical package path
+     * {@code com.ljwx.platform.core.exception.BusinessException}.
+     */
+    @ExceptionHandler(com.ljwx.platform.core.exception.BusinessException.class)
+    public ResponseEntity<Result<?>> handleLegacyBusinessException(
+            com.ljwx.platform.core.exception.BusinessException ex) {
+        log.warn("Legacy business exception: code={}, message={}", ex.getErrorCode().getCode(), ex.getMessage());
+        return ResponseEntity
+                .status(httpStatusFor(ex.getErrorCode()))
+                .body(Result.fail(ex.getErrorCode().getCode(), ex.getMessage()));
+    }
+
     // ─── Validation (400001) ────────────────────────────────────────────────────
 
     /**
