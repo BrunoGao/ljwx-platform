@@ -1,0 +1,72 @@
+name: CodeQL
+
+on:
+  push:
+    branches: [main, master, develop]
+  pull_request:
+    branches: [main, master, develop]
+  schedule:
+    - cron: "15 2 * * 1"
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: read
+  security-events: write
+
+jobs:
+  capability-check:
+    name: CodeQL Capability Check
+    runs-on: ubuntu-latest
+    outputs:
+      enabled: ${{ steps.check.outputs.enabled }}
+    steps:
+      - name: Check code scanning availability
+        id: check
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if gh api -H "Accept: application/vnd.github+json" "repos/${GITHUB_REPOSITORY}/code-scanning/alerts?per_page=1" >/dev/null 2>&1; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+            echo "Code scanning is available."
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "Code scanning is unavailable on current billing plan or repository settings; skipping CodeQL analyze job."
+          fi
+
+  analyze:
+    needs: capability-check
+    if: ${{ needs.capability-check.outputs.enabled == 'true' }}
+    name: Analyze (${{ matrix.language }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [java, javascript-typescript]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.language }}
+
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v3
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+
+  skipped:
+    needs: capability-check
+    if: ${{ needs.capability-check.outputs.enabled != 'true' }}
+    name: CodeQL Skipped
+    runs-on: ubuntu-latest
+    steps:
+      - name: Skip reason
+        run: echo "CodeQL skipped because code scanning is unavailable."

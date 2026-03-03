@@ -3,3 +3,6 @@ contact_links:
   - name: Architecture Discussion
     url: https://github.com/BrunoGao/ljwx-platform/discussions
     about: Use Discussions for open-ended design questions.
+  - name: Security Vulnerability Report
+    url: https://github.com/BrunoGao/ljwx-platform/security/advisories/new
+    about: Report vulnerabilities privately through GitHub Security Advisory.

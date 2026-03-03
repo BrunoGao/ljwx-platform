@@ -1,0 +1,41 @@
+name: Incident Postmortem
+description: Record incident timeline, impact, and corrective actions
+title: "[Postmortem] "
+labels:
+  - type:docs
+body:
+  - type: input
+    id: severity
+    attributes:
+      label: Severity
+      placeholder: SEV-1 / SEV-2 / SEV-3
+    validations:
+      required: true
+  - type: textarea
+    id: impact
+    attributes:
+      label: Impact
+      placeholder: User impact, affected services, and duration.
+    validations:
+      required: true
+  - type: textarea
+    id: timeline
+    attributes:
+      label: Timeline
+      placeholder: "YYYY-MM-DD HH:MM UTC - event"
+    validations:
+      required: true
+  - type: textarea
+    id: root_cause
+    attributes:
+      label: Root Cause
+      placeholder: Technical and process root causes.
+    validations:
+      required: true
+  - type: textarea
+    id: actions
+    attributes:
+      label: Corrective Actions
+      placeholder: "- [ ] Action / owner / due date"
+    validations:
+      required: true

@@ -1,0 +1,37 @@
+name: RFC
+description: Propose and review architecture or workflow changes
+title: "[RFC] "
+labels:
+  - type:docs
+body:
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+      description: What problem are we solving?
+      placeholder: Current pain point, constraints, and business impact.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposal
+      description: Describe the proposed design/approach.
+      placeholder: Core design, alternatives considered, and rollout strategy.
+    validations:
+      required: true
+  - type: textarea
+    id: decision
+    attributes:
+      label: Decision Inputs
+      description: Required data for making a decision.
+      placeholder: Risks, migration plan, and success metrics.
+    validations:
+      required: true
+  - type: input
+    id: adr_link
+    attributes:
+      label: ADR Link (optional)
+      placeholder: docs/adr/ADR-XXXX-*.md
+    validations:
+      required: false

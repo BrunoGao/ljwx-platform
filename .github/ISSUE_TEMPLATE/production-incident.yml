@@ -1,0 +1,55 @@
+name: Production Incident
+description: Track an online incident from detection to mitigation
+title: "[Incident][P0] "
+labels:
+  - type:bugfix
+  - priority:P0
+  - gate:fail
+  - workflow:gate
+body:
+  - type: input
+    id: alert_source
+    attributes:
+      label: Alert Source
+      description: Sentry / Datadog / Prometheus / Other
+      placeholder: Datadog monitor URL
+    validations:
+      required: true
+  - type: input
+    id: impact_window
+    attributes:
+      label: Impact Window (UTC)
+      placeholder: "2026-03-03 08:20 ~ 2026-03-03 08:46"
+    validations:
+      required: true
+  - type: textarea
+    id: impact_summary
+    attributes:
+      label: Impact Summary
+      placeholder: Affected endpoints/users/regions and symptom.
+    validations:
+      required: true
+  - type: textarea
+    id: mitigation
+    attributes:
+      label: Mitigation
+      placeholder: Immediate mitigation and rollback details.
+    validations:
+      required: true
+  - type: textarea
+    id: follow_up
+    attributes:
+      label: Follow-up Tasks
+      value: |
+        - [ ] Write postmortem discussion
+        - [ ] Add regression test
+        - [ ] Add monitoring guard
+    validations:
+      required: true
+  - type: input
+    id: release_ref
+    attributes:
+      label: Release / Tag Reference
+      placeholder: v1.2.3-phase27
+    validations:
+      required: false
