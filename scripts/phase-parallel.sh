@@ -33,6 +33,47 @@ SHARED_STATE_PATHS=(
   "docs/reports/data/phases"
   "docs/reports/data/history"
 )
+AUTO_STASH_REF=""
+AUTO_STASH_CREATED=false
+
+workspace_has_changes() {
+  [[ -n "$(git status --porcelain --untracked-files=all)" ]]
+}
+
+autostash_workspace_if_needed() {
+  if ! workspace_has_changes; then
+    return 0
+  fi
+
+  local stamp msg
+  stamp="$(date -u +%Y%m%dT%H%M%SZ)"
+  msg="phase-parallel-${PHASE_NUM}-autostash-${stamp}"
+
+  echo "Local workspace changes detected; creating temporary stash (tracked + untracked)."
+  git stash push --include-untracked -m "$msg" >/dev/null
+
+  AUTO_STASH_REF="$(git stash list --format='%gd %gs' | awk -v m="$msg" '$0 ~ m {print $1; exit}')"
+  if [[ -n "$AUTO_STASH_REF" ]]; then
+    AUTO_STASH_CREATED=true
+    echo "  Auto-stashed as $AUTO_STASH_REF"
+  fi
+}
+
+restore_autostash() {
+  if [[ "$AUTO_STASH_CREATED" != "true" || -z "$AUTO_STASH_REF" ]]; then
+    return 0
+  fi
+
+  echo "Restoring auto-stashed workspace changes ($AUTO_STASH_REF)..."
+  if git stash pop --index "$AUTO_STASH_REF" >/dev/null 2>&1; then
+    echo "  Auto-stash restored."
+    AUTO_STASH_CREATED=false
+    AUTO_STASH_REF=""
+  else
+    echo "WARN: Auto-stash could not be restored cleanly."
+    echo "      It is kept in stash list; restore manually when needed."
+  fi
+}
 
 prune_shared_state_changes() {
   local worker="${1:-WT}"
@@ -54,12 +95,14 @@ cleanup() {
   git worktree remove "$FE_DIR" --force 2>/dev/null || true
   git branch -D "$BE_BRANCH" 2>/dev/null || true
   git branch -D "$FE_BRANCH" 2>/dev/null || true
+  restore_autostash
 }
 trap cleanup EXIT
 
 # ── Step 0: Preflight ─────────────────────────────────────
 echo "═══ Preflight ═══"
 bash scripts/preflight/preflight-check.sh
+autostash_workspace_if_needed
 echo ""
 
 # ── Step 1: Create isolated worktrees ─────────────────────
