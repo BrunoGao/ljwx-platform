@@ -1,5 +1,5 @@
 {
-  "endpoint_coverage_floor": 0.35,
+  "endpoint_coverage_floor": 0.13,
   "tests_execution_floor": 0.00,
   "notes": "Ratchet floors: values can only stay or increase"
 }

@@ -80,11 +80,11 @@ add_violation() {
   echo "[失败] $msg"
 }
 
-linked_issues="$(printf '%s' "$PR_BODY" | python3 - <<'PY'
+linked_issues="$(python3 - "$PR_BODY" <<'PY'
 import re
 import sys
 
-body = sys.stdin.read()
+body = sys.argv[1]
 pattern = r"(?i)\b(?:close[sd]?|fix(?:e[sd])?|resolve[sd]?|relate[sd]?)\s+#(\d+)"
 nums = sorted({int(n) for n in re.findall(pattern, body)})
 print(" ".join(str(n) for n in nums))
@@ -97,11 +97,11 @@ else
   echo "[通过] 已识别关联 Issue: $linked_issues"
 fi
 
-phase_from_line="$(printf '%s' "$PR_BODY" | python3 - <<'PY'
+phase_from_line="$(python3 - "$PR_BODY" <<'PY'
 import re
 import sys
 
-body = sys.stdin.read()
+body = sys.argv[1]
 patterns = [
     r"(?im)^\s*-\s*Phase:\s*#?\s*([0-9]{1,2})\s*$",
     r"(?i)\bphase[-_ ]?([0-9]{1,2})\b",
@@ -116,21 +116,21 @@ else:
 PY
 )"
 
-spec_path="$(printf '%s' "$PR_BODY" | python3 - <<'PY'
+spec_path="$(python3 - "$PR_BODY" <<'PY'
 import re
 import sys
 
-body = sys.stdin.read()
+body = sys.argv[1]
 match = re.search(r"(?i)(spec/phase/phase-([0-9]{2})\.md)", body)
 print(match.group(1) if match else "")
 PY
 )"
 
-phase_from_spec="$(printf '%s' "$PR_BODY" | python3 - <<'PY'
+phase_from_spec="$(python3 - "$PR_BODY" <<'PY'
 import re
 import sys
 
-body = sys.stdin.read()
+body = sys.argv[1]
 match = re.search(r"(?i)spec/phase/phase-([0-9]{2})\.md", body)
 print(match.group(1) if match else "")
 PY
@@ -160,11 +160,11 @@ if [[ -n "$phase_from_line" && -n "$phase_from_spec" && "$phase_from_line" != "$
   add_violation "Phase 与 Spec 不一致：Phase=$phase_from_line Spec=$phase_from_spec"
 fi
 
-changelog_checked="$(printf '%s' "$PR_BODY" | python3 - <<'PY'
+changelog_checked="$(python3 - "$PR_BODY" <<'PY'
 import re
 import sys
 
-body = sys.stdin.read()
+body = sys.argv[1]
 checked = re.search(r"(?im)^\s*-\s*\[[xX]\]\s*CHANGELOG updated", body) is not None
 explicit_skip = re.search(r"(?im)^\s*CHANGELOG\s*:\s*(not needed|n/?a|无需)\s*$", body) is not None
 print("true" if (checked or explicit_skip) else "false")
