@@ -1,0 +1,120 @@
+name: Dependabot Auto Merge
+
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened, ready_for_review, labeled]
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: "Manual run: Dependabot PR number (optional; empty means smoke run)"
+        required: false
+        type: string
+
+permissions:
+  contents: write
+  pull-requests: write
+  checks: read
+  statuses: read
+
+jobs:
+  patch-automerge:
+    name: dependabot-patch-automerge
+    if: ${{ github.event_name == 'workflow_dispatch' || github.actor == 'dependabot[bot]' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Resolve PR number
+        id: pr
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "${GITHUB_EVENT_NAME}" == "pull_request_target" ]]; then
+            echo "number=${{ github.event.pull_request.number }}" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          input_number="${{ inputs.pr_number }}"
+          if [[ -z "$input_number" ]]; then
+            echo "number=" >> "$GITHUB_OUTPUT"
+            echo "[信息] workflow_dispatch 未提供 pr_number，将执行 smoke run。"
+            exit 0
+          fi
+
+          if ! [[ "$input_number" =~ ^[0-9]+$ ]]; then
+            echo "Manual input pr_number must be numeric." >&2
+            exit 1
+          fi
+
+          echo "number=$input_number" >> "$GITHUB_OUTPUT"
+
+      - name: Smoke run (no PR number)
+        if: ${{ steps.pr.outputs.number == '' }}
+        run: |
+          echo "[信息] Dependabot Auto Merge smoke run completed."
+
+      - name: Ensure PR author is Dependabot
+        if: ${{ steps.pr.outputs.number != '' }}
+        id: actor
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          author="$(gh pr view "${{ steps.pr.outputs.number }}" --repo "${GITHUB_REPOSITORY}" --json author --jq '.author.login')"
+          echo "author=$author" >> "$GITHUB_OUTPUT"
+          if [[ "$author" != "dependabot[bot]" ]]; then
+            echo "PR #${{ steps.pr.outputs.number }} author is not dependabot[bot]: $author"
+            exit 1
+          fi
+
+      - name: Fetch Dependabot metadata
+        if: ${{ steps.pr.outputs.number != '' }}
+        id: metadata
+        uses: dependabot/fetch-metadata@v2
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Evaluate eligibility
+        if: ${{ steps.pr.outputs.number != '' }}
+        id: gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          update_type='${{ steps.metadata.outputs.update-type }}'
+          echo "update_type=${update_type}" >> "$GITHUB_OUTPUT"
+
+          if [[ "$update_type" != "version-update:semver-patch" ]]; then
+            echo "eligible=false" >> "$GITHUB_OUTPUT"
+            echo "[信息] 非 patch 更新，跳过自动合并"
+            exit 0
+          fi
+
+          if [[ "${{ github.event.pull_request.draft }}" == "true" ]]; then
+            echo "eligible=false" >> "$GITHUB_OUTPUT"
+            echo "[信息] Draft PR，跳过自动合并"
+            exit 0
+          fi
+
+          echo "eligible=true" >> "$GITHUB_OUTPUT"
+          echo "[信息] 符合自动合并条件（patch）"
+
+      - name: Approve PR
+        if: ${{ steps.pr.outputs.number != '' && steps.gate.outputs.eligible == 'true' }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_URL: https://github.com/${{ github.repository }}/pull/${{ steps.pr.outputs.number }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh pr review --approve "$PR_URL" --body "自动审批：Dependabot patch 依赖更新。" || true
+
+      - name: Enable auto-merge
+        if: ${{ steps.pr.outputs.number != '' && steps.gate.outputs.eligible == 'true' }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_URL: https://github.com/${{ github.repository }}/pull/${{ steps.pr.outputs.number }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh pr merge --auto --squash "$PR_URL"
+          echo "[信息] 已启用 auto-merge，等待必需检查全部通过后自动合并"

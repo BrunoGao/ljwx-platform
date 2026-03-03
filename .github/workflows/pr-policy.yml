@@ -1,0 +1,65 @@
+name: PR Policy
+
+on:
+  pull_request:
+    branches: [main, master, develop]
+    types: [opened, edited, reopened, synchronize, milestoned, demilestoned, ready_for_review]
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: "Manual run: PR number (optional; empty means smoke run)"
+        required: false
+        type: string
+
+permissions:
+  contents: read
+  pull-requests: read
+  issues: read
+
+jobs:
+  pr-policy:
+    name: pr-policy
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Resolve PR number
+        id: pr
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "${GITHUB_EVENT_NAME}" == "pull_request" ]]; then
+            echo "number=${{ github.event.pull_request.number }}" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          input_number="${{ inputs.pr_number }}"
+          if [[ -z "$input_number" ]]; then
+            echo "number=" >> "$GITHUB_OUTPUT"
+            echo "[信息] workflow_dispatch 未提供 pr_number，将执行 smoke run。"
+            exit 0
+          fi
+
+          if ! [[ "$input_number" =~ ^[0-9]+$ ]]; then
+            echo "Manual input pr_number must be numeric." >&2
+            exit 1
+          fi
+
+          echo "number=$input_number" >> "$GITHUB_OUTPUT"
+
+      - name: Smoke run (no PR number)
+        if: ${{ steps.pr.outputs.number == '' }}
+        run: |
+          echo "[信息] PR Policy smoke run completed."
+
+      - name: Validate PR policy
+        if: ${{ steps.pr.outputs.number != '' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          bash scripts/github/check-pr-policy.sh \
+            --repo "${GITHUB_REPOSITORY}" \
+            --pr "${{ steps.pr.outputs.number }}"
