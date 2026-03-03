@@ -35,6 +35,17 @@ def log_info(msg: str):
     print(f"{Colors.BLUE}ℹ️  {msg}{Colors.END}")
 
 
+def is_label_context(content: str, label: str) -> bool:
+    """Match blacklisted tokens only in label-like context, not generic prose/DB fields."""
+    escaped = re.escape(label)
+    patterns = [
+        rf"`{escaped}`\s*(?:label|labels)\b",
+        rf"\blabels?\s*[:=]\s*[^\n]{{0,120}}\b{escaped}\b",
+        rf"\b(?:label|labels)\b[^\n]{{0,60}}\b{escaped}\b",
+    ]
+    return any(re.search(p, content, re.IGNORECASE) for p in patterns)
+
+
 # 加载 Registry 文件
 def load_registry(registry_path: str) -> dict:
     """加载 YAML registry 文件"""
@@ -143,7 +154,7 @@ def check_observability_labels(
             # 检查 Loki labels
             if "Loki" in content or "loki" in content:
                 for label in loki_blacklist:
-                    if re.search(rf"\b{label}\b", content, re.IGNORECASE):
+                    if is_label_context(content, label):
                         errors.append(
                             f"{spec_file.name}: Loki label '{label}' is blacklisted (high cardinality)"
                         )
@@ -151,7 +162,7 @@ def check_observability_labels(
             # 检查 Prometheus labels
             if "Prometheus" in content or "prometheus" in content:
                 for label in prom_blacklist:
-                    if re.search(rf"\b{label}\b", content, re.IGNORECASE):
+                    if is_label_context(content, label):
                         errors.append(
                             f"{spec_file.name}: Prometheus label '{label}' is blacklisted (high cardinality)"
                         )
