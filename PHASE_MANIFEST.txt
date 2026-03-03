@@ -1,3 +1,30 @@
+## PHASE 36
+Title: Prometheus 指标监控 (Metrics Monitoring)
+Completed: 2026-03-02T09:13:04Z
+Files:
+  - ljwx-platform-app/pom.xml
+  - ljwx-platform-app/src/main/resources/application.yml
+  - ljwx-platform-app/src/main/java/com/ljwx/platform/app/filter/TenantMetricsFilter.java
+  - k8s/prometheus-servicemonitor.yaml
+Status: PASSED
+
+## PHASE 43
+Title: 租户域名识别 (Tenant Domain Recognition)
+Completed: 2026-03-15T00:00:00Z
+Files:
+  - ljwx-platform-app/src/main/resources/db/migration/V043__create_tenant_domain.sql
+  - ljwx-platform-app/src/main/java/com/ljwx/platform/app/domain/entity/TenantDomain.java
+  - ljwx-platform-app/src/main/java/com/ljwx/platform/app/infra/mapper/TenantDomainMapper.java
+  - ljwx-platform-app/src/main/resources/mapper/TenantDomainMapper.xml
+  - ljwx-platform-app/src/main/java/com/ljwx/platform/app/appservice/TenantDomainAppService.java
+  - ljwx-platform-app/src/main/java/com/ljwx/platform/app/controller/TenantDomainController.java
+  - ljwx-platform-app/src/main/java/com/ljwx/platform/app/filter/TenantDomainFilter.java
+  - ljwx-platform-app/src/main/java/com/ljwx/platform/app/domain/dto/TenantDomainCreateDTO.java
+  - ljwx-platform-app/src/main/java/com/ljwx/platform/app/domain/vo/TenantDomainVO.java
+  - ljwx-platform-core/src/main/java/com/ljwx/platform/core/result/ErrorCode.java (updated)
+  - ljwx-platform-security/src/main/java/com/ljwx/platform/security/filter/TenantContextFilter.java (updated)
+Status: PASSED
+
 ## PHASE 37
 Title: Grafana 仪表盘与告警 (Grafana Dashboards)
 Completed: 2026-03-02T00:00:00Z
@@ -584,7 +611,7 @@ Gate: PASSED
 
 ## PHASE 34
 Title: Outbox 事件表 (Outbox Event Pattern)
-Completed: 2026-03-02T08:00:00Z
+Completed: 2026-03-02T15:54:00Z
 Files:
   - ljwx-platform-app/src/main/resources/db/migration/V034__create_outbox_event.sql
   - ljwx-platform-core/src/main/java/com/ljwx/platform/core/event/OutboxEvent.java
@@ -594,7 +621,7 @@ Files:
   - ljwx-platform-app/src/main/java/com/ljwx/platform/app/infra/mapper/OutboxEventMapper.java
   - ljwx-platform-app/src/main/resources/mapper/OutboxEventMapper.xml
   - ljwx-platform-app/src/main/java/com/ljwx/platform/app/listener/OutboxEventNotificationListener.java
-Status: PENDING
+Status: PASSED
 
 ## PHASE 35
 Title: 结构化日志与 Loki 集成 (Structured Logging)
@@ -617,7 +644,7 @@ Files:
   - ljwx-platform-app/src/main/resources/application.yml
   - ljwx-platform-app/src/main/java/com/ljwx/platform/app/filter/TenantMetricsFilter.java
   - k8s/prometheus-servicemonitor.yaml
-Status: PENDING
+Status: PASSED
 
 ## PHASE 39
 Title: 数据脱敏 (Data Masking)

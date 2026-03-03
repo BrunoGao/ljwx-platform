@@ -1,14 +1,14 @@
 {
   "phase": "42",
   "status": "FAIL",
-  "timestamp": "2026-03-02T00:04:49Z",
+  "timestamp": "2026-03-02T00:52:27Z",
   "repo": {
     "owner": "unknown",
     "name": "unknown",
     "default_branch": "master"
   },
   "git": {
-    "commit": "65fd9ac",
+    "commit": "ca64ae1",
     "branch": "master"
   },
   "ci": {
@@ -90,10 +90,10 @@
     {
       "id": "R09",
       "name": "Tests",
-      "status": "FAIL",
-      "critical": 1,
+      "status": "PASS",
+      "critical": 0,
       "warnings": 0,
-      "message": "failed"
+      "message": "passed"
     },
     {
       "id": "R10",
@@ -106,23 +106,16 @@
   ],
   "summary": {
     "total": 10,
-    "pass": 7,
-    "fail": 2,
+    "pass": 8,
+    "fail": 1,
     "skip": 1,
-    "critical": 2,
+    "critical": 1,
     "warnings": 0,
-    "pass_rate": 70
+    "pass_rate": 80
   },
   "violations": [
     {
       "rule": "R05",
-      "severity": "CRITICAL",
-      "file": null,
-      "line": null,
-      "message": "failed"
-    },
-    {
-      "rule": "R09",
       "severity": "CRITICAL",
       "file": null,
       "line": null,

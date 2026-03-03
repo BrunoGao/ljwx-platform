@@ -1,10 +1,26 @@
 {
   "phase": "29",
   "status": "PASS",
-  "timestamp": "2026-02-26T05:42:17Z",
+  "timestamp": "2026-03-02T14:54:10Z",
+  "repo": {
+    "owner": "unknown",
+    "name": "unknown",
+    "default_branch": "master"
+  },
   "git": {
-    "commit": "e04765b",
-    "branch": "master"
+    "commit": "92b87f4",
+    "branch": "feat-baseline-gate-workflow"
+  },
+  "ci": {
+    "run_id": null,
+    "run_attempt": 1,
+    "workflow": "gate-local",
+    "run_url": null
+  },
+  "artifacts": {
+    "surefire_html": "data/artifacts/local/phase-29/surefire-index.html",
+    "surefire_xml_index": "data/artifacts/local/phase-29/surefire-index.json",
+    "gate_raw_log": "data/artifacts/local/phase-29/gate.log"
   },
   "rules": [
     {
@@ -78,16 +94,32 @@
       "critical": 0,
       "warnings": 0,
       "message": "passed"
+    },
+    {
+      "id": "R10",
+      "name": "E2E System Tests",
+      "status": "SKIP",
+      "critical": 0,
+      "warnings": 0,
+      "message": "disabled by ENABLE_E2E"
+    },
+    {
+      "id": "R11",
+      "name": "Baseline",
+      "status": "PASS",
+      "critical": 0,
+      "warnings": 0,
+      "message": "passed"
     }
   ],
   "summary": {
-    "total": 9,
-    "pass": 9,
+    "total": 11,
+    "pass": 10,
     "fail": 0,
-    "skip": 0,
+    "skip": 1,
     "critical": 0,
     "warnings": 0,
-    "pass_rate": 100
+    "pass_rate": 90.91
   },
   "violations": []
 }

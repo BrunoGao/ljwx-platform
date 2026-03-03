@@ -1,0 +1,29 @@
+{
+  "generatedAt": "2026-03-02T19:43:41Z",
+  "input": {
+    "diagnosis": "artifacts/closed-loop/20260302T140355Z/phase-50/local-attempt-1/diagnosis.json",
+    "recipes": "scripts/ci/repair-recipes.yaml"
+  },
+  "summary": {
+    "planned": 1,
+    "applied": 1,
+    "passed": 1,
+    "failed": 0
+  },
+  "actions": [
+    {
+      "id": "codegen-openapi",
+      "check": "codegen",
+      "category": "B",
+      "mode": "auto",
+      "cmd": "if [ -x scripts/tools/export-openapi.sh ]; then bash scripts/tools/export-openapi.sh; else echo 'codegen recipe skipped: scripts/tools/export-openapi.sh not found'; fi",
+      "status": "pass",
+      "attempts": 1,
+      "exitCode": 0,
+      "logPath": "artifacts/closed-loop/20260302T140355Z/phase-50/local-attempt-1/repair-logs/codegen-openapi.log",
+      "patchPath": "artifacts/closed-loop/20260302T140355Z/phase-50/local-attempt-1/repair-logs/codegen-openapi.patch",
+      "touchedFiles": []
+    }
+  ],
+  "patchPath": "artifacts/closed-loop/20260302T140355Z/phase-50/local-attempt-1/repair.patch"
+}

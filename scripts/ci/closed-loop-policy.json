@@ -1,0 +1,36 @@
+{
+  "global": {
+    "breaker_state_file": "artifacts/closed-loop/breakers/state.json",
+    "event_log_file": "artifacts/closed-loop/breakers/events.jsonl"
+  },
+  "flaky": {
+    "enabled": true,
+    "max_reruns": 3,
+    "backoff_sec": 5,
+    "default_test_cmd": "mvn -B -ntp -q -f pom.xml -DskipITs test",
+    "circuit_breaker": {
+      "failure_threshold": 2,
+      "cooldown_sec": 1200
+    }
+  },
+  "network": {
+    "enabled": true,
+    "max_retries": 3,
+    "backoff_sec": 6,
+    "cache": {
+      "enabled": true,
+      "pnpm_fetch": true,
+      "maven_go_offline": true,
+      "pnpm_store_dir": ".cache/pnpm-store",
+      "maven_local_repo": ".cache/m2/repository"
+    },
+    "mirror": {
+      "enabled": false,
+      "pnpm_registry": "https://registry.npmmirror.com"
+    },
+    "circuit_breaker": {
+      "failure_threshold": 3,
+      "cooldown_sec": 1800
+    }
+  }
+}

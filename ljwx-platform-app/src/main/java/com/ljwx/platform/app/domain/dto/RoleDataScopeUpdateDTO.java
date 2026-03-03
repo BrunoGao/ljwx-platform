@@ -10,7 +10,7 @@ import java.util.List;
  *
  * <p>用于更新角色的自定义数据范围（部门列表）。
  *
- * <p>禁止字段：id, roleId, tenantId, createdBy, createdTime, updatedBy, updatedTime, deleted, version。
+ * <p>禁止字段：id、角色标识、租户标识、审计字段、逻辑删除标记、版本号。
  */
 @Data
 public class RoleDataScopeUpdateDTO {

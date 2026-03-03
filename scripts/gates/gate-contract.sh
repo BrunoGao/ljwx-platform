@@ -46,7 +46,7 @@ if grep -q 'springdoc-openapi-maven-plugin' pom.xml 2>/dev/null || \
 fi
 
 # Method 2: Start app briefly and fetch from /v3/api-docs
-if [[ ! -f "$OPENAPI_OUTPUT" ]]; then
+if [[ ! -s "$OPENAPI_OUTPUT" ]]; then
   echo "  Attempting runtime OpenAPI generation"
 
   # Ensure DB is up (using local PostgreSQL)
@@ -62,7 +62,11 @@ if [[ ! -f "$OPENAPI_OUTPUT" ]]; then
   APP_JAR=$(find "$APP_DIR/target" -name '*.jar' ! -name '*-sources.jar' 2>/dev/null | head -1)
 
   if [[ -n "$APP_JAR" && -f "$APP_JAR" ]]; then
-    java -jar "$APP_JAR" --server.port=18080 &
+    # Runtime OpenAPI extraction should not depend on local Redis auth state.
+    java -jar "$APP_JAR" \
+      --server.port=18080 \
+      --cache.enabled=false \
+      --spring.autoconfigure.exclude=org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration,org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration &
     APP_PID=$!
 
     # Wait for startup (max 60s)

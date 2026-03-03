@@ -1,0 +1,154 @@
+{
+  "phase": "47",
+  "status": "FAIL",
+  "timestamp": "2026-03-02T18:31:55Z",
+  "repo": {
+    "owner": "unknown",
+    "name": "unknown",
+    "default_branch": "master"
+  },
+  "git": {
+    "commit": "f73df3d",
+    "branch": "feat-baseline-gate-workflow"
+  },
+  "ci": {
+    "run_id": null,
+    "run_attempt": 1,
+    "workflow": "gate-local",
+    "run_url": null
+  },
+  "artifacts": {
+    "surefire_html": "data/artifacts/local/phase-47/surefire-index.html",
+    "surefire_xml_index": "data/artifacts/local/phase-47/surefire-index.json",
+    "gate_raw_log": "data/artifacts/local/phase-47/gate.log"
+  },
+  "rules": [
+    {
+      "id": "R01",
+      "name": "Compile",
+      "status": "FAIL",
+      "critical": 1,
+      "warnings": 0,
+      "message": "failed"
+    },
+    {
+      "id": "R02",
+      "name": "Manifest",
+      "status": "FAIL",
+      "critical": 1,
+      "warnings": 0,
+      "message": "failed"
+    },
+    {
+      "id": "R03",
+      "name": "Rules",
+      "status": "FAIL",
+      "critical": 1,
+      "warnings": 0,
+      "message": "failed"
+    },
+    {
+      "id": "R04",
+      "name": "Flyway Governance",
+      "status": "PASS",
+      "critical": 0,
+      "warnings": 0,
+      "message": "passed"
+    },
+    {
+      "id": "R05",
+      "name": "Integration",
+      "status": "FAIL",
+      "critical": 1,
+      "warnings": 0,
+      "message": "failed"
+    },
+    {
+      "id": "R06",
+      "name": "Contract",
+      "status": "PASS",
+      "critical": 0,
+      "warnings": 0,
+      "message": "passed"
+    },
+    {
+      "id": "R07",
+      "name": "NFR",
+      "status": "PASS",
+      "critical": 0,
+      "warnings": 0,
+      "message": "passed"
+    },
+    {
+      "id": "R08",
+      "name": "RTM",
+      "status": "PASS",
+      "critical": 0,
+      "warnings": 0,
+      "message": "rtm generated"
+    },
+    {
+      "id": "R09",
+      "name": "Tests",
+      "status": "PASS",
+      "critical": 0,
+      "warnings": 0,
+      "message": "passed"
+    },
+    {
+      "id": "R10",
+      "name": "E2E System Tests",
+      "status": "SKIP",
+      "critical": 0,
+      "warnings": 0,
+      "message": "disabled by ENABLE_E2E"
+    },
+    {
+      "id": "R11",
+      "name": "Baseline",
+      "status": "PASS",
+      "critical": 0,
+      "warnings": 0,
+      "message": "passed"
+    }
+  ],
+  "summary": {
+    "total": 11,
+    "pass": 6,
+    "fail": 4,
+    "skip": 1,
+    "critical": 4,
+    "warnings": 0,
+    "pass_rate": 54.55
+  },
+  "violations": [
+    {
+      "rule": "R01",
+      "severity": "CRITICAL",
+      "file": null,
+      "line": null,
+      "message": "failed"
+    },
+    {
+      "rule": "R02",
+      "severity": "CRITICAL",
+      "file": null,
+      "line": null,
+      "message": "failed"
+    },
+    {
+      "rule": "R03",
+      "severity": "CRITICAL",
+      "file": null,
+      "line": null,
+      "message": "failed"
+    },
+    {
+      "rule": "R05",
+      "severity": "CRITICAL",
+      "file": null,
+      "line": null,
+      "message": "failed"
+    }
+  ]
+}

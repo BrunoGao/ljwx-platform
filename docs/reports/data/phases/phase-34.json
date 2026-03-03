@@ -1,14 +1,14 @@
 {
   "phase": "34",
   "status": "FAIL",
-  "timestamp": "2026-03-01T20:37:30Z",
+  "timestamp": "2026-03-02T09:09:48Z",
   "repo": {
     "owner": "unknown",
     "name": "unknown",
     "default_branch": "master"
   },
   "git": {
-    "commit": "65fd9ac",
+    "commit": "3169285",
     "branch": "master"
   },
   "ci": {
@@ -102,16 +102,24 @@
       "critical": 0,
       "warnings": 0,
       "message": "disabled by ENABLE_E2E"
+    },
+    {
+      "id": "R11",
+      "name": "Baseline",
+      "status": "PASS",
+      "critical": 0,
+      "warnings": 0,
+      "message": "passed"
     }
   ],
   "summary": {
-    "total": 10,
-    "pass": 7,
+    "total": 11,
+    "pass": 8,
     "fail": 2,
     "skip": 1,
     "critical": 2,
     "warnings": 0,
-    "pass_rate": 70
+    "pass_rate": 72.73
   },
   "violations": [
     {

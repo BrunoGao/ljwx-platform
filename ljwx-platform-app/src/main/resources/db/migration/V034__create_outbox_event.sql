@@ -1,6 +1,9 @@
 -- Phase 34: Outbox 事件表 (Outbox Event Pattern)
 -- 用于保证"写库+发消息"的原子性,实现事件最终一致性
 
+-- Drop table if exists to handle out-of-order migration scenarios
+DROP TABLE IF EXISTS sys_outbox_event CASCADE;
+
 CREATE TABLE sys_outbox_event (
     id                  BIGINT          NOT NULL,
     aggregate_type      VARCHAR(100)    NOT NULL,

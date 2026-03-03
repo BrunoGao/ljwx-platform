@@ -1,0 +1,65 @@
+{
+  "phase": "52",
+  "attempt": 3,
+  "generatedAt": "2026-03-02T20:57:43Z",
+  "input": {
+    "collect": "artifacts/closed-loop/20260302T140355Z/phase-52/local-attempt-3/collect.json"
+  },
+  "summary": {
+    "failedChecks": 1,
+    "categoryCounts": {
+      "A": 0,
+      "B": 1,
+      "C": 0,
+      "D": 0
+    },
+    "repairabilityCounts": {
+      "auto": 1,
+      "suggest": 0,
+      "mitigate": 0,
+      "manual": 0
+    }
+  },
+  "diagnoses": [
+    {
+      "check": "phase-52-execute",
+      "source": "local",
+      "category": "B",
+      "repairability": "auto",
+      "confidence": 0.78,
+      "reason": "Semi-deterministic test/schema/migration class failure.",
+      "signals": [
+        "contract"
+      ],
+      "recommendedRecipes": [
+        "contract"
+      ],
+      "evidence": {
+        "summary": "  PASS  H2 scripts/gates/gate-all.sh has strict mode (set -euo pipefail)",
+        "errors": [
+          "  PASS  H2 scripts/gates/gate-all.sh has strict mode (set -euo pipefail)",
+          "  PASS  H2 scripts/gates/gate-manifest.sh has strict mode (set -euo pipefail)",
+          "  PASS  H2 scripts/gates/gate-rules.sh has strict mode (set -euo pipefail)",
+          "  PASS  H2 scripts/gates/gate-compile.sh has strict mode (set -euo pipefail)",
+          "  PASS  H2 scripts/gates/gate-integration.sh has strict mode (set -euo pipefail)",
+          "  PASS  H2 scripts/gates/gate-contract.sh has strict mode (set -euo pipefail)",
+          "  PASS  H2 scripts/gates/gate-nfr.sh has strict mode (set -euo pipefail)",
+          "  PASS  H2 scripts/hooks/pre-edit-guard.sh has strict mode (set -euo pipefail)",
+          "  PASS  H2 scripts/hooks/post-edit-check.sh has strict mode (set -euo pipefail)",
+          "  PASS  H2 scripts/hooks/stop-gate.sh has strict mode (set -euo pipefail)",
+          "  PASS  H2 scripts/review/diff-review.sh has strict mode (set -euo pipefail)",
+          "  PASS  H2 scripts/preflight/preflight-check.sh has strict mode (set -euo pipefail)",
+          "  PASS  H2 scripts/phase-execute.sh has strict mode (set -euo pipefail)",
+          "  PASS  H2 scripts/phase-parallel.sh has strict mode (set -euo pipefail)",
+          "  PASS  H2 scripts/run-all.sh has strict mode (set -euo pipefail)",
+          "║  FAIL: 0                                        ║",
+          "- ✅ Proper error handling",
+          "- Proper exception handling with BusinessException",
+          "Result: ✅ SUCCESS (no errors)",
+          "[ERROR] COMPILATION ERROR : "
+        ],
+        "logPath": "artifacts/closed-loop/20260302T140355Z/phase-52/local-attempt-3/logs/phase-52-execute.log"
+      }
+    }
+  ]
+}

@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ljwx.platform.app.infra.mapper.TenantDomainMapper">
+
+    <resultMap id="BaseResultMap" type="com.ljwx.platform.app.domain.entity.TenantDomain">
+        <id     column="id"             property="id"/>
+        <result column="domain"         property="domain"/>
+        <result column="status"         property="status"/>
+        <result column="is_primary"     property="isPrimary"/>
+        <result column="verified"       property="verified"/>
+        <result column="verified_time"  property="verifiedTime"/>
+        <result column="verify_token"   property="verifyToken"/>
+        <result column="remark"         property="remark"/>
+        <result column="tenant_id"      property="tenantId"/>
+        <result column="created_by"     property="createdBy"/>
+        <result column="created_time"   property="createdTime"/>
+        <result column="updated_by"     property="updatedBy"/>
+        <result column="updated_time"   property="updatedTime"/>
+        <result column="deleted"        property="deleted"/>
+        <result column="version"        property="version"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id, domain, status, is_primary, verified, verified_time, verify_token, remark,
+        tenant_id, created_by, created_time, updated_by, updated_time, deleted, version
+    </sql>
+
+    <!--
+      根据 ID 查询
+    -->
+    <select id="selectById" parameterType="long" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM sys_tenant_domain
+        WHERE id = #{id}
+          AND deleted = FALSE
+    </select>
+
+    <!--
+      查询列表（自动注入 tenant_id）
+    -->
+    <select id="selectList" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM sys_tenant_domain
+        WHERE deleted = FALSE
+        ORDER BY is_primary DESC, created_time DESC
+    </select>
+
+    <!--
+      根据域名查询（包含已删除记录）
+      用于唯一性校验，TenantLineInterceptor 绕过
+    -->
+    <select id="selectByDomainIncludeDeleted" parameterType="string" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM sys_tenant_domain
+        WHERE domain = #{domain}
+        LIMIT 1
+    </select>
+
+    <!--
+      根据域名查询（仅启用的）
+      用于域名识别，TenantLineInterceptor 绕过
+    -->
+    <select id="selectByDomain" parameterType="string" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM sys_tenant_domain
+        WHERE domain = #{domain}
+          AND status = 'ENABLED'
+          AND deleted = FALSE
+        LIMIT 1
+    </select>
+
+    <!--
+      根据租户 ID 查询主域名
+    -->
+    <select id="selectPrimaryByTenantId" parameterType="long" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM sys_tenant_domain
+        WHERE tenant_id = #{tenantId}
+          AND is_primary = TRUE
+          AND deleted = FALSE
+        LIMIT 1
+    </select>
+
+    <!--
+      插入
+    -->
+    <insert id="insert" parameterType="com.ljwx.platform.app.domain.entity.TenantDomain" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO sys_tenant_domain (
+            id, domain, status, is_primary, verified, verified_time, verify_token, remark,
+            tenant_id, created_by, created_time, updated_by, updated_time, deleted, version
+        ) VALUES (
+            #{id}, #{domain}, #{status}, #{isPrimary}, #{verified}, #{verifiedTime}, #{verifyToken}, #{remark},
+            #{tenantId}, #{createdBy}, #{createdTime}, #{updatedBy}, #{updatedTime}, #{deleted}, #{version}
+        )
+    </insert>
+
+    <!--
+      更新
+    -->
+    <update id="updateById" parameterType="com.ljwx.platform.app.domain.entity.TenantDomain">
+        UPDATE sys_tenant_domain
+        SET domain = #{domain},
+            status = #{status},
+            is_primary = #{isPrimary},
+            verified = #{verified},
+            verified_time = #{verifiedTime},
+            verify_token = #{verifyToken},
+            remark = #{remark},
+            updated_by = #{updatedBy},
+            updated_time = #{updatedTime},
+            deleted = #{deleted},
+            version = #{version}
+        WHERE id = #{id}
+    </update>
+
+    <!--
+      取消租户的所有主域名标记
+    -->
+    <update id="clearPrimaryByTenantId" parameterType="long">
+        UPDATE sys_tenant_domain
+        SET is_primary = FALSE,
+            updated_time = CURRENT_TIMESTAMP
+        WHERE tenant_id = #{tenantId}
+          AND is_primary = TRUE
+          AND deleted = FALSE
+    </update>
+
+</mapper>

@@ -1,63 +1,24 @@
 #!/usr/bin/env bash
 # ═══════════════════════════════════════════════════════════
-# run-all.sh — 全量执行器（Phase 0–53，幂等，可中断续跑）
+# run-all.sh — 全量编排器（Closed-Loop CI）
+#
+# 闭环阶段:
+#   1) Collect  收集失败信号（本地 check JSON + GitHub check logs）
+#   2) Diagnose 失败归因分类（A/B/C/D）
+#   3) Repair   执行 repair recipes -> 复检 -> 最多 N 次迭代
 #
 # 用法:
-#   bash scripts/run-all.sh              # 执行所有未完成的 Phase
-#   bash scripts/run-all.sh --from 5     # 从 Phase 5 开始
-#   bash scripts/run-all.sh --only 3     # 只执行 Phase 3
-#   bash scripts/run-all.sh --dry-run    # 显示执行计划但不执行
+#   bash scripts/run-all.sh
+#   bash scripts/run-all.sh --from 5
+#   bash scripts/run-all.sh --only 3
+#   bash scripts/run-all.sh --dry-run
 #
-# CI Gate 用法（在指定 Phase 后 push 并等待 GitHub Actions 全绿）:
+# CI Gate:
 #   bash scripts/run-all.sh \
 #     --checkpoint "5,10,18,27,32,44,53" \
 #     --repo your-org/your-repo \
 #     --workflow build-and-notify.yml \
 #     --auto-commit
-#
-# 幂等性: 检查 PHASE_MANIFEST.txt 中已完成的 Phase，跳过重复执行
-# 追溯性: 每个 Phase 的日志保存在 logs/phase-NN/
-#
-# Phase 概览:
-#   0-5   基础设施（骨架、Core、Data、Security、Web、App）
-#   6-10  功能模块（文档、Quartz、字典配置、日志通知文件、首页契约）
-#   11-14 前端（Shared 包、Admin 脚手架、Mobile、Screen）
-#   15-17 Admin 功能页面（用户角色租户 / 任务字典配置 / 日志文件公告）
-#   18-19 集成测试 + 阶段性 Gate
-#   20    菜单管理 + 动态路由
-#   21    部门管理 + 数据权限
-#   22    个人中心 + 登录日志 + 在线用户（后端）
-#   23    Admin 前端页面 Batch 2
-#   24    租户套餐 + 通知已读 + 导入导出
-#   25    系统监控 + API 限流 + WebSocket
-#   26    集成测试（Phase 20-25）
-#   27    阶段性 Gate + 全量 Manifest v2
-#   28    安全加固（XSS / 幂等 / Token 黑名单 / 登录锁定）
-#   29    可观测性（TraceId / 结构化日志 / 慢 API / 前端错误监控）
-#   30    数据变更审计 + 日志清理
-#   31    前端增强（v-permission / 数据变更日志页面）
-#   32    Final Gate v3
-#   33    多级缓存管理器
-#   34    Outbox 事件表
-#   35    结构化日志与 Loki 集成
-#   36    Prometheus 指标监控
-#   37    Grafana 仪表盘与告警
-#   38    租户品牌配置
-#   39    数据脱敏
-#   40    岗位管理
-#   41    租户生命周期管理
-#   42    超级管理员机制
-#   43    租户域名识别
-#   44    角色自定义数据范围
-#   45    任务执行日志
-#   46    导入导出中心
-#   47    开放 API — 应用管理
-#   48    开放 API — 密钥管理
-#   49    Webhook 事件推送
-#   50    消息中台 — 模板管理
-#   51    消息中台 — 消息记录
-#   52    消息中台 — 订阅管理
-#   53    流程引擎（简化版）
 # ═══════════════════════════════════════════════════════════
 set -euo pipefail
 
@@ -69,38 +30,53 @@ export CLAUDE_PROJECT_DIR="$PROJECT_ROOT"
 FROM_PHASE=0
 ONLY_PHASE=""
 DRY_RUN=false
-TOTAL_PHASES=54   # Phase 0–53
+TOTAL_PHASES=54 # Phase 0–53
 
 # CI Gate 参数
-CHECKPOINTS=""          # 逗号分隔的 checkpoint phase 号，如 "5,10,18,27,32"
-GITHUB_REPO=""          # owner/repo
+CHECKPOINTS=""
+GITHUB_REPO=""
 GITHUB_WORKFLOW="build-and-notify.yml"
-AUTO_COMMIT=false       # 是否自动 git add -A && git commit
+AUTO_COMMIT=false
+
+# Closed-loop 参数
+MAX_REPAIR_ATTEMPTS=3
+REPAIR_RECIPES="scripts/ci/repair-recipes.yaml"
+POLICY_FILE="scripts/ci/closed-loop-policy.json"
+ENABLE_AUTO_REPAIR=true
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --from)       FROM_PHASE="$2";       shift 2 ;;
-    --only)       ONLY_PHASE="$2";       shift 2 ;;
-    --dry-run)    DRY_RUN=true;          shift ;;
-    --checkpoint) CHECKPOINTS="$2";      shift 2 ;;
-    --repo)       GITHUB_REPO="$2";      shift 2 ;;
-    --workflow)   GITHUB_WORKFLOW="$2";  shift 2 ;;
-    --auto-commit) AUTO_COMMIT=true;     shift ;;
+    --from)            FROM_PHASE="$2"; shift 2 ;;
+    --only)            ONLY_PHASE="$2"; shift 2 ;;
+    --dry-run)         DRY_RUN=true; shift ;;
+    --checkpoint)      CHECKPOINTS="$2"; shift 2 ;;
+    --repo)            GITHUB_REPO="$2"; shift 2 ;;
+    --workflow)        GITHUB_WORKFLOW="$2"; shift 2 ;;
+    --auto-commit)     AUTO_COMMIT=true; shift ;;
+    --repair-attempts) MAX_REPAIR_ATTEMPTS="$2"; shift 2 ;;
+    --repair-recipes)  REPAIR_RECIPES="$2"; shift 2 ;;
+    --policy-file)     POLICY_FILE="$2"; shift 2 ;;
+    --no-auto-repair)  ENABLE_AUTO_REPAIR=false; shift ;;
     *) echo "Unknown arg: $1"; exit 1 ;;
   esac
 done
 
+if ! [[ "$MAX_REPAIR_ATTEMPTS" =~ ^[0-9]+$ ]]; then
+  echo "--repair-attempts must be a non-negative integer"
+  exit 2
+fi
+
 # ── Setup ──────────────────────────────────────────────────
-mkdir -p logs
+mkdir -p logs artifacts/closed-loop
 MANIFEST="PHASE_MANIFEST.txt"
 FAILED_LOG="logs/failed.log"
-RUN_LOG="logs/run-all-$(date +%Y%m%d-%H%M%S).log"
+RUN_ID="$(date -u +%Y%m%dT%H%M%SZ)"
+RUN_ARTIFACT_DIR="artifacts/closed-loop/${RUN_ID}"
+mkdir -p "$RUN_ARTIFACT_DIR"
 
 : > "$FAILED_LOG"
 
-# ── Helper functions ───────────────────────────────────────
-
-# CI Gate: 判断某 phase 是否为 checkpoint
+# ── Helpers ────────────────────────────────────────────────
 is_checkpoint() {
   local p="$1"
   [[ -z "$CHECKPOINTS" ]] && return 1
@@ -111,26 +87,30 @@ is_checkpoint() {
   return 1
 }
 
-# CI Gate: 是否有未提交的变更
 git_has_changes() {
   [[ -n "$(git status --porcelain)" ]]
 }
 
-# CI Gate: 自动提交（可选）并 push
 git_commit_push() {
   local phase="$1"
+  local message="$2"
   local padded
-  padded=$(printf '%02d' "$phase")
+  padded="$(printf '%02d' "$phase")"
 
-  if $AUTO_COMMIT && git_has_changes; then
-    git add -A
-    git commit -m "chore(phase-${padded}): checkpoint commit [ci gate]" || true
+  if git_has_changes; then
+    if $AUTO_COMMIT; then
+      git add -A
+      git commit -m "${message} [phase-${padded}]" || true
+    else
+      echo "[CI Gate] 工作区有未提交改动，但未开启 --auto-commit。"
+      echo "         无法自动 push 修复补丁。"
+      return 20
+    fi
   fi
 
   git push
 }
 
-# CI Gate: 等待 GitHub Actions workflow 完成
 wait_ci_green() {
   local sha="$1"
   bash scripts/wait-github-workflow.sh \
@@ -139,38 +119,6 @@ wait_ci_green() {
     --workflow "$GITHUB_WORKFLOW" \
     --timeout-sec 7200 \
     --interval-sec 15
-}
-
-# CI Gate: 执行完整的 checkpoint 流程（push → 等绿 → 失败则中止）
-run_checkpoint() {
-  local phase="$1"
-
-  if [[ -z "$GITHUB_REPO" ]]; then
-    echo "[CI Gate] --checkpoint 已配置，但缺少 --repo 参数，中止。"
-    exit 2
-  fi
-
-  echo ""
-  echo "──────────────────────────────────────────────────"
-  echo "[CI Gate] Checkpoint 触发：Phase $phase"
-  echo "[CI Gate] Committing & pushing..."
-  git_commit_push "$phase"
-
-  local sha
-  sha="$(git rev-parse HEAD)"
-  echo "[CI Gate] HEAD sha=${sha:0:12}"
-  echo "[CI Gate] Waiting for workflow '${GITHUB_WORKFLOW}'..."
-
-  if wait_ci_green "$sha"; then
-    echo "[CI Gate] PASSED — 继续执行后续 Phase"
-    echo "──────────────────────────────────────────────────"
-    echo ""
-  else
-    echo "[CI Gate] FAILED — 停在 Phase $phase 的 checkpoint"
-    echo "  修复后可用 --from $((phase + 1)) 续跑"
-    echo "──────────────────────────────────────────────────"
-    exit 10
-  fi
 }
 
 is_completed() {
@@ -190,15 +138,294 @@ phase_exists() {
   [[ -f "spec/phase/phase-${padded}.md" ]]
 }
 
+run_structured_check() {
+  local check_name="$1"
+  local phase="$2"
+  local attempt="$3"
+  local source="$4"
+  local artifact_dir="$5"
+  shift 5
+
+  local safe_name="${check_name//\//-}"
+  safe_name="${safe_name// /-}"
+  local log_path="${artifact_dir}/logs/${safe_name}.log"
+  local json_path="${artifact_dir}/checks/${safe_name}.json"
+  mkdir -p "$(dirname "$log_path")" "$(dirname "$json_path")"
+
+  set +e
+  "$@" 2>&1 | tee "$log_path"
+  local rc=${PIPESTATUS[0]}
+  set -e
+
+  local status="pass"
+  [[ "$rc" -ne 0 ]] && status="fail"
+
+  local summary
+  summary="$(grep -Eim1 'error|fail|exception|timeout|fatal' "$log_path" || true)"
+  if [[ -z "$summary" ]]; then
+    if [[ "$status" == "pass" ]]; then
+      summary="check passed"
+    else
+      summary="check failed (exit ${rc})"
+    fi
+  fi
+
+  local errors_json
+  errors_json="$(
+    { grep -Ein 'error|fail|exception|timeout|fatal|traceback' "$log_path" 2>/dev/null || true; } \
+      | head -n 50 \
+      | cut -d: -f2- \
+      | jq -R -s 'split("\n") | map(select(length>0))'
+  )"
+
+  jq -n \
+    --arg check "$check_name" \
+    --arg status "$status" \
+    --argjson exitCode "$rc" \
+    --arg summary "$summary" \
+    --arg logPath "$log_path" \
+    --arg source "$source" \
+    --arg phase "$phase" \
+    --argjson attempt "$attempt" \
+    --arg timestamp "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+    --argjson errors "$errors_json" \
+    '{
+      check: $check,
+      status: $status,
+      exitCode: $exitCode,
+      summary: $summary,
+      logPath: $logPath,
+      source: $source,
+      phase: $phase,
+      attempt: $attempt,
+      timestamp: $timestamp,
+      errors: $errors
+    }' >"$json_path"
+
+  return "$rc"
+}
+
+collect_diagnose_repair() {
+  local phase="$1"
+  local attempt="$2"
+  local artifact_dir="$3"
+  local github_file="${4:-}"
+
+  local collect_json="${artifact_dir}/collect.json"
+  local diagnosis_json="${artifact_dir}/diagnosis.json"
+  local repair_json="${artifact_dir}/repair.json"
+  local checks_dir="${artifact_dir}/checks"
+
+  local collect_cmd=(
+    bash scripts/ci/closed-loop-collect.sh
+    --phase "$phase"
+    --attempt "$attempt"
+    --checks-dir "$checks_dir"
+    --output "$collect_json"
+  )
+  if [[ -n "$github_file" && -f "$github_file" ]]; then
+    collect_cmd+=(--github-file "$github_file")
+  fi
+  "${collect_cmd[@]}"
+
+  bash scripts/ci/closed-loop-diagnose.sh \
+    --collect "$collect_json" \
+    --output "$diagnosis_json"
+
+  CLOSED_LOOP_PHASE="$phase" \
+    CLOSED_LOOP_ATTEMPT="$attempt" \
+    CLOSED_LOOP_POLICY_FILE="$POLICY_FILE" \
+    bash scripts/ci/closed-loop-repair.sh \
+      --diagnosis "$diagnosis_json" \
+      --recipes "$REPAIR_RECIPES" \
+      --output "$repair_json"
+}
+
+execute_phase_with_closed_loop() {
+  local phase="$1"
+  local executor="$2"
+  local padded
+  padded="$(printf '%02d' "$phase")"
+  local phase_artifact_dir="${RUN_ARTIFACT_DIR}/phase-${padded}"
+  local attempt=1
+
+  while (( attempt <= MAX_REPAIR_ATTEMPTS + 1 )); do
+    local attempt_dir="${phase_artifact_dir}/local-attempt-${attempt}"
+    mkdir -p "$attempt_dir"
+    echo "[ClosedLoop][Local] Phase $phase attempt $attempt/$((MAX_REPAIR_ATTEMPTS + 1))"
+
+    if run_structured_check \
+      "phase-${padded}-execute" \
+      "$padded" \
+      "$attempt" \
+      "local" \
+      "$attempt_dir" \
+      bash "$executor" "$phase" "--skip-preflight"; then
+      cp -f "${attempt_dir}/logs/phase-${padded}-execute.log" "logs/phase-${padded}/run.log" 2>/dev/null || true
+      return 0
+    fi
+
+    cp -f "${attempt_dir}/logs/phase-${padded}-execute.log" "logs/phase-${padded}/run.log" 2>/dev/null || true
+
+    if ! $ENABLE_AUTO_REPAIR || (( attempt > MAX_REPAIR_ATTEMPTS )); then
+      echo "[ClosedLoop][Local] 自动修复未启用或已达到最大尝试次数。"
+      return 1
+    fi
+
+    echo "[ClosedLoop][Local] Collect -> Diagnose -> Repair"
+    local repair_rc=0
+    if ! collect_diagnose_repair "$padded" "$attempt" "$attempt_dir"; then
+      repair_rc=$?
+    fi
+
+    local applied=0
+    if [[ -f "${attempt_dir}/repair.json" ]]; then
+      applied="$(jq -r '.summary.applied // 0' "${attempt_dir}/repair.json" 2>/dev/null || echo 0)"
+    fi
+
+    if [[ "$repair_rc" -eq 11 || "$applied" -eq 0 ]]; then
+      echo "[ClosedLoop][Local] 没有匹配的 repair recipe，停止自动修复。"
+      return 1
+    fi
+    if [[ "$repair_rc" -ne 0 && "$repair_rc" -ne 11 ]]; then
+      echo "[ClosedLoop][Local] repair recipe 执行失败（rc=${repair_rc}）。"
+    fi
+
+    # 修复后先做一次相关 gate 复检，保留证据链。
+    run_structured_check \
+      "phase-${padded}-gate-verify" \
+      "$padded" \
+      "$attempt" \
+      "local" \
+      "$attempt_dir" \
+      bash scripts/gates/gate-all.sh "$phase" || true
+
+    attempt=$((attempt + 1))
+  done
+
+  return 1
+}
+
+run_checkpoint_with_closed_loop() {
+  local phase="$1"
+  local padded
+  padded="$(printf '%02d' "$phase")"
+
+  if [[ -z "$GITHUB_REPO" ]]; then
+    echo "[CI Gate] --checkpoint 已配置，但缺少 --repo 参数。"
+    return 2
+  fi
+
+  local ci_attempt=1
+  while (( ci_attempt <= MAX_REPAIR_ATTEMPTS + 1 )); do
+    local ci_dir="${RUN_ARTIFACT_DIR}/phase-${padded}/ci-attempt-${ci_attempt}"
+    mkdir -p "$ci_dir"
+
+    echo ""
+    echo "──────────────────────────────────────────────────"
+    echo "[CI Gate] Checkpoint：Phase $phase attempt $ci_attempt/$((MAX_REPAIR_ATTEMPTS + 1))"
+    echo "[CI Gate] Committing & pushing..."
+    if ! git_commit_push "$phase" "chore(ci-gate): checkpoint auto-commit"; then
+      return 20
+    fi
+
+    local sha
+    sha="$(git rev-parse HEAD)"
+    echo "[CI Gate] HEAD sha=${sha:0:12}"
+    echo "[CI Gate] Waiting for workflow '${GITHUB_WORKFLOW}'..."
+
+    if run_structured_check \
+      "phase-${padded}-github-workflow" \
+      "$padded" \
+      "$ci_attempt" \
+      "github" \
+      "$ci_dir" \
+      bash scripts/wait-github-workflow.sh \
+        --repo "$GITHUB_REPO" \
+        --sha "$sha" \
+        --workflow "$GITHUB_WORKFLOW" \
+        --timeout-sec 7200 \
+        --interval-sec 15; then
+      echo "[CI Gate] PASSED — 继续执行后续 Phase"
+      echo "──────────────────────────────────────────────────"
+      echo ""
+      return 0
+    fi
+
+    if ! $ENABLE_AUTO_REPAIR || (( ci_attempt > MAX_REPAIR_ATTEMPTS )); then
+      echo "[CI Gate] FAILED — 已达到最大尝试次数。"
+      echo "──────────────────────────────────────────────────"
+      return 10
+    fi
+
+    echo "[CI Gate] FAILED — 进入 Collect -> Diagnose -> Repair"
+    bash scripts/ci/collect-github-failures.sh \
+      --repo "$GITHUB_REPO" \
+      --workflow "$GITHUB_WORKFLOW" \
+      --sha "$sha" \
+      --output-dir "${ci_dir}/github" >/dev/null || true
+
+    local github_file="${ci_dir}/github/github-checks.json"
+    local repair_rc=0
+    if ! collect_diagnose_repair "$padded" "$ci_attempt" "$ci_dir" "$github_file"; then
+      repair_rc=$?
+    fi
+
+    local applied=0
+    if [[ -f "${ci_dir}/repair.json" ]]; then
+      applied="$(jq -r '.summary.applied // 0' "${ci_dir}/repair.json" 2>/dev/null || echo 0)"
+    fi
+
+    if [[ "$repair_rc" -eq 11 || "$applied" -eq 0 ]]; then
+      echo "[CI Gate] 无匹配修复配方，停止自动修复。"
+      return 10
+    fi
+    if [[ "$repair_rc" -ne 0 && "$repair_rc" -ne 11 ]]; then
+      echo "[CI Gate] repair recipe 执行失败（rc=${repair_rc}）。"
+    fi
+
+    run_structured_check \
+      "phase-${padded}-post-repair-gate" \
+      "$padded" \
+      "$ci_attempt" \
+      "local" \
+      "$ci_dir" \
+      bash scripts/gates/gate-all.sh "$phase" || true
+
+    ci_attempt=$((ci_attempt + 1))
+  done
+
+  return 10
+}
+
 # ── Pre-flight ─────────────────────────────────────────────
 echo "════════════════════════════════════════════════════"
-echo "  LJWX Platform — Full Generation Run"
+echo "  LJWX Platform — Full Generation Run (Closed-Loop)"
 echo "  Start: $(date)"
 echo "  Phases: $FROM_PHASE – $((TOTAL_PHASES - 1))"
+echo "  Auto Repair: $ENABLE_AUTO_REPAIR | Max Attempts: $MAX_REPAIR_ATTEMPTS"
+echo "  Repair Recipes: $REPAIR_RECIPES"
+echo "  Policy File: $POLICY_FILE"
+echo "  Artifacts: $RUN_ARTIFACT_DIR"
 [[ -n "$ONLY_PHASE" ]] && echo "  Mode: only Phase $ONLY_PHASE"
 $DRY_RUN && echo "  Mode: DRY RUN"
 echo "════════════════════════════════════════════════════"
 echo ""
+
+if ! command -v jq >/dev/null 2>&1; then
+  echo "jq is required by closed-loop collector/diagnoser/repairer."
+  exit 2
+fi
+
+if [[ ! -f "$REPAIR_RECIPES" ]]; then
+  echo "Repair recipes not found: $REPAIR_RECIPES"
+  exit 2
+fi
+
+if [[ ! -f "$POLICY_FILE" ]]; then
+  echo "Closed-loop policy file not found: $POLICY_FILE"
+  exit 2
+fi
 
 if ! $DRY_RUN; then
   echo "--- Preflight Check ---"
@@ -226,9 +453,9 @@ SKIPPED=0
 echo "Execution plan (${#PHASE_LIST[@]} phases):"
 [[ -n "$CHECKPOINTS" ]] && echo "  Checkpoints: ${CHECKPOINTS} (push + wait CI green)"
 for phase in "${PHASE_LIST[@]}"; do
-  padded=$(printf '%02d' "$phase")
+  padded="$(printf '%02d' "$phase")"
   brief="spec/phase/phase-${padded}.md"
-  title=$(grep -m1 '^title:' "$brief" 2>/dev/null | sed 's/title:[[:space:]]*//' | tr -d '"' || echo "?")
+  title="$(grep -m1 '^title:' "$brief" 2>/dev/null | sed 's/title:[[:space:]]*//' | tr -d '"' || echo "?")"
   cp_tag=""
   is_checkpoint "$phase" && cp_tag="  [CI GATE]"
   if is_completed "$phase"; then
@@ -243,12 +470,11 @@ $DRY_RUN && echo "Dry run complete." && exit 0
 
 # ── Main execution loop ────────────────────────────────────
 for phase in "${PHASE_LIST[@]}"; do
-  padded=$(printf '%02d' "$phase")
+  padded="$(printf '%02d' "$phase")"
 
   echo ""
   echo ">>>>>>>>>> Phase $phase <<<<<<<<<<"
 
-  # Idempotency check
   if is_completed "$phase"; then
     echo "  Phase $phase already completed — skipping."
     SKIPPED=$((SKIPPED + 1))
@@ -256,33 +482,33 @@ for phase in "${PHASE_LIST[@]}"; do
     continue
   fi
 
-  # Detect parallel-eligible phase (both backend and frontend)
   PHASE_BRIEF="spec/phase/phase-${padded}.md"
-  YAML_BLOCK=$(awk '/^---$/{n++;if(n==1){next};if(n==2){exit}} n==1{print}' "$PHASE_BRIEF")
-  T_BE=$(echo "$YAML_BLOCK" | grep 'backend:' | awk '{print $2}' | head -1)
-  T_FE=$(echo "$YAML_BLOCK" | grep 'frontend:' | awk '{print $2}' | head -1)
+  YAML_BLOCK="$(awk '/^---$/{n++;if(n==1){next};if(n==2){exit}} n==1{print}' "$PHASE_BRIEF")"
+  T_BE="$(echo "$YAML_BLOCK" | grep 'backend:' | awk '{print $2}' | head -1 || true)"
+  T_FE="$(echo "$YAML_BLOCK" | grep 'frontend:' | awk '{print $2}' | head -1 || true)"
 
   EXECUTOR="scripts/phase-execute.sh"
   if [[ "${T_BE:-false}" == "true" && "${T_FE:-false}" == "true" ]]; then
     EXECUTOR="scripts/phase-parallel.sh"
   fi
 
-  LOG_BASE="logs/phase-${padded}"
-  mkdir -p "$LOG_BASE"
+  mkdir -p "logs/phase-${padded}"
 
-  # Execute
-  if bash "$EXECUTOR" "$phase" "--skip-preflight" 2>&1 | tee "$LOG_BASE/run.log"; then
+  if execute_phase_with_closed_loop "$phase" "$EXECUTOR"; then
     echo "Phase $phase — PASSED"
     PASSED=$((PASSED + 1))
 
-    # CI Gate: checkpoint 检查（仅在非 --only 模式下触发）
     if [[ -z "$ONLY_PHASE" ]] && is_checkpoint "$phase"; then
-      run_checkpoint "$phase"
+      if ! run_checkpoint_with_closed_loop "$phase"; then
+        echo "[CI Gate] FAILED — 停在 Phase $phase 的 checkpoint"
+        echo "Phase $phase CHECKPOINT FAILED — $(date -u +%Y-%m-%dT%H:%M:%SZ)" >>"$FAILED_LOG"
+        FAILED=$((FAILED + 1))
+        exit 10
+      fi
     fi
   else
-    EXIT_CODE=$?
-    echo "Phase $phase — FAILED (exit $EXIT_CODE)"
-    echo "Phase $phase FAILED — $(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$FAILED_LOG"
+    echo "Phase $phase — FAILED"
+    echo "Phase $phase FAILED — $(date -u +%Y-%m-%dT%H:%M:%SZ)" >>"$FAILED_LOG"
     FAILED=$((FAILED + 1))
     echo "Continuing to next phase..."
   fi
@@ -300,6 +526,7 @@ if [[ $FAILED -gt 0 ]]; then
   cat "$FAILED_LOG"
 fi
 echo "  Logs: logs/"
+echo "  Closed-loop artifacts: $RUN_ARTIFACT_DIR"
 echo "════════════════════════════════════════════════════"
 
 exit "$FAILED"

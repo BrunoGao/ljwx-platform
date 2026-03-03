@@ -14,7 +14,8 @@ spring:
   flyway:
     enabled: true
     locations: classpath:db/migration
-    baseline-on-migrate: false
+    baseline-on-migrate: true
+    baseline-version: "52"
     out-of-order: true
   quartz:
     job-store-type: jdbc

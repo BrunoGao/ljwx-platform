@@ -28,6 +28,12 @@ public enum ErrorCode {
 
     ACCOUNT_LOCKED(423001, "账号已锁定，请30分钟后重试"),
 
+    DOMAIN_EXISTS(409002, "域名已存在"),
+    INVALID_DOMAIN_FORMAT(400003, "域名格式不正确"),
+    CANNOT_DELETE_PRIMARY_DOMAIN(400004, "无法删除主域名"),
+    DOMAIN_NOT_FOUND(404002, "域名不存在"),
+    DOMAIN_VERIFY_FAILED(400005, "域名验证失败"),
+
     SYSTEM_ERROR(500001, "系统内部错误");
 
     private final int code;

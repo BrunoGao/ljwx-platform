@@ -25,6 +25,26 @@ BE_BRANCH="worktree-${BE_WT}"
 FE_BRANCH="worktree-${FE_WT}"
 BE_DIR=".claude/worktrees/${BE_WT}"
 FE_DIR=".claude/worktrees/${FE_WT}"
+SHARED_STATE_PATHS=(
+  "PHASE_MANIFEST.txt"
+  "docs/reports/data/summary.json"
+  "docs/reports/data/rtm.json"
+  "docs/reports/data/tests.json"
+  "docs/reports/data/phases"
+  "docs/reports/data/history"
+)
+
+prune_shared_state_changes() {
+  local worker="${1:-WT}"
+  if ! git diff --quiet -- "${SHARED_STATE_PATHS[@]}" 2>/dev/null \
+    || [[ -n "$(git ls-files --others --exclude-standard -- "${SHARED_STATE_PATHS[@]}")" ]]; then
+    echo "[$worker] Dropping shared-state side effects (manifest/reports)."
+  fi
+
+  # Parallel branches must not carry manifest/report artifacts back to main.
+  git restore --source=HEAD --staged --worktree -- "${SHARED_STATE_PATHS[@]}" >/dev/null 2>&1 || true
+  git clean -fd -- "${SHARED_STATE_PATHS[@]}" >/dev/null 2>&1 || true
+}
 
 # ── Cleanup on exit ───────────────────────────────────────
 cleanup() {
@@ -63,9 +83,11 @@ echo "═══ Parallel Generation — Phase $PHASE_NUM ═══"
 Read CLAUDE.md, spec/01-constraints.md, spec/08-output-rules.md, and $PHASE_BRIEF.
 Generate ONLY backend files (.java, pom.xml, .xml, .yml, .sql, .properties).
 Do NOT generate any frontend files (.vue, .ts, .json for node, .css, .html).
+Do NOT run gate scripts, and do NOT modify PHASE_MANIFEST.txt or docs/reports/data/*.
 Follow spec/08-output-rules.md for output format." \
     --agent backend-builder \
     --output-format text
+  prune_shared_state_changes "BE"
   git add -A
   git commit -m "wip: phase-${PHASE_NUM} backend" --allow-empty
   echo "[BE] Done."
@@ -79,9 +101,11 @@ PID_BE=$!
 Read CLAUDE.md, spec/06-frontend-config.md, spec/08-output-rules.md, and $PHASE_BRIEF.
 Generate ONLY frontend files (.vue, .ts, package.json, .scss, .html, tsconfig*.json).
 Do NOT generate any backend files (.java, pom.xml, .sql, .yml backend configs).
+Do NOT run gate scripts, and do NOT modify PHASE_MANIFEST.txt or docs/reports/data/*.
 Follow spec/08-output-rules.md for output format." \
     --agent frontend-builder \
     --output-format text
+  prune_shared_state_changes "FE"
   git add -A
   git commit -m "wip: phase-${PHASE_NUM} frontend" --allow-empty
   echo "[FE] Done."

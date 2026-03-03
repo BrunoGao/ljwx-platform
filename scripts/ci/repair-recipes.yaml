@@ -1,0 +1,85 @@
+repairs:
+  - id: eslint-fix
+    check: eslint
+    category: A
+    mode: auto
+    type: run
+    max_attempts: 1
+    cmd: "if [ -d ljwx-platform-admin ] && grep -q '\"lint\"' ljwx-platform-admin/package.json 2>/dev/null; then (cd ljwx-platform-admin && pnpm run lint -- --fix); elif [ -f package.json ] && grep -q '\"lint\"' package.json 2>/dev/null; then pnpm run lint -- --fix; else echo 'eslint recipe skipped: lint script not found'; fi"
+  - id: prettier-fix
+    check: prettier
+    category: A
+    mode: auto
+    type: run
+    max_attempts: 1
+    cmd: "if command -v pnpm >/dev/null 2>&1; then pnpm exec prettier --write .; else echo 'prettier recipe skipped: pnpm not found'; exit 1; fi"
+  - id: spotless-apply
+    check: spotless
+    category: A
+    mode: auto
+    type: run
+    max_attempts: 1
+    cmd: "if [ -x ./mvnw ]; then ./mvnw -q spotless:apply; else mvn -q spotless:apply; fi"
+  - id: gofmt-fix
+    check: gofmt
+    category: A
+    mode: auto
+    type: run
+    max_attempts: 1
+    cmd: "GO_FILES=$(find . -name '*.go' -type f); if [ -n \"${GO_FILES}\" ] && command -v gofmt >/dev/null 2>&1; then gofmt -w ${GO_FILES}; else echo 'gofmt recipe skipped: no go files or gofmt missing'; fi"
+  - id: black-fix
+    check: black
+    category: A
+    mode: auto
+    type: run
+    max_attempts: 1
+    cmd: "if command -v black >/dev/null 2>&1; then black .; else echo 'black recipe skipped: black not found'; exit 1; fi"
+  - id: isort-fix
+    check: isort
+    category: A
+    mode: auto
+    type: run
+    max_attempts: 1
+    cmd: "if command -v isort >/dev/null 2>&1; then isort .; else echo 'isort recipe skipped: isort not found'; exit 1; fi"
+  - id: markdownlint-fix
+    check: markdownlint
+    category: A
+    mode: auto
+    type: run
+    max_attempts: 1
+    cmd: "if command -v pnpm >/dev/null 2>&1; then pnpm exec markdownlint-cli2 '**/*.md' --fix; else echo 'markdownlint recipe skipped: pnpm not found'; exit 1; fi"
+  - id: lockfile-regen
+    check: lockfile
+    category: A
+    mode: auto
+    type: run
+    max_attempts: 1
+    cmd: "if [ -f pnpm-lock.yaml ] && command -v pnpm >/dev/null 2>&1; then pnpm install --lockfile-only; else echo 'lockfile recipe skipped'; fi"
+  - id: codegen-openapi
+    check: codegen
+    category: B
+    mode: auto
+    type: run
+    max_attempts: 1
+    cmd: "if [ -x scripts/tools/export-openapi.sh ]; then bash scripts/tools/export-openapi.sh; else echo 'codegen recipe skipped: scripts/tools/export-openapi.sh not found'; fi"
+  - id: flyway-repair
+    check: flyway
+    category: B
+    mode: auto
+    type: run
+    max_attempts: 1
+    cmd: "if [ -x scripts/flyway-repair.sh ]; then bash scripts/flyway-repair.sh; elif [ -x scripts/tools/flyway-repair.sh ]; then bash scripts/tools/flyway-repair.sh; else echo 'flyway repair script not found'; exit 1; fi"
+  - id: flaky-test-rerun
+    check: test-flaky
+    category: C
+    mode: mitigate
+    type: run
+    max_attempts: 1
+    cmd: "bash scripts/ci/flaky-rerun.sh"
+  - id: network-retry-cache
+    check: network-timeout
+    category: C
+    mode: mitigate
+    type: run
+    max_attempts: 1
+    cmd: "bash scripts/ci/network-retry-cache.sh"

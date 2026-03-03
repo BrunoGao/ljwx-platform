@@ -79,6 +79,7 @@ public class TenantContextFilter extends OncePerRequestFilter {
      *
      * <p>Resolution logic:
      * <ol>
+     *   <li>If domain-based tenant ID is present (from TenantDomainFilter) → use it</li>
      *   <li>If user is super admin (tenant_id = 0):
      *     <ul>
      *       <li>If {@code X-Tenant-Id} header is present → use header value</li>
@@ -93,6 +94,14 @@ public class TenantContextFilter extends OncePerRequestFilter {
      * @return resolved tenant ID, or {@code null} for unauthenticated requests
      */
     private Long resolveTenantId(HttpServletRequest request) {
+        // 1. 优先从域名识别（由 TenantDomainFilter 设置）
+        Long tenantIdFromDomain = (Long) request.getAttribute("TENANT_ID_FROM_DOMAIN");
+        if (tenantIdFromDomain != null) {
+            log.debug("Resolved tenant from domain: {}", tenantIdFromDomain);
+            return tenantIdFromDomain;
+        }
+
+        // 2. 从认证信息获取
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || !authentication.isAuthenticated()) {
             return null;
@@ -103,7 +112,7 @@ public class TenantContextFilter extends OncePerRequestFilter {
             return null;
         }
 
-        // Super admin can switch tenant context via header
+        // 3. Super admin can switch tenant context via header
         if (Long.valueOf(0).equals(userTenantId)) {
             String headerTenantId = request.getHeader(TENANT_ID_HEADER);
             if (StringUtils.hasText(headerTenantId)) {
@@ -118,7 +127,7 @@ public class TenantContextFilter extends OncePerRequestFilter {
             }
         }
 
-        // Regular user or super admin without header
+        // 4. Regular user or super admin without header
         return userTenantId;
     }
 

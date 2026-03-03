@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
+import type { ElTree } from 'element-plus'
 import type { RoleDataScopeVO, RoleDataScopeUpdateDTO } from '@ljwx/shared'
 import type { DeptTreeVO } from '@/api/dept'
 import { getRoleDataScope, updateRoleDataScope } from '@/api/role'
@@ -22,6 +23,7 @@ const loading = ref(false)
 const deptTree = ref<DeptTreeVO[]>([])
 const selectedDeptIds = ref<number[]>([])
 const dataScopeInfo = ref<RoleDataScopeVO | null>(null)
+const treeRef = ref<InstanceType<typeof ElTree>>()
 
 watch(
   () => props.visible,
@@ -52,15 +54,15 @@ async function loadData(): Promise<void> {
 }
 
 async function handleSubmit(): Promise<void> {
-  if (!props.roleId) return
+  if (!props.roleId || !treeRef.value) return
 
   loading.value = true
   try {
+    const checkedKeys = treeRef.value.getCheckedKeys(false) as number[]
     const updateData: RoleDataScopeUpdateDTO = {
-      deptIds: selectedDeptIds.value,
+      deptIds: checkedKeys,
     }
     await updateRoleDataScope(props.roleId, updateData)
-    ElMessage.success('数据范围更新成功')
     emit('success')
     handleClose()
   } catch {
@@ -95,14 +97,17 @@ function handleClose(): void {
       >
         <template #default>
           <div>选择该角色可访问的部门数据范围。</div>
-          <div>当前已选择 <strong>{{ selectedDeptIds.length }}</strong> 个部门。</div>
+          <div v-if="dataScopeInfo">
+            当前已选择 <strong>{{ dataScopeInfo.deptIds.length }}</strong> 个部门。
+          </div>
         </template>
       </el-alert>
 
       <el-tree
-        v-model="selectedDeptIds"
+        ref="treeRef"
         :data="deptTree"
         :props="{ label: 'name', children: 'children' }"
+        :default-checked-keys="selectedDeptIds"
         node-key="id"
         show-checkbox
         default-expand-all
