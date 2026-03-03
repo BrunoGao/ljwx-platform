@@ -41,7 +41,7 @@ permissions:
 jobs:
   acceptance:
     if: ${{ github.event_name == 'workflow_dispatch' || (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success') }}
-    runs-on: [self-hosted, k3s-local]
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
