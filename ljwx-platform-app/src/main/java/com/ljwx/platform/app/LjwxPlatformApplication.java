@@ -21,14 +21,14 @@ import org.springframework.scheduling.annotation.EnableAsync;
  *   <li>{@code @EnableAsync} — enables Spring's async task execution, used
  *       by the operation-log service to record audit logs on a dedicated
  *       thread pool (core=2, max=4, queue=1024).</li>
- *   <li>{@code @MapperScan} — registers all MyBatis mapper interfaces in the
- *       app module's infra.mapper package with the SqlSessionFactory.</li>
+ *   <li>{@code @MapperScan} — registers all MyBatis mapper interfaces in both
+ *       infra and legacy app mapper packages with the SqlSessionFactory.</li>
  * </ul>
  */
 @SpringBootApplication(scanBasePackages = "com.ljwx.platform")
 @EnableCaching
 @EnableAsync
-@MapperScan("com.ljwx.platform.app.infra.mapper")
+@MapperScan({"com.ljwx.platform.app.infra.mapper", "com.ljwx.platform.app.mapper"})
 public class LjwxPlatformApplication {
 
     public static void main(String[] args) {
