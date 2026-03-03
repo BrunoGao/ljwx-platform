@@ -234,17 +234,45 @@ jobs:
           overlay = Path("deploy-repo") / os.environ["OVERLAY_FILE"]
           data = yaml.safe_load(overlay.read_text()) or {}
 
-          updates = {
-              os.environ["BACKEND_IMAGE_NAME"]:  os.environ["BACKEND_IMAGE_TAG"],
-              os.environ["ADMIN_UI_IMAGE_NAME"]: os.environ["ADMIN_UI_IMAGE_TAG"],
-              os.environ["SCREEN_IMAGE_NAME"]:   os.environ["SCREEN_IMAGE_TAG"],
+          targets = {
+              "ljwx-platform": (
+                  os.environ["BACKEND_IMAGE_NAME"],
+                  os.environ["BACKEND_IMAGE_TAG"],
+              ),
+              "ljwx-platform-admin-ui": (
+                  os.environ["ADMIN_UI_IMAGE_NAME"],
+                  os.environ["ADMIN_UI_IMAGE_TAG"],
+              ),
+              "ljwx-platform-screen": (
+                  os.environ["SCREEN_IMAGE_NAME"],
+                  os.environ["SCREEN_IMAGE_TAG"],
+              ),
           }
 
+          def infer_component(image_key: str) -> str:
+              normalized = image_key.strip()
+              for component in targets:
+                  if normalized.endswith(f"/{component}") or normalized == component:
+                      return component
+              return ""
+
+          touched = 0
           for img in data.get("images", []):
-              # Match by newName (the actual image pulled) or name
-              key = img.get("newName", img.get("name", ""))
-              if key in updates:
-                  img["newTag"] = updates[key]
+              key = str(img.get("newName") or img.get("name") or "")
+              component = infer_component(key)
+              if not component:
+                  continue
+              new_name, new_tag = targets[component]
+              img["newName"] = new_name
+              img["newTag"] = new_tag
+              if "digest" in img:
+                  del img["digest"]
+              touched += 1
+
+          if touched == 0:
+              raise SystemExit(
+                  f"no images entry matched ljwx-platform components in {overlay}"
+              )
 
           overlay.write_text(yaml.safe_dump(data, sort_keys=False))
           PY
