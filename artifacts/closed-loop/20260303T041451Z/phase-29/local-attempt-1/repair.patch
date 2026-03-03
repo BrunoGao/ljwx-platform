@@ -1,0 +1,413 @@
+diff --git a/docs/reports/data/phases/phase-29.json b/docs/reports/data/phases/phase-29.json
+index f5fe95c..7042cfd 100644
+--- a/docs/reports/data/phases/phase-29.json
++++ b/docs/reports/data/phases/phase-29.json
+@@ -1,15 +1,15 @@
+ {
+   "phase": "29",
+-  "status": "PASS",
+-  "timestamp": "2026-03-02T14:54:10Z",
++  "status": "FAIL",
++  "timestamp": "2026-03-03T04:17:20Z",
+   "repo": {
+     "owner": "unknown",
+     "name": "unknown",
+     "default_branch": "master"
+   },
+   "git": {
+-    "commit": "92b87f4",
+-    "branch": "feat-baseline-gate-workflow"
++    "commit": "2b50bfe",
++    "branch": "master"
+   },
+   "ci": {
+     "run_id": null,
+@@ -90,10 +90,10 @@
+     {
+       "id": "R09",
+       "name": "Tests",
+-      "status": "PASS",
+-      "critical": 0,
++      "status": "FAIL",
++      "critical": 1,
+       "warnings": 0,
+-      "message": "passed"
++      "message": "failed"
+     },
+     {
+       "id": "R10",
+@@ -114,12 +114,20 @@
+   ],
+   "summary": {
+     "total": 11,
+-    "pass": 10,
+-    "fail": 0,
++    "pass": 9,
++    "fail": 1,
+     "skip": 1,
+-    "critical": 0,
++    "critical": 1,
+     "warnings": 0,
+-    "pass_rate": 90.91
++    "pass_rate": 81.82
+   },
+-  "violations": []
++  "violations": [
++    {
++      "rule": "R09",
++      "severity": "CRITICAL",
++      "file": null,
++      "line": null,
++      "message": "failed"
++    }
++  ]
+ }
+diff --git a/docs/reports/data/rtm.json b/docs/reports/data/rtm.json
+index 736a16d..41f1dc7 100644
+--- a/docs/reports/data/rtm.json
++++ b/docs/reports/data/rtm.json
+@@ -1,5 +1,5 @@
+ {
+-  "generated_at": "2026-03-02T23:54:54Z",
++  "generated_at": "2026-03-03T04:17:15Z",
+   "matrix": [
+     {
+       "phase": "00",
+diff --git a/docs/reports/data/summary.json b/docs/reports/data/summary.json
+index 1c3e6f0..e3e0a76 100644
+--- a/docs/reports/data/summary.json
++++ b/docs/reports/data/summary.json
+@@ -1,14 +1,14 @@
+ {
+-  "generated_at": "2026-03-02T23:55:08Z",
++  "generated_at": "2026-03-03T04:17:21Z",
+   "repo": {
+     "owner": "unknown",
+     "name": "unknown",
+     "default_branch": "master"
+   },
+   "git": {
+-    "branch": "feat-baseline-gate-workflow",
+-    "commit": "638a3f1",
+-    "short": "638a3f1"
++    "branch": "master",
++    "commit": "2b50bfe",
++    "short": "2b50bfe"
+   },
+   "ci": {
+     "run_id": null,
+@@ -17,10 +17,10 @@
+     "run_url": null
+   },
+   "totals": {
+-    "pass": 33,
+-    "fail": 0,
++    "pass": 32,
++    "fail": 1,
+     "pending": 0,
+-    "critical": 0,
++    "critical": 1,
+     "warnings": 0
+   },
+   "phases": [
+@@ -612,13 +612,13 @@
+     },
+     {
+       "phase": "29",
+-      "status": "PASS",
+-      "pass_rate": 90.91,
+-      "critical": 0,
++      "status": "FAIL",
++      "pass_rate": 81.82,
++      "critical": 1,
+       "warnings": 0,
+-      "timestamp": "2026-03-02T14:54:10Z",
+-      "git_commit": "92b87f4",
+-      "r09_status": "PASS",
++      "timestamp": "2026-03-03T04:17:20Z",
++      "git_commit": "2b50bfe",
++      "r09_status": "FAIL",
+       "gate_status": {
+         "R01": "PASS",
+         "R02": "PASS",
+@@ -628,7 +628,7 @@
+         "R06": "PASS",
+         "R07": "PASS",
+         "R08": "PASS",
+-        "R09": "PASS",
++        "R09": "FAIL",
+         "R10": "SKIP",
+         "R11": "PASS"
+       }
+@@ -700,6 +700,39 @@
+     }
+   ],
+   "history": [
++    {
++      "timestamp": "2026-03-03T04:17:20Z",
++      "phase": "29",
++      "status": "FAIL",
++      "pass_rate": 81.82,
++      "git_commit": "2b50bfe",
++      "critical": 1,
++      "warnings": 0,
++      "run_id": null,
++      "run_url": null
++    },
++    {
++      "timestamp": "2026-03-03T04:16:10Z",
++      "phase": "29",
++      "status": "FAIL",
++      "pass_rate": 81.82,
++      "git_commit": "2b50bfe",
++      "critical": 1,
++      "warnings": 0,
++      "run_id": null,
++      "run_url": null
++    },
++    {
++      "timestamp": "2026-03-03T04:13:27Z",
++      "phase": "29",
++      "status": "FAIL",
++      "pass_rate": 81.82,
++      "git_commit": "2b50bfe",
++      "critical": 1,
++      "warnings": 0,
++      "run_id": null,
++      "run_url": null
++    },
+     {
+       "timestamp": "2026-03-02T23:55:07Z",
+       "phase": "53",
+@@ -1216,39 +1249,6 @@
+       "warnings": 0,
+       "run_id": null,
+       "run_url": null
+-    },
+-    {
+-      "timestamp": "2026-03-02T18:17:29Z",
+-      "phase": "47",
+-      "status": "FAIL",
+-      "pass_rate": 54.55,
+-      "git_commit": "3f6316a",
+-      "critical": 4,
+-      "warnings": 0,
+-      "run_id": null,
+-      "run_url": null
+-    },
+-    {
+-      "timestamp": "2026-03-02T18:15:41Z",
+-      "phase": "32",
+-      "status": "FAIL",
+-      "pass_rate": 63.64,
+-      "git_commit": "3f6316a",
+-      "critical": 3,
+-      "warnings": 0,
+-      "run_id": null,
+-      "run_url": null
+-    },
+-    {
+-      "timestamp": "2026-03-02T18:11:40Z",
+-      "phase": "32",
+-      "status": "FAIL",
+-      "pass_rate": 63.64,
+-      "git_commit": "b54e089",
+-      "critical": 3,
+-      "warnings": 0,
+-      "run_id": null,
+-      "run_url": null
+     }
+   ]
+ }
+diff --git a/docs/reports/data/tests.json b/docs/reports/data/tests.json
+index cae62c9..9833c27 100644
+--- a/docs/reports/data/tests.json
++++ b/docs/reports/data/tests.json
+@@ -1,5 +1,5 @@
+ {
+-  "generated_at": "2026-03-02T23:54:56Z",
++  "generated_at": "2026-03-03T04:17:22Z",
+   "ci": {
+     "run_id": null,
+     "run_attempt": 1,
+@@ -7,10 +7,19 @@
+     "run_url": null
+   },
+   "summary": {
+-    "total": 0,
++    "total": 1,
+     "pass": 0,
+-    "fail": 0,
++    "fail": 1,
+     "skip": 0
+   },
+-  "tests": []
++  "tests": [
++    {
++      "phase": null,
++      "suite": "com.ljwx.platform.contract.protocol.ProtocolContractSecurityTest",
++      "testcase": "",
++      "status": "ERROR",
++      "time_seconds": 3.208,
++      "message": "Failed to load ApplicationContext for [WebMergedContextConfiguration@3891b430 testClass = com.ljwx.platform.contract.protocol.ProtocolContractSecurityTest, locations = [], classes = [com.ljwx.platform.app.LjwxPlatformApplication], contextInitializerClasses = [], activeProfiles = [\"test\"], propertySourceDescriptors = [], propertySourceProperties = [\"org.springframework.boot.test.context.SpringBootTestContextBootstrapper=true\", \"server.port=0\"], contextCustomizers = [[ImportsContextCustomizer@769f6023 key = [org.springframework.boot.test.autoconfigure.web.servlet.MockMvcWebDriverAutoConfiguration, org.springframework.boot.autoconfigure.security.oauth2.client.servlet.OAuth2ClientWebSecurityAutoConfiguration, org.springframework.boot.test.autoconfigure.web.servlet.MockMvcAutoConfiguration, org.springframework.boot.autoconfigure.security.saml2.Saml2RelyingPartyAutoConfiguration, org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration, org.springframework.boot.autoconfigure.security.servlet.SecurityFilterAutoConfiguration, org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration, org.springframework.boot.autoconfigure.security.oauth2.resource.servlet.OAuth2ResourceServerAutoConfiguration, org.springframework.boot.test.autoconfigure.web.servlet.MockMvcSecurityConfiguration, org.springframework.boot.test.autoconfigure.web.servlet.MockMvcWebClientAutoConfiguration, org.springframework.boot.autoconfigure.security.oauth2.client.OAuth2ClientAutoConfiguration, org.springframework.boot.test.autoconfigure.web.reactive.WebTestClientAutoConfiguration]], org.springframework.boot.test.context.filter.ExcludeFilterContextCustomizer@35beb15e, org.springframework.boot.test.json.DuplicateJsonObjectContextCustomizerFactory$DuplicateJsonObjectContextCustomizer@191ae03f, org.springframework.boot.test.mock.mockito.MockitoContextCustomizer@0, org.springframework.boot.test.web.client.TestRestTemplateContextCustomizer@62679465, org.springframework.boot.test.web.reactor.netty.DisableReactorResourceFactoryGlobalResourcesContextCustomizerFactory$DisableReactorResourceFactoryGlobalResourcesContextCustomizerCustomizer@5f59185e, org.springframework.boot.test.autoconfigure.OnFailureConditionReportContextCustomizerFactory$OnFailureConditionReportContextCustomizer@51e4ccb3, org.springframework.boot.test.autoconfigure.actuate.observability.ObservabilityContextCustomizerFactory$DisableObservabilityContextCustomizer@1f, org.springframework.boot.test.autoconfigure.properties.PropertyMappingContextCustomizer@4b3fa0b3, org.springframework.boot.test.autoconfigure.web.servlet.WebDriverContextCustomizer@40dd3977, org.springframework.test.context.support.DynamicPropertiesContextCustomizer@50fc4786, org.springframework.boot.test.context.SpringBootTestAnnotation@843e3845], resourceBasePath = \"src/main/webapp\", contextLoader = org.springframework.boot.test.context.SpringBootContextLoader, parent = null]"
++    }
++  ]
+ }
+diff --git a/scripts/run-all.sh b/scripts/run-all.sh
+index 58b23bf..d8f80ab 100755
+--- a/scripts/run-all.sh
++++ b/scripts/run-all.sh
+@@ -131,6 +131,61 @@ is_completed() {
+   ' "$MANIFEST" | grep -qE "(Status|Gate): PASSED"
+ }
+ 
++phase_has_manifest_entry() {
++  local phase="$1"
++  [[ -f "$MANIFEST" ]] || return 1
++  grep -q "^## PHASE $phase$" "$MANIFEST"
++}
++
++mark_phase_passed() {
++  local phase="$1"
++  local padded phase_brief title marker
++  padded="$(printf '%02d' "$phase")"
++  phase_brief="spec/phase/phase-${padded}.md"
++  marker="## PHASE $phase"
++  title="$(grep -m1 '^title:' "$phase_brief" 2>/dev/null | sed 's/title:[[:space:]]*//' | tr -d '"' || true)"
++  [[ -z "$title" ]] && title="Phase $phase"
++
++  if phase_has_manifest_entry "$phase"; then
++    awk -v marker="$marker" '
++      BEGIN { in_phase=0; status_set=0 }
++      $0 == marker { in_phase=1; print; next }
++      in_phase && /^## PHASE / {
++        if (!status_set) {
++          print "Status: PASSED"
++        }
++        in_phase=0
++      }
++      in_phase && /^(Status|Gate): / {
++        print "Status: PASSED"
++        status_set=1
++        next
++      }
++      { print }
++      END {
++        if (in_phase && !status_set) {
++          print "Status: PASSED"
++        }
++      }
++    ' "$MANIFEST" > "${MANIFEST}.tmp" && mv "${MANIFEST}.tmp" "$MANIFEST"
++    echo "[ClosedLoop][Local] Manifest updated: ${marker} -> PASSED"
++    return 0
++  fi
++
++  {
++    echo ""
++    echo "$marker"
++    echo "Title: $title"
++    echo "Completed: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
++    echo "Files:"
++    awk '/^scope:/,/^---$/' "$phase_brief" \
++      | sed -n 's/^[[:space:]]*-[[:space:]]*//p' \
++      | sed 's/^/  - /'
++    echo "Status: PASSED"
++  } >> "$MANIFEST"
++  echo "[ClosedLoop][Local] Manifest appended: ${marker} -> PASSED"
++}
++
+ phase_exists() {
+   local phase="$1"
+   local padded
+@@ -248,12 +303,71 @@ execute_phase_with_closed_loop() {
+   padded="$(printf '%02d' "$phase")"
+   local phase_artifact_dir="${RUN_ARTIFACT_DIR}/phase-${padded}"
+   local attempt=1
++  local resume_mode=false
++
++  if phase_has_manifest_entry "$phase" || [[ -f "logs/phase-${padded}/run.log" ]]; then
++    resume_mode=true
++    echo "[ClosedLoop][Local] Resume mode enabled for phase $phase (existing outputs detected)."
++  fi
+ 
+   while (( attempt <= MAX_REPAIR_ATTEMPTS + 1 )); do
+     local attempt_dir="${phase_artifact_dir}/local-attempt-${attempt}"
+     mkdir -p "$attempt_dir"
+     echo "[ClosedLoop][Local] Phase $phase attempt $attempt/$((MAX_REPAIR_ATTEMPTS + 1))"
+ 
++    if $resume_mode; then
++      if run_structured_check \
++        "phase-${padded}-precheck-gate" \
++        "$padded" \
++        "$attempt" \
++        "local" \
++        "$attempt_dir" \
++        bash scripts/gates/gate-all.sh "$phase"; then
++        echo "[ClosedLoop][Local] Gate already PASS on existing code, skip regeneration."
++        mark_phase_passed "$phase"
++        return 0
++      fi
++
++      if ! $ENABLE_AUTO_REPAIR || (( attempt > MAX_REPAIR_ATTEMPTS )); then
++        echo "[ClosedLoop][Local] Resume mode: 自动修复未启用或已达到最大尝试次数，跳过重新生成。"
++        return 1
++      fi
++
++      echo "[ClosedLoop][Local] Resume mode: Collect -> Diagnose -> Repair (no regeneration)"
++      local resume_repair_rc=0
++      if ! collect_diagnose_repair "$padded" "$attempt" "$attempt_dir"; then
++        resume_repair_rc=$?
++      fi
++
++      local resume_applied=0
++      if [[ -f "${attempt_dir}/repair.json" ]]; then
++        resume_applied="$(jq -r '.summary.applied // 0' "${attempt_dir}/repair.json" 2>/dev/null || echo 0)"
++      fi
++
++      if [[ "$resume_repair_rc" -eq 11 || "$resume_applied" -eq 0 ]]; then
++        echo "[ClosedLoop][Local] Resume mode: 没有匹配的 repair recipe，停止自动修复。"
++        return 1
++      fi
++      if [[ "$resume_repair_rc" -ne 0 && "$resume_repair_rc" -ne 11 ]]; then
++        echo "[ClosedLoop][Local] Resume mode: repair recipe 执行失败（rc=${resume_repair_rc}）。"
++      fi
++
++      if run_structured_check \
++        "phase-${padded}-gate-verify" \
++        "$padded" \
++        "$attempt" \
++        "local" \
++        "$attempt_dir" \
++        bash scripts/gates/gate-all.sh "$phase"; then
++        echo "[ClosedLoop][Local] Resume mode: repair verified by gate, skip regeneration."
++        mark_phase_passed "$phase"
++        return 0
++      fi
++
++      attempt=$((attempt + 1))
++      continue
++    fi
++
+     if run_structured_check \
+       "phase-${padded}-execute" \
+       "$padded" \
+@@ -292,13 +406,17 @@ execute_phase_with_closed_loop() {
+     fi
+ 
+     # 修复后先做一次相关 gate 复检，保留证据链。
+-    run_structured_check \
++    if run_structured_check \
+       "phase-${padded}-gate-verify" \
+       "$padded" \
+       "$attempt" \
+       "local" \
+       "$attempt_dir" \
+-      bash scripts/gates/gate-all.sh "$phase" || true
++      bash scripts/gates/gate-all.sh "$phase"; then
++      echo "[ClosedLoop][Local] Repair verified by gate, skip regeneration."
++      mark_phase_passed "$phase"
++      return 0
++    fi
+ 
+     attempt=$((attempt + 1))
+   done

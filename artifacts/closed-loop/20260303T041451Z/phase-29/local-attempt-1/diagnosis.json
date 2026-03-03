@@ -1,0 +1,65 @@
+{
+  "phase": "29",
+  "attempt": 1,
+  "generatedAt": "2026-03-03T04:17:22Z",
+  "input": {
+    "collect": "artifacts/closed-loop/20260303T041451Z/phase-29/local-attempt-1/collect.json"
+  },
+  "summary": {
+    "failedChecks": 1,
+    "categoryCounts": {
+      "A": 0,
+      "B": 1,
+      "C": 0,
+      "D": 0
+    },
+    "repairabilityCounts": {
+      "auto": 1,
+      "suggest": 0,
+      "mitigate": 0,
+      "manual": 0
+    }
+  },
+  "diagnoses": [
+    {
+      "check": "phase-29-precheck-gate",
+      "source": "local",
+      "category": "B",
+      "repairability": "auto",
+      "confidence": 0.78,
+      "reason": "Semi-deterministic test/schema/migration class failure.",
+      "signals": [
+        "flyway"
+      ],
+      "recommendedRecipes": [
+        "flyway"
+      ],
+      "evidence": {
+        "summary": "(node:7098) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.",
+        "errors": [
+          "(node:7098) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.",
+          "  gate-rules: ERRORS=0  WARNINGS=18",
+          "  WARNING   new migration detected (append to lock after review): ljwx-platform-app/src/main/resources/db/migration/V031__create_sys_frontend_error.sql",
+          "  gate-flyway-governance: ERRORS=0 WARNINGS=21",
+          "2026-03-03 12:15:26.767 [main] ERROR o.s.b.w.e.tomcat.TomcatStarter [traceId=] [tenantId=] [userId=] - Error starting Tomcat context. Exception: org.springframework.beans.factory.UnsatisfiedDependencyException. Message: Error creating bean with name 'tenantDomainFilter' defined in URL [jar:nested:/Users/brunogao/work/codes/ljwx/ljwx-platform/ljwx-platform-app/target/ljwx-platform-app-1.0.0-SNAPSHOT.jar/!BOOT-INF/classes/!/com/ljwx/platform/app/filter/TenantDomainFilter.class]: Unsatisfied dependency expressed through constructor parameter 0: Error creating bean with name 'tenantDomainAppService' defined in URL [jar:nested:/Users/brunogao/work/codes/ljwx/ljwx-platform/ljwx-platform-app/target/ljwx-platform-app-1.0.0-SNAPSHOT.jar/!BOOT-INF/classes/!/com/ljwx/platform/app/appservice/TenantDomainAppService.class]: Unsatisfied dependency expressed through constructor parameter 0: Error creating bean with name 'tenantDomainMapper' defined in URL [jar:nested:/Users/brunogao/work/codes/ljwx/ljwx-platform/ljwx-platform-app/target/ljwx-platform-app-1.0.0-SNAPSHOT.jar/!BOOT-INF/classes/!/com/ljwx/platform/app/infra/mapper/TenantDomainMapper.class]: Unsatisfied dependency expressed through bean property 'sqlSessionTemplate': Error creating bean with name 'flywayInitializer' defined in class path resource [org/springframework/boot/autoconfigure/flyway/FlywayAutoConfiguration$FlywayConfiguration.class]: Unable to obtain connection from database: 尝试连线已失败。",
+          "Error Code : 0",
+          "2026-03-03 12:15:26.786 [main] WARN  o.s.b.w.s.c.AnnotationConfigServletWebServerApplicationContext [traceId=] [tenantId=] [userId=] - Exception encountered during context initialization - cancelling refresh attempt: org.springframework.context.ApplicationContextException: Unable to start web server",
+          "Error starting ApplicationContext. To display the condition evaluation report re-run your application with 'debug' enabled.",
+          "2026-03-03 12:15:26.813 [main] ERROR o.s.boot.SpringApplication [traceId=] [tenantId=] [userId=] - Application run failed",
+          "org.springframework.context.ApplicationContextException: Unable to start web server",
+          "Caused by: org.springframework.boot.web.server.WebServerException: Unable to start embedded Tomcat",
+          "Caused by: org.springframework.beans.factory.UnsatisfiedDependencyException: Error creating bean with name 'tenantDomainFilter' defined in URL [jar:nested:/Users/brunogao/work/codes/ljwx/ljwx-platform/ljwx-platform-app/target/ljwx-platform-app-1.0.0-SNAPSHOT.jar/!BOOT-INF/classes/!/com/ljwx/platform/app/filter/TenantDomainFilter.class]: Unsatisfied dependency expressed through constructor parameter 0: Error creating bean with name 'tenantDomainAppService' defined in URL [jar:nested:/Users/brunogao/work/codes/ljwx/ljwx-platform/ljwx-platform-app/target/ljwx-platform-app-1.0.0-SNAPSHOT.jar/!BOOT-INF/classes/!/com/ljwx/platform/app/appservice/TenantDomainAppService.class]: Unsatisfied dependency expressed through constructor parameter 0: Error creating bean with name 'tenantDomainMapper' defined in URL [jar:nested:/Users/brunogao/work/codes/ljwx/ljwx-platform/ljwx-platform-app/target/ljwx-platform-app-1.0.0-SNAPSHOT.jar/!BOOT-INF/classes/!/com/ljwx/platform/app/infra/mapper/TenantDomainMapper.class]: Unsatisfied dependency expressed through bean property 'sqlSessionTemplate': Error creating bean with name 'flywayInitializer' defined in class path resource [org/springframework/boot/autoconfigure/flyway/FlywayAutoConfiguration$FlywayConfiguration.class]: Unable to obtain connection from database: 尝试连线已失败。",
+          "Error Code : 0",
+          "Caused by: org.springframework.beans.factory.UnsatisfiedDependencyException: Error creating bean with name 'tenantDomainAppService' defined in URL [jar:nested:/Users/brunogao/work/codes/ljwx/ljwx-platform/ljwx-platform-app/target/ljwx-platform-app-1.0.0-SNAPSHOT.jar/!BOOT-INF/classes/!/com/ljwx/platform/app/appservice/TenantDomainAppService.class]: Unsatisfied dependency expressed through constructor parameter 0: Error creating bean with name 'tenantDomainMapper' defined in URL [jar:nested:/Users/brunogao/work/codes/ljwx/ljwx-platform/ljwx-platform-app/target/ljwx-platform-app-1.0.0-SNAPSHOT.jar/!BOOT-INF/classes/!/com/ljwx/platform/app/infra/mapper/TenantDomainMapper.class]: Unsatisfied dependency expressed through bean property 'sqlSessionTemplate': Error creating bean with name 'flywayInitializer' defined in class path resource [org/springframework/boot/autoconfigure/flyway/FlywayAutoConfiguration$FlywayConfiguration.class]: Unable to obtain connection from database: 尝试连线已失败。",
+          "Error Code : 0",
+          "Caused by: org.springframework.beans.factory.UnsatisfiedDependencyException: Error creating bean with name 'tenantDomainMapper' defined in URL [jar:nested:/Users/brunogao/work/codes/ljwx/ljwx-platform/ljwx-platform-app/target/ljwx-platform-app-1.0.0-SNAPSHOT.jar/!BOOT-INF/classes/!/com/ljwx/platform/app/infra/mapper/TenantDomainMapper.class]: Unsatisfied dependency expressed through bean property 'sqlSessionTemplate': Error creating bean with name 'flywayInitializer' defined in class path resource [org/springframework/boot/autoconfigure/flyway/FlywayAutoConfiguration$FlywayConfiguration.class]: Unable to obtain connection from database: 尝试连线已失败。",
+          "Error Code : 0",
+          "Caused by: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'flywayInitializer' defined in class path resource [org/springframework/boot/autoconfigure/flyway/FlywayAutoConfiguration$FlywayConfiguration.class]: Unable to obtain connection from database: 尝试连线已失败。",
+          "Error Code : 0",
+          "Caused by: org.flywaydb.core.internal.exception.FlywaySqlException: Unable to obtain connection from database: 尝试连线已失败。"
+        ],
+        "logPath": "artifacts/closed-loop/20260303T041451Z/phase-29/local-attempt-1/logs/phase-29-precheck-gate.log"
+      }
+    }
+  ]
+}

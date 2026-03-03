@@ -51,8 +51,10 @@ scope:
 **解决方案**：实现 SQL 模板驱动的报表引擎，支持：
 1. **报表定义管理**：在线配置 SQL 查询模板、列定义、过滤器
 2. **安全参数化执行**：所有 SQL 使用 `#{}` 占位符，后端安全替换，防止 SQL 注入
-3. **数据源抽象**：支持 SQL 类型（直接查询 DB）和 API 类型（调用内部 API）
-4. **权限隔离**：TenantLineInterceptor 自动注入 tenant_id 过滤，报表结果严格隔离
+3. **租户隔离**：执行时自动追加 `AND tenant_id = #{tenantId}` 条件，确保数据隔离
+4. **权限隔离**：报表定义和执行结果严格按租户隔离
+
+> **技术约束**：MVP 仅支持 PostgreSQL 数据库，SQL 模板语法遵循 PostgreSQL 标准。
 
 ## 数据库契约
 
@@ -64,7 +66,7 @@ scope:
 | tenant_id | BIGINT | NOT NULL, DEFAULT 0, INDEX | 租户 ID |
 | report_name | VARCHAR(100) | NOT NULL | 报表名称 |
 | report_key | VARCHAR(100) | NOT NULL | 报表唯一标识 |
-| data_source_type | VARCHAR(20) | NOT NULL, DEFAULT 'SQL' | 数据源类型：SQL / API |
+| data_source_type | VARCHAR(20) | NOT NULL, DEFAULT 'SQL' | 数据源类型（MVP 仅支持 SQL，目标数据库为 PostgreSQL） |
 | query_template | TEXT | NOT NULL | SQL 查询模板（使用 #{paramName} 占位符） |
 | column_def | JSONB | NOT NULL | 列定义（列名、标题、类型、宽度、格式化） |
 | filter_def | JSONB | NULL | 过滤器定义（参数名、类型、标签、是否必填） |
@@ -108,7 +110,7 @@ scope:
 |------|------|------|------|
 | reportName | String | @NotBlank, @Size(max=100) | 报表名称 |
 | reportKey | String | @NotBlank, @Size(max=100), @Pattern(regexp="^[a-z][a-z0-9_]*$") | 报表唯一标识 |
-| dataSourceType | String | @NotBlank, @Pattern(regexp="SQL\|API") | 数据源类型 |
+| dataSourceType | String | @NotBlank, @Pattern(regexp="SQL") | 数据源类型（MVP 仅支持 SQL，目标数据库为 PostgreSQL） |
 | queryTemplate | String | @NotBlank | SQL 模板（仅含 #{} 参数化占位符） |
 | columnDef | List | @NotNull, @Size(min=1) | 列定义列表 |
 | filterDef | List | — | 过滤器定义列表 |
@@ -120,9 +122,11 @@ scope:
 
 | 字段 | 类型 | 校验 | 说明 |
 |------|------|------|------|
-| params | Map\<String, Object\> | — | 运行时参数（对应 filter_def 中的参数） |
+| params | Map\<String, Object\> | @Size(max=20) | 运行时参数（对应 filter_def 中的参数，最多 20 个参数） |
 | pageNum | Integer | @Min(1) | 分页页码 |
 | pageSize | Integer | @Min(1), @Max(1000) | 分页大小（最大 1000 行） |
+
+> **参数校验**：Service 层需验证 params 中的 key 必须在 filter_def 中定义，防止 SQL 注入。
 
 ### ReportDefVO
 
@@ -147,7 +151,7 @@ scope:
 | 字段 | 类型 | 校验 | 说明 |
 |------|------|------|------|
 | reportName | String | @NotBlank, @Size(max=100) | 报表名称 |
-| dataSourceType | String | @NotBlank, @Pattern(regexp="SQL\|API") | 数据源类型 |
+| dataSourceType | String | @NotBlank, @Pattern(regexp="SQL") | 数据源类型（MVP 仅支持 SQL，目标数据库为 PostgreSQL） |
 | queryTemplate | String | @NotBlank | SQL 模板（仅含 #{} 参数化占位符） |
 | columnDef | List | @NotNull, @Size(min=1) | 列定义列表 |
 | filterDef | List | — | 过滤器定义列表 |
@@ -165,6 +169,7 @@ scope:
 | total | Long | 总行数 |
 | pageNum | Integer | 当前页 |
 | pageSize | Integer | 每页大小 |
+| warnings | List\<String\> | 警告信息列表（如 pageSize 截断、查询耗时过长等） |
 
 ## 核心组件契约
 
@@ -203,6 +208,10 @@ public class RptReportExecuteService {
      * 2. 禁止包含 INSERT/UPDATE/DELETE/DROP/TRUNCATE 关键字（正则校验）
      * 3. 分页大小不超过 1000 行
      * 4. 执行超时 30s
+     * 5. 租户隔离：执行前在 SQL 末尾自动追加 "AND tenant_id = #{tenantId}"（从 SecurityContext 获取）
+     *    - 若 SQL 已含 WHERE，追加 "AND tenant_id = #{tenantId}"
+     *    - 若 SQL 无 WHERE，追加 "WHERE tenant_id = #{tenantId}"
+     *    - 禁止用户在 query_template 中手动写 tenant_id 条件（防止绕过）
      */
     public ReportResultVO execute(Long reportId, ReportExecuteDTO dto);
 }
@@ -250,26 +259,36 @@ public class RptReportController {
 - **BL-55-01**：创建报表时，`report_key` 在同一租户内不可重复 → 查重后插入 → 重复时返回 409 Conflict
 - **BL-55-02**：报表 SQL 模板不得包含写操作关键字（INSERT/UPDATE/DELETE/DROP/TRUNCATE/ALTER）→ 服务层正则校验 → 发现违规返回 400
 - **BL-55-03**：报表 SQL 模板必须使用 `#{}` 参数化占位符，禁止 `${}` 直接拼接 → 服务层校验 → 发现 `${}` 返回 400
-- **BL-55-04**：执行报表查询时，`pageSize` 最大为 1000，超出时截断 → 返回 warning 字段
-- **BL-55-05**：报表执行时，TenantLineInterceptor 自动注入 tenant_id 条件，确保跨租户数据隔离
+- **BL-55-04**：执行报表查询时，`pageSize` 最大为 1000，超出时截断 → 返回 warnings 字段（List<String>）包含 "pageSize 已截断为 1000"
+- **BL-55-05**：报表执行时，RptReportExecuteService 在 SQL 末尾自动追加 `AND tenant_id = #{tenantId}`（从 SecurityContext 获取），确保跨租户数据隔离 → 禁止用户在 query_template 中手动写 tenant_id 条件（创建时校验拒绝）
 - **BL-55-06**：报表查询超时（30s）→ 中断查询 → 返回 504 带 trace_id
+- **BL-55-07**：SQL 模板语法必须符合 PostgreSQL 标准 → 服务层不做语法校验（由 PostgreSQL 执行时报错）→ 执行失败时返回 500 带错误信息
 
 ## 安全设计
 
 ```java
 // SQL 安全校验（在 RptReportDefAppService.create/update 中调用）
 private void validateQueryTemplate(String queryTemplate) {
-    // 禁止写操作关键字（大小写不敏感）
+    // 禁止写操作关键字（大小写不敏感，使用词边界匹配）
     String upper = queryTemplate.toUpperCase();
-    List<String> forbidden = List.of("INSERT", "UPDATE", "DELETE", "DROP", "TRUNCATE", "ALTER", "CREATE");
+    List<String> forbidden = List.of("INSERT", "UPDATE", "DELETE", "DROP", "TRUNCATE", "ALTER", "CREATE", "GRANT", "REVOKE");
     for (String keyword : forbidden) {
-        if (upper.contains(keyword)) {
+        // 使用正则词边界匹配，防止误判（如 "INSERTED_AT" 不应触发 "INSERT"）
+        if (Pattern.compile("\\b" + keyword + "\\b").matcher(upper).find()) {
             throw new BusinessException(400, "SQL 模板禁止包含写操作关键字: " + keyword);
         }
     }
     // 禁止 ${} 直接拼接
     if (queryTemplate.contains("${")) {
         throw new BusinessException(400, "SQL 模板禁止使用 ${} 占位符，请使用 #{}");
+    }
+    // 禁止多语句（分号分隔）
+    if (queryTemplate.trim().contains(";") && !queryTemplate.trim().endsWith(";")) {
+        throw new BusinessException(400, "SQL 模板禁止包含多条语句");
+    }
+    // 禁止注释（防止绕过检测）
+    if (queryTemplate.contains("--") || queryTemplate.contains("/*")) {
+        throw new BusinessException(400, "SQL 模板禁止包含注释");
     }
 }
 ```

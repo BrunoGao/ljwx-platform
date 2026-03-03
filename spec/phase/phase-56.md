@@ -144,8 +144,8 @@ scope:
 
 | 字段 | 类型 | 校验 | 说明 |
 |------|------|------|------|
-| sessionId | String | @Size(max=64) | 会话 ID（空则生成新会话） |
-| message | String | @NotBlank, @Size(max=2000) | 用户提问 |
+| sessionId | String | @Size(max=64), @Pattern(regexp="[a-zA-Z0-9_-]+") | 会话 ID（空则生成新会话，仅允许字母数字下划线短横线） |
+| message | String | @NotBlank, @Size(min=1, max=2000) | 用户提问（1-2000 字符） |
 
 **禁止字段**：`id`、`tenantId`、`userId`、`createdBy`、`createdTime`、`updatedBy`、`updatedTime`、`deleted`、`version`
 
@@ -182,9 +182,9 @@ scope:
 | 字段 | 类型 | 校验 | 说明 |
 |------|------|------|------|
 | provider | String | @NotBlank, @Pattern(regexp="OPENAI\|TONGYI\|DEEPSEEK") | 提供商 |
-| modelName | String | @NotBlank, @Size(max=100) | 模型名称 |
-| apiKey | String | @NotBlank | API Key（明文，后端加密存储） |
-| baseUrl | String | @Size(max=500) | 自定义 Base URL |
+| modelName | String | @NotBlank, @Size(max=100), @Pattern(regexp="[a-zA-Z0-9._-]+") | 模型名称（仅允许字母数字点下划线短横线） |
+| apiKey | String | @NotBlank, @Size(min=20, max=500) | API Key（明文，后端加密存储，20-500 字符） |
+| baseUrl | String | @Size(max=500), @Pattern(regexp="https?://.*") | 自定义 Base URL（必须以 http:// 或 https:// 开头） |
 | temperature | BigDecimal | @DecimalMin("0.0"), @DecimalMax("1.0") | 温度 |
 | maxTokens | Integer | @Min(256), @Max(8192) | 最大 Token 数 |
 
@@ -297,7 +297,7 @@ public class AiConfigController {
 > 格式：BL-56-{序号}：[条件] → [动作] → [结果/异常]
 
 - **BL-56-01**：AI 对话时，Agent 仅持有只读权限（通过 SecurityContext 模拟只读角色）→ 尝试调用写操作 Tool → 返回 403
-- **BL-56-02**：每次 AI 对话必须写入 sys_ai_conversation_log（包含 tool_calls JSONB）→ 写日志失败不影响对话响应（异步写入）
+- **BL-56-02**：每次 AI 对话必须写入 sys_ai_conversation_log（包含 tool_calls JSONB）→ 同步写入，写日志失败时记录错误日志但不阻断对话响应（降级策略）
 - **BL-56-03**：API Key 必须加密存储（AES），查询时 `apiKeyMasked` 脱敏显示 → 原始 Key 不在任何 VO 中暴露
 - **BL-56-04**：AI 配置未启用时调用 /chat → 返回 503 "AI 功能未启用"
 - **BL-56-05**：sessionId 为空时自动生成 UUID → 返回 AiChatVO 中的 sessionId 供客户端续用
@@ -305,28 +305,38 @@ public class AiConfigController {
 
 ## 模型切换配置
 
-通过 `sys_config` 表存储，`AiConfigAppService` 动态加载：
+**配置源**：`sys_ai_config` 表（单一真源，SSOT）
 
-| 配置项 | 说明 |
-|--------|------|
-| ai.provider | 模型提供商（OPENAI/TONGYI/DEEPSEEK） |
-| ai.model.name | 模型名称（如 gpt-4o, qwen-max, deepseek-chat） |
-| ai.api.key.encrypted | 加密 API Key |
-| ai.base.url | 自定义 Base URL（可选） |
+`AiConfigAppService` 从 `sys_ai_config` 表动态加载配置，支持租户级覆盖：
+- `tenant_id = 0`：全局默认配置（平台级）
+- `tenant_id != 0`：租户自定义配置（优先级高于全局）
 
-Spring AI 配置示例：
+Spring AI 通过 `AiConfigAppService` 动态构建 ChatModel 实例：
 
-```yaml
-spring:
-  ai:
-    openai:
-      api-key: ${AI_API_KEY}
-      base-url: ${AI_BASE_URL:https://api.openai.com}
-      chat:
-        options:
-          model: ${AI_MODEL:gpt-4o}
-          temperature: 0.7
+```java
+@Service
+public class AiConfigAppService {
+    public ChatModel buildChatModel() {
+        AiConfig config = getActiveConfig(); // 从 sys_ai_config 表查询
+        return switch (config.getProvider()) {
+            case "OPENAI" -> new OpenAiChatModel(
+                OpenAiApi.builder()
+                    .apiKey(decrypt(config.getApiKeyEncrypted()))
+                    .baseUrl(config.getBaseUrl())
+                    .build(),
+                OpenAiChatOptions.builder()
+                    .model(config.getModelName())
+                    .temperature(config.getTemperature().doubleValue())
+                    .maxTokens(config.getMaxTokens())
+                    .build()
+            );
+            // ... 其他提供商
+        };
+    }
+}
 ```
+
+**禁止**：不使用 `sys_config` 表或环境变量作为配置源（避免多源冲突）。
 
 ## 测试用例（摘要）
 

@@ -124,7 +124,7 @@ scope:
 |------|------|------|------|
 | id | BIGINT | PK, NOT NULL | 主键（雪花 ID） |
 | tenant_id | BIGINT | NOT NULL, DEFAULT 0, INDEX | 租户 ID |
-| entity_type | VARCHAR(50) | NOT NULL | 实体类型（USER/DEPT/...） |
+| entity_type | VARCHAR(50) | NOT NULL | 实体类型（USER/DEPT/...，大写枚举） |
 | field_key | VARCHAR(100) | NOT NULL | 字段 Key（英文） |
 | field_label | VARCHAR(100) | NOT NULL | 字段显示名称 |
 | field_type | VARCHAR(50) | NOT NULL | 字段类型（TEXT/NUMBER/DATE/SELECT/...） |
@@ -191,14 +191,14 @@ scope:
 |------|------|------|------|
 | formDefId | Long | @NotNull | 表单定义 ID（必填，防止全表扫描） |
 | creatorId | Long | — | 填写人 ID（可选过滤） |
-| startTime | LocalDateTime | — | 创建时间开始（可选） |
-| endTime | LocalDateTime | — | 创建时间结束（可选） |
+| startTime | LocalDateTime | — | 创建时间开始（可选，需与 endTime 同时提供） |
+| endTime | LocalDateTime | — | 创建时间结束（可选，需与 startTime 同时提供，且 endTime >= startTime，最大跨度 90 天） |
 | pageNum | Integer | @Min(1) | 分页页码 |
 | pageSize | Integer | @Min(1), @Max(100) | 分页大小 |
 
 **禁止字段**：`tenantId`（由 TenantLineInterceptor 自动注入）
 
-> `formDefId` 为必填，保证查询走 `idx_formdata_tenant_formdef` 索引，符合 BL-54-06（禁止全表 JSONB 扫描）。
+> `formDefId` 为必填，保证查询走 `idx_formdata_tenant_formdef` 索引，符合 BL-54-06（禁止全表 JSONB 扫描）。日期区间校验在 Service 层执行。
 
 ### FormDefCreateDTO
 
@@ -243,7 +243,7 @@ scope:
 
 | 字段 | 类型 | 校验 | 说明 |
 |------|------|------|------|
-| entityType | String | @NotBlank, @Size(max=50) | 实体类型（如 user/dept） |
+| entityType | String | @NotBlank, @Size(max=50), @Pattern(regexp="USER|DEPT") | 实体类型（大写枚举：USER/DEPT） |
 | fieldKey | String | @NotBlank, @Size(max=100), @Pattern(regexp="^[a-z][a-z0-9_]*$") | 字段唯一标识（小写字母+数字+下划线） |
 | fieldLabel | String | @NotBlank, @Size(max=100) | 显示名称 |
 | fieldType | String | @NotBlank, @Pattern(regexp="TEXT\|NUMBER\|DATE\|SELECT\|CHECKBOX") | 字段类型 |

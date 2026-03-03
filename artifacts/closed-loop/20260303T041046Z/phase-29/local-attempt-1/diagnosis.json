@@ -1,0 +1,103 @@
+{
+  "phase": "29",
+  "attempt": 1,
+  "generatedAt": "2026-03-03T04:13:31Z",
+  "input": {
+    "collect": "artifacts/closed-loop/20260303T041046Z/phase-29/local-attempt-1/collect.json"
+  },
+  "summary": {
+    "failedChecks": 2,
+    "categoryCounts": {
+      "A": 0,
+      "B": 2,
+      "C": 0,
+      "D": 0
+    },
+    "repairabilityCounts": {
+      "auto": 2,
+      "suggest": 0,
+      "mitigate": 0,
+      "manual": 0
+    }
+  },
+  "diagnoses": [
+    {
+      "check": "phase-29-execute",
+      "source": "local",
+      "category": "B",
+      "repairability": "auto",
+      "confidence": 0.78,
+      "reason": "Semi-deterministic test/schema/migration class failure.",
+      "signals": [
+        "contract"
+      ],
+      "recommendedRecipes": [
+        "contract"
+      ],
+      "evidence": {
+        "summary": "  PASS  H2 scripts/gates/gate-all.sh has strict mode (set -euo pipefail)",
+        "errors": [
+          "  PASS  H2 scripts/gates/gate-all.sh has strict mode (set -euo pipefail)",
+          "  PASS  H2 scripts/gates/gate-manifest.sh has strict mode (set -euo pipefail)",
+          "  PASS  H2 scripts/gates/gate-rules.sh has strict mode (set -euo pipefail)",
+          "  PASS  H2 scripts/gates/gate-compile.sh has strict mode (set -euo pipefail)",
+          "  PASS  H2 scripts/gates/gate-integration.sh has strict mode (set -euo pipefail)",
+          "  PASS  H2 scripts/gates/gate-contract.sh has strict mode (set -euo pipefail)",
+          "  PASS  H2 scripts/gates/gate-nfr.sh has strict mode (set -euo pipefail)",
+          "  PASS  H2 scripts/hooks/pre-edit-guard.sh has strict mode (set -euo pipefail)",
+          "  PASS  H2 scripts/hooks/post-edit-check.sh has strict mode (set -euo pipefail)",
+          "  PASS  H2 scripts/hooks/stop-gate.sh has strict mode (set -euo pipefail)",
+          "  PASS  H2 scripts/review/diff-review.sh has strict mode (set -euo pipefail)",
+          "  PASS  H2 scripts/preflight/preflight-check.sh has strict mode (set -euo pipefail)",
+          "  PASS  H2 scripts/phase-execute.sh has strict mode (set -euo pipefail)",
+          "  PASS  H2 scripts/phase-parallel.sh has strict mode (set -euo pipefail)",
+          "  PASS  H2 scripts/run-all.sh has strict mode (set -euo pipefail)",
+          "║  FAIL: 0                                        ║",
+          "error: Unable to create '/Users/brunogao/work/codes/ljwx/ljwx-platform/.git/index.lock': Operation not permitted",
+          "error: could not write index"
+        ],
+        "logPath": "artifacts/closed-loop/20260303T041046Z/phase-29/local-attempt-1/logs/phase-29-execute.log"
+      }
+    },
+    {
+      "check": "phase-29-precheck-gate",
+      "source": "local",
+      "category": "B",
+      "repairability": "auto",
+      "confidence": 0.78,
+      "reason": "Semi-deterministic test/schema/migration class failure.",
+      "signals": [
+        "flyway"
+      ],
+      "recommendedRecipes": [
+        "flyway"
+      ],
+      "evidence": {
+        "summary": "(node:65573) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.",
+        "errors": [
+          "(node:65573) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.",
+          "  gate-rules: ERRORS=0  WARNINGS=18",
+          "  WARNING   new migration detected (append to lock after review): ljwx-platform-app/src/main/resources/db/migration/V031__create_sys_frontend_error.sql",
+          "  gate-flyway-governance: ERRORS=0 WARNINGS=21",
+          "2026-03-03 12:11:21.806 [main] ERROR o.s.b.w.e.tomcat.TomcatStarter [traceId=] [tenantId=] [userId=] - Error starting Tomcat context. Exception: org.springframework.beans.factory.UnsatisfiedDependencyException. Message: Error creating bean with name 'tenantDomainFilter' defined in URL [jar:nested:/Users/brunogao/work/codes/ljwx/ljwx-platform/ljwx-platform-app/target/ljwx-platform-app-1.0.0-SNAPSHOT.jar/!BOOT-INF/classes/!/com/ljwx/platform/app/filter/TenantDomainFilter.class]: Unsatisfied dependency expressed through constructor parameter 0: Error creating bean with name 'tenantDomainAppService' defined in URL [jar:nested:/Users/brunogao/work/codes/ljwx/ljwx-platform/ljwx-platform-app/target/ljwx-platform-app-1.0.0-SNAPSHOT.jar/!BOOT-INF/classes/!/com/ljwx/platform/app/appservice/TenantDomainAppService.class]: Unsatisfied dependency expressed through constructor parameter 0: Error creating bean with name 'tenantDomainMapper' defined in URL [jar:nested:/Users/brunogao/work/codes/ljwx/ljwx-platform/ljwx-platform-app/target/ljwx-platform-app-1.0.0-SNAPSHOT.jar/!BOOT-INF/classes/!/com/ljwx/platform/app/infra/mapper/TenantDomainMapper.class]: Unsatisfied dependency expressed through bean property 'sqlSessionTemplate': Error creating bean with name 'flywayInitializer' defined in class path resource [org/springframework/boot/autoconfigure/flyway/FlywayAutoConfiguration$FlywayConfiguration.class]: Unable to obtain connection from database: 尝试连线已失败。",
+          "Error Code : 0",
+          "2026-03-03 12:11:21.827 [main] WARN  o.s.b.w.s.c.AnnotationConfigServletWebServerApplicationContext [traceId=] [tenantId=] [userId=] - Exception encountered during context initialization - cancelling refresh attempt: org.springframework.context.ApplicationContextException: Unable to start web server",
+          "Error starting ApplicationContext. To display the condition evaluation report re-run your application with 'debug' enabled.",
+          "2026-03-03 12:11:21.850 [main] ERROR o.s.boot.SpringApplication [traceId=] [tenantId=] [userId=] - Application run failed",
+          "org.springframework.context.ApplicationContextException: Unable to start web server",
+          "Caused by: org.springframework.boot.web.server.WebServerException: Unable to start embedded Tomcat",
+          "Caused by: org.springframework.beans.factory.UnsatisfiedDependencyException: Error creating bean with name 'tenantDomainFilter' defined in URL [jar:nested:/Users/brunogao/work/codes/ljwx/ljwx-platform/ljwx-platform-app/target/ljwx-platform-app-1.0.0-SNAPSHOT.jar/!BOOT-INF/classes/!/com/ljwx/platform/app/filter/TenantDomainFilter.class]: Unsatisfied dependency expressed through constructor parameter 0: Error creating bean with name 'tenantDomainAppService' defined in URL [jar:nested:/Users/brunogao/work/codes/ljwx/ljwx-platform/ljwx-platform-app/target/ljwx-platform-app-1.0.0-SNAPSHOT.jar/!BOOT-INF/classes/!/com/ljwx/platform/app/appservice/TenantDomainAppService.class]: Unsatisfied dependency expressed through constructor parameter 0: Error creating bean with name 'tenantDomainMapper' defined in URL [jar:nested:/Users/brunogao/work/codes/ljwx/ljwx-platform/ljwx-platform-app/target/ljwx-platform-app-1.0.0-SNAPSHOT.jar/!BOOT-INF/classes/!/com/ljwx/platform/app/infra/mapper/TenantDomainMapper.class]: Unsatisfied dependency expressed through bean property 'sqlSessionTemplate': Error creating bean with name 'flywayInitializer' defined in class path resource [org/springframework/boot/autoconfigure/flyway/FlywayAutoConfiguration$FlywayConfiguration.class]: Unable to obtain connection from database: 尝试连线已失败。",
+          "Error Code : 0",
+          "Caused by: org.springframework.beans.factory.UnsatisfiedDependencyException: Error creating bean with name 'tenantDomainAppService' defined in URL [jar:nested:/Users/brunogao/work/codes/ljwx/ljwx-platform/ljwx-platform-app/target/ljwx-platform-app-1.0.0-SNAPSHOT.jar/!BOOT-INF/classes/!/com/ljwx/platform/app/appservice/TenantDomainAppService.class]: Unsatisfied dependency expressed through constructor parameter 0: Error creating bean with name 'tenantDomainMapper' defined in URL [jar:nested:/Users/brunogao/work/codes/ljwx/ljwx-platform/ljwx-platform-app/target/ljwx-platform-app-1.0.0-SNAPSHOT.jar/!BOOT-INF/classes/!/com/ljwx/platform/app/infra/mapper/TenantDomainMapper.class]: Unsatisfied dependency expressed through bean property 'sqlSessionTemplate': Error creating bean with name 'flywayInitializer' defined in class path resource [org/springframework/boot/autoconfigure/flyway/FlywayAutoConfiguration$FlywayConfiguration.class]: Unable to obtain connection from database: 尝试连线已失败。",
+          "Error Code : 0",
+          "Caused by: org.springframework.beans.factory.UnsatisfiedDependencyException: Error creating bean with name 'tenantDomainMapper' defined in URL [jar:nested:/Users/brunogao/work/codes/ljwx/ljwx-platform/ljwx-platform-app/target/ljwx-platform-app-1.0.0-SNAPSHOT.jar/!BOOT-INF/classes/!/com/ljwx/platform/app/infra/mapper/TenantDomainMapper.class]: Unsatisfied dependency expressed through bean property 'sqlSessionTemplate': Error creating bean with name 'flywayInitializer' defined in class path resource [org/springframework/boot/autoconfigure/flyway/FlywayAutoConfiguration$FlywayConfiguration.class]: Unable to obtain connection from database: 尝试连线已失败。",
+          "Error Code : 0",
+          "Caused by: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'flywayInitializer' defined in class path resource [org/springframework/boot/autoconfigure/flyway/FlywayAutoConfiguration$FlywayConfiguration.class]: Unable to obtain connection from database: 尝试连线已失败。",
+          "Error Code : 0",
+          "Caused by: org.flywaydb.core.internal.exception.FlywaySqlException: Unable to obtain connection from database: 尝试连线已失败。"
+        ],
+        "logPath": "artifacts/closed-loop/20260303T041046Z/phase-29/local-attempt-1/logs/phase-29-precheck-gate.log"
+      }
+    }
+  ]
+}

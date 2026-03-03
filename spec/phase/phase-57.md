@@ -2,7 +2,7 @@
 phase: 57
 title: "移动端 H5 + 国际化 (Mobile H5 + i18n)"
 targets:
-  backend: false
+  backend: true
   frontend: true
 depends_on: [56]
 bundle_with: []
@@ -141,7 +141,10 @@ const request = <T>(options: UniApp.RequestOptions): Promise<T> => {
       success: (res) => {
         const data = res.data as ApiResult<T>
         if (data.code === 200) resolve(data.data)
-        else if (data.code === 401) { uni.redirectTo({ url: '/pages/login/index' }) }
+        else if (data.code === 401) {
+          uni.redirectTo({ url: '/pages/login/index' })
+          reject(new Error('UNAUTHORIZED'))
+        }
         else reject(new Error(data.message))
       },
       fail: reject,
@@ -210,6 +213,8 @@ export default {
 
 ### 字典多语言
 
+> **说明**：`sys_dict_data.labels JSONB` 字段在前置 Phase（Phase 8）中已实现，本 Phase 仅使用该字段。
+
 后端 `sys_dict_data.labels JSONB` 字段支持多语言：
 ```json
 { "zh": "启用", "en": "Enabled" }
@@ -227,6 +232,8 @@ const getDictLabel = (dictType: string, value: string) => {
 
 ### 菜单多语言
 
+> **说明**：`sys_menu.names JSONB` 字段在前置 Phase（Phase 4）中已实现，本 Phase 仅使用该字段。
+
 `sys_menu.names JSONB` 字段：
 ```json
 { "zh": "用户管理", "en": "User Management" }
@@ -235,6 +242,8 @@ const getDictLabel = (dictType: string, value: string) => {
 前端动态路由生成时使用 `names[lang]` 作为菜单标题。
 
 ### 品牌配置语言
+
+> **说明**：`sys_tenant_brand` 表在前置 Phase（Phase 42）中已实现，本 Phase 仅新增 `platform.default_locale` 配置项。
 
 `sys_tenant_brand` 新增条目：
 - `brand_key = platform.default_locale`，`brand_value = zh-CN`，`category = basic`

@@ -68,6 +68,7 @@ scope:
 1. **计量计费**：Quartz 每日定时任务聚合 sys_operation_log/sys_login_log/sys_file 按 tenant_id 统计，写入 bill_usage_record
 2. **运营仪表盘**：基于 bill_usage_record + sys_tenant 构建全局运营看板（DAU/MAU、存储用量、API 调用、即将过期预警）
 3. **帮助中心**：帮助文档管理 + 前端悬浮 "?" 按当前路由匹配帮助内容
+4. **XSS 防护**：前端使用 DOMPurify (^3.0.0) 清理 Markdown 渲染输出，防止帮助文档注入脚本
 
 ## 数据库契约
 
@@ -148,10 +149,12 @@ scope:
 |------|------|----------|--------|--------|------|
 | GET | /api/v1/help-docs | system:help:list | — | Result\<List\<HelpDocVO\>\> | 列表（按 category 过滤） |
 | GET | /api/v1/help-docs/{id} | system:help:query | — | Result\<HelpDocVO\> | 详情 |
-| GET | /api/v1/help-docs/route | — | — | Result\<HelpDocVO\> | 按路由匹配文档（无需鉴权） |
+| GET | /api/v1/help-docs/route | — | — | Result\<HelpDocVO\> | 按路由匹配文档（无需鉴权，需 X-Tenant-Id header） |
 | POST | /api/v1/help-docs | system:help:add | HelpDocCreateDTO | Result\<Long\> | 创建 |
 | PUT | /api/v1/help-docs/{id} | system:help:edit | HelpDocUpdateDTO | Result\<Void\> | 更新 |
 | DELETE | /api/v1/help-docs/{id} | system:help:delete | — | Result\<Void\> | 删除 |
+
+> **租户隔离说明**：`/api/v1/help-docs/route` 接口虽然无需鉴权（permitAll），但必须通过 `X-Tenant-Id` header 传递租户 ID，后端通过 TenantLineInterceptor 自动注入 `tenant_id` 条件，确保只返回当前租户的帮助文档。
 
 ## DTO / VO 契约
 
@@ -160,7 +163,9 @@ scope:
 | 字段 | 类型 | 校验 | 说明 |
 |------|------|------|------|
 | startDate | LocalDate | @NotNull | 查询开始日期 |
-| endDate | LocalDate | @NotNull | 查询结束日期 |
+| endDate | LocalDate | @NotNull | 查询结束日期（需 >= startDate，最大跨度 365 天） |
+
+> **日期区间校验**：Service 层需验证 `endDate >= startDate` 且跨度不超过 365 天，防止大范围查询。
 | metricType | String | — | 指标类型过滤（可选，不传则返回全部类型） |
 
 **禁止字段**：`tenantId`（由 TenantLineInterceptor 自动注入）
@@ -190,10 +195,10 @@ scope:
 | 字段 | 类型 | 校验 | 说明 |
 |------|------|------|------|
 | docKey | String | @NotBlank, @Size(max=100), @Pattern(regexp="^[a-z][a-z0-9_-]*$") | 文档标识 |
-| title | String | @NotBlank, @Size(max=200) | 标题 |
-| content | String | @NotBlank | Markdown 正文 |
-| category | String | @NotBlank, @Size(max=50) | 分类 |
-| routeMatch | String | @Size(max=500) | 关联路由 |
+| title | String | @NotBlank, @Size(min=1, max=200) | 标题（1-200 字符） |
+| content | String | @NotBlank, @Size(min=1, max=50000) | Markdown 正文（1-50000 字符） |
+| category | String | @NotBlank, @Size(max=50), @Pattern(regexp="[a-zA-Z0-9_-]+") | 分类（仅允许字母数字下划线短横线） |
+| routeMatch | String | @Size(max=500), @Pattern(regexp="^/.*") | 关联路由（必须以 / 开头） |
 | sortOrder | Integer | @Min(0) | 排序 |
 
 **禁止字段**：`id`、`tenantId`、`createdBy`、`createdTime`、`updatedBy`、`updatedTime`、`deleted`、`version`
@@ -350,6 +355,7 @@ public class OperationsDashboardService {
 import { useRoute } from 'vue-router'
 import { getHelpDocByRoute } from '@/api/help/help-doc'
 import { marked } from 'marked'
+import DOMPurify from 'dompurify'
 
 const route = useRoute()
 const visible = ref(false)
@@ -360,8 +366,9 @@ const openHelp = async () => {
   visible.value = true
 }
 
+// 安全渲染：marked 输出后使用 DOMPurify 清理 XSS
 const renderedContent = computed(() =>
-  doc.value ? marked(doc.value.content) : ''
+  doc.value ? DOMPurify.sanitize(marked(doc.value.content)) : ''
 )
 </script>
 ```
@@ -409,11 +416,12 @@ public class HelpDocController {
 
 - **BL-58-01**：DailyUsageStatJob 使用 `ON CONFLICT DO UPDATE` 实现幂等写入 → 每日重复执行不产生重复数据
 - **BL-58-02**：运营仪表盘数据来源必须是 `bill_usage_record`（PostgreSQL），**禁止**从 Prometheus 查询租户维度数据（高基数问题）
-- **BL-58-03**：`GET /api/v1/help-docs/route?path=...` 无需鉴权 → 任何登录用户可访问帮助文档
+- **BL-58-03**：`GET /api/v1/help-docs/route?path=...` 为公开接口（permitAll）→ 未登录用户可访问 tenant_id=0 的全局文档；已登录用户可访问全局文档 + 本租户私有文档（通过 JWT 中的 tenantId 过滤）→ Service 层从 SecurityContext 获取 tenantId（未登录时默认 0）
 - **BL-58-04**：帮助文档 `route_match` 支持精确匹配和前缀匹配（`/system/user` 匹配 `/system/user/list`）→ 优先精确匹配
 - **BL-58-05**：租户用量超过套餐配额时（USER_COUNT > max_user_count 等）→ 通过消息中台发送告警通知给租户管理员 → 不强制阻断操作（P2 阶段仅告警）
 - **BL-58-06**：即将到期预警（30 天内到期）→ 在运营仪表盘醒目展示 + 每周通过消息中台通知超管
 - **BL-58-07**：调用 `GET /api/v1/billing/summary` 和 `GET /api/v1/ops/dashboard` 时 → Service 层验证 SecurityContext 中当前用户 tenantId == 0（平台超管身份）→ 非超管用户抛出 AccessDeniedException（响应 403），不返回任何跨租户数据
+- **BL-58-08**：前端渲染帮助文档 Markdown 时 → 使用 DOMPurify.sanitize() 清理 marked() 输出 → 防止 XSS 注入（即使管理员恶意编辑文档也无法执行脚本）
 
 ## 测试用例（摘要）
 

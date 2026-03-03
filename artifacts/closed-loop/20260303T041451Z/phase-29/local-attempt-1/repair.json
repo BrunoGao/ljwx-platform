@@ -1,0 +1,29 @@
+{
+  "generatedAt": "2026-03-03T04:17:23Z",
+  "input": {
+    "diagnosis": "artifacts/closed-loop/20260303T041451Z/phase-29/local-attempt-1/diagnosis.json",
+    "recipes": "scripts/ci/repair-recipes.yaml"
+  },
+  "summary": {
+    "planned": 1,
+    "applied": 1,
+    "passed": 0,
+    "failed": 1
+  },
+  "actions": [
+    {
+      "id": "flyway-repair",
+      "check": "flyway",
+      "category": "B",
+      "mode": "auto",
+      "cmd": "if [ -x scripts/flyway-repair.sh ]; then bash scripts/flyway-repair.sh; elif [ -x scripts/tools/flyway-repair.sh ]; then bash scripts/tools/flyway-repair.sh; else echo 'flyway repair script not found'; exit 1; fi",
+      "status": "fail",
+      "attempts": 1,
+      "exitCode": 1,
+      "logPath": "artifacts/closed-loop/20260303T041451Z/phase-29/local-attempt-1/repair-logs/flyway-repair.log",
+      "patchPath": "artifacts/closed-loop/20260303T041451Z/phase-29/local-attempt-1/repair-logs/flyway-repair.patch",
+      "touchedFiles": []
+    }
+  ],
+  "patchPath": "artifacts/closed-loop/20260303T041451Z/phase-29/local-attempt-1/repair.patch"
+}
