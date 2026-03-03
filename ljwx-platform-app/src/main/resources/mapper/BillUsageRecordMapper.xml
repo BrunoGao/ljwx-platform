@@ -85,7 +85,7 @@
             COALESCE(s.storage_mb, 0) AS storageMb,
             COALESCE(a.api_calls_total, 0) AS apiCallsTotal,
             COALESCE(l.login_count_last30d, 0) AS loginCountLast30d,
-            CASE WHEN t.expire_time IS NOT NULL AND t.expire_time <= CURRENT_TIMESTAMP + INTERVAL '30 days' THEN TRUE ELSE FALSE END AS isExpiringSoon
+            CASE WHEN t.expire_time IS NOT NULL AND t.expire_time &lt;= CURRENT_TIMESTAMP + INTERVAL '30 days' THEN TRUE ELSE FALSE END AS isExpiringSoon
         FROM sys_tenant t
         LEFT JOIN (
             SELECT tenant_id, usage_value AS user_count
