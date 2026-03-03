@@ -220,18 +220,22 @@ jobs:
           git commit -m "queue(${SERVICE}): ${QUEUE_ENTRY_ID}"
           git push origin "${BRANCH}"
 
+          cat > /tmp/queue-pr-body.md <<EOF
+          Automated queue enqueue from ${GITHUB_REPOSITORY}@${SOURCE_GIT_SHA}
+
+          - service: \`${SERVICE}\`
+          - env: \`${ENVIRONMENT}\`
+          - queue id: \`${QUEUE_ENTRY_ID}\`
+          - source run: [${SOURCE_RUN_ID}](https://github.com/${GITHUB_REPOSITORY}/actions/runs/${SOURCE_RUN_ID})
+          - backend ghcr: \`${GHCR_REF}\`
+
+          This PR only updates \`${QUEUE_FILE}\` and does not wait for Harbor replication.
+          Promoter will check Harbor digest readiness asynchronously.
+          EOF
+
           gh pr create \
             --repo "${{ steps.cfg.outputs.deploy_repo }}" \
             --title "queue(${SERVICE}): ${QUEUE_ENTRY_ID}" \
-            --body "Automated queue enqueue from ${GITHUB_REPOSITORY}@${SOURCE_GIT_SHA}
-
-- service: \\`${SERVICE}\\`
-- env: \\`${ENVIRONMENT}\\`
-- queue id: \\`${QUEUE_ENTRY_ID}\\`
-- source run: [${SOURCE_RUN_ID}](https://github.com/${GITHUB_REPOSITORY}/actions/runs/${SOURCE_RUN_ID})
-- backend ghcr: \\`${GHCR_REF}\\`
-
-This PR only updates \\`${QUEUE_FILE}\\` and does not wait for Harbor replication.
-Promoter will check Harbor digest readiness asynchronously." \
+            --body-file /tmp/queue-pr-body.md \
             --base main \
             --head "${BRANCH}"
