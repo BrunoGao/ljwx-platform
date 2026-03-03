@@ -321,6 +321,58 @@ migrations:
       - "wf_history"
     status: "active"
 
+  # ==================== Phase 54-58 (P2 扩展功能) ====================
+  # 注意：V054-V060 已跳过，Phase 54-58 属于 P2 扩展层，版本号从 V061 开始
+  # 原因：Phase 40-53 为 P1 业务功能，预留了 V040-V060（其中 V054-V060 未使用），
+  #        Phase 54-58 (P2) 紧跟 V061 开始，保持版本号单调递增
+
+  - version: "061"
+    description: "create_form_def_and_data"
+    type: "DDL"
+    phase: 54
+    tables:
+      - "sys_form_def"
+      - "sys_form_data"
+    status: "planned"
+    note: "sys_form_data 含 GIN(field_values jsonb_path_ops) 索引"
+
+  - version: "062"
+    description: "create_custom_field_def"
+    type: "DDL"
+    phase: 54
+    tables:
+      - "sys_custom_field_def"
+    status: "planned"
+
+  - version: "063"
+    description: "create_rpt_report_def"
+    type: "DDL"
+    phase: 55
+    tables:
+      - "rpt_report_def"
+    status: "planned"
+    note: "column_def/filter_def 为 JSONB 列"
+
+  - version: "064"
+    description: "create_ai_config_and_log"
+    type: "DDL"
+    phase: 56
+    tables:
+      - "sys_ai_config"
+      - "sys_ai_conversation_log"
+    status: "planned"
+    note: "sys_ai_config.api_key_encrypted 为 AES 加密存储，sys_ai_conversation_log.tool_calls 为 JSONB"
+
+  - version: "065"
+    description: "create_billing_and_help"
+    type: "DDL"
+    phase: 58
+    tables:
+      - "bill_usage_record"
+      - "sys_help_doc"
+    status: "planned"
+    note: "bill_usage_record 含 uk_usage_tenant_metric_date 唯一索引（幂等写入）；Phase 57 无 DB 迁移"
+
 # 迁移规则
 rules:
   version_format: "VNNN__description.sql"
@@ -334,7 +386,7 @@ allocation_strategy:
   phase_0_32:  "V001-V031 (已完成，V032 无迁移)"
   phase_33_39: "V033-V039 (P0 基础设施，V035/V036/V037 已释放)"
   phase_40_53: "V040-V060 (P1 业务功能，预留至 V060)"
-  phase_54_plus: "V061+ (P2 及以后)"
+  phase_54_plus: "V061-V065 (P2 扩展功能，Phase 54-58)"
 
 # 变更历史
 changelog:
