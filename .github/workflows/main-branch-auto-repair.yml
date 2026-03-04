@@ -144,13 +144,13 @@ jobs:
 
           自动闭环修复未完成，已转人工处理。
 
-          - Source workflow: `${{ steps.ctx.outputs.workflow_name }}`
-          - Source run id: `${{ steps.ctx.outputs.run_id }}`
+          - Source workflow: ${{ steps.ctx.outputs.workflow_name }}
+          - Source run id: ${{ steps.ctx.outputs.run_id }}
           - Source run URL: ${{ steps.ctx.outputs.run_url }}
-          - Target branch: `${{ steps.ctx.outputs.branch }}`
-          - Repair status: `${{ steps.repair.outputs.repair_status }}`
-          - Exit code: `${{ steps.repair.outputs.exit_code }}`
-          - Attempt: `${{ steps.repair.outputs.attempt }}/${{ steps.repair.outputs.max_attempts }}`
+          - Target branch: ${{ steps.ctx.outputs.branch }}
+          - Repair status: ${{ steps.repair.outputs.repair_status }}
+          - Exit code: ${{ steps.repair.outputs.exit_code }}
+          - Attempt: ${{ steps.repair.outputs.attempt }}/${{ steps.repair.outputs.max_attempts }}
 
           请人工定位失败根因后提交修复，再由主分支 workflow 自动回归。
           BODY
@@ -185,10 +185,10 @@ jobs:
           {
             echo "## Main Branch Auto Repair"
             echo ""
-            echo "- branch: `${{ steps.ctx.outputs.branch }}`"
-            echo "- source workflow: `${{ steps.ctx.outputs.workflow_name }}`"
-            echo "- source run: `${{ steps.ctx.outputs.run_id }}`"
-            echo "- repair status: `${{ steps.repair.outputs.repair_status || 'skipped' }}`"
-            echo "- attempt: `${{ steps.repair.outputs.attempt || '-' }}/${{ steps.repair.outputs.max_attempts || '-' }}`"
-            echo "- exit code: `${{ steps.repair.outputs.exit_code || '-' }}`"
+            echo "- branch: ${{ steps.ctx.outputs.branch }}"
+            echo "- source workflow: ${{ steps.ctx.outputs.workflow_name }}"
+            echo "- source run: ${{ steps.ctx.outputs.run_id }}"
+            echo "- repair status: ${{ steps.repair.outputs.repair_status || 'skipped' }}"
+            echo "- attempt: ${{ steps.repair.outputs.attempt || '-' }}/${{ steps.repair.outputs.max_attempts || '-' }}"
+            echo "- exit code: ${{ steps.repair.outputs.exit_code || '-' }}"
           } >> "$GITHUB_STEP_SUMMARY"

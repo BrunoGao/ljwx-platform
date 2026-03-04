@@ -55,6 +55,7 @@ public class HelpDocController {
      * @param path route path
      * @return help doc VO
      */
+    @PreAuthorize("permitAll()")
     @GetMapping("/route")
     public Result<HelpDocVO> getByRoute(@RequestParam String path) {
         HelpDocVO doc = helpDocAppService.getByRoute(path);
