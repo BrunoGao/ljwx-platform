@@ -1,0 +1,194 @@
+name: Main Branch Auto Repair
+
+on:
+  workflow_run:
+    workflows:
+      - CI
+      - Gate Check
+      - Post Merge E2E
+      - Nightly Regression
+    types: [completed]
+    branches: [main, master]
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: "Failed workflow run id"
+        required: true
+        type: string
+      branch:
+        description: "Target branch (main/master)"
+        required: false
+        default: "master"
+        type: string
+      workflow_name:
+        description: "Source workflow name"
+        required: false
+        default: "manual"
+        type: string
+      max_attempts:
+        description: "Max auto-repair attempts"
+        required: false
+        default: "3"
+        type: string
+
+permissions:
+  contents: write
+  issues: write
+  actions: read
+
+concurrency:
+  group: auto-repair-${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_branch || inputs.branch || github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  auto_repair:
+    if: >-
+      (github.event_name == 'workflow_run' &&
+       github.event.workflow_run.conclusion == 'failure' &&
+       github.event.workflow_run.name != 'Main Branch Auto Repair') ||
+      github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Resolve context
+        id: ctx
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "${{ github.event_name }}" == "workflow_run" ]]; then
+            run_id="${{ github.event.workflow_run.id }}"
+            branch="${{ github.event.workflow_run.head_branch }}"
+            workflow_name="${{ github.event.workflow_run.name }}"
+            run_url="${{ github.event.workflow_run.html_url }}"
+          else
+            run_id="${{ inputs.run_id }}"
+            branch="${{ inputs.branch }}"
+            workflow_name="${{ inputs.workflow_name }}"
+            run_url="https://github.com/${GITHUB_REPOSITORY}/actions/runs/${run_id}"
+          fi
+
+          if [[ -z "$branch" ]]; then
+            branch="master"
+          fi
+
+          if [[ "$branch" != "main" && "$branch" != "master" ]]; then
+            echo "skip_non_main=true" >> "$GITHUB_OUTPUT"
+            echo "run_id=$run_id" >> "$GITHUB_OUTPUT"
+            echo "branch=$branch" >> "$GITHUB_OUTPUT"
+            echo "workflow_name=$workflow_name" >> "$GITHUB_OUTPUT"
+            echo "run_url=$run_url" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          max_attempts="3"
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            max_attempts="${{ inputs.max_attempts }}"
+          fi
+
+          echo "skip_non_main=false" >> "$GITHUB_OUTPUT"
+          echo "run_id=$run_id" >> "$GITHUB_OUTPUT"
+          echo "branch=$branch" >> "$GITHUB_OUTPUT"
+          echo "workflow_name=$workflow_name" >> "$GITHUB_OUTPUT"
+          echo "run_url=$run_url" >> "$GITHUB_OUTPUT"
+          echo "max_attempts=$max_attempts" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout target branch
+        if: steps.ctx.outputs.skip_non_main != 'true'
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ steps.ctx.outputs.branch }}
+
+      - name: Execute auto-repair
+        if: steps.ctx.outputs.skip_non_main != 'true'
+        id: repair
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set +e
+          bash scripts/ci/main-branch-auto-repair.sh \
+            --repo "${GITHUB_REPOSITORY}" \
+            --run-id "${{ steps.ctx.outputs.run_id }}" \
+            --workflow-name "${{ steps.ctx.outputs.workflow_name }}" \
+            --branch "${{ steps.ctx.outputs.branch }}" \
+            --max-attempts "${{ steps.ctx.outputs.max_attempts }}" \
+            --github-output "$GITHUB_OUTPUT"
+          rc=$?
+          set -e
+
+          echo "exit_code=$rc" >> "$GITHUB_OUTPUT"
+          case "$rc" in
+            0)  echo "repair_status=fixed" >> "$GITHUB_OUTPUT" ;;
+            11) echo "repair_status=no_fix" >> "$GITHUB_OUTPUT" ;;
+            21) echo "repair_status=max_attempt" >> "$GITHUB_OUTPUT" ;;
+            22) echo "repair_status=repair_failed" >> "$GITHUB_OUTPUT" ;;
+            *)  echo "repair_status=error" >> "$GITHUB_OUTPUT" ;;
+          esac
+
+      - name: Upsert escalation issue
+        if: steps.ctx.outputs.skip_non_main != 'true' && steps.repair.outputs.repair_status != 'fixed'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+
+          marker="<!-- auto-repair:${{ steps.ctx.outputs.run_id }}:${{ steps.ctx.outputs.workflow_name }} -->"
+          title="[Auto Repair] ${{ steps.ctx.outputs.workflow_name }} unresolved on ${{ steps.ctx.outputs.branch }}"
+          body_file="$(mktemp)"
+
+          cat >"$body_file" <<BODY
+          ${marker}
+
+          自动闭环修复未完成，已转人工处理。
+
+          - Source workflow: `${{ steps.ctx.outputs.workflow_name }}`
+          - Source run id: `${{ steps.ctx.outputs.run_id }}`
+          - Source run URL: ${{ steps.ctx.outputs.run_url }}
+          - Target branch: `${{ steps.ctx.outputs.branch }}`
+          - Repair status: `${{ steps.repair.outputs.repair_status }}`
+          - Exit code: `${{ steps.repair.outputs.exit_code }}`
+          - Attempt: `${{ steps.repair.outputs.attempt }}/${{ steps.repair.outputs.max_attempts }}`
+
+          请人工定位失败根因后提交修复，再由主分支 workflow 自动回归。
+          BODY
+
+          existing="$(gh issue list \
+            --repo "${GITHUB_REPOSITORY}" \
+            --state open \
+            --search "in:body ${marker}" \
+            --json number \
+            --jq '.[0].number // empty')"
+
+          if [[ -n "$existing" ]]; then
+            gh issue comment "$existing" --repo "${GITHUB_REPOSITORY}" --body-file "$body_file"
+          else
+            gh issue create \
+              --repo "${GITHUB_REPOSITORY}" \
+              --title "$title" \
+              --body-file "$body_file" \
+              --label "type:bugfix" \
+              --label "gate:fail" || \
+            gh issue create \
+              --repo "${GITHUB_REPOSITORY}" \
+              --title "$title" \
+              --body-file "$body_file"
+          fi
+
+      - name: Summary
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          {
+            echo "## Main Branch Auto Repair"
+            echo ""
+            echo "- branch: `${{ steps.ctx.outputs.branch }}`"
+            echo "- source workflow: `${{ steps.ctx.outputs.workflow_name }}`"
+            echo "- source run: `${{ steps.ctx.outputs.run_id }}`"
+            echo "- repair status: `${{ steps.repair.outputs.repair_status || 'skipped' }}`"
+            echo "- attempt: `${{ steps.repair.outputs.attempt || '-' }}/${{ steps.repair.outputs.max_attempts || '-' }}`"
+            echo "- exit code: `${{ steps.repair.outputs.exit_code || '-' }}`"
+          } >> "$GITHUB_STEP_SUMMARY"
