@@ -7,6 +7,12 @@ RUN npm install -g pnpm@10.30.1 --quiet
 
 WORKDIR /app
 
+# Build-time frontend env vars for reusable compose/k8s pipelines.
+ARG VITE_APP_BASE_API=/api
+ARG VITE_APP_TITLE="LJWX Platform Admin"
+ENV VITE_APP_BASE_API=${VITE_APP_BASE_API}
+ENV VITE_APP_TITLE=${VITE_APP_TITLE}
+
 # Copy workspace manifests first (layer-cache friendly)
 COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
 COPY packages/shared/package.json packages/shared/

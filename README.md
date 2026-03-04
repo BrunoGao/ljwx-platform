@@ -95,7 +95,70 @@ pnpm dev
 
 数据大屏默认访问 `http://localhost:5174`。
 
-### 6. 运行 Gate 检查
+### 6. 一键 Docker Compose（推荐端到端验收）
+
+```bash
+cp .env.compose.example .env.compose
+# 必须先修改 .env.compose 里的 DB_PASSWORD 为强口令
+bash scripts/local/compose-stack.sh up
+bash scripts/local/compose-stack.sh smoke
+```
+
+默认端口：
+
+- backend: `http://localhost:18080`
+- admin: `http://localhost:18081`
+- screen: `http://localhost:18082`
+
+说明：`postgres/redis` 仅在 compose 内网可见，默认不暴露宿主机端口。
+
+运行 R10 E2E 闭环：
+
+```bash
+bash scripts/local/compose-stack.sh e2e
+```
+
+停止并清理：
+
+```bash
+bash scripts/local/compose-stack.sh down
+```
+
+### 7. 一键 Docker Compose（纯交付件模式）
+
+该模式只拉取镜像，不进行本地 `docker build`，用于验收“纯交付件部署”。
+
+```bash
+cp .env.delivery.example .env.delivery
+# 必填：BACKEND_IMAGE / ADMIN_IMAGE / SCREEN_IMAGE（建议使用不可变 digest）
+DEPLOY_MODE=delivery bash scripts/local/compose-stack.sh up
+DEPLOY_MODE=delivery bash scripts/local/compose-stack.sh smoke
+```
+
+常用命令：
+
+```bash
+DEPLOY_MODE=delivery bash scripts/local/compose-stack.sh pull
+DEPLOY_MODE=delivery bash scripts/local/compose-stack.sh e2e
+DEPLOY_MODE=delivery bash scripts/local/compose-stack.sh down
+```
+
+### 8. 本地 k3s 纯交付件部署（不依赖 Argo）
+
+```bash
+cp .env.k3s.delivery.example .env.k3s.delivery
+# 必填：镜像引用、数据库口令；按需设置拉取凭据
+bash scripts/local/k3s-delivery.sh apply
+bash scripts/local/k3s-delivery.sh status
+```
+
+- 清单位于：`deploy/k3s/artifact`
+- Ingress 参考模板：`deploy/k3s/artifact/ingress.example.yaml`
+- Secret 参考模板：`deploy/k3s/artifact/ljwx-platform-db.secret.example.yaml`
+- `MANAGE_DB_SECRET=1` 时脚本会根据 `.env.k3s.delivery` 创建/更新 `ljwx-platform-db`
+- `MANAGE_PULL_SECRET=1` 时脚本会创建镜像拉取 secret 并补丁 default service account
+
+### 9. 运行 Gate 检查
 
 ```bash
 bash scripts/gates/gate-all.sh 27
@@ -168,7 +231,12 @@ ljwx-platform/
 ├── README.md                    # 本文件
 ├── pom.xml                      # Maven 父 POM
 ├── pnpm-workspace.yaml          # pnpm 工作区配置
-├── docker-compose.yml           # 本地开发环境
+├── docker-compose.yml           # 本地开发环境（数据库占位）
+├── docker-compose.stack.yml     # 源码构建 compose
+├── docker-compose.delivery.yml  # 纯交付件 compose（仅镜像拉取）
+├── .env.compose.example         # 源码构建 compose 环境模板
+├── .env.delivery.example        # 纯交付件 compose 环境模板
+├── .env.k3s.delivery.example    # k3s 纯交付件环境模板
 │
 ├── ljwx-platform-core/          # 核心模块（接口 + 通用类）
 ├── ljwx-platform-security/      # 安全模块（JWT + Spring Security）
@@ -189,10 +257,13 @@ ljwx-platform/
 │
 ├── spec/                        # 项目规格文档
 │   └── phase/                   # 各 Phase 任务说明
+├── deploy/
+│   └── k3s/artifact/            # k3s 纯交付件部署清单（backend/admin/screen）
 │
 └── scripts/
     ├── gates/                   # Gate 验收脚本
     ├── hooks/                   # Claude Code Hooks
+    ├── local/                   # 本地 compose/k3s 快速部署脚本
     ├── tools/                   # 工具脚本
     └── acceptance/              # 验收测试脚本
 ```
@@ -282,6 +353,19 @@ ljwx-platform/
 - Argo CD Application 达到 `Synced + Healthy`
 - 目标 Deployment rollout 完成，且 `DEPLOYMENT_ID` 与 release values 一致
 - Prometheus active targets 中 `otel-agent-metrics` 为 `UP`
+
+若只需要验证“交付件可直接落地 k3s”（不经过 Argo），可使用：
+
+- `bash scripts/local/k3s-delivery.sh apply`
+- `bash scripts/local/k3s-delivery.sh status`
+
+## Grafana 可观测看板（日志 + 链路 + 指标）
+
+- 统一看板文件：`k8s/grafana-dashboard-observability.json`
+- 自动部署命令：
+  - `bash scripts/ops/apply-grafana-observability-dashboard.sh`
+- 使用说明：
+  - `docs/ops/grafana-observability-dashboard.md`
 
 ## 主分支自动修复闭环（Full Test + Auto Repair）
 
