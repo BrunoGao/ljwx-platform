@@ -29,6 +29,25 @@ run_k6() {
   return 127
 }
 
+read_json_number_or_zero() {
+  local file="$1"
+  local filter="$2"
+  local value
+
+  value="$(jq -r "$filter" "$file" 2>/dev/null || true)"
+  if [[ -z "$value" || "$value" == "null" || "$value" == "NaN" ]]; then
+    echo "0"
+    return
+  fi
+
+  echo "$value"
+}
+
+to_json_number() {
+  local value="${1:-0}"
+  jq -nc --arg v "$value" '$v | tonumber? // 0'
+}
+
 collect_failed_checks() {
   local summary_file="$1"
   jq -r '
@@ -118,23 +137,30 @@ run_case() {
   set -e
 
   local checks_total checks_passed checks_failed p95
-  checks_passed="$(jq -r '.metrics.checks.values.passes // 0' "$summary_file" 2>/dev/null || echo 0)"
-  checks_failed="$(jq -r '.metrics.checks.values.fails // 0' "$summary_file" 2>/dev/null || echo 0)"
+  checks_passed="$(read_json_number_or_zero "$summary_file" '(.metrics.checks.values.passes // 0) | tonumber? // 0 | floor')"
+  checks_failed="$(read_json_number_or_zero "$summary_file" '(.metrics.checks.values.fails // 0) | tonumber? // 0 | floor')"
   checks_total=$((checks_passed + checks_failed))
-  p95="$(jq -r '.metrics.http_req_duration.values["p(95)"] // 0' "$summary_file" 2>/dev/null || echo 0)"
+  p95="$(read_json_number_or_zero "$summary_file" '(.metrics.http_req_duration.values["p(95)"] // 0) | tonumber? // 0')"
 
   local v_checks v_logs
   v_checks="$(build_violations_from_checks "$summary_file" "$script")"
   v_logs="$(build_violations_from_log "$log_file" "$script")"
 
+  local rc_json checks_json passed_json failed_json p95_json
+  rc_json="$(to_json_number "$rc")"
+  checks_json="$(to_json_number "$checks_total")"
+  passed_json="$(to_json_number "$checks_passed")"
+  failed_json="$(to_json_number "$checks_failed")"
+  p95_json="$(to_json_number "$p95")"
+
   jq -nc \
     --arg id "$id" \
     --arg script "$script" \
-    --argjson rc "$rc" \
-    --argjson checks "$checks_total" \
-    --argjson passed "$checks_passed" \
-    --argjson failed "$checks_failed" \
-    --argjson p95 "$p95" \
+    --argjson rc "$rc_json" \
+    --argjson checks "$checks_json" \
+    --argjson passed "$passed_json" \
+    --argjson failed "$failed_json" \
+    --argjson p95 "$p95_json" \
     --argjson v_checks "$v_checks" \
     --argjson v_logs "$v_logs" \
     '{id:$id,script:$script,rc:$rc,checks:$checks,passed:$passed,failed:$failed,p95:$p95,violations:($v_checks + $v_logs)}'
