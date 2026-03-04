@@ -542,63 +542,125 @@ jobs:
           fi
 
           STATE="ready"
+          RESOLVED_NS=""
           RESOLVED_SVC=""
           RESOLVED_PORT=""
 
-          if ! kubectl get ns "${TEMPO_NS}" >/dev/null 2>&1; then
-            STATE="tempo_namespace_not_found"
-          else
+          find_service_in_ns() {
+            local ns="$1"
+            if ! kubectl get ns "${ns}" >/dev/null 2>&1; then
+              return 1
+            fi
             if [ -n "${TEMPO_SVC_INPUT}" ]; then
-              if kubectl -n "${TEMPO_NS}" get svc "${TEMPO_SVC_INPUT}" >/dev/null 2>&1; then
-                RESOLVED_SVC="${TEMPO_SVC_INPUT}"
-              else
-                STATE="tempo_service_not_found"
+              if kubectl -n "${ns}" get svc "${TEMPO_SVC_INPUT}" >/dev/null 2>&1; then
+                printf '%s' "${TEMPO_SVC_INPUT}"
+                return 0
               fi
-            else
-              RESOLVED_SVC="$(
-                kubectl -n "${TEMPO_NS}" get svc -o json | jq -r --arg pattern "${TEMPO_SERVICE_PATTERN}" '
+              return 1
+            fi
+            kubectl -n "${ns}" get svc -o json | jq -r --arg pattern "${TEMPO_SERVICE_PATTERN}" '
+              [
+                .items[]
+                | {
+                    name: .metadata.name,
+                    score: (
+                      if (.metadata.name | test("query|frontend|gateway")) then 0
+                      elif (.metadata.name | test("^tempo$")) then 1
+                      else 2
+                      end
+                    )
+                  }
+                | select(.name | test($pattern))
+              ]
+              | sort_by(.score, .name)
+              | .[0].name // ""
+            '
+          }
+
+          # 1) Try requested namespace first.
+          CANDIDATE_SVC="$(find_service_in_ns "${TEMPO_NS}" || true)"
+          if [ -n "${CANDIDATE_SVC}" ]; then
+            RESOLVED_NS="${TEMPO_NS}"
+            RESOLVED_SVC="${CANDIDATE_SVC}"
+          fi
+
+          # 2) Namespace fallback search when not found in requested namespace.
+          if [ -z "${RESOLVED_SVC}" ]; then
+            for ns in tracing monitoring observability tempo logging; do
+              if [ "${ns}" = "${TEMPO_NS}" ]; then
+                continue
+              fi
+              CANDIDATE_SVC="$(find_service_in_ns "${ns}" || true)"
+              if [ -n "${CANDIDATE_SVC}" ]; then
+                RESOLVED_NS="${ns}"
+                RESOLVED_SVC="${CANDIDATE_SVC}"
+                break
+              fi
+            done
+          fi
+
+          # 3) Global discovery as last resort.
+          if [ -z "${RESOLVED_SVC}" ]; then
+            if [ -n "${TEMPO_SVC_INPUT}" ]; then
+              MATCH="$(
+                kubectl get svc -A -o json | jq -r --arg svc "${TEMPO_SVC_INPUT}" '
                   [
                     .items[]
+                    | select(.metadata.name == $svc)
+                    | "\(.metadata.namespace)|\(.metadata.name)"
+                  ]
+                  | .[0] // ""
+                '
+              )"
+            else
+              MATCH="$(
+                kubectl get svc -A -o json | jq -r --arg pattern "${TEMPO_SERVICE_PATTERN}" '
+                  [
+                    .items[]
+                    | select(.metadata.name | test($pattern))
                     | {
+                        ns: .metadata.namespace,
                         name: .metadata.name,
-                        ports: (.spec.ports // [])
-                      }
-                    | select(.name | test($pattern))
-                    | . + {
                         score: (
-                          if (.name | test("query|frontend|gateway")) then 0
-                          elif (.name | test("^tempo$")) then 1
+                          if (.metadata.name | test("query|frontend|gateway")) then 0
+                          elif (.metadata.name | test("^tempo$")) then 1
                           else 2
                           end
                         )
                       }
                   ]
-                  | sort_by(.score, .name)
-                  | .[0].name // ""
+                  | sort_by(.score, .ns, .name)
+                  | .[0]
+                  | if . == null then "" else "\(.ns)|\(.name)" end
                 '
               )"
-              if [ -z "${RESOLVED_SVC}" ]; then
-                STATE="tempo_service_not_found"
-              fi
             fi
 
-            if [ "${STATE}" = "ready" ]; then
-              RESOLVED_PORT="$(
-                kubectl -n "${TEMPO_NS}" get svc "${RESOLVED_SVC}" -o json | jq -r '
-                  (.spec.ports // []) as $ports |
-                  (($ports | map(.port) | map(select(. == 3200 or . == 3100 or . == 16686 or . == 80)) | .[0]) // ($ports[0].port // empty))
-                '
-              )"
-              if [ -z "${RESOLVED_PORT}" ]; then
-                STATE="tempo_port_not_found"
-              fi
+            if [ -n "${MATCH}" ]; then
+              RESOLVED_NS="${MATCH%%|*}"
+              RESOLVED_SVC="${MATCH##*|}"
+            fi
+          fi
+
+          if [ -z "${RESOLVED_SVC}" ] || [ -z "${RESOLVED_NS}" ]; then
+            STATE="tempo_service_not_found"
+          else
+            RESOLVED_PORT="$(
+              kubectl -n "${RESOLVED_NS}" get svc "${RESOLVED_SVC}" -o json | jq -r '
+                (.spec.ports // []) as $ports |
+                (($ports | map(.port) | map(select(. == 3200 or . == 3100 or . == 16686 or . == 80)) | .[0]) // ($ports[0].port // empty))
+              '
+            )"
+            if [ -z "${RESOLVED_PORT}" ]; then
+              STATE="tempo_port_not_found"
             fi
           fi
 
           if [ "${STATE}" != "ready" ]; then
             echo "${STATE}" > artifacts/tempo-status.txt
-            echo "::warning::Tempo 校验状态: ${STATE} (namespace=${TEMPO_NS}, service_input=${TEMPO_SVC_INPUT:-<auto>})"
+            echo "::warning::Tempo 校验状态: ${STATE} (requested_ns=${TEMPO_NS}, service_input=${TEMPO_SVC_INPUT:-<auto>}, pattern=${TEMPO_SERVICE_PATTERN})"
             echo "tempo_state=${STATE}" >> "${GITHUB_OUTPUT}"
+            echo "tempo_namespace_resolved=" >> "${GITHUB_OUTPUT}"
             echo "tempo_service=" >> "${GITHUB_OUTPUT}"
             echo "tempo_port=" >> "${GITHUB_OUTPUT}"
             echo "tempo_required=${TEMPO_REQUIRED}" >> "${GITHUB_OUTPUT}"
@@ -610,10 +672,11 @@ jobs:
           fi
 
           echo "tempo_state=ready" >> "${GITHUB_OUTPUT}"
+          echo "tempo_namespace_resolved=${RESOLVED_NS}" >> "${GITHUB_OUTPUT}"
           echo "tempo_service=${RESOLVED_SVC}" >> "${GITHUB_OUTPUT}"
           echo "tempo_port=${RESOLVED_PORT}" >> "${GITHUB_OUTPUT}"
           echo "tempo_required=${TEMPO_REQUIRED}" >> "${GITHUB_OUTPUT}"
-          echo "Tempo 解析成功: service=${RESOLVED_SVC} port=${RESOLVED_PORT}"
+          echo "Tempo 解析成功: namespace=${RESOLVED_NS} service=${RESOLVED_SVC} port=${RESOLVED_PORT}"
 
       - name: Collect Tempo snapshots
         shell: bash
@@ -625,7 +688,7 @@ jobs:
             exit 0
           fi
 
-          TEMPO_NS="${{ steps.cfg.outputs.tempo_namespace }}"
+          TEMPO_NS="${{ steps.tempo.outputs.tempo_namespace_resolved }}"
           TEMPO_SVC="${{ steps.tempo.outputs.tempo_service }}"
           TEMPO_PORT="${{ steps.tempo.outputs.tempo_port }}"
           TRACE_ID="${{ steps.trace.outputs.trace_id }}"
@@ -672,6 +735,8 @@ jobs:
           ACTUAL_IMAGE="${{ steps.deploy.outputs.actual_image }}"
           TEMPO_STATE="${{ steps.tempo.outputs.tempo_state }}"
           TEMPO_REQUIRED="${{ steps.tempo.outputs.tempo_required }}"
+          TEMPO_NAMESPACE_RESOLVED="${{ steps.tempo.outputs.tempo_namespace_resolved }}"
+          TEMPO_NAMESPACE_REQUESTED="${{ steps.cfg.outputs.tempo_namespace }}"
           TEMPO_SERVICE="${{ steps.tempo.outputs.tempo_service }}"
 
           if [ -f artifacts/perf-summary.json ]; then
@@ -686,6 +751,12 @@ jobs:
           fi
           if [ -z "${TEMPO_REQUIRED}" ]; then
             TEMPO_REQUIRED="false"
+          fi
+          if [ -z "${TEMPO_NAMESPACE_RESOLVED}" ]; then
+            TEMPO_NAMESPACE_RESOLVED="N/A"
+          fi
+          if [ -z "${TEMPO_NAMESPACE_REQUESTED}" ]; then
+            TEMPO_NAMESPACE_REQUESTED="N/A"
           fi
           if [ -z "${TEMPO_SERVICE}" ]; then
             TEMPO_SERVICE="N/A"
@@ -708,6 +779,8 @@ jobs:
             echo "- sample_trace_id: \`${{ steps.trace.outputs.trace_id || 'N/A' }}\`"
             echo "- tempo_required: \`${TEMPO_REQUIRED}\`"
             echo "- tempo_state: \`${TEMPO_STATE}\`"
+            echo "- tempo_namespace_requested: \`${TEMPO_NAMESPACE_REQUESTED}\`"
+            echo "- tempo_namespace_resolved: \`${TEMPO_NAMESPACE_RESOLVED}\`"
             echo "- tempo_service: \`${TEMPO_SERVICE}\`"
             echo "- artifacts: workflow artifact \`k3s-perf-observability-${{ github.run_id }}\`"
           } >> "${GITHUB_STEP_SUMMARY}"
