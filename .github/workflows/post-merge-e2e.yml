@@ -74,13 +74,14 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          SPRING_PROFILES_ACTIVE=test \
+          SPRING_PROFILES_ACTIVE=test,dev \
           SPRING_DATASOURCE_URL='jdbc:postgresql://127.0.0.1:5432/ljwx_platform' \
           SPRING_DATASOURCE_USERNAME=postgres \
           SPRING_DATASOURCE_PASSWORD=postgres \
           mvn -f ljwx-platform-app/pom.xml \
+            -e \
             -DskipTests \
-            -Dspring-boot.run.profiles=test \
+            -Dspring-boot.run.profiles=test,dev \
             -Dspring-boot.run.useTestClasspath=true \
             spring-boot:run > app.log 2>&1 &
           echo $! > app.pid
