@@ -18,8 +18,15 @@ run_k6() {
   fi
 
   if command -v docker >/dev/null 2>&1; then
+    local network_args=()
+    if [[ "$(uname -s)" == "Linux" ]]; then
+      network_args+=(--network host)
+    fi
+
     docker run --rm -i \
+      "${network_args[@]}" \
       -v "$PROJECT_ROOT:/work" \
+      -v /tmp:/tmp \
       -w /work \
       grafana/k6:0.49.0 "$@"
     return
