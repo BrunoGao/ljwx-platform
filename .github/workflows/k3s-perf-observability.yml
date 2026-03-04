@@ -164,7 +164,10 @@ jobs:
           kubectl get nodes -o wide
           kubectl -n "${NS}" rollout status deployment/"${DEPLOY}" --timeout="${VERIFY_TIMEOUT}m"
 
-          SELECTOR="$(kubectl -n "${NS}" get deployment "${DEPLOY}" -o jsonpath='{range $k,$v := .spec.selector.matchLabels}{$k}={$v},{end}' | sed 's/,$//')"
+          SELECTOR="$(
+            kubectl -n "${NS}" get deployment "${DEPLOY}" -o json \
+              | jq -r '.spec.selector.matchLabels // {} | to_entries | map("\(.key)=\(.value)") | join(",")'
+          )"
           if [ -z "${SELECTOR}" ]; then
             echo "[FATAL] failed to resolve deployment selector"
             exit 1
