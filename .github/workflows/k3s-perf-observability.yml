@@ -1,0 +1,459 @@
+name: k3s-perf-observability
+
+on:
+  workflow_dispatch:
+    inputs:
+      namespace:
+        description: "Kubernetes namespace"
+        required: false
+        default: "ljwx-platform"
+      deployment_name:
+        description: "Kubernetes deployment name"
+        required: false
+        default: "ljwx-platform"
+      service_name:
+        description: "Kubernetes service name"
+        required: false
+        default: "ljwx-platform"
+      service_port:
+        description: "Kubernetes service port"
+        required: false
+        default: "80"
+      verify_timeout_minutes:
+        description: "Rollout verify timeout minutes"
+        required: false
+        default: "10"
+      perf_vus:
+        description: "k6 VUs"
+        required: false
+        default: "10"
+      perf_duration:
+        description: "k6 duration"
+        required: false
+        default: "60s"
+      prometheus_namespace:
+        description: "Prometheus namespace"
+        required: false
+        default: "monitoring"
+      prometheus_service:
+        description: "Prometheus service name (empty = auto discover)"
+        required: false
+        default: ""
+      tempo_namespace:
+        description: "Tempo namespace"
+        required: false
+        default: "monitoring"
+      tempo_service:
+        description: "Tempo service name (empty = auto discover)"
+        required: false
+        default: ""
+  workflow_run:
+    workflows: ["acceptance-local-k3s"]
+    types: [completed]
+
+permissions:
+  contents: read
+
+jobs:
+  perf-observability:
+    if: ${{ github.event_name == 'workflow_dispatch' || (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success') }}
+    runs-on: [self-hosted, k3s-local]
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Resolve config
+        id: cfg
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            NAMESPACE="${{ github.event.inputs.namespace }}"
+            DEPLOYMENT_NAME="${{ github.event.inputs.deployment_name }}"
+            SERVICE_NAME="${{ github.event.inputs.service_name }}"
+            SERVICE_PORT="${{ github.event.inputs.service_port }}"
+            VERIFY_TIMEOUT_MINUTES="${{ github.event.inputs.verify_timeout_minutes }}"
+            PERF_VUS="${{ github.event.inputs.perf_vus }}"
+            PERF_DURATION="${{ github.event.inputs.perf_duration }}"
+            PROM_NAMESPACE="${{ github.event.inputs.prometheus_namespace }}"
+            PROM_SERVICE="${{ github.event.inputs.prometheus_service }}"
+            TEMPO_NAMESPACE="${{ github.event.inputs.tempo_namespace }}"
+            TEMPO_SERVICE="${{ github.event.inputs.tempo_service }}"
+          else
+            NAMESPACE="ljwx-platform"
+            DEPLOYMENT_NAME="ljwx-platform"
+            SERVICE_NAME="ljwx-platform"
+            SERVICE_PORT="80"
+            VERIFY_TIMEOUT_MINUTES="10"
+            PERF_VUS="10"
+            PERF_DURATION="60s"
+            PROM_NAMESPACE="monitoring"
+            PROM_SERVICE=""
+            TEMPO_NAMESPACE="monitoring"
+            TEMPO_SERVICE=""
+          fi
+
+          {
+            echo "namespace=${NAMESPACE}"
+            echo "deployment_name=${DEPLOYMENT_NAME}"
+            echo "service_name=${SERVICE_NAME}"
+            echo "service_port=${SERVICE_PORT}"
+            echo "verify_timeout_minutes=${VERIFY_TIMEOUT_MINUTES}"
+            echo "perf_vus=${PERF_VUS}"
+            echo "perf_duration=${PERF_DURATION}"
+            echo "prometheus_namespace=${PROM_NAMESPACE}"
+            echo "prometheus_service=${PROM_SERVICE}"
+            echo "tempo_namespace=${TEMPO_NAMESPACE}"
+            echo "tempo_service=${TEMPO_SERVICE}"
+          } >> "${GITHUB_OUTPUT}"
+
+      - name: Validate required tools
+        shell: bash
+        run: |
+          set -euo pipefail
+          command -v kubectl >/dev/null
+          command -v docker >/dev/null
+          command -v jq >/dev/null
+          command -v curl >/dev/null
+          python3 --version
+
+      - name: Configure kubeconfig
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -n "${{ secrets.KUBE_CONFIG_B64 }}" ]; then
+            KUBECONFIG_PATH="${RUNNER_TEMP}/kubeconfig"
+            echo "${{ secrets.KUBE_CONFIG_B64 }}" | base64 -d > "${KUBECONFIG_PATH}"
+            chmod 600 "${KUBECONFIG_PATH}"
+            echo "KUBECONFIG=${KUBECONFIG_PATH}" >> "${GITHUB_ENV}"
+            exit 0
+          fi
+          if [ -r "/etc/rancher/k3s/k3s.yaml" ]; then
+            echo "KUBECONFIG=/etc/rancher/k3s/k3s.yaml" >> "${GITHUB_ENV}"
+            exit 0
+          fi
+          echo "[FATAL] kubeconfig not found. Provide KUBE_CONFIG_B64 or make /etc/rancher/k3s/k3s.yaml readable."
+          exit 1
+
+      - name: Verify cluster and rollout
+        id: deploy
+        shell: bash
+        run: |
+          set -euo pipefail
+          NS="${{ steps.cfg.outputs.namespace }}"
+          DEPLOY="${{ steps.cfg.outputs.deployment_name }}"
+          VERIFY_TIMEOUT="${{ steps.cfg.outputs.verify_timeout_minutes }}"
+
+          kubectl cluster-info
+          kubectl get nodes -o wide
+          kubectl -n "${NS}" rollout status deployment/"${DEPLOY}" --timeout="${VERIFY_TIMEOUT}m"
+
+          SELECTOR="$(kubectl -n "${NS}" get deployment "${DEPLOY}" -o jsonpath='{range $k,$v := .spec.selector.matchLabels}{$k}={$v},{end}' | sed 's/,$//')"
+          if [ -z "${SELECTOR}" ]; then
+            echo "[FATAL] failed to resolve deployment selector"
+            exit 1
+          fi
+
+          echo "selector=${SELECTOR}" >> "${GITHUB_OUTPUT}"
+
+      - name: Start service port-forward
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts
+          NS="${{ steps.cfg.outputs.namespace }}"
+          SVC="${{ steps.cfg.outputs.service_name }}"
+          PORT="${{ steps.cfg.outputs.service_port }}"
+
+          kubectl -n "${NS}" port-forward "svc/${SVC}" 18080:"${PORT}" > artifacts/service-port-forward.log 2>&1 &
+          PF_PID=$!
+          echo "${PF_PID}" > artifacts/service-port-forward.pid
+
+          for i in $(seq 1 120); do
+            if curl -fsS http://127.0.0.1:18080/actuator/health >/dev/null 2>&1; then
+              echo "service is reachable by port-forward"
+              exit 0
+            fi
+            if ! kill -0 "${PF_PID}" >/dev/null 2>&1; then
+              echo "[FATAL] port-forward process exited unexpectedly"
+              cat artifacts/service-port-forward.log || true
+              exit 1
+            fi
+            sleep 2
+          done
+
+          echo "[FATAL] service health timeout via port-forward"
+          cat artifacts/service-port-forward.log || true
+          exit 1
+
+      - name: Capture sample trace id
+        id: trace
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fsS -D artifacts/health.headers -o artifacts/health.body http://127.0.0.1:18080/actuator/health
+          TRACE_ID="$(python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          path = Path('artifacts/health.body')
+          try:
+              payload = json.loads(path.read_text(encoding='utf-8'))
+          except Exception:
+              print('')
+              raise SystemExit(0)
+
+          trace_id = ''
+          if isinstance(payload, dict):
+              trace_id = str(payload.get('traceId') or '')
+          print(trace_id)
+          PY
+          )"
+          echo "trace_id=${TRACE_ID}" >> "${GITHUB_OUTPUT}"
+
+      - name: Run k6 performance baseline (R11)
+        id: perf
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/k6
+          chmod 777 artifacts/k6
+
+          set +e
+          docker run --rm --network host \
+            -e BASE_URL="http://127.0.0.1:18080" \
+            -e K6_VUS="${{ steps.cfg.outputs.perf_vus }}" \
+            -e K6_DURATION="${{ steps.cfg.outputs.perf_duration }}" \
+            -e TENANT_A_USER="admin" \
+            -e TENANT_A_PASS="Admin@12345" \
+            -v "${GITHUB_WORKSPACE}:/work" \
+            -w /work \
+            grafana/k6:0.49.0 run \
+              --summary-export /work/artifacts/k6/summary.json \
+              --out json=/work/artifacts/k6/raw.json \
+              tests/perf/baseline.js > artifacts/k6/k6.log 2>&1
+          PERF_RC=$?
+          set -e
+
+          echo "perf_rc=${PERF_RC}" >> "${GITHUB_OUTPUT}"
+
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          summary_file = Path('artifacts/k6/summary.json')
+          result = {
+              'status': 'FAIL',
+              'checks': 0,
+              'passed': 0,
+              'failed': 0,
+              'p95_ms': 0.0,
+              'avg_ms': 0.0,
+          }
+
+          if summary_file.exists():
+              payload = json.loads(summary_file.read_text(encoding='utf-8'))
+              metrics = payload.get('metrics', {}) if isinstance(payload, dict) else {}
+
+              def metric_val(name: str, key: str, default: float = 0.0) -> float:
+                  metric = metrics.get(name, {})
+                  values = metric.get('values') if isinstance(metric, dict) else None
+                  if isinstance(values, dict) and key in values and values.get(key) is not None:
+                      return float(values[key])
+                  if isinstance(metric, dict) and key in metric and metric.get(key) is not None:
+                      return float(metric[key])
+                  return default
+
+              passed = int(metric_val('checks', 'passes', 0.0))
+              failed = int(metric_val('checks', 'fails', 0.0))
+              checks = passed + failed
+              p95 = float(metric_val('http_req_duration', 'p(95)', 0.0))
+              avg = float(metric_val('http_req_duration', 'avg', 0.0))
+
+              result.update(
+                  {
+                      'checks': checks,
+                      'passed': passed,
+                      'failed': failed,
+                      'p95_ms': p95,
+                      'avg_ms': avg,
+                  }
+              )
+
+          perf_rc = 0
+          perf_file = Path('artifacts/perf.rc')
+          if perf_file.exists():
+              perf_rc = int(perf_file.read_text(encoding='utf-8').strip())
+
+          result['status'] = 'PASS' if perf_rc == 0 else 'FAIL'
+          Path('artifacts/perf-summary.json').write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding='utf-8')
+          PY
+
+          echo "${PERF_RC}" > artifacts/perf.rc
+
+      - name: Collect application logs and trace hits
+        shell: bash
+        run: |
+          set -euo pipefail
+          NS="${{ steps.cfg.outputs.namespace }}"
+          SELECTOR="${{ steps.deploy.outputs.selector }}"
+          TRACE_ID="${{ steps.trace.outputs.trace_id }}"
+
+          kubectl -n "${NS}" get pods -l "${SELECTOR}" -o wide > artifacts/pods.txt
+          kubectl -n "${NS}" get events --sort-by='.lastTimestamp' | tail -n 100 > artifacts/events.txt || true
+          kubectl -n "${NS}" logs -l "${SELECTOR}" --all-containers=true --tail=2000 > artifacts/app.logs || true
+
+          if [ -n "${TRACE_ID}" ]; then
+            grep -n "${TRACE_ID}" artifacts/app.logs > artifacts/trace-log-hit.txt || true
+          else
+            echo "trace_id_not_found_in_health_payload" > artifacts/trace-log-hit.txt
+          fi
+
+      - name: Collect Prometheus snapshots
+        shell: bash
+        run: |
+          set -euo pipefail
+          PROM_NS="${{ steps.cfg.outputs.prometheus_namespace }}"
+          PROM_SVC="${{ steps.cfg.outputs.prometheus_service }}"
+
+          if [ -z "${PROM_SVC}" ]; then
+            PROM_SVC="$(
+              kubectl -n "${PROM_NS}" get svc \
+                -o jsonpath='{range .items[*]}{.metadata.name}{" "}{range .spec.ports[*]}{.port}{","}{end}{"\n"}{end}' \
+                | awk '$1 ~ /^prometheus/ && $2 ~ /(^|,)9090,/{print $1; exit}'
+            )"
+          fi
+
+          if [ -z "${PROM_SVC}" ]; then
+            echo "prometheus_service_not_found" > artifacts/prometheus-status.txt
+            exit 0
+          fi
+
+          kubectl -n "${PROM_NS}" port-forward "svc/${PROM_SVC}" 19090:9090 > artifacts/prometheus-port-forward.log 2>&1 &
+          echo $! > artifacts/prometheus-port-forward.pid
+          sleep 5
+
+          curl -fsS "http://127.0.0.1:19090/api/v1/targets?state=active" > artifacts/prom-targets.json
+
+          python3 - <<'PY'
+          import json
+          import urllib.parse
+          import urllib.request
+          from pathlib import Path
+
+          queries = {
+              'up_otel_agent_metrics': 'up{job=\"otel-agent-metrics\"}',
+              'http_rps_total': 'sum(rate(http_server_requests_seconds_count[5m]))',
+              'http_p95_seconds': 'histogram_quantile(0.95, sum(rate(http_server_requests_seconds_bucket[5m])) by (le))',
+              'jvm_heap_used_bytes': 'sum(jvm_memory_used_bytes{area=\"heap\"})',
+          }
+
+          for name, q in queries.items():
+              url = f"http://127.0.0.1:19090/api/v1/query?query={urllib.parse.quote(q, safe='')}"
+              out = Path(f"artifacts/prom-query-{name}.json")
+              try:
+                  with urllib.request.urlopen(url, timeout=10) as resp:
+                      out.write_text(resp.read().decode('utf-8'), encoding='utf-8')
+              except Exception as exc:
+                  out.write_text(json.dumps({'status': 'error', 'error': str(exc)}, ensure_ascii=False, indent=2), encoding='utf-8')
+          PY
+
+      - name: Collect Tempo snapshots (optional)
+        shell: bash
+        run: |
+          set -euo pipefail
+          TEMPO_NS="${{ steps.cfg.outputs.tempo_namespace }}"
+          TEMPO_SVC="${{ steps.cfg.outputs.tempo_service }}"
+          TRACE_ID="${{ steps.trace.outputs.trace_id }}"
+
+          if [ -z "${TEMPO_SVC}" ]; then
+            TEMPO_SVC="$(kubectl -n "${TEMPO_NS}" get svc -o name 2>/dev/null | sed 's#service/##' | grep -E '^tempo' | head -n1 || true)"
+          fi
+
+          if [ -z "${TEMPO_SVC}" ]; then
+            echo "tempo_service_not_found" > artifacts/tempo-status.txt
+            exit 0
+          fi
+
+          TEMPO_PORT="$(kubectl -n "${TEMPO_NS}" get svc "${TEMPO_SVC}" -o jsonpath='{.spec.ports[0].port}' 2>/dev/null || true)"
+          if [ -z "${TEMPO_PORT}" ]; then
+            echo "tempo_port_not_found" > artifacts/tempo-status.txt
+            exit 0
+          fi
+
+          kubectl -n "${TEMPO_NS}" port-forward "svc/${TEMPO_SVC}" 13200:"${TEMPO_PORT}" > artifacts/tempo-port-forward.log 2>&1 &
+          echo $! > artifacts/tempo-port-forward.pid
+          sleep 5
+
+          curl -fsS "http://127.0.0.1:13200/ready" > artifacts/tempo-ready.txt || true
+          curl -fsS "http://127.0.0.1:13200/api/search?limit=5" > artifacts/tempo-search.json || true
+
+          if [ -n "${TRACE_ID}" ]; then
+            curl -fsS "http://127.0.0.1:13200/api/traces/${TRACE_ID}" > artifacts/tempo-trace.json || true
+          fi
+
+      - name: Stop port-forward processes
+        if: always()
+        shell: bash
+        run: |
+          for pid_file in artifacts/service-port-forward.pid artifacts/prometheus-port-forward.pid artifacts/tempo-port-forward.pid; do
+            if [ -f "${pid_file}" ]; then
+              PID="$(cat "${pid_file}")"
+              kill "${PID}" >/dev/null 2>&1 || true
+            fi
+          done
+
+      - name: Upload perf and observability artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: k3s-perf-observability-${{ github.run_id }}
+          path: artifacts/**
+
+      - name: Build summary
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          PERF_STATUS="unknown"
+          PERF_CHECKS="0"
+          PERF_P95="0"
+          PERF_AVG="0"
+
+          if [ -f artifacts/perf-summary.json ]; then
+            PERF_STATUS="$(jq -r '.status // "unknown"' artifacts/perf-summary.json)"
+            PERF_CHECKS="$(jq -r '.checks // 0' artifacts/perf-summary.json)"
+            PERF_P95="$(jq -r '.p95_ms // 0' artifacts/perf-summary.json)"
+            PERF_AVG="$(jq -r '.avg_ms // 0' artifacts/perf-summary.json)"
+          fi
+
+          {
+            echo "## K3s Perf + Observability"
+            echo "- namespace: \`${{ steps.cfg.outputs.namespace }}\`"
+            echo "- deployment: \`${{ steps.cfg.outputs.deployment_name }}\`"
+            echo "- service: \`${{ steps.cfg.outputs.service_name }}:${{ steps.cfg.outputs.service_port }}\`"
+            echo "- perf_vus: \`${{ steps.cfg.outputs.perf_vus }}\`"
+            echo "- perf_duration: \`${{ steps.cfg.outputs.perf_duration }}\`"
+            echo "- perf_status: \`${PERF_STATUS}\`"
+            echo "- perf_checks: \`${PERF_CHECKS}\`"
+            echo "- perf_p95_ms: \`${PERF_P95}\`"
+            echo "- perf_avg_ms: \`${PERF_AVG}\`"
+            echo "- sample_trace_id: \`${{ steps.trace.outputs.trace_id || 'N/A' }}\`"
+            echo "- artifacts: workflow artifact \`k3s-perf-observability-${{ github.run_id }}\`"
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+      - name: Fail when perf runner failed
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          PERF_RC="${{ steps.perf.outputs.perf_rc }}"
+          if [ -z "${PERF_RC}" ]; then
+            echo "[FATAL] perf_rc missing"
+            exit 1
+          fi
+          if [ "${PERF_RC}" != "0" ]; then
+            echo "[FATAL] k6 perf run failed with rc=${PERF_RC}"
+            exit 1
+          fi
