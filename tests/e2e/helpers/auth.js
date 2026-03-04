@@ -2,14 +2,25 @@ import http from "k6/http";
 import { fail } from "k6";
 import { cfg } from "../config.js";
 
+function getPathValue(root, path) {
+  let cursor = root;
+  for (const key of path) {
+    if (cursor === null || cursor === undefined) {
+      return undefined;
+    }
+    cursor = cursor[key];
+  }
+  return cursor;
+}
+
 function extractToken(payload) {
   const candidates = [
-    payload?.data?.accessToken,
-    payload?.data?.token,
-    payload?.data?.jwt,
-    payload?.accessToken,
-    payload?.token,
-    payload?.jwt,
+    getPathValue(payload, ["data", "accessToken"]),
+    getPathValue(payload, ["data", "token"]),
+    getPathValue(payload, ["data", "jwt"]),
+    getPathValue(payload, ["accessToken"]),
+    getPathValue(payload, ["token"]),
+    getPathValue(payload, ["jwt"]),
   ];
 
   for (const candidate of candidates) {
