@@ -20,7 +20,7 @@ export const cfg = {
 
   protectedPath: __ENV.PROTECTED_PATH || "/api/v1/menus/tree",
   forbiddenPath: __ENV.FORBIDDEN_PATH || "/api/users",
-  okPath: __ENV.OK_PATH || "/api/v1/menus/tree",
+  okPath: __ENV.OK_PATH || "/api/v1/menus",
   expectRWrapper: (__ENV.EXPECT_R_WRAPPER || "true").toLowerCase() === "true",
 
   resourceBase: __ENV.RESOURCE_BASE || "/api/v1/menus",

@@ -21,13 +21,14 @@ function getPathValue(root, path) {
 
 function extractId(payload) {
   const candidates = [
+    getPathValue(payload, ["data"]),
     getPathValue(payload, ["data", "id"]),
     getPathValue(payload, ["data", "record", "id"]),
     getPathValue(payload, ["data", 0, "id"]),
     getPathValue(payload, ["id"]),
   ];
   for (const candidate of candidates) {
-    if (candidate !== undefined && candidate !== null && candidate !== "") {
+    if ((typeof candidate === "string" || typeof candidate === "number") && candidate !== "") {
       return candidate;
     }
   }
