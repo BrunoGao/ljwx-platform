@@ -283,6 +283,21 @@ ljwx-platform/
 - 目标 Deployment rollout 完成，且 `DEPLOYMENT_ID` 与 release values 一致
 - Prometheus active targets 中 `otel-agent-metrics` 为 `UP`
 
+## 主分支自动修复闭环（Full Test + Auto Repair）
+
+- 监控入口：`.github/workflows/main-branch-auto-repair.yml`
+- 触发条件：
+  - `CI` / `Gate Check` / `Post Merge E2E` / `Nightly Regression` 在 `main|master` 失败后自动触发
+  - 或手工 `workflow_dispatch` 指定失败 `run_id`
+- 自动动作：
+  - 收集失败 run 日志（`scripts/ci/collect-github-failures.sh`）
+  - 归因分类（`closed-loop-collect -> closed-loop-diagnose`）
+  - 执行修复配方（`scripts/ci/closed-loop-repair.sh` + `scripts/ci/repair-recipes.yaml`）
+  - 若产生代码变更则自动提交并推送主分支，触发下一轮全量测试
+- 终止策略：
+  - 默认最多 `3` 次自动修复（可在手工触发时调整）
+  - 超限或无可修复配方时自动创建/更新 Issue 转人工
+
 ## 硬规则摘要
 
 1. **DAG 依赖**：`core ← {security, data} ← web ← app`，security 和 data 互不依赖
