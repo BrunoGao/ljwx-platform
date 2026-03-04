@@ -8,13 +8,17 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ValueConstants;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.mvc.method.RequestMappingInfo;
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
+import java.time.temporal.Temporal;
 import java.util.Comparator;
+import java.util.Collection;
+import java.util.Map;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -55,7 +59,7 @@ public class ProtocolEndpointResolver {
         if (!methods.isEmpty() && !methods.contains(RequestMethod.GET)) {
             return List.of();
         }
-        if (hasRequiredRequestParam(handler.getMethod())) {
+        if (hasRequiredRequestParam(handler.getMethod()) || hasComplexModelArgument(handler.getMethod())) {
             // Protocol security contract sends bare GET requests. Endpoints requiring query params
             // would fail with 400 before auth/authorization and produce false negatives.
             return List.of();
@@ -110,6 +114,49 @@ public class ProtocolEndpointResolver {
             return true;
         }
         return false;
+    }
+
+    private boolean hasComplexModelArgument(Method method) {
+        for (Parameter parameter : method.getParameters()) {
+            if (AnnotatedElementUtils.findMergedAnnotation(parameter, PathVariable.class) != null) {
+                continue;
+            }
+            if (AnnotatedElementUtils.findMergedAnnotation(parameter, RequestParam.class) != null) {
+                continue;
+            }
+            if (isSimpleType(parameter.getType())) {
+                continue;
+            }
+            // Unannotated complex object on GET (e.g. QueryDTO) requires query payload.
+            // Skip it to keep protocol security checks focused on auth behavior.
+            return true;
+        }
+        return false;
+    }
+
+    private boolean isSimpleType(Class<?> type) {
+        if (type.isPrimitive() || type.isEnum()) {
+            return true;
+        }
+        if (String.class.equals(type) || Number.class.isAssignableFrom(type)) {
+            return true;
+        }
+        if (Boolean.class.equals(type) || Character.class.equals(type)) {
+            return true;
+        }
+        if (Temporal.class.isAssignableFrom(type)) {
+            return true;
+        }
+        if (Optional.class.isAssignableFrom(type)) {
+            return true;
+        }
+        if (Collection.class.isAssignableFrom(type) || Map.class.isAssignableFrom(type)) {
+            return true;
+        }
+        String name = type.getName();
+        return name.startsWith("jakarta.servlet.")
+                || name.startsWith("javax.servlet.")
+                || name.startsWith("org.springframework.");
     }
 
     private String normalizePath(String raw) {
