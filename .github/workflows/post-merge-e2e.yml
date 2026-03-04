@@ -27,6 +27,15 @@ jobs:
           --health-interval 5s
           --health-timeout 3s
           --health-retries 20
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 20
     env:
       GH_TOKEN: ${{ github.token }}
       BASE_URL: http://localhost:8080
@@ -70,6 +79,20 @@ jobs:
           echo "PostgreSQL is not reachable on 127.0.0.1:5432" >&2
           exit 1
 
+      - name: Wait for Redis
+        shell: bash
+        run: |
+          set -euo pipefail
+          for i in {1..30}; do
+            if (echo > /dev/tcp/127.0.0.1/6379) >/dev/null 2>&1; then
+              echo "Redis is ready"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "Redis is not reachable on 127.0.0.1:6379" >&2
+          exit 1
+
       - name: Start app locally
         shell: bash
         run: |
@@ -78,6 +101,8 @@ jobs:
           SPRING_DATASOURCE_URL='jdbc:postgresql://127.0.0.1:5432/ljwx_platform' \
           SPRING_DATASOURCE_USERNAME=postgres \
           SPRING_DATASOURCE_PASSWORD=postgres \
+          REDIS_HOST=127.0.0.1 \
+          REDIS_PORT=6379 \
           mvn -f ljwx-platform-app/pom.xml \
             -e \
             -DskipTests \
