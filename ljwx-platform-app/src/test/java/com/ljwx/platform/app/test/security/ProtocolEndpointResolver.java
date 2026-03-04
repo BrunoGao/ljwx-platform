@@ -6,13 +6,17 @@ import org.springframework.http.HttpMethod;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ValueConstants;
 import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.mvc.method.RequestMappingInfo;
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 
 import java.lang.reflect.Method;
+import java.lang.reflect.Parameter;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -51,6 +55,11 @@ public class ProtocolEndpointResolver {
         if (!methods.isEmpty() && !methods.contains(RequestMethod.GET)) {
             return List.of();
         }
+        if (hasRequiredRequestParam(handler.getMethod())) {
+            // Protocol security contract sends bare GET requests. Endpoints requiring query params
+            // would fail with 400 before auth/authorization and produce false negatives.
+            return List.of();
+        }
 
         String preAuthorize = preAuthorizeValue(handler.getMethod());
         if (preAuthorize.isBlank()) {
@@ -81,6 +90,26 @@ public class ProtocolEndpointResolver {
 
     private boolean hasAuthorityExpression(String expression) {
         return expression != null && expression.contains("hasAuthority(");
+    }
+
+    private boolean hasRequiredRequestParam(Method method) {
+        for (Parameter parameter : method.getParameters()) {
+            RequestParam requestParam = AnnotatedElementUtils.findMergedAnnotation(parameter, RequestParam.class);
+            if (requestParam == null) {
+                continue;
+            }
+            if (!requestParam.required()) {
+                continue;
+            }
+            if (!ValueConstants.DEFAULT_NONE.equals(requestParam.defaultValue())) {
+                continue;
+            }
+            if (Optional.class.isAssignableFrom(parameter.getType())) {
+                continue;
+            }
+            return true;
+        }
+        return false;
     }
 
     private String normalizePath(String raw) {
