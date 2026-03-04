@@ -74,11 +74,20 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          APP_JAR="$(find ljwx-platform-app/target -maxdepth 1 -type f -name 'ljwx-platform-app-*.jar' ! -name '*original*' | head -n 1)"
+          if [[ -z "${APP_JAR}" ]]; then
+            echo "app jar not found under ljwx-platform-app/target" >&2
+            ls -lah ljwx-platform-app/target || true
+            exit 1
+          fi
           SPRING_PROFILES_ACTIVE=test \
           SPRING_DATASOURCE_URL='jdbc:postgresql://127.0.0.1:5432/ljwx_platform' \
           SPRING_DATASOURCE_USERNAME=postgres \
           SPRING_DATASOURCE_PASSWORD=postgres \
-          mvn -f ljwx-platform-app/pom.xml -DskipTests spring-boot:run > app.log 2>&1 &
+          SPRING_CACHE_TYPE=simple \
+          SPRING_QUARTZ_AUTO_STARTUP=false \
+          SPRING_AUTOCONFIGURE_EXCLUDE='org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration,org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration' \
+          java -jar "${APP_JAR}" > app.log 2>&1 &
           echo $! > app.pid
 
       - name: Wait app health
@@ -86,6 +95,11 @@ jobs:
         run: |
           set -euo pipefail
           for i in {1..240}; do
+            if [[ -f app.pid ]] && ! kill -0 "$(cat app.pid)" 2>/dev/null; then
+              echo "app process exited before health check passed" >&2
+              tail -n 300 app.log || true
+              exit 1
+            fi
             if curl -fsS "${BASE_URL}/actuator/health" >/dev/null 2>&1; then
               echo "app is healthy"
               exit 0
