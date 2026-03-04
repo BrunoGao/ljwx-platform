@@ -8,12 +8,23 @@ export const options = {
   iterations: Number(__ENV.K6_ITERATIONS || 1),
 };
 
+function getPathValue(root, path) {
+  let cursor = root;
+  for (const key of path) {
+    if (cursor === null || cursor === undefined) {
+      return undefined;
+    }
+    cursor = cursor[key];
+  }
+  return cursor;
+}
+
 function extractId(payload) {
   const candidates = [
-    payload?.data?.id,
-    payload?.data?.record?.id,
-    payload?.data?.[0]?.id,
-    payload?.id,
+    getPathValue(payload, ["data", "id"]),
+    getPathValue(payload, ["data", "record", "id"]),
+    getPathValue(payload, ["data", 0, "id"]),
+    getPathValue(payload, ["id"]),
   ];
   for (const candidate of candidates) {
     if (candidate !== undefined && candidate !== null && candidate !== "") {
@@ -54,11 +65,13 @@ export function setup() {
   const createRes = http.post(
     createUrl,
     JSON.stringify({
+      parentId: 0,
       name: resourceName,
-      title: resourceName,
       path: `/test/${resourceName}`,
       component: "TestComponent",
-      perms: `test:${resourceName}`,
+      menuType: 1,
+      permission: `test:${resourceName}`,
+      visible: 1,
     }),
     {
       headers: withAuthHeaders(tokenA),
@@ -89,7 +102,7 @@ export default function (ctx) {
   ensureEndpointExists(listRes, "list resources");
   checkStatusOneOf(listRes, [200], "tenantB list resources");
   const listPayload = checkR(listRes, "tenantB list response R<T>");
-  if (containsId(listPayload?.data, id)) {
+  if (containsId(getPathValue(listPayload, ["data"]), id)) {
     throw new Error(`Tenant isolation violated: tenantB list contains tenantA resource id=${id}`);
   }
 
