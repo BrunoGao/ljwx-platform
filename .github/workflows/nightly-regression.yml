@@ -14,7 +14,7 @@ jobs:
   nightly_regression:
     runs-on: [self-hosted, k3s-local]
     env:
-      GH_TOKEN: ${{ github.token }}
+      GH_TOKEN: ${{ secrets.PROJECT_TOKEN != '' && secrets.PROJECT_TOKEN || (secrets.PROJECT_V2_TOKEN != '' && secrets.PROJECT_V2_TOKEN || github.token) }}
       APP_NAMESPACE: ljwx-platform
       APP_SERVICE: ljwx-platform
       APP_SERVICE_PORT: "80"
@@ -160,9 +160,7 @@ jobs:
           if [[ "${{ steps.k3s_gate.outputs.r10_status }}" != "PASS" || "${{ steps.k3s_gate.outputs.r11_status }}" != "PASS" ]]; then
             overall="FAIL"
           fi
-          if ! bash scripts/regression/regression-weekly.sh --mode nightly --status "$overall" --apply; then
-            echo "weekly campaign update failed; continue workflow" >&2
-          fi
+          bash scripts/regression/regression-weekly.sh --mode nightly --status "$overall" --apply
 
       - name: Upload gate reports for Pages
         if: always()
