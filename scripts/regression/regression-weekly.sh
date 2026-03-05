@@ -346,7 +346,7 @@ COMMENT_URL=""
 if [[ "$DRY_RUN" == "false" ]]; then
   if ! comment_out="$(gh issue comment "$ISSUE_NUMBER" --repo "${OWNER}/${REPO}" --body "$COMMENT_MD" 2>&1)"; then
     echo "$comment_out" >&2
-    echo "weekly comment update failed" >&2
+    echo "周回归评论更新失败" >&2
     exit 1
   fi
   COMMENT_URL="$(grep -Eo 'https://github.com/[^[:space:]]+/issues/[0-9]+#issuecomment-[0-9]+' <<<"$comment_out" | tail -n1 || true)"
