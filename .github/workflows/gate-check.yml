@@ -30,6 +30,7 @@ concurrency:
 jobs:
   gate:
     name: gate
+    if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.test_env == 'k3s') }}
     runs-on: ubuntu-latest
     services:
       postgres:
@@ -243,6 +244,21 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Install kubectl (no sudo)
+        shell: bash
+        run: |
+          set -euo pipefail
+          BIN_DIR="${RUNNER_TEMP}/bin"
+          mkdir -p "${BIN_DIR}"
+          KUBECTL_BIN="kubectl"
+          if ! command -v kubectl >/dev/null 2>&1; then
+            curl -sSL -o "${BIN_DIR}/kubectl" "https://dl.k8s.io/release/$(curl -sSL https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+            chmod +x "${BIN_DIR}/kubectl"
+            echo "${BIN_DIR}" >> "${GITHUB_PATH}"
+            KUBECTL_BIN="${BIN_DIR}/kubectl"
+          fi
+          "${KUBECTL_BIN}" version --client
 
       - name: Validate tools
         shell: bash

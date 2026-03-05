@@ -34,12 +34,26 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Install kubectl (no sudo)
+        shell: bash
+        run: |
+          set -euo pipefail
+          BIN_DIR="${RUNNER_TEMP}/bin"
+          mkdir -p "${BIN_DIR}"
+          KUBECTL_BIN="kubectl"
+          if ! command -v kubectl >/dev/null 2>&1; then
+            curl -sSL -o "${BIN_DIR}/kubectl" "https://dl.k8s.io/release/$(curl -sSL https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+            chmod +x "${BIN_DIR}/kubectl"
+            echo "${BIN_DIR}" >> "${GITHUB_PATH}"
+            KUBECTL_BIN="${BIN_DIR}/kubectl"
+          fi
+          "${KUBECTL_BIN}" version --client
+
       - name: Validate tools
         shell: bash
         run: |
           set -euo pipefail
           command -v jq >/dev/null
-          command -v gh >/dev/null
           command -v kubectl >/dev/null
           command -v curl >/dev/null
 
