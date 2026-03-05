@@ -8,6 +8,15 @@ on:
   merge_group:
     branches: [master, main, develop]
   workflow_dispatch:
+    inputs:
+      test_env:
+        description: "Gate runtime target: ci or k3s"
+        required: false
+        default: "ci"
+        type: choice
+        options:
+          - ci
+          - k3s
 
 permissions:
   contents: read
@@ -209,3 +218,101 @@ jobs:
             docs/reports/**
             **/target/surefire-reports/**
             **/target/failsafe-reports/**
+
+  gate-k3s:
+    name: gate-k3s
+    if: ${{ (github.event_name == 'workflow_dispatch' && inputs.test_env == 'k3s') || vars.GATE_CHECK_ENABLE_K3S == 'true' }}
+    runs-on: [self-hosted, k3s-local]
+    timeout-minutes: 45
+    env:
+      APP_NAMESPACE: ${{ vars.K3S_APP_NAMESPACE != '' && vars.K3S_APP_NAMESPACE || 'ljwx-platform' }}
+      APP_SERVICE: ${{ vars.K3S_APP_SERVICE != '' && vars.K3S_APP_SERVICE || 'ljwx-platform' }}
+      APP_SERVICE_PORT: ${{ vars.K3S_APP_SERVICE_PORT != '' && vars.K3S_APP_SERVICE_PORT || '80' }}
+      MONITORING_NAMESPACE: ${{ vars.K3S_MONITORING_NAMESPACE != '' && vars.K3S_MONITORING_NAMESPACE || 'monitoring' }}
+      PROM_SERVICE: ${{ vars.K3S_PROM_SERVICE != '' && vars.K3S_PROM_SERVICE || 'prometheus-kube-prometheus-prometheus' }}
+      LOKI_NAMESPACE: ${{ vars.K3S_LOKI_NAMESPACE != '' && vars.K3S_LOKI_NAMESPACE || 'logging' }}
+      LOKI_SERVICE: ${{ vars.K3S_LOKI_SERVICE != '' && vars.K3S_LOKI_SERVICE || 'loki' }}
+      TRACING_NAMESPACE: ${{ vars.K3S_TRACING_NAMESPACE != '' && vars.K3S_TRACING_NAMESPACE || 'tracing' }}
+      TEMPO_SERVICE: ${{ vars.K3S_TEMPO_SERVICE != '' && vars.K3S_TEMPO_SERVICE || 'tempo' }}
+      SERVICE_NAME: ${{ vars.K3S_SERVICE_NAME != '' && vars.K3S_SERVICE_NAME || 'ljwx-platform' }}
+      STRICT_TEMPO_SEARCH: "0"
+      K6_VUS_R10: "1"
+      K6_ITERATIONS_R10: "1"
+      K6_VUS_R11: "6"
+      K6_DURATION_R11: "45s"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate tools
+        shell: bash
+        run: |
+          set -euo pipefail
+          command -v kubectl >/dev/null
+          command -v jq >/dev/null
+          command -v curl >/dev/null
+
+      - name: Configure kubeconfig
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -n "${{ secrets.KUBE_CONFIG_B64 }}" ]; then
+            KUBECONFIG_PATH="${RUNNER_TEMP}/kubeconfig"
+            echo "${{ secrets.KUBE_CONFIG_B64 }}" | base64 -d > "${KUBECONFIG_PATH}"
+            chmod 600 "${KUBECONFIG_PATH}"
+            echo "KUBECONFIG=${KUBECONFIG_PATH}" >> "${GITHUB_ENV}"
+            exit 0
+          fi
+          if [ -r "/etc/rancher/k3s/k3s.yaml" ]; then
+            echo "KUBECONFIG=/etc/rancher/k3s/k3s.yaml" >> "${GITHUB_ENV}"
+            exit 0
+          fi
+          echo "[FATAL] kubeconfig not found. Provide KUBE_CONFIG_B64 or make /etc/rancher/k3s/k3s.yaml readable."
+          exit 1
+
+      - name: Verify cluster access
+        shell: bash
+        run: |
+          set -euo pipefail
+          kubectl cluster-info
+          kubectl get nodes -o wide
+
+      - name: Run k3s business gate
+        id: k3s_gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          run_r11=0
+          if [[ "${{ github.event_name }}" == "push" || "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            run_r11=1
+          fi
+
+          RUN_R10=1 RUN_R11="${run_r11}" bash scripts/check-observability-k3s.sh
+
+          REPORT_FILE="/tmp/ljwx-gate-results/observability-e2e.json"
+          r10_status="$(jq -r '.gates.r10.status // "UNKNOWN"' "${REPORT_FILE}" 2>/dev/null || true)"
+          r11_status="$(jq -r '.gates.r11.status // "SKIP"' "${REPORT_FILE}" 2>/dev/null || true)"
+          summary_status="$(jq -r '.status // "UNKNOWN"' "${REPORT_FILE}" 2>/dev/null || true)"
+
+          echo "r10_status=${r10_status}" >> "$GITHUB_OUTPUT"
+          echo "r11_status=${r11_status}" >> "$GITHUB_OUTPUT"
+          echo "summary_status=${summary_status}" >> "$GITHUB_OUTPUT"
+
+      - name: Upload k3s gate artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gate-k3s-reports
+          path: |
+            /tmp/ljwx-gate-results/**
+            /tmp/ljwx-gate-results/observability/**
+
+      - name: Fail when k3s gate failed
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "${{ steps.k3s_gate.outputs.summary_status }}" != "PASS" ]]; then
+            echo "k3s gate failed: summary=${{ steps.k3s_gate.outputs.summary_status }} R10=${{ steps.k3s_gate.outputs.r10_status }} R11=${{ steps.k3s_gate.outputs.r11_status }}" >&2
+            exit 1
+          fi

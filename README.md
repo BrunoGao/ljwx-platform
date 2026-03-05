@@ -354,6 +354,12 @@ ljwx-platform/
 - 目标 Deployment rollout 完成，且 `DEPLOYMENT_ID` 与 release values 一致
 - Prometheus active targets 中 `otel-agent-metrics` 为 `UP`
 
+另外，回归工作流已切换到 k3s 目标验证：
+
+- `.github/workflows/post-merge-e2e.yml`：在 k3s 上执行 `R10` 冒烟
+- `.github/workflows/nightly-regression.yml`：在 k3s 上执行 `R10 + R11` 与可观测断言
+- 统一入口脚本：`bash scripts/check-observability-k3s.sh`
+
 若只需要验证“交付件可直接落地 k3s”（不经过 Argo），可使用：
 
 - `bash scripts/local/k3s-delivery.sh apply`
@@ -362,8 +368,11 @@ ljwx-platform/
 ## Grafana 可观测看板（日志 + 链路 + 指标）
 
 - 统一看板文件：`k8s/grafana-dashboard-observability.json`
+- 看板 UID：`ljwx-platform-obsv`
 - 自动部署命令：
   - `bash scripts/ops/apply-grafana-observability-dashboard.sh`
+- 一键端到端验收（R10/R11 + Prom/Loki/Tempo）：
+  - `bash scripts/check-observability-k3s.sh`
 - 使用说明：
   - `docs/ops/grafana-observability-dashboard.md`
 
