@@ -37,9 +37,23 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-for cmd in jq gh; do
+require_cmd() {
+  local cmd="$1"
   command -v "$cmd" >/dev/null 2>&1 || { echo "missing command: $cmd" >&2; exit 1; }
-done
+}
+
+require_cmd jq
+if ! command -v gh >/dev/null 2>&1; then
+  installer="$ROOT_DIR/scripts/ci/install-gh.sh"
+  if [[ -x "$installer" ]]; then
+    echo "[信息] 检测到 gh 缺失，尝试自动安装..."
+    if ! bash "$installer"; then
+      echo "[警告] gh 自动安装失败，继续按原逻辑校验。" >&2
+    fi
+    PATH="${RUNNER_TEMP:-/tmp}/bin:${PATH}"
+  fi
+fi
+require_cmd gh
 
 [[ -f "$SUMMARY_JSON" ]] || { echo "missing summary file: $SUMMARY_JSON" >&2; exit 1; }
 [[ -f "$RTM_JSON" ]] || { echo "missing rtm file: $RTM_JSON" >&2; exit 1; }
