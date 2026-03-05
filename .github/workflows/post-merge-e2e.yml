@@ -30,6 +30,7 @@ jobs:
       TENANT_A_PASS: ${{ secrets.E2E_TENANT_A_PASS || 'Admin@12345' }}
       TENANT_B_USER: ${{ secrets.E2E_TENANT_B_USER || 'tenantB_admin' }}
       TENANT_B_PASS: ${{ secrets.E2E_TENANT_B_PASS || 'Admin@12345' }}
+      TENANT_B_PASS_HASH: ${{ secrets.E2E_TENANT_B_PASS_HASH || '' }}
       K6_VUS_R10: "1"
       K6_ITERATIONS_R10: "1"
     steps:

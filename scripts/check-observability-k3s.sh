@@ -40,11 +40,14 @@ K6_ITERATIONS_R10="${K6_ITERATIONS_R10:-1}"
 K6_VUS_R11="${K6_VUS_R11:-3}"
 K6_DURATION_R11="${K6_DURATION_R11:-20s}"
 STRICT_TEMPO_SEARCH="${STRICT_TEMPO_SEARCH:-1}"
+AUTO_REPAIR_R10_FIXTURES="${AUTO_REPAIR_R10_FIXTURES:-1}"
+R10_FIXTURE_REQUIRED="${R10_FIXTURE_REQUIRED:-0}"
 
 export TENANT_A_USER="${TENANT_A_USER:-admin}"
 export TENANT_A_PASS="${TENANT_A_PASS:-Admin@12345}"
 export TENANT_B_USER="${TENANT_B_USER:-tenantB_admin}"
 export TENANT_B_PASS="${TENANT_B_PASS:-Admin@12345}"
+export TENANT_B_PASS_HASH="${TENANT_B_PASS_HASH:-}"
 
 R10_JSON="/tmp/ljwx-gate-results/R10.json"
 R11_JSON="/tmp/ljwx-gate-results/R11.json"
@@ -322,6 +325,52 @@ tempo_ready_status() {
   fi
 }
 
+prepare_r10_fixtures() {
+  if [[ "${RUN_R10}" != "1" ]]; then
+    return
+  fi
+
+  if [[ "${AUTO_REPAIR_R10_FIXTURES}" != "1" ]]; then
+    log_info "跳过 R10 夹具修复（AUTO_REPAIR_R10_FIXTURES=${AUTO_REPAIR_R10_FIXTURES}）"
+    return
+  fi
+
+  local seed_script="${PROJECT_ROOT}/scripts/e2e/seed-fixtures-k3s.sh"
+  if [[ ! -x "${seed_script}" ]]; then
+    log_warn "R10 夹具修复脚本不存在或不可执行: ${seed_script}"
+    if [[ "${R10_FIXTURE_REQUIRED}" == "1" ]]; then
+      log_error "R10_FIXTURE_REQUIRED=1 且夹具修复脚本不可用。"
+      exit 1
+    fi
+    return
+  fi
+
+  log_info "执行 R10 夹具修复..."
+  set +e
+  APP_NAMESPACE="${APP_NAMESPACE}" \
+  TENANT_B_USER="${TENANT_B_USER}" \
+  TENANT_B_PASS="${TENANT_B_PASS}" \
+  TENANT_B_PASS_HASH="${TENANT_B_PASS_HASH}" \
+  bash "${seed_script}" >"${TMP_DIR}/seed-fixtures.log" 2>&1
+  local rc=$?
+  set -e
+
+  if [[ "${rc}" -eq 0 ]]; then
+    log_info "R10 夹具修复完成。"
+    return
+  fi
+
+  log_warn "R10 夹具修复失败(rc=${rc})，继续执行 gate。"
+  if [[ -f "${TMP_DIR}/seed-fixtures.log" ]]; then
+    tail -n 40 "${TMP_DIR}/seed-fixtures.log" >&2 || true
+  fi
+
+  if [[ "${R10_FIXTURE_REQUIRED}" == "1" ]]; then
+    log_error "R10_FIXTURE_REQUIRED=1 且夹具修复失败。"
+    exit 1
+  fi
+}
+
 dump_r10_diagnostics() {
   log_warn "R10 失败诊断：TENANT_A_USER=${TENANT_A_USER}, TENANT_B_USER=${TENANT_B_USER}"
 
@@ -335,7 +384,7 @@ dump_r10_diagnostics() {
 
   if [[ -f "${TMP_DIR}/gate-e2e.log" ]]; then
     log_warn "gate-e2e.log 关键行："
-    grep -E 'Login failed|expected=200 actual=401|GoError|script exception|tenantB|用户名或密码错误' "${TMP_DIR}/gate-e2e.log" \
+    grep -E 'Login failed|expected=200 actual=40[1-3]|actual=500|GoError|script exception|tenantB|用户名或密码错误|账号已锁定|423001|401001' "${TMP_DIR}/gate-e2e.log" \
       | head -n 30 >&2 || true
   fi
 
@@ -343,7 +392,34 @@ dump_r10_diagnostics() {
   for k6_log in /tmp/ljwx-gate-results/k6/e2e_*.log.*; do
     if [[ -f "${k6_log}" ]]; then
       log_warn "k6 日志 $(basename "${k6_log}") 关键行："
-      grep -E 'Login failed|expected=200 actual=401|GoError|script exception|tenantB|用户名或密码错误' "${k6_log}" \
+      grep -E 'Login failed|expected=200 actual=40[1-3]|actual=500|GoError|script exception|tenantB|用户名或密码错误|账号已锁定|423001|401001' "${k6_log}" \
+        | head -n 30 >&2 || true
+    fi
+  done
+}
+
+dump_r11_diagnostics() {
+  log_warn "R11 失败诊断：R11_EXEC_RC=${R11_EXEC_RC}, R11_STATUS=${R11_STATUS}"
+
+  if [[ -s "${R11_JSON}" ]]; then
+    local r11_brief
+    r11_brief="$(jq -c '{status,message,checks,passed,failed,p95_ms,avg_ms}' "${R11_JSON}" 2>/dev/null || true)"
+    if [[ -n "${r11_brief}" ]]; then
+      log_warn "R11 JSON 摘要: ${r11_brief}"
+    fi
+  fi
+
+  if [[ -f "${TMP_DIR}/gate-perf.log" ]]; then
+    log_warn "gate-perf.log 关键行："
+    grep -E 'Login failed|GoError|script exception|ERRO|actual=40[0-9]|actual=500|threshold|k6 is not available|docker fallback' "${TMP_DIR}/gate-perf.log" \
+      | head -n 40 >&2 || true
+  fi
+
+  local perf_log
+  for perf_log in /tmp/ljwx-gate-results/k6/perf*.log.*; do
+    if [[ -f "${perf_log}" ]]; then
+      log_warn "k6 性能日志 $(basename "${perf_log}") 关键行："
+      grep -E 'Login failed|GoError|script exception|ERRO|actual=40[0-9]|actual=500|threshold' "${perf_log}" \
         | head -n 30 >&2 || true
     fi
   done
@@ -367,6 +443,12 @@ run_r10() {
 
   R10_STATUS="$(json_file_value "${R10_JSON}" '.status' "UNKNOWN")"
   R10_MESSAGE="$(json_file_value "${R10_JSON}" '.message' "")"
+  if [[ "${R10_EXEC_RC}" -ne 0 && ( -z "${R10_STATUS}" || "${R10_STATUS}" == "UNKNOWN" || "${R10_STATUS}" == "null" ) ]]; then
+    R10_STATUS="FAIL"
+    if [[ -z "${R10_MESSAGE}" ]]; then
+      R10_MESSAGE="R10 report missing (gate-e2e rc=${R10_EXEC_RC})"
+    fi
+  fi
 
   if [[ "${R10_EXEC_RC}" -eq 0 && "${R10_STATUS}" == "PASS" ]]; then
     record_assertion "gate_r10" "R10 E2E Gate" "true" "PASS" "${R10_STATUS}" "${R10_MESSAGE}"
@@ -393,11 +475,18 @@ run_r11() {
 
   R11_STATUS="$(json_file_value "${R11_JSON}" '.status' "UNKNOWN")"
   R11_MESSAGE="$(json_file_value "${R11_JSON}" '.message' "")"
+  if [[ "${R11_EXEC_RC}" -ne 0 && ( -z "${R11_STATUS}" || "${R11_STATUS}" == "UNKNOWN" || "${R11_STATUS}" == "null" ) ]]; then
+    R11_STATUS="FAIL"
+    if [[ -z "${R11_MESSAGE}" ]]; then
+      R11_MESSAGE="R11 report missing (gate-perf rc=${R11_EXEC_RC})"
+    fi
+  fi
 
   if [[ "${R11_EXEC_RC}" -eq 0 && "${R11_STATUS}" == "PASS" ]]; then
     record_assertion "gate_r11" "R11 Perf Gate" "true" "PASS" "${R11_STATUS}" "${R11_MESSAGE}"
   else
     record_assertion "gate_r11" "R11 Perf Gate" "false" "PASS" "${R11_STATUS}" "rc=${R11_EXEC_RC}; ${R11_MESSAGE}"
+    dump_r11_diagnostics
   fi
 }
 
@@ -559,6 +648,7 @@ main() {
   start_port_forward "${LOKI_NAMESPACE}" "${LOKI_SERVICE}" "${LOKI_LOCAL_PORT}" "${LOKI_SERVICE_PORT}" "loki"
   start_port_forward "${TRACING_NAMESPACE}" "${TEMPO_SERVICE}" "${TEMPO_LOCAL_PORT}" "${TEMPO_SERVICE_PORT}" "tempo"
 
+  prepare_r10_fixtures
   run_r10
   run_r11
   run_prom_assertions

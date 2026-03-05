@@ -241,6 +241,7 @@ jobs:
       TENANT_A_PASS: ${{ secrets.E2E_TENANT_A_PASS || 'Admin@12345' }}
       TENANT_B_USER: ${{ secrets.E2E_TENANT_B_USER || 'tenantB_admin' }}
       TENANT_B_PASS: ${{ secrets.E2E_TENANT_B_PASS || 'Admin@12345' }}
+      TENANT_B_PASS_HASH: ${{ secrets.E2E_TENANT_B_PASS_HASH || '' }}
       K6_VUS_R10: "1"
       K6_ITERATIONS_R10: "1"
       K6_VUS_R11: "6"
@@ -307,12 +308,25 @@ jobs:
             run_r11=1
           fi
 
-          RUN_R10=1 RUN_R11="${run_r11}" bash scripts/check-observability-k3s.sh
+          status="PASS"
+          if ! RUN_R10=1 RUN_R11="${run_r11}" bash scripts/check-observability-k3s.sh; then
+            status="FAIL"
+          fi
 
           REPORT_FILE="/tmp/ljwx-gate-results/observability-e2e.json"
           r10_status="$(jq -r '.gates.r10.status // "UNKNOWN"' "${REPORT_FILE}" 2>/dev/null || true)"
           r11_status="$(jq -r '.gates.r11.status // "SKIP"' "${REPORT_FILE}" 2>/dev/null || true)"
           summary_status="$(jq -r '.status // "UNKNOWN"' "${REPORT_FILE}" 2>/dev/null || true)"
+
+          if [[ -z "${r10_status}" || "${r10_status}" == "null" ]]; then
+            r10_status="${status}"
+          fi
+          if [[ -z "${r11_status}" || "${r11_status}" == "null" ]]; then
+            r11_status="${status}"
+          fi
+          if [[ -z "${summary_status}" || "${summary_status}" == "null" || "${summary_status}" == "UNKNOWN" ]]; then
+            summary_status="${status}"
+          fi
 
           echo "r10_status=${r10_status}" >> "$GITHUB_OUTPUT"
           echo "r11_status=${r11_status}" >> "$GITHUB_OUTPUT"
