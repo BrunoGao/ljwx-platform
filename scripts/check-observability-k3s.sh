@@ -41,6 +41,11 @@ K6_VUS_R11="${K6_VUS_R11:-3}"
 K6_DURATION_R11="${K6_DURATION_R11:-20s}"
 STRICT_TEMPO_SEARCH="${STRICT_TEMPO_SEARCH:-1}"
 
+export TENANT_A_USER="${TENANT_A_USER:-admin}"
+export TENANT_A_PASS="${TENANT_A_PASS:-Admin@12345}"
+export TENANT_B_USER="${TENANT_B_USER:-tenantB_admin}"
+export TENANT_B_PASS="${TENANT_B_PASS:-Admin@12345}"
+
 R10_JSON="/tmp/ljwx-gate-results/R10.json"
 R11_JSON="/tmp/ljwx-gate-results/R11.json"
 
@@ -317,6 +322,33 @@ tempo_ready_status() {
   fi
 }
 
+dump_r10_diagnostics() {
+  log_warn "R10 失败诊断：TENANT_A_USER=${TENANT_A_USER}, TENANT_B_USER=${TENANT_B_USER}"
+
+  if [[ -s "${R10_JSON}" ]]; then
+    local r10_brief
+    r10_brief="$(jq -c '{status,message,checks,passed,failed,p95_ms}' "${R10_JSON}" 2>/dev/null || true)"
+    if [[ -n "${r10_brief}" ]]; then
+      log_warn "R10 JSON 摘要: ${r10_brief}"
+    fi
+  fi
+
+  if [[ -f "${TMP_DIR}/gate-e2e.log" ]]; then
+    log_warn "gate-e2e.log 关键行："
+    grep -E 'Login failed|expected=200 actual=401|GoError|script exception|tenantB|用户名或密码错误' "${TMP_DIR}/gate-e2e.log" \
+      | head -n 30 >&2 || true
+  fi
+
+  local k6_log
+  for k6_log in /tmp/ljwx-gate-results/k6/e2e_*.log.*; do
+    if [[ -f "${k6_log}" ]]; then
+      log_warn "k6 日志 $(basename "${k6_log}") 关键行："
+      grep -E 'Login failed|expected=200 actual=401|GoError|script exception|tenantB|用户名或密码错误' "${k6_log}" \
+        | head -n 30 >&2 || true
+    fi
+  done
+}
+
 run_r10() {
   if [[ "${RUN_R10}" != "1" ]]; then
     log_info "跳过 R10（RUN_R10=${RUN_R10}）"
@@ -324,6 +356,7 @@ run_r10() {
   fi
 
   log_info "执行 R10 E2E gate..."
+  log_info "R10 账号参数：TENANT_A_USER=${TENANT_A_USER}, TENANT_B_USER=${TENANT_B_USER}"
   set +e
   BASE_URL="http://127.0.0.1:${APP_LOCAL_PORT}" \
   K6_VUS="${K6_VUS_R10}" \
@@ -339,6 +372,7 @@ run_r10() {
     record_assertion "gate_r10" "R10 E2E Gate" "true" "PASS" "${R10_STATUS}" "${R10_MESSAGE}"
   else
     record_assertion "gate_r10" "R10 E2E Gate" "false" "PASS" "${R10_STATUS}" "rc=${R10_EXEC_RC}; ${R10_MESSAGE}"
+    dump_r10_diagnostics
   fi
 }
 

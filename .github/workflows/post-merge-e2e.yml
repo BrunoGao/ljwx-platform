@@ -26,6 +26,10 @@ jobs:
       TEMPO_SERVICE: tempo
       SERVICE_NAME: ljwx-platform
       STRICT_TEMPO_SEARCH: "0"
+      TENANT_A_USER: ${{ secrets.E2E_TENANT_A_USER || 'admin' }}
+      TENANT_A_PASS: ${{ secrets.E2E_TENANT_A_PASS || 'Admin@12345' }}
+      TENANT_B_USER: ${{ secrets.E2E_TENANT_B_USER || 'tenantB_admin' }}
+      TENANT_B_PASS: ${{ secrets.E2E_TENANT_B_PASS || 'Admin@12345' }}
       K6_VUS_R10: "1"
       K6_ITERATIONS_R10: "1"
     steps:
