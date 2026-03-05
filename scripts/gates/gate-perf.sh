@@ -16,19 +16,65 @@ run_k6() {
     k6 "$@"
     return
   fi
+
   if command -v docker >/dev/null 2>&1; then
-    docker run --rm -i -v "$PROJECT_ROOT:/work" -w /work grafana/k6:0.49.0 "$@"
+    local network_args=()
+    local env_args=()
+
+    if [[ -n "${K6_DOCKER_NETWORK:-}" ]]; then
+      network_args+=(--network "${K6_DOCKER_NETWORK}")
+    elif [[ "$(uname -s)" == "Linux" ]]; then
+      network_args+=(--network host)
+    fi
+
+    local env_key
+    for env_key in \
+      BASE_URL LOGIN_PATH \
+      TENANT_A_USER TENANT_A_PASS TENANT_B_USER TENANT_B_PASS \
+      K6_VUS K6_DURATION PERF_ENDPOINTS; do
+      if [[ -n "${!env_key:-}" ]]; then
+        env_args+=(-e "${env_key}")
+      fi
+    done
+
+    docker run --rm -i \
+      "${network_args[@]}" \
+      "${env_args[@]}" \
+      -v "$PROJECT_ROOT:/work" \
+      -v /tmp:/tmp \
+      -w /work \
+      grafana/k6:0.49.0 "$@"
     return
   fi
+
   echo "k6 is not available and docker fallback is unavailable" >&2
   return 127
 }
 
+read_json_number_or_zero() {
+  local file="$1"
+  local filter="$2"
+  local value
+
+  value="$(jq -r "$filter" "$file" 2>/dev/null || true)"
+  if [[ -z "$value" || "$value" == "null" || "$value" == "NaN" ]]; then
+    echo "0"
+    return
+  fi
+
+  echo "$value"
+}
+
 cd "$PROJECT_ROOT"
 
-summary_file="$(mktemp)"
-raw_file="$(mktemp)"
-log_file="$(mktemp)"
+case_tmp_dir="${TMP_DIR}/k6"
+mkdir -p "$case_tmp_dir"
+chmod 777 "$case_tmp_dir"
+
+summary_file="${case_tmp_dir}/perf.summary.$$.json"
+raw_file="${case_tmp_dir}/perf.raw.$$.json"
+log_file="$(mktemp "${case_tmp_dir}/perf.log.XXXXXX")"
+rm -f "$summary_file" "$raw_file"
 
 set +e
 run_k6 run \
@@ -38,11 +84,11 @@ run_k6 run \
 rc=$?
 set -e
 
-checks_passed="$(jq -r '.metrics.checks.values.passes // 0' "$summary_file" 2>/dev/null || echo 0)"
-checks_failed="$(jq -r '.metrics.checks.values.fails // 0' "$summary_file" 2>/dev/null || echo 0)"
+checks_passed="$(read_json_number_or_zero "$summary_file" '(.metrics.checks.values.passes // .metrics.checks.passes // 0) | tonumber? // 0 | floor')"
+checks_failed="$(read_json_number_or_zero "$summary_file" '(.metrics.checks.values.fails // .metrics.checks.fails // 0) | tonumber? // 0 | floor')"
 checks_total=$((checks_passed + checks_failed))
-p95="$(jq -r '.metrics.http_req_duration.values["p(95)"] // 0' "$summary_file" 2>/dev/null || echo 0)"
-avg="$(jq -r '.metrics.http_req_duration.values.avg // 0' "$summary_file" 2>/dev/null || echo 0)"
+p95="$(read_json_number_or_zero "$summary_file" '(.metrics.http_req_duration.values["p(95)"] // .metrics.http_req_duration["p(95)"] // 0) | tonumber? // 0')"
+avg="$(read_json_number_or_zero "$summary_file" '(.metrics.http_req_duration.values.avg // .metrics.http_req_duration.avg // 0) | tonumber? // 0')"
 
 status="PASS"
 violations='[]'
@@ -62,15 +108,28 @@ jq -n \
   --arg name "Performance Baseline" \
   --arg status "$status" \
   --arg message "$message" \
-  --argjson critical "$critical" \
-  --argjson warnings "$warnings" \
-  --argjson checks "$checks_total" \
-  --argjson passed "$checks_passed" \
-  --argjson failed "$checks_failed" \
-  --argjson p95_ms "$p95" \
-  --argjson avg_ms "$avg" \
+  --arg critical "$critical" \
+  --arg warnings "$warnings" \
+  --arg checks "$checks_total" \
+  --arg passed "$checks_passed" \
+  --arg failed "$checks_failed" \
+  --arg p95_ms "$p95" \
+  --arg avg_ms "$avg" \
   --argjson violations "$violations" \
-  '{id:$id,name:$name,status:$status,critical:$critical,warnings:$warnings,message:$message,checks:$checks,passed:$passed,failed:$failed,p95_ms:$p95_ms,avg_ms:$avg_ms,violations:$violations}' > "$OUT_JSON"
+  '{
+    id: $id,
+    name: $name,
+    status: $status,
+    critical: ($critical | tonumber? // 0),
+    warnings: ($warnings | tonumber? // 0),
+    message: $message,
+    checks: ($checks | tonumber? // 0),
+    passed: ($passed | tonumber? // 0),
+    failed: ($failed | tonumber? // 0),
+    p95_ms: ($p95_ms | tonumber? // 0),
+    avg_ms: ($avg_ms | tonumber? // 0),
+    violations: $violations
+  }' > "$OUT_JSON"
 
 echo "$OUT_JSON"
 
