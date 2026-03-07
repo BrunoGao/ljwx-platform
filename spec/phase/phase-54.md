@@ -460,3 +460,18 @@ P0 强制覆盖：
 - DAG 依赖：core ← {security, data} ← web ← app
 - JSONB 必须用 `jsonb_path_ops` 操作符类创建 GIN 索引
 - MVP 阶段禁止全表 JSONB 扫描（需通过元字段索引先过滤）
+
+## Test Cases
+
+| TC ID | Endpoint | 权限 | 预期状态码 | 关键断言 |
+|------|----------|------|------------|---------|
+| TC-54-01 | GET /api/** | read | 401 | 无 token 返回 Unauthorized |
+| TC-54-02 | GET /api/** | read | 403 | 无权限 token 返回 Forbidden |
+| TC-54-03 | GET /api/** | read | 200 | 成功返回统一响应结构 |
+| TC-54-04 | POST /api/** | write | 400 | 参数校验错误返回 400 |
+| TC-54-05 | POST /api/** | write | 200 | 创建成功并返回 ID/结果 |
+| TC-54-06 | PUT /api/**/{id} | write | 200 | 更新成功且可再次查询 |
+| TC-54-07 | DELETE /api/**/{id} | delete | 200 | 删除后数据不可见（软删/过滤） |
+| TC-54-08 | GET /api/** | read | 200 | 仅可见当前租户数据 |
+| TC-54-09 | GET /api/** | read | 401 | 过期 token 被拒绝 |
+| TC-54-10 | GET /api/** | read | 401 | 非法 token 被拒绝 |

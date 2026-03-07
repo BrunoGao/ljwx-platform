@@ -4,6 +4,8 @@ import { ElMessage } from 'element-plus'
 import { useUserStore } from '@/stores/user'
 import router from '@/router'
 
+const AUTH_REFRESH_BYPASS_PATHS = ['/api/auth/login', '/api/auth/refresh']
+
 // Augment InternalAxiosRequestConfig to support the retry flag
 declare module 'axios' {
   interface InternalAxiosRequestConfig {
@@ -32,6 +34,19 @@ let failedQueue: Array<{
   reject: (reason?: unknown) => void
 }> = []
 
+function shouldAttemptTokenRefresh(config: InternalAxiosRequestConfig): boolean {
+  const requestUrl = config.url ?? ''
+  if (isAuthRefreshBypassRequest(requestUrl)) {
+    return false
+  }
+
+  return Boolean(useUserStore().refreshToken)
+}
+
+function isAuthRefreshBypassRequest(requestUrl: string): boolean {
+  return AUTH_REFRESH_BYPASS_PATHS.some((path) => requestUrl.includes(path))
+}
+
 // Response interceptor: handle business errors and 401 refresh
 service.interceptors.response.use(
   (response: AxiosResponse) => {
@@ -45,7 +60,12 @@ service.interceptors.response.use(
   async (error: unknown) => {
     if (isAxiosError(error)) {
       const originalRequest = error.config
-      if (error.response?.status === 401 && originalRequest && !originalRequest._retry) {
+      if (
+        error.response?.status === 401 &&
+        originalRequest &&
+        !originalRequest._retry &&
+        shouldAttemptTokenRefresh(originalRequest)
+      ) {
         if (isRefreshing) {
           return new Promise((resolve, reject) => {
             failedQueue.push({ resolve, reject })
@@ -70,8 +90,12 @@ service.interceptors.response.use(
           isRefreshing = false
         }
       }
+
       const errMsg = (error.response?.data as { message?: string } | undefined)?.message ?? '网络错误'
-      ElMessage.error(errMsg)
+      if (!isAuthRefreshBypassRequest(originalRequest?.url ?? '')) {
+        ElMessage.error(errMsg)
+      }
+      return Promise.reject(new Error(errMsg))
     }
     return Promise.reject(error)
   },

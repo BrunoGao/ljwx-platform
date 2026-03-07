@@ -60,6 +60,7 @@ set +a
 
 : "${DB_NAME:=ljwx_platform}"
 : "${DB_PASSWORD:=}"
+: "${LJWX_BOOTSTRAP_ADMIN_INITIAL_PASSWORD:=}"
 : "${ALLOW_WEAK_PASSWORD:=0}"
 : "${BACKEND_PORT:=18080}"
 : "${ADMIN_PORT:=18081}"
@@ -79,6 +80,11 @@ esac
 if [[ "${should_validate_password}" == "1" && "$ALLOW_WEAK_PASSWORD" != "1" ]]; then
   if [[ -z "$DB_PASSWORD" || "$DB_PASSWORD" == "postgres" || "$DB_PASSWORD" == "123456" || "$DB_PASSWORD" == *"CHANGE_ME"* || ${#DB_PASSWORD} -lt 12 ]]; then
     echo "检测到数据库密码不安全（为空/默认/过短）。请在 ${ENV_FILE} 设置强密码，或临时设置 ALLOW_WEAK_PASSWORD=1（不推荐）。" >&2
+    exit 1
+  fi
+
+  if [[ -z "$LJWX_BOOTSTRAP_ADMIN_INITIAL_PASSWORD" || "$LJWX_BOOTSTRAP_ADMIN_INITIAL_PASSWORD" == *"CHANGE_ME"* ]]; then
+    echo "检测到 LJWX_BOOTSTRAP_ADMIN_INITIAL_PASSWORD 未设置。请在 ${ENV_FILE} 中显式配置租户管理员初始密码。" >&2
     exit 1
   fi
 fi
@@ -168,9 +174,9 @@ run_e2e() {
   K6_DOCKER_NETWORK="${K6_DOCKER_NETWORK:-$COMPOSE_NETWORK}" \
   BASE_URL="${BASE_URL:-http://backend:8080}" \
   TENANT_A_USER="${TENANT_A_USER:-admin}" \
-  TENANT_A_PASS="${TENANT_A_PASS:-Admin@12345}" \
+  TENANT_A_PASS="${TENANT_A_PASS:-${LJWX_BOOTSTRAP_ADMIN_INITIAL_PASSWORD}}" \
   TENANT_B_USER="${TENANT_B_USER:-tenantB_admin}" \
-  TENANT_B_PASS="${TENANT_B_PASS:-Admin@12345}" \
+  TENANT_B_PASS="${TENANT_B_PASS:-}" \
   LOGIN_PATH="${LOGIN_PATH:-/api/auth/login}" \
   FORBIDDEN_PATH="${FORBIDDEN_PATH:-/api/users}" \
   RESOURCE_LIST_PATH="${RESOURCE_LIST_PATH:-/api/v1/menus}" \

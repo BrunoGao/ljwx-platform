@@ -168,7 +168,7 @@ tests:
       auth: valid_token
       body:
         oldPassword: "WrongPassword123"
-        newPassword: "NewAdmin@12345"
+        newPassword: "NewSecure#4567"
     expect:
       status: 400
       error_code: "OLD_PASSWORD_INCORRECT"
@@ -184,8 +184,8 @@ tests:
       path: /api/v1/profile/password
       auth: valid_token
       body:
-        oldPassword: "Admin@12345"
-        newPassword: "NewAdmin@12345"
+        oldPassword: "${LJWX_BOOTSTRAP_ADMIN_INITIAL_PASSWORD}"
+        newPassword: "NewSecure#4567"
     expect:
       status: 200
       assert: "使用新密码 POST /api/v1/auth/login → 200"
@@ -238,7 +238,7 @@ tests:
       auth: none
       body:
         username: "admin"
-        password: "Admin@12345"
+        password: "${LJWX_BOOTSTRAP_ADMIN_INITIAL_PASSWORD}"
     expect:
       status: 200
       assert: "响应时间 < 500ms，后台异步 sys_login_log 记录存在"
@@ -256,8 +256,8 @@ tests:
       path: /api/v1/profile/password
       auth: valid_token
       body:
-        oldPassword: "Admin@12345"
-        newPassword: "NewAdmin@12345"
+        oldPassword: "${LJWX_BOOTSTRAP_ADMIN_INITIAL_PASSWORD}"
+        newPassword: "NewSecure#4567"
     expect:
       status: 200
       assert: "应用日志中不出现明文密码，仅显示 ***"
@@ -272,7 +272,7 @@ tests:
       path: /api/v1/profile/password
       auth: valid_token
       body:
-        oldPassword: "Admin@12345"
+        oldPassword: "${LJWX_BOOTSTRAP_ADMIN_INITIAL_PASSWORD}"
         newPassword: ""
     expect:
       status: 400
@@ -287,7 +287,7 @@ tests:
       auth: valid_token
       body:
         oldPassword: null
-        newPassword: "NewAdmin@12345"
+        newPassword: "NewSecure#4567"
     expect:
       status: 400
 
@@ -345,8 +345,8 @@ tests:
       path: /api/v1/profile/password
       auth: valid_token
       body:
-        oldPassword: "Admin@12345"
-        newPassword: "NewAdmin@12345"
+        oldPassword: "${LJWX_BOOTSTRAP_ADMIN_INITIAL_PASSWORD}"
+        newPassword: "NewSecure#4567"
         tenantId: 99999
     expect:
       status: 200

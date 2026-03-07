@@ -20,9 +20,8 @@ TENANT_B_ID="${TENANT_B_ID:-200001}"
 TENANT_B_ROLE_ID="${TENANT_B_ROLE_ID:-220001}"
 TENANT_B_USER_ID="${TENANT_B_USER_ID:-220002}"
 TENANT_B_USER="${TENANT_B_USER:-tenantB_admin}"
-TENANT_B_PASS="${TENANT_B_PASS:-Admin@12345}"
+TENANT_B_PASS="${TENANT_B_PASS:-}"
 TENANT_B_PASS_HASH="${TENANT_B_PASS_HASH:-}"
-DEFAULT_TENANT_B_PASS_HASH='$2a$10$PnWlMR8Ox6UMTZj7Zm9uO.wSqzbjVt04UbeJ7q3RxDe8TSIP6efz2'
 
 require_command() {
   local cmd="$1"
@@ -41,13 +40,51 @@ if [[ ! -f "${SQL_FILE}" ]]; then
   exit 1
 fi
 
+generate_bcrypt_hash() {
+  local password="$1"
+
+  if command -v htpasswd >/dev/null 2>&1; then
+    htpasswd -bnBC 10 "" "${password}" | tr -d ':\n'
+    return 0
+  fi
+
+  if command -v python3 >/dev/null 2>&1; then
+    if TENANT_B_PASS="${password}" python3 - <<'PY' >/tmp/ljwx-bcrypt-hash.txt 2>/tmp/ljwx-bcrypt-hash.err
+import os
+import sys
+
+try:
+    import bcrypt
+except ModuleNotFoundError as exc:
+    print(f"missing dependency: {exc.name}", file=sys.stderr)
+    raise SystemExit(1)
+
+raw = os.environ["TENANT_B_PASS"].encode()
+print(bcrypt.hashpw(raw, bcrypt.gensalt(rounds=10)).decode())
+PY
+    then
+      cat /tmp/ljwx-bcrypt-hash.txt
+      rm -f /tmp/ljwx-bcrypt-hash.txt /tmp/ljwx-bcrypt-hash.err
+      return 0
+    fi
+    rm -f /tmp/ljwx-bcrypt-hash.txt /tmp/ljwx-bcrypt-hash.err
+  fi
+
+  if command -v docker >/dev/null 2>&1; then
+    docker run --rm httpd:2.4-alpine htpasswd -bnBC 10 "" "${password}" | tr -d ':\n'
+    return 0
+  fi
+
+  echo "缺少 BCrypt 生成方式，请安装 htpasswd，或提供带 bcrypt 模块的 python3，或安装 docker，或直接传入 TENANT_B_PASS_HASH" >&2
+  return 1
+}
+
 if [[ -z "${TENANT_B_PASS_HASH}" ]]; then
-  if [[ "${TENANT_B_PASS}" == "Admin@12345" ]]; then
-    TENANT_B_PASS_HASH="${DEFAULT_TENANT_B_PASS_HASH}"
-  else
-    echo "TENANT_B_PASS 不是默认值，且未提供 TENANT_B_PASS_HASH，无法执行夹具修复" >&2
+  if [[ -z "${TENANT_B_PASS}" ]]; then
+    echo "缺少 TENANT_B_PASS 或 TENANT_B_PASS_HASH，无法执行夹具修复" >&2
     exit 1
   fi
+  TENANT_B_PASS_HASH="$(generate_bcrypt_hash "${TENANT_B_PASS}")"
 fi
 
 if [[ -z "${DB_HOST}" ]]; then

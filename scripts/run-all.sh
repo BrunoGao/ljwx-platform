@@ -30,7 +30,7 @@ export CLAUDE_PROJECT_DIR="$PROJECT_ROOT"
 FROM_PHASE=0
 ONLY_PHASE=""
 DRY_RUN=false
-TOTAL_PHASES=54 # Phase 0–53
+TOTAL_PHASES=54 # fallback: Phase 0–53
 
 # CI Gate 参数
 CHECKPOINTS=""
@@ -60,6 +60,21 @@ while [[ $# -gt 0 ]]; do
     *) echo "Unknown arg: $1"; exit 1 ;;
   esac
 done
+
+detect_total_phases() {
+  local max_phase=""
+  if [[ -d spec/phase ]]; then
+    max_phase="$(find spec/phase -maxdepth 1 -type f -name 'phase-[0-9][0-9].md' -printf '%f\n' 2>/dev/null \
+      | sed -E 's/^phase-([0-9]{2})\.md$/\1/' \
+      | sort -n \
+      | tail -n1 || true)"
+  fi
+  if [[ -n "$max_phase" ]]; then
+    TOTAL_PHASES=$((10#$max_phase + 1))
+  fi
+}
+
+detect_total_phases
 
 if ! [[ "$MAX_REPAIR_ATTEMPTS" =~ ^[0-9]+$ ]]; then
   echo "--repair-attempts must be a non-negative integer"

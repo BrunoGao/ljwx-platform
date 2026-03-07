@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "source": "docs/reference/list.md",
+  "description": "Physical phase ID to logical Phase 1-35 mapping (for reporting and acceptance view).",
+  "logical_phase_range": {
+    "min": 1,
+    "max": 35
+  },
+  "physical_to_logical": {
+    "39": 29,
+    "46": 30,
+    "47": 29,
+    "48": 29,
+    "49": 29,
+    "50": 28,
+    "51": 28,
+    "52": 28,
+    "53": 32,
+    "54": 31,
+    "55": 30,
+    "56": 33,
+    "57": 34,
+    "58": 35
+  }
+}

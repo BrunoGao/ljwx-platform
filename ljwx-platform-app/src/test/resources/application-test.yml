@@ -26,6 +26,9 @@ logging:
     root: WARN
 
 ljwx:
+  bootstrap:
+    admin-initial-password: TestSecure#2026A
+    user-import-initial-password: ImportSecure#2026A
   jwt:
     secret: test-secret-key-for-integration-tests-256-bits-long
     access-token-expiration: 1800

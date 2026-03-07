@@ -4,6 +4,7 @@ import com.ljwx.platform.app.domain.dto.UserCreateDTO;
 import com.ljwx.platform.app.domain.dto.UserQueryDTO;
 import com.ljwx.platform.app.domain.dto.UserUpdateDTO;
 import com.ljwx.platform.app.domain.entity.SysUser;
+import com.ljwx.platform.app.service.BootstrapPasswordService;
 import com.ljwx.platform.app.domain.vo.UserVO;
 import com.ljwx.platform.app.infra.mapper.SysUserMapper;
 import com.ljwx.platform.core.context.CurrentTenantHolder;
@@ -42,6 +43,7 @@ public class UserAppService {
     private final SnowflakeIdGenerator idGenerator;
     private final CurrentTenantHolder tenantHolder;
     private final CurrentUserHolder userHolder;
+    private final BootstrapPasswordService bootstrapPasswordService;
 
     public PageResult<UserVO> listUsers(UserQueryDTO query) {
         List<SysUser> users = userMapper.selectList(query);
@@ -153,10 +155,7 @@ public class UserAppService {
                 String nickname  = getCellString(row, 1);
                 String email     = getCellString(row, 2);
                 String phone     = getCellString(row, 3);
-                String password  = getCellString(row, 4);
-                if (password == null || password.isBlank()) {
-                    password = "Admin@12345";
-                }
+                String password  = bootstrapPasswordService.resolveImportedUserPassword(getCellString(row, 4), i + 1);
                 long id = idGenerator.nextId();
                 SysUser user = new SysUser();
                 user.setId(id);

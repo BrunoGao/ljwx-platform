@@ -20,6 +20,7 @@ scope:
 | 模块 | ljwx-platform-app (后端) + K8s 配置 |
 | Feature | L0-D02-F02 |
 | 前置依赖 | Phase 35 (结构化日志) |
+| 测试契约 | `spec/tests/phase-36-metrics.tests.yml` |
 | 优先级 | 🔴 **P0 - 生产就绪必需** |
 
 ## 读取清单
@@ -190,3 +191,18 @@ spec:
 - 低基数：Prometheus 指标基数 < 1000
 - 租户维度：通过 Loki 日志查询,不写 Prometheus
 - 采集间隔：30 秒
+
+## Test Cases
+
+| TC ID | Endpoint | 权限 | 预期状态码 | 关键断言 |
+|------|----------|------|------------|---------|
+| TC-36-01 | GET /api/** | read | 401 | 无 token 返回 Unauthorized |
+| TC-36-02 | GET /api/** | read | 403 | 无权限 token 返回 Forbidden |
+| TC-36-03 | GET /api/** | read | 200 | 成功返回统一响应结构 |
+| TC-36-04 | POST /api/** | write | 400 | 参数校验错误返回 400 |
+| TC-36-05 | POST /api/** | write | 200 | 创建成功并返回 ID/结果 |
+| TC-36-06 | PUT /api/**/{id} | write | 200 | 更新成功且可再次查询 |
+| TC-36-07 | DELETE /api/**/{id} | delete | 200 | 删除后数据不可见（软删/过滤） |
+| TC-36-08 | GET /api/** | read | 200 | 仅可见当前租户数据 |
+| TC-36-09 | GET /api/** | read | 401 | 过期 token 被拒绝 |
+| TC-36-10 | GET /api/** | read | 401 | 非法 token 被拒绝 |

@@ -1,0 +1,168 @@
+# Phase 58 — 运营仪表盘 + 计量计费 + 帮助中心 测试契约
+# 关联 Spec：spec/phase/phase-58.md
+
+phase: 58
+module: "ops-billing-help"
+ac_ref: "spec/phase/phase-58.md"
+
+tests:
+  - id: TC-58-01
+    priority: P0
+    category: security
+    ac: AC-02
+    scenario: "无 Token 访问计量计费接口 → 401"
+    request:
+      method: GET
+      path: /api/v1/billing/usage
+      auth: none
+    expect:
+      status: 401
+
+  - id: TC-58-02
+    priority: P0
+    category: security
+    ac: AC-02
+    scenario: "无权限访问 /billing/summary 或 /ops/dashboard → 403"
+    request:
+      method: GET
+      path: /api/v1/ops/dashboard
+      auth: token_without_permission
+    expect:
+      status: 403
+
+  - id: TC-58-03
+    priority: P0
+    category: billing_job
+    ac: AC-03
+    scenario: "DailyUsageStatJob 执行后写入 bill_usage_record"
+    setup:
+      - seed_operation_login_file_data
+    expect:
+      db_assert: "执行任务后 bill_usage_record 出现当日统计记录"
+
+  - id: TC-58-04
+    priority: P0
+    category: billing_job
+    ac: AC-03
+    scenario: "DailyUsageStatJob 重复执行保持幂等（ON CONFLICT DO UPDATE）"
+    setup:
+      - run_daily_usage_job_twice
+    expect:
+      db_assert: "同 tenant+metric+date 仅一条记录，usage_value 按更新逻辑覆盖"
+
+  - id: TC-58-05
+    priority: P0
+    category: dashboard
+    ac: AC-04
+    scenario: "运营仪表盘接口返回聚合数据"
+    request:
+      method: GET
+      path: /api/v1/ops/dashboard
+      auth: token_super_admin
+    expect:
+      status: 200
+      body:
+        data:
+          totalTenants: "{>=0}"
+          dailyActiveUsers: "[近30天趋势]"
+
+  - id: TC-58-06
+    priority: P0
+    category: help_center
+    ac: AC-05
+    scenario: "帮助文档路由匹配：精确匹配优先于前缀匹配"
+    request:
+      method: GET
+      path: /api/v1/help-docs/route
+      auth: none
+      query:
+        path: "/system/user/list"
+    expect:
+      status: 200
+      note: "返回精确路由文档，不回退到前缀文档"
+
+  - id: TC-58-07
+    priority: P0
+    category: help_center
+    ac: AC-02
+    scenario: "帮助文档路由接口 permitAll（无需登录）"
+    request:
+      method: GET
+      path: /api/v1/help-docs/route
+      auth: none
+      query:
+        path: "/system/user"
+    expect:
+      status: 200
+
+  - id: TC-58-08
+    priority: P0
+    category: business
+    ac: AC-05
+    scenario: "创建帮助文档时 docKey 重复 → 409"
+    setup:
+      - create_help_doc_key_user_guide
+    request:
+      method: POST
+      path: /api/v1/help-docs
+      auth: token_with_system:help:add
+      body:
+        docKey: "user_guide"
+        title: "用户指南副本"
+        content: "重复文档"
+        category: "user"
+    expect:
+      status: 409
+
+  - id: TC-58-09
+    priority: P0
+    category: db_schema
+    ac: AC-01
+    scenario: "V065 创建 bill_usage_record 与 sys_help_doc，无 IF NOT EXISTS，含审计字段"
+    expect:
+      db_assert: "V065 建两表与索引完整，且不含 IF NOT EXISTS"
+
+  - id: TC-58-10
+    priority: P0
+    category: tenant_isolation
+    ac: AC-02
+    scenario: "跨租户权限：超管可查全部，普通用户仅可查本租户"
+    request:
+      method: GET
+      path: /api/v1/billing/summary
+      auth: token_normal_tenant_admin
+    expect:
+      status: 403
+      note: "普通租户管理员访问跨租户汇总被拒绝；超管访问返回 200"
+
+  - id: TC-58-11
+    priority: P1
+    category: ui_acceptance
+    ac: AC-06
+    scenario: "仪表盘展示 30 天内即将到期租户预警"
+    expect:
+      note: "前端运营仪表盘页面醒目展示 expiringSoon 列表"
+
+  - id: TC-58-12
+    priority: P1
+    category: ui_acceptance
+    ac: AC-05
+    scenario: "Admin 布局集成 HelpButton，按路由加载帮助内容"
+    expect:
+      note: "切换页面时 HelpButton 正确拉取 /help-docs/route 并渲染内容"
+
+ac_tc_map:
+  AC-01: [TC-58-09]
+  AC-02: [TC-58-01, TC-58-02, TC-58-07, TC-58-10]
+  AC-03: [TC-58-03, TC-58-04]
+  AC-04: [TC-58-05]
+  AC-05: [TC-58-06, TC-58-08, TC-58-12]
+  AC-06: [TC-58-11]
+  AC-07: []  # 编译与全量 Gate 校验由 R01/R09 兜底
+
+gate_r09:
+  p0_required: true
+  p1_coverage_target: 0.7
+  p2_skip: true
+  test_class: "OpsBillingHelpControllerTest"
+  note: "覆盖计量作业幂等、超管鉴权、帮助中心路由匹配与数据库迁移约束"

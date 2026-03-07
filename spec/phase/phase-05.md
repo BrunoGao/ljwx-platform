@@ -129,7 +129,7 @@ LjwxPlatformApplication
 ## 业务规则
 
 - **BL-05-01**：Flyway 按版本号顺序执行 V001→V009，迁移失败则应用拒绝启动
-- **BL-05-02**：V006 admin 密码必须是 `BCrypt(Admin@12345, cost=10)` 的哈希值，禁止明文
+- **BL-05-02**：管理员初始密码不得在仓库中以固定明文出现；运行时必须通过 `LJWX_BOOTSTRAP_ADMIN_INITIAL_PASSWORD` 注入，数据库仅存储 BCrypt(cost=10) 哈希
 - **BL-05-03**：V007 权限列表必须覆盖 spec/01-constraints.md §RBAC 中所有权限字符串
 - **BL-05-04**：所有业务表（V002-V004）必须含 7 列审计字段，均 NOT NULL + DEFAULT
 
@@ -173,3 +173,18 @@ P0 强制覆盖：
 ## 可 Bundle
 
 可与 Phase 4 一起执行。
+
+## Test Cases
+
+| TC ID | Endpoint | 权限 | 预期状态码 | 关键断言 |
+|------|----------|------|------------|---------|
+| TC-05-01 | GET /api/** | read | 401 | 无 token 返回 Unauthorized |
+| TC-05-02 | GET /api/** | read | 403 | 无权限 token 返回 Forbidden |
+| TC-05-03 | GET /api/** | read | 200 | 成功返回统一响应结构 |
+| TC-05-04 | POST /api/** | write | 400 | 参数校验错误返回 400 |
+| TC-05-05 | POST /api/** | write | 200 | 创建成功并返回 ID/结果 |
+| TC-05-06 | PUT /api/**/{id} | write | 200 | 更新成功且可再次查询 |
+| TC-05-07 | DELETE /api/**/{id} | delete | 200 | 删除后数据不可见（软删/过滤） |
+| TC-05-08 | GET /api/** | read | 200 | 仅可见当前租户数据 |
+| TC-05-09 | GET /api/** | read | 401 | 过期 token 被拒绝 |
+| TC-05-10 | GET /api/** | read | 401 | 非法 token 被拒绝 |

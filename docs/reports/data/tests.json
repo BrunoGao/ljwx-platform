@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-03-03T07:45:52Z",
+  "generated_at": "2026-03-05T05:56:46Z",
   "ci": {
     "run_id": null,
     "run_attempt": 1,
@@ -7,10 +7,182 @@
     "run_url": null
   },
   "summary": {
-    "total": 0,
+    "total": 19,
     "pass": 0,
-    "fail": 0,
-    "skip": 0
+    "fail": 18,
+    "skip": 1
   },
-  "tests": []
+  "tests": [
+    {
+      "phase": null,
+      "logical_phase": null,
+      "suite": "com.ljwx.platform.contract.protocol.ProtocolContractSecurityTest",
+      "testcase": "",
+      "status": "ERROR",
+      "time_seconds": 0.004,
+      "message": "Could not initialize class com.ljwx.platform.app.test.base.BaseIntegrationTest"
+    },
+    {
+      "phase": "00",
+      "logical_phase": null,
+      "suite": "com.ljwx.platform.phase00.SmokeTest",
+      "testcase": "",
+      "status": "ERROR",
+      "time_seconds": 0.002,
+      "message": "Could not initialize class com.ljwx.platform.app.test.base.BaseIntegrationTest"
+    },
+    {
+      "phase": "03",
+      "logical_phase": "03",
+      "suite": "com.ljwx.platform.phase03.SecurityIntegrationTest",
+      "testcase": "",
+      "status": "ERROR",
+      "time_seconds": 0.001,
+      "message": "Could not initialize class com.ljwx.platform.app.test.base.BaseIntegrationTest"
+    },
+    {
+      "phase": "04",
+      "logical_phase": "04",
+      "suite": "com.ljwx.platform.phase04.UserApiTest",
+      "testcase": "",
+      "status": "ERROR",
+      "time_seconds": 0.001,
+      "message": "Could not initialize class com.ljwx.platform.app.test.base.BaseCrudTest"
+    },
+    {
+      "phase": "05",
+      "logical_phase": "05",
+      "suite": "com.ljwx.platform.phase05.RoleApiTest",
+      "testcase": "",
+      "status": "ERROR",
+      "time_seconds": 0.001,
+      "message": "Could not initialize class com.ljwx.platform.app.test.base.BaseCrudTest"
+    },
+    {
+      "phase": "06",
+      "logical_phase": "06",
+      "suite": "com.ljwx.platform.phase06.TenantApiTest",
+      "testcase": "placeholder",
+      "status": "SKIP",
+      "time_seconds": 0.0,
+      "message": "SKIP: 未发现 TenantController（/api/v1/tenants），待对应 Phase 实现后启用"
+    },
+    {
+      "phase": "08",
+      "logical_phase": "08",
+      "suite": "com.ljwx.platform.phase08.DictConfigApiTest",
+      "testcase": "",
+      "status": "ERROR",
+      "time_seconds": 0.001,
+      "message": "Could not initialize class com.ljwx.platform.app.test.base.BaseIntegrationTest"
+    },
+    {
+      "phase": "09",
+      "logical_phase": "09",
+      "suite": "com.ljwx.platform.phase09.NoticeApiTest",
+      "testcase": "",
+      "status": "ERROR",
+      "time_seconds": 0.001,
+      "message": "Could not initialize class com.ljwx.platform.app.test.base.BaseCrudTest"
+    },
+    {
+      "phase": "20",
+      "logical_phase": "20",
+      "suite": "com.ljwx.platform.phase20.MenuApiIntegrationTest",
+      "testcase": "",
+      "status": "ERROR",
+      "time_seconds": 1.417,
+      "message": "Failed to create temporary file for /com/sun/jna/linux-x86-64/libjnidispatch.so library: Permission denied"
+    },
+    {
+      "phase": "28",
+      "logical_phase": "28",
+      "suite": "com.ljwx.platform.phase28.SecurityHardeningApiTest",
+      "testcase": "",
+      "status": "ERROR",
+      "time_seconds": 0.001,
+      "message": "Could not initialize class com.ljwx.platform.app.test.base.BaseIntegrationTest"
+    },
+    {
+      "phase": "29",
+      "logical_phase": "29",
+      "suite": "com.ljwx.platform.phase29.ActuatorPrometheusEndpointTest",
+      "testcase": "",
+      "status": "ERROR",
+      "time_seconds": 2.255,
+      "message": "Failed to create temporary file for /com/sun/jna/linux-x86-64/libjnidispatch.so library: Permission denied"
+    },
+    {
+      "phase": "30",
+      "logical_phase": "30",
+      "suite": "com.ljwx.platform.phase30.DataChangeLogApiTest",
+      "testcase": "",
+      "status": "ERROR",
+      "time_seconds": 0.001,
+      "message": "Could not initialize class com.ljwx.platform.app.test.base.BaseIntegrationTest"
+    },
+    {
+      "phase": "33",
+      "logical_phase": "33",
+      "suite": "com.ljwx.platform.phase33.MultiLevelCacheManagerTest",
+      "testcase": "",
+      "status": "ERROR",
+      "time_seconds": 0.001,
+      "message": "Could not initialize class com.ljwx.platform.app.test.base.BaseIntegrationTest"
+    },
+    {
+      "phase": "35",
+      "logical_phase": "35",
+      "suite": "com.ljwx.platform.phase35.StructuredLoggingTest",
+      "testcase": "testApplicationContextLoads",
+      "status": "ERROR",
+      "time_seconds": 0.001,
+      "message": "ApplicationContext failure threshold (1) exceeded: skipping repeated attempt to load context for [WebMergedContextConfiguration@4db0d696 testClass = com.ljwx.platform.phase35.StructuredLoggingTest, locations = [], classes = [com.ljwx.platform.app.LjwxPlatformApplication], contextInitializerClasses = [], activeProfiles = [\"test\"], propertySourceDescriptors = [], propertySourceProperties = [\"org.springframework.boot.test.context.SpringBootTestContextBootstrapper=true\"], contextCustomizers = [org.springframework.boot.test.context.filter.ExcludeFilterContextCustomizer@6b0f266e, org.springframework.boot.test.json.DuplicateJsonObjectContextCustomizerFactory$DuplicateJsonObjectContextCustomizer@43d76a92, org.springframework.boot.test.mock.mockito.MockitoContextCustomizer@0, org.springframework.boot.test.web.client.TestRestTemplateContextCustomizer@787988f4, org.springframework.boot.test.web.reactor.netty.DisableReactorResourceFactoryGlobalResourcesContextCustomizerFactory$DisableReactorResourceFactoryGlobalResourcesContextCustomizerCustomizer@3a3f96ab, org.springframework.boot.test.autoconfigure.OnFailureConditionReportContextCustomizerFactory$OnFailureConditionReportContextCustomizer@21b51e59, org.springframework.boot.test.autoconfigure.actuate.observability.ObservabilityContextCustomizerFactory$DisableObservabilityContextCustomizer@1f, org.springframework.boot.test.autoconfigure.properties.PropertyMappingContextCustomizer@0, org.springframework.boot.test.autoconfigure.web.servlet.WebDriverContextCustomizer@756808cc, org.springframework.test.context.support.DynamicPropertiesContextCustomizer@0, org.springframework.boot.test.context.SpringBootTestAnnotation@2fa00b54], resourceBasePath = \"src/main/webapp\", contextLoader = org.springframework.boot.test.context.SpringBootContextLoader, parent = null]"
+    },
+    {
+      "phase": "35",
+      "logical_phase": "35",
+      "suite": "com.ljwx.platform.phase35.StructuredLoggingTest",
+      "testcase": "testMDCKeysAreNotNull",
+      "status": "ERROR",
+      "time_seconds": 0.002,
+      "message": "ApplicationContext failure threshold (1) exceeded: skipping repeated attempt to load context for [WebMergedContextConfiguration@4db0d696 testClass = com.ljwx.platform.phase35.StructuredLoggingTest, locations = [], classes = [com.ljwx.platform.app.LjwxPlatformApplication], contextInitializerClasses = [], activeProfiles = [\"test\"], propertySourceDescriptors = [], propertySourceProperties = [\"org.springframework.boot.test.context.SpringBootTestContextBootstrapper=true\"], contextCustomizers = [org.springframework.boot.test.context.filter.ExcludeFilterContextCustomizer@6b0f266e, org.springframework.boot.test.json.DuplicateJsonObjectContextCustomizerFactory$DuplicateJsonObjectContextCustomizer@43d76a92, org.springframework.boot.test.mock.mockito.MockitoContextCustomizer@0, org.springframework.boot.test.web.client.TestRestTemplateContextCustomizer@787988f4, org.springframework.boot.test.web.reactor.netty.DisableReactorResourceFactoryGlobalResourcesContextCustomizerFactory$DisableReactorResourceFactoryGlobalResourcesContextCustomizerCustomizer@3a3f96ab, org.springframework.boot.test.autoconfigure.OnFailureConditionReportContextCustomizerFactory$OnFailureConditionReportContextCustomizer@21b51e59, org.springframework.boot.test.autoconfigure.actuate.observability.ObservabilityContextCustomizerFactory$DisableObservabilityContextCustomizer@1f, org.springframework.boot.test.autoconfigure.properties.PropertyMappingContextCustomizer@0, org.springframework.boot.test.autoconfigure.web.servlet.WebDriverContextCustomizer@756808cc, org.springframework.test.context.support.DynamicPropertiesContextCustomizer@0, org.springframework.boot.test.context.SpringBootTestAnnotation@2fa00b54], resourceBasePath = \"src/main/webapp\", contextLoader = org.springframework.boot.test.context.SpringBootContextLoader, parent = null]"
+    },
+    {
+      "phase": "35",
+      "logical_phase": "35",
+      "suite": "com.ljwx.platform.phase35.StructuredLoggingTest",
+      "testcase": "testMDCKeysConstants",
+      "status": "ERROR",
+      "time_seconds": 0.001,
+      "message": "ApplicationContext failure threshold (1) exceeded: skipping repeated attempt to load context for [WebMergedContextConfiguration@4db0d696 testClass = com.ljwx.platform.phase35.StructuredLoggingTest, locations = [], classes = [com.ljwx.platform.app.LjwxPlatformApplication], contextInitializerClasses = [], activeProfiles = [\"test\"], propertySourceDescriptors = [], propertySourceProperties = [\"org.springframework.boot.test.context.SpringBootTestContextBootstrapper=true\"], contextCustomizers = [org.springframework.boot.test.context.filter.ExcludeFilterContextCustomizer@6b0f266e, org.springframework.boot.test.json.DuplicateJsonObjectContextCustomizerFactory$DuplicateJsonObjectContextCustomizer@43d76a92, org.springframework.boot.test.mock.mockito.MockitoContextCustomizer@0, org.springframework.boot.test.web.client.TestRestTemplateContextCustomizer@787988f4, org.springframework.boot.test.web.reactor.netty.DisableReactorResourceFactoryGlobalResourcesContextCustomizerFactory$DisableReactorResourceFactoryGlobalResourcesContextCustomizerCustomizer@3a3f96ab, org.springframework.boot.test.autoconfigure.OnFailureConditionReportContextCustomizerFactory$OnFailureConditionReportContextCustomizer@21b51e59, org.springframework.boot.test.autoconfigure.actuate.observability.ObservabilityContextCustomizerFactory$DisableObservabilityContextCustomizer@1f, org.springframework.boot.test.autoconfigure.properties.PropertyMappingContextCustomizer@0, org.springframework.boot.test.autoconfigure.web.servlet.WebDriverContextCustomizer@756808cc, org.springframework.test.context.support.DynamicPropertiesContextCustomizer@0, org.springframework.boot.test.context.SpringBootTestAnnotation@2fa00b54], resourceBasePath = \"src/main/webapp\", contextLoader = org.springframework.boot.test.context.SpringBootContextLoader, parent = null]"
+    },
+    {
+      "phase": "39",
+      "logical_phase": "29",
+      "suite": "com.ljwx.platform.phase39.DataMaskTest",
+      "testcase": "testUnmaskWithPermission",
+      "status": "ERROR",
+      "time_seconds": 0.008,
+      "message": "Failed to load ApplicationContext for [WebMergedContextConfiguration@6769013a testClass = com.ljwx.platform.phase39.DataMaskTest, locations = [], classes = [com.ljwx.platform.app.LjwxPlatformApplication], contextInitializerClasses = [], activeProfiles = [\"test\"], propertySourceDescriptors = [], propertySourceProperties = [\"org.springframework.boot.test.context.SpringBootTestContextBootstrapper=true\"], contextCustomizers = [org.springframework.boot.test.context.filter.ExcludeFilterContextCustomizer@6b0f266e, org.springframework.boot.test.json.DuplicateJsonObjectContextCustomizerFactory$DuplicateJsonObjectContextCustomizer@43d76a92, org.springframework.boot.test.mock.mockito.MockitoContextCustomizer@0, org.springframework.boot.test.web.client.TestRestTemplateContextCustomizer@787988f4, org.springframework.boot.test.web.reactor.netty.DisableReactorResourceFactoryGlobalResourcesContextCustomizerFactory$DisableReactorResourceFactoryGlobalResourcesContextCustomizerCustomizer@3a3f96ab, org.springframework.boot.test.autoconfigure.OnFailureConditionReportContextCustomizerFactory$OnFailureConditionReportContextCustomizer@21b51e59, org.springframework.boot.test.autoconfigure.actuate.observability.ObservabilityContextCustomizerFactory$DisableObservabilityContextCustomizer@1f, org.springframework.boot.test.autoconfigure.properties.PropertyMappingContextCustomizer@0, org.springframework.boot.test.autoconfigure.web.servlet.WebDriverContextCustomizer@756808cc, org.springframework.test.context.support.DynamicPropertiesContextCustomizer@0, org.springframework.boot.test.context.SpringBootTestAnnotation@2fa00b54], resourceBasePath = \"src/main/webapp\", contextLoader = org.springframework.boot.test.context.SpringBootContextLoader, parent = null]"
+    },
+    {
+      "phase": "39",
+      "logical_phase": "29",
+      "suite": "com.ljwx.platform.phase39.DataMaskTest",
+      "testcase": "testPhoneMasking",
+      "status": "ERROR",
+      "time_seconds": 0.001,
+      "message": "ApplicationContext failure threshold (1) exceeded: skipping repeated attempt to load context for [WebMergedContextConfiguration@6769013a testClass = com.ljwx.platform.phase39.DataMaskTest, locations = [], classes = [com.ljwx.platform.app.LjwxPlatformApplication], contextInitializerClasses = [], activeProfiles = [\"test\"], propertySourceDescriptors = [], propertySourceProperties = [\"org.springframework.boot.test.context.SpringBootTestContextBootstrapper=true\"], contextCustomizers = [org.springframework.boot.test.context.filter.ExcludeFilterContextCustomizer@6b0f266e, org.springframework.boot.test.json.DuplicateJsonObjectContextCustomizerFactory$DuplicateJsonObjectContextCustomizer@43d76a92, org.springframework.boot.test.mock.mockito.MockitoContextCustomizer@0, org.springframework.boot.test.web.client.TestRestTemplateContextCustomizer@787988f4, org.springframework.boot.test.web.reactor.netty.DisableReactorResourceFactoryGlobalResourcesContextCustomizerFactory$DisableReactorResourceFactoryGlobalResourcesContextCustomizerCustomizer@3a3f96ab, org.springframework.boot.test.autoconfigure.OnFailureConditionReportContextCustomizerFactory$OnFailureConditionReportContextCustomizer@21b51e59, org.springframework.boot.test.autoconfigure.actuate.observability.ObservabilityContextCustomizerFactory$DisableObservabilityContextCustomizer@1f, org.springframework.boot.test.autoconfigure.properties.PropertyMappingContextCustomizer@0, org.springframework.boot.test.autoconfigure.web.servlet.WebDriverContextCustomizer@756808cc, org.springframework.test.context.support.DynamicPropertiesContextCustomizer@0, org.springframework.boot.test.context.SpringBootTestAnnotation@2fa00b54], resourceBasePath = \"src/main/webapp\", contextLoader = org.springframework.boot.test.context.SpringBootContextLoader, parent = null]"
+    },
+    {
+      "phase": "39",
+      "logical_phase": "29",
+      "suite": "com.ljwx.platform.phase39.DataMaskTest",
+      "testcase": "testEmailMasking",
+      "status": "ERROR",
+      "time_seconds": 0.002,
+      "message": "ApplicationContext failure threshold (1) exceeded: skipping repeated attempt to load context for [WebMergedContextConfiguration@6769013a testClass = com.ljwx.platform.phase39.DataMaskTest, locations = [], classes = [com.ljwx.platform.app.LjwxPlatformApplication], contextInitializerClasses = [], activeProfiles = [\"test\"], propertySourceDescriptors = [], propertySourceProperties = [\"org.springframework.boot.test.context.SpringBootTestContextBootstrapper=true\"], contextCustomizers = [org.springframework.boot.test.context.filter.ExcludeFilterContextCustomizer@6b0f266e, org.springframework.boot.test.json.DuplicateJsonObjectContextCustomizerFactory$DuplicateJsonObjectContextCustomizer@43d76a92, org.springframework.boot.test.mock.mockito.MockitoContextCustomizer@0, org.springframework.boot.test.web.client.TestRestTemplateContextCustomizer@787988f4, org.springframework.boot.test.web.reactor.netty.DisableReactorResourceFactoryGlobalResourcesContextCustomizerFactory$DisableReactorResourceFactoryGlobalResourcesContextCustomizerCustomizer@3a3f96ab, org.springframework.boot.test.autoconfigure.OnFailureConditionReportContextCustomizerFactory$OnFailureConditionReportContextCustomizer@21b51e59, org.springframework.boot.test.autoconfigure.actuate.observability.ObservabilityContextCustomizerFactory$DisableObservabilityContextCustomizer@1f, org.springframework.boot.test.autoconfigure.properties.PropertyMappingContextCustomizer@0, org.springframework.boot.test.autoconfigure.web.servlet.WebDriverContextCustomizer@756808cc, org.springframework.test.context.support.DynamicPropertiesContextCustomizer@0, org.springframework.boot.test.context.SpringBootTestAnnotation@2fa00b54], resourceBasePath = \"src/main/webapp\", contextLoader = org.springframework.boot.test.context.SpringBootContextLoader, parent = null]"
+    }
+  ]
 }

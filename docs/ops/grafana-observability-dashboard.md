@@ -11,12 +11,16 @@
 ## 2. Dashboard 文件
 
 - `k8s/grafana-dashboard-observability.json`
+- Dashboard UID：`ljwx-platform-obsv`
 
 看板分区：
 
-- 指标（Prometheus）：QPS、错误率、P95、状态码趋势、接口延迟趋势
-- 日志（Loki）：实时日志流、日志级别趋势、按 `trace_id` 过滤日志
+- 指标（Prometheus）：QPS、错误率、P95/P99、状态码趋势、接口延迟趋势
+- 运行时（Prometheus）：可用性、在线实例、JVM 内存、CPU、Hikari 连接池
+- 日志（Loki）：实时日志流、日志级别趋势、错误日志、慢接口日志、按 `trace_id` 过滤日志
+- 租户与慢接口（Loki）：租户请求量 Top10、租户耗时 P95（基于结构化日志聚合）
 - 链路（Tempo）：`service.name` 维度 Trace 搜索 + 与日志联动排查
+- 告警态势（Prometheus）：当前 Firing 告警、错误率趋势、P99 延迟趋势
 
 ## 3. 自动部署到 k8s（推荐）
 
@@ -33,6 +37,11 @@ bash scripts/ops/apply-grafana-observability-dashboard.sh
 
 脚本会创建/更新 ConfigMap，并打上 `grafana_dashboard=1` 标签，兼容 Grafana Sidecar 自动加载。
 
+注意（Argo CD 托管场景）：
+
+- 若 `monitoring/ljwx-platform-observability-dashboard` 被 Argo CD 托管，手工 `kubectl apply` 会被自动回滚。
+- 需同步修改 Argo 真源仓库：`BrunoGaoSZ/ljwx-deploy` 的 `apps/ljwx-platform-observability/base/dashboards/ljwx-platform-observability.json`。
+
 ## 4. 手工导入（兜底）
 
 Grafana UI：
@@ -43,6 +52,7 @@ Grafana UI：
    - `DS_PROMETHEUS`
    - `DS_LOKI`
    - `DS_TEMPO`
+4. 确认 Dashboard UID 为 `ljwx-platform-obsv`（用于固定链接访问）
 
 ## 5. 使用方式（Trace 关联排障）
 
@@ -66,3 +76,32 @@ kubectl -n tracing get svc tempo
 # 4) 触发一次后端健康检查，生成日志与指标样本
 curl -fsS http://platform-backend.lingjingwanxiang.cn/actuator/health
 ```
+
+## 7. 一键端到端验收（R10/R11 + Prom/Loki/Tempo）
+
+```bash
+bash scripts/check-observability-k3s.sh
+```
+
+脚本默认执行：
+
+- R10：`scripts/gates/gate-e2e.sh`
+- R11：`scripts/gates/gate-perf.sh`
+- Prometheus 断言：请求增量、P95 延迟
+- Loki 断言：日志条数、`traceId` 关联日志条数
+- Tempo 断言：`/ready`、`spans_received_total`、trace 搜索结果、`service.name` 命中
+
+产物：
+
+- 汇总报告：`/tmp/ljwx-gate-results/observability-e2e.json`
+- gate 报告：`/tmp/ljwx-gate-results/R10.json`、`/tmp/ljwx-gate-results/R11.json`
+- 运行日志：`/tmp/ljwx-gate-results/observability/`
+
+常用环境变量：
+
+- `SERVICE_NAME`（默认 `ljwx-platform`）
+- `APP_NAMESPACE` / `APP_SERVICE`（默认 `ljwx-platform`）
+- `RUN_R10` / `RUN_R11`（默认 `1`）
+- `K6_VUS_R10` / `K6_ITERATIONS_R10`（默认 `1` / `1`）
+- `K6_VUS_R11` / `K6_DURATION_R11`（默认 `3` / `20s`）
+- `STRICT_TEMPO_SEARCH`（默认 `1`，设为 `0` 时 Tempo 搜索断言降级为告警，不阻断脚本退出）

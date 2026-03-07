@@ -1,6 +1,7 @@
 package com.ljwx.platform.phase04;
 
 import com.ljwx.platform.app.test.base.BaseCrudTest;
+import com.ljwx.platform.app.test.support.TestCredentials;
 
 import java.util.Map;
 import java.util.UUID;
@@ -37,7 +38,7 @@ class UserApiTest extends BaseCrudTest {
         String suffix = UUID.randomUUID().toString().substring(0, 8);
         return Map.of(
                 "username", "it_user_" + suffix,
-                "password", "Admin@12345",
+                "password", TestCredentials.USER_CREATE_PASSWORD,
                 "nickname", "IT User " + suffix
         );
     }

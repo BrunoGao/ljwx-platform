@@ -31,6 +31,8 @@ set +a
 : "${DB_PASSWORD:=}"
 : "${REDIS_PASSWORD:=}"
 : "${JWT_SECRET:=}"
+: "${LJWX_BOOTSTRAP_ADMIN_INITIAL_PASSWORD:=}"
+: "${LJWX_BOOTSTRAP_USER_IMPORT_INITIAL_PASSWORD:=}"
 : "${BACKEND_IMAGE:=}"
 : "${ADMIN_IMAGE:=}"
 : "${SCREEN_IMAGE:=}"
@@ -84,6 +86,11 @@ validate_db_secret_inputs() {
       exit 1
     fi
   fi
+
+  if [[ -z "${LJWX_BOOTSTRAP_ADMIN_INITIAL_PASSWORD}" || "${LJWX_BOOTSTRAP_ADMIN_INITIAL_PASSWORD}" == *"CHANGE_ME"* ]]; then
+    echo "LJWX_BOOTSTRAP_ADMIN_INITIAL_PASSWORD 未设置，请在 ${ENV_FILE} 中配置强口令。" >&2
+    exit 1
+  fi
 }
 
 ensure_namespace() {
@@ -117,6 +124,8 @@ apply_db_secret() {
     --from-literal=DB_PASSWORD="${DB_PASSWORD}" \
     --from-literal=REDIS_PASSWORD="${REDIS_PASSWORD}" \
     --from-literal=JWT_SECRET="${JWT_SECRET}" \
+    --from-literal=LJWX_BOOTSTRAP_ADMIN_INITIAL_PASSWORD="${LJWX_BOOTSTRAP_ADMIN_INITIAL_PASSWORD}" \
+    --from-literal=LJWX_BOOTSTRAP_USER_IMPORT_INITIAL_PASSWORD="${LJWX_BOOTSTRAP_USER_IMPORT_INITIAL_PASSWORD}" \
     --dry-run=client -o yaml | kubectl apply -f -
 }
 

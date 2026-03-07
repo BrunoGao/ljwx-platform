@@ -59,7 +59,7 @@ bash scripts/reset-database.sh --mode empty
 
 ```bash
 cp .env.example .env
-# 编辑 .env，填写 JWT_SECRET 等配置（可选设置 FLYWAY_BASELINE_VERSION）
+# 编辑 .env，至少填写 JWT_SECRET 与 LJWX_BOOTSTRAP_ADMIN_INITIAL_PASSWORD
 ```
 
 ### 3. 启动后端
@@ -73,7 +73,7 @@ SPRING_PROFILES_ACTIVE=local java -jar ljwx-platform-app/target/ljwx-platform-ap
 
 `local` profile 下 Flyway 使用 baseline 模式（默认 `V052`），仅对 baseline 之后的新迁移执行增量，减少开发阶段因历史迁移导致的失败。
 
-默认管理员账号：`admin` / `Admin@12345`
+默认管理员账号用户名固定为 `admin`，初始密码来自 `LJWX_BOOTSTRAP_ADMIN_INITIAL_PASSWORD`。
 
 ### 4. 启动管理后台
 
@@ -99,7 +99,7 @@ pnpm dev
 
 ```bash
 cp .env.compose.example .env.compose
-# 必须先修改 .env.compose 里的 DB_PASSWORD 为强口令
+# 必须先修改 .env.compose 里的 DB_PASSWORD、LJWX_BOOTSTRAP_ADMIN_INITIAL_PASSWORD、TENANT_B_PASS
 bash scripts/local/compose-stack.sh up
 bash scripts/local/compose-stack.sh smoke
 ```
@@ -130,7 +130,7 @@ bash scripts/local/compose-stack.sh down
 
 ```bash
 cp .env.delivery.example .env.delivery
-# 必填：BACKEND_IMAGE / ADMIN_IMAGE / SCREEN_IMAGE（建议使用不可变 digest）
+# 必填：镜像引用与 LJWX_BOOTSTRAP_ADMIN_INITIAL_PASSWORD（建议使用不可变 digest）
 DEPLOY_MODE=delivery bash scripts/local/compose-stack.sh up
 DEPLOY_MODE=delivery bash scripts/local/compose-stack.sh smoke
 ```
@@ -147,7 +147,7 @@ DEPLOY_MODE=delivery bash scripts/local/compose-stack.sh down
 
 ```bash
 cp .env.k3s.delivery.example .env.k3s.delivery
-# 必填：镜像引用、数据库口令；按需设置拉取凭据
+# 必填：镜像引用、数据库口令、LJWX_BOOTSTRAP_ADMIN_INITIAL_PASSWORD；按需设置拉取凭据
 bash scripts/local/k3s-delivery.sh apply
 bash scripts/local/k3s-delivery.sh status
 ```

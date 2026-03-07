@@ -300,3 +300,18 @@ P0 强制覆盖（Gate R09 检查）：
 - 禁止：`IF NOT EXISTS` · `tenantId` in DTO · `any` in TypeScript
 - DAG 约束：data 模块禁止 import security 包
 - 前端版本号：仅 `~`（tilde），禁止 `^`（caret）
+
+## Test Cases
+
+| TC ID | Endpoint | 权限 | 预期状态码 | 关键断言 |
+|------|----------|------|------------|---------|
+| TC-21-01 | GET /api/** | read | 401 | 无 token 返回 Unauthorized |
+| TC-21-02 | GET /api/** | read | 403 | 无权限 token 返回 Forbidden |
+| TC-21-03 | GET /api/** | read | 200 | 成功返回统一响应结构 |
+| TC-21-04 | POST /api/** | write | 400 | 参数校验错误返回 400 |
+| TC-21-05 | POST /api/** | write | 200 | 创建成功并返回 ID/结果 |
+| TC-21-06 | PUT /api/**/{id} | write | 200 | 更新成功且可再次查询 |
+| TC-21-07 | DELETE /api/**/{id} | delete | 200 | 删除后数据不可见（软删/过滤） |
+| TC-21-08 | GET /api/** | read | 200 | 仅可见当前租户数据 |
+| TC-21-09 | GET /api/** | read | 401 | 过期 token 被拒绝 |
+| TC-21-10 | GET /api/** | read | 401 | 非法 token 被拒绝 |

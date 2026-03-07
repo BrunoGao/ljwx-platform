@@ -15,6 +15,28 @@ import re
 import xml.etree.ElementTree as ET
 from datetime import datetime, timezone
 
+phase_map: dict[str, int] = {}
+phase_map_file = pathlib.Path("spec/phase/logical-phase-map.json")
+if phase_map_file.exists():
+    try:
+        raw = json.loads(phase_map_file.read_text(encoding="utf-8"))
+        phase_map = {str(k): int(v) for k, v in raw.get("physical_to_logical", {}).items()}
+    except Exception:
+        phase_map = {}
+
+
+def resolve_logical_phase(phase: str | None) -> str | None:
+    if phase is None:
+        return None
+    mapped = phase_map.get(phase)
+    if mapped is not None:
+        return f"{mapped:02d}"
+    p = int(phase)
+    if 1 <= p <= 35:
+        return f"{p:02d}"
+    return None
+
+
 tests = []
 for report in sorted(pathlib.Path(".").glob("**/target/surefire-reports/TEST-*.xml")):
     try:
@@ -44,6 +66,7 @@ for report in sorted(pathlib.Path(".").glob("**/target/surefire-reports/TEST-*.x
         m = re.search(r"com\.ljwx\.platform\.phase(\d{2})\.", classname)
         if m:
             phase = m.group(1)
+        logical_phase = resolve_logical_phase(phase)
         try:
             time_seconds = float(t)
         except ValueError:
@@ -51,6 +74,7 @@ for report in sorted(pathlib.Path(".").glob("**/target/surefire-reports/TEST-*.x
 
         tests.append({
             "phase": phase,
+            "logical_phase": logical_phase,
             "suite": classname,
             "testcase": name,
             "status": status,
