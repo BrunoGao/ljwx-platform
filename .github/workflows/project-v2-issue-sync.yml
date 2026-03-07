@@ -60,7 +60,7 @@ jobs:
       ISSUE_EVENT_NUMBER: ${{ github.event.issue.number }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Validate toolchain
         run: |

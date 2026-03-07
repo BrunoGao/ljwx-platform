@@ -21,7 +21,7 @@ jobs:
       ALLOW_UNSUPPORTED_ENV_PROTECTION: "true"
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Validate governance drift
         run: |
