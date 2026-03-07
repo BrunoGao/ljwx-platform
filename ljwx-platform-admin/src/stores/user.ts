@@ -2,17 +2,61 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import type { UserInfo, LoginDTO, LoginVO, TokenVO } from '@ljwx/shared'
 
+const ACCESS_TOKEN_STORAGE_KEY = 'ljwx_access_token'
+const REFRESH_TOKEN_STORAGE_KEY = 'ljwx_refresh_token'
+
+function normalizeStoredToken(value: string | null): string {
+  if (value === null || value === 'undefined' || value === 'null') {
+    return ''
+  }
+  return value
+}
+
+function clearPersistedTokens(): void {
+  localStorage.removeItem(ACCESS_TOKEN_STORAGE_KEY)
+  localStorage.removeItem(REFRESH_TOKEN_STORAGE_KEY)
+}
+
+function readPersistedTokens(): { accessToken: string; refreshToken: string } {
+  const accessToken = normalizeStoredToken(localStorage.getItem(ACCESS_TOKEN_STORAGE_KEY))
+  const refreshToken = normalizeStoredToken(localStorage.getItem(REFRESH_TOKEN_STORAGE_KEY))
+
+  // Drop partially persisted auth state to avoid unusable refresh flows.
+  if (Boolean(accessToken) !== Boolean(refreshToken)) {
+    clearPersistedTokens()
+    return {
+      accessToken: '',
+      refreshToken: '',
+    }
+  }
+
+  return {
+    accessToken,
+    refreshToken,
+  }
+}
+
 export const useUserStore = defineStore('user', () => {
-  const accessToken = ref<string>(localStorage.getItem('ljwx_access_token') ?? '')
-  const refreshToken = ref<string>(localStorage.getItem('ljwx_refresh_token') ?? '')
+  const persistedTokens = readPersistedTokens()
+  const accessToken = ref<string>(persistedTokens.accessToken)
+  const refreshToken = ref<string>(persistedTokens.refreshToken)
   const userInfo = ref<UserInfo | null>(null)
 
-  function setTokens(data: LoginVO): void {
+  function persistTokens(data: Pick<TokenVO, 'accessToken' | 'refreshToken'>): void {
     accessToken.value = data.accessToken
     refreshToken.value = data.refreshToken
+    localStorage.setItem(ACCESS_TOKEN_STORAGE_KEY, data.accessToken)
+    localStorage.setItem(REFRESH_TOKEN_STORAGE_KEY, data.refreshToken)
+  }
+
+  function setTokens(data: LoginVO): void {
+    if (!data.accessToken || !data.refreshToken) {
+      logout()
+      throw new Error('登录响应缺少完整令牌，请联系管理员')
+    }
+
+    persistTokens(data)
     userInfo.value = data.userInfo
-    localStorage.setItem('ljwx_access_token', data.accessToken)
-    localStorage.setItem('ljwx_refresh_token', data.refreshToken)
   }
 
   async function login(data: LoginDTO): Promise<void> {
@@ -25,20 +69,23 @@ export const useUserStore = defineStore('user', () => {
     accessToken.value = ''
     refreshToken.value = ''
     userInfo.value = null
-    localStorage.removeItem('ljwx_access_token')
-    localStorage.removeItem('ljwx_refresh_token')
+    clearPersistedTokens()
   }
 
   async function refreshAccessToken(): Promise<void> {
     if (!refreshToken.value) {
-      throw new Error('No refresh token available')
+      logout()
+      throw new Error('登录状态已失效，请重新登录')
     }
+
     const { refreshTokenApi } = await import('@/api/auth')
     const result: TokenVO = await refreshTokenApi(refreshToken.value)
-    accessToken.value = result.accessToken
-    refreshToken.value = result.refreshToken
-    localStorage.setItem('ljwx_access_token', result.accessToken)
-    localStorage.setItem('ljwx_refresh_token', result.refreshToken)
+    if (!result.accessToken || !result.refreshToken) {
+      logout()
+      throw new Error('登录状态刷新失败，请重新登录')
+    }
+
+    persistTokens(result)
   }
 
   function hasAuthority(authority: string): boolean {
