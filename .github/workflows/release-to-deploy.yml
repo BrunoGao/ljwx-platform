@@ -83,7 +83,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
 
       - name: Download build release metadata
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: release-metadata
           run-id: ${{ steps.cfg.outputs.source_run_id }}
