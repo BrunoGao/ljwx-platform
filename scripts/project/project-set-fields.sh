@@ -182,62 +182,84 @@ extract_from_issue() {
         PHASE="$val"
       else
         val="$(printf '%s\n' "$labels" | sed -nE 's/^phase-([0-9]{1,2})$/\1/p' | head -n1)"
-        [[ -n "$val" ]] && PHASE="$val"
+        if [[ -n "$val" ]]; then
+          PHASE="$val"
+        fi
       fi
     fi
   fi
 
   if [[ -z "$WORKFLOW" ]]; then
     val="$(extract_body_field_value "$body" "Workflow" || true)"
-    [[ -z "$val" ]] && val="$(extract_markdown_section "$body" "Workflow" || true)"
+    if [[ -z "$val" ]]; then
+      val="$(extract_markdown_section "$body" "Workflow" || true)"
+    fi
     if [[ -z "$val" ]]; then
       val="$(printf '%s\n' "$labels" | sed -nE 's/^workflow:(.+)$/\1/p' | head -n1)"
     fi
-    [[ -n "$val" ]] && WORKFLOW="$(normalize_workflow "$val")"
+    if [[ -n "$val" ]]; then
+      WORKFLOW="$(normalize_workflow "$val")"
+    fi
   else
     WORKFLOW="$(normalize_workflow "$WORKFLOW")"
   fi
 
   if [[ -z "$PRIORITY" ]]; then
     val="$(extract_body_field_value "$body" "Priority" || true)"
-    [[ -z "$val" ]] && val="$(extract_markdown_section "$body" "Priority" || true)"
+    if [[ -z "$val" ]]; then
+      val="$(extract_markdown_section "$body" "Priority" || true)"
+    fi
     if [[ -z "$val" ]]; then
       val="$(printf '%s\n' "$labels" | sed -nE 's/^priority:([Pp][0-2])$/\1/p' | head -n1)"
     fi
-    [[ -n "$val" ]] && PRIORITY="$(normalize_priority "$val")"
+    if [[ -n "$val" ]]; then
+      PRIORITY="$(normalize_priority "$val")"
+    fi
   else
     PRIORITY="$(normalize_priority "$PRIORITY")"
   fi
 
   if [[ -z "$GATE_STATUS" ]]; then
     val="$(extract_body_field_value "$body" "Gate Status" || true)"
-    [[ -z "$val" ]] && val="$(extract_markdown_section "$body" "Gate Status" || true)"
+    if [[ -z "$val" ]]; then
+      val="$(extract_markdown_section "$body" "Gate Status" || true)"
+    fi
     if [[ -z "$val" ]]; then
       val="$(printf '%s\n' "$labels" | sed -nE 's/^gate:(pass|fail|pending|skip)$/\1/ip' | head -n1)"
     fi
-    [[ -n "$val" ]] && GATE_STATUS="$(normalize_gate "$val")"
+    if [[ -n "$val" ]]; then
+      GATE_STATUS="$(normalize_gate "$val")"
+    fi
   else
     GATE_STATUS="$(normalize_gate "$GATE_STATUS")"
   fi
 
   if [[ -z "$WORKSTREAM" ]]; then
     val="$(extract_body_field_value "$body" "Workstream" || true)"
-    [[ -z "$val" ]] && val="$(extract_markdown_section "$body" "Workstream" || true)"
+    if [[ -z "$val" ]]; then
+      val="$(extract_markdown_section "$body" "Workstream" || true)"
+    fi
     if [[ -z "$val" ]]; then
       val="$(printf '%s\n' "$labels" | sed -nE 's/^workstream:(.+)$/\1/p' | head -n1)"
     fi
-    [[ -n "$val" ]] && WORKSTREAM="$(normalize_workstream "$val")"
+    if [[ -n "$val" ]]; then
+      WORKSTREAM="$(normalize_workstream "$val")"
+    fi
   else
     WORKSTREAM="$(normalize_workstream "$WORKSTREAM")"
   fi
 
   if [[ -z "$SUITE" ]]; then
     val="$(extract_body_field_value "$body" "Suite" || true)"
-    [[ -z "$val" ]] && val="$(extract_markdown_section "$body" "Suite" || true)"
+    if [[ -z "$val" ]]; then
+      val="$(extract_markdown_section "$body" "Suite" || true)"
+    fi
     if [[ -z "$val" ]]; then
       val="$(printf '%s\n' "$labels" | sed -nE 's/^suite:(.+)$/\1/p' | head -n1)"
     fi
-    [[ -n "$val" ]] && SUITE="$(normalize_suite "$val")"
+    if [[ -n "$val" ]]; then
+      SUITE="$(normalize_suite "$val")"
+    fi
   else
     SUITE="$(normalize_suite "$SUITE")"
   fi
@@ -306,12 +328,24 @@ set_select_field() {
   fi
 }
 
-[[ -n "$PHASE" ]] && set_number_field "$PHASE_FIELD_ID" "$PHASE" "Phase"
-[[ -n "$WORKFLOW" ]] && set_select_field "$WORKFLOW_FIELD_ID" "$WORKFLOW_OPTION_ID" "Workflow:$WORKFLOW"
-[[ -n "$PRIORITY" ]] && set_select_field "$PRIORITY_FIELD_ID" "$PRIORITY_OPTION_ID" "Priority:$PRIORITY"
-[[ -n "$GATE_STATUS" ]] && set_select_field "$GATE_FIELD_ID" "$GATE_OPTION_ID" "GateStatus:$GATE_STATUS"
-[[ -n "$WORKSTREAM" ]] && set_select_field "$WORKSTREAM_FIELD_ID" "$WORKSTREAM_OPTION_ID" "Workstream:$WORKSTREAM"
-[[ -n "$SUITE" ]] && set_select_field "$SUITE_FIELD_ID" "$SUITE_OPTION_ID" "Suite:$SUITE"
+if [[ -n "$PHASE" ]]; then
+  set_number_field "$PHASE_FIELD_ID" "$PHASE" "Phase"
+fi
+if [[ -n "$WORKFLOW" ]]; then
+  set_select_field "$WORKFLOW_FIELD_ID" "$WORKFLOW_OPTION_ID" "Workflow:$WORKFLOW"
+fi
+if [[ -n "$PRIORITY" ]]; then
+  set_select_field "$PRIORITY_FIELD_ID" "$PRIORITY_OPTION_ID" "Priority:$PRIORITY"
+fi
+if [[ -n "$GATE_STATUS" ]]; then
+  set_select_field "$GATE_FIELD_ID" "$GATE_OPTION_ID" "GateStatus:$GATE_STATUS"
+fi
+if [[ -n "$WORKSTREAM" ]]; then
+  set_select_field "$WORKSTREAM_FIELD_ID" "$WORKSTREAM_OPTION_ID" "Workstream:$WORKSTREAM"
+fi
+if [[ -n "$SUITE" ]]; then
+  set_select_field "$SUITE_FIELD_ID" "$SUITE_OPTION_ID" "Suite:$SUITE"
+fi
 
 if [[ "$DRY_RUN" == "false" ]]; then
   echo "updated item: $ITEM_ID"
