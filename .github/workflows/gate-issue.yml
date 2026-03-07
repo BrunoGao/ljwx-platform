@@ -45,7 +45,7 @@ jobs:
           echo "gate_key=$GATE_KEY" >> "$GITHUB_OUTPUT"
 
       - name: Upsert or close gate issue by unique Gate-Key
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const owner = context.repo.owner;
