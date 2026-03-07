@@ -73,6 +73,9 @@ ljwx:
     secret: ${JWT_SECRET:your-256-bit-secret-key-here-change-in-production}
     access-token-expiration: 1800
     refresh-token-expiration: 604800
+  bootstrap:
+    admin-initial-password: ${LJWX_BOOTSTRAP_ADMIN_INITIAL_PASSWORD:}
+    user-import-initial-password: ${LJWX_BOOTSTRAP_USER_IMPORT_INITIAL_PASSWORD:}
   file:
     base-path: ${FILE_BASE_PATH:./uploads}
 

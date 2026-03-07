@@ -1,8 +1,217 @@
 {
-  "generated_at": "2026-03-03T07:45:50Z",
+  "generated_at": "2026-03-05T05:57:24Z",
+  "summary": {
+    "total_endpoints": 116,
+    "covered_endpoints": 16,
+    "uncovered_endpoints": 100,
+    "coverage_percent": 13.79
+  },
+  "phase_coverage": [
+    {
+      "phase": "07",
+      "logical_phase": "07",
+      "total_endpoints": 4,
+      "covered_endpoints": 0,
+      "uncovered_endpoints": 4,
+      "coverage_percent": 0
+    },
+    {
+      "phase": "08",
+      "logical_phase": "08",
+      "total_endpoints": 4,
+      "covered_endpoints": 3,
+      "uncovered_endpoints": 1,
+      "coverage_percent": 75
+    },
+    {
+      "phase": "09",
+      "logical_phase": "09",
+      "total_endpoints": 8,
+      "covered_endpoints": 0,
+      "uncovered_endpoints": 8,
+      "coverage_percent": 0
+    },
+    {
+      "phase": "20",
+      "logical_phase": "20",
+      "total_endpoints": 4,
+      "covered_endpoints": 3,
+      "uncovered_endpoints": 1,
+      "coverage_percent": 75
+    },
+    {
+      "phase": "21",
+      "logical_phase": "21",
+      "total_endpoints": 4,
+      "covered_endpoints": 3,
+      "uncovered_endpoints": 1,
+      "coverage_percent": 75
+    },
+    {
+      "phase": "22",
+      "logical_phase": "22",
+      "total_endpoints": 2,
+      "covered_endpoints": 2,
+      "uncovered_endpoints": 0,
+      "coverage_percent": 100
+    },
+    {
+      "phase": "24",
+      "logical_phase": "24",
+      "total_endpoints": 3,
+      "covered_endpoints": 0,
+      "uncovered_endpoints": 3,
+      "coverage_percent": 0
+    },
+    {
+      "phase": "25",
+      "logical_phase": "25",
+      "total_endpoints": 3,
+      "covered_endpoints": 3,
+      "uncovered_endpoints": 0,
+      "coverage_percent": 100
+    },
+    {
+      "phase": "40",
+      "logical_phase": null,
+      "total_endpoints": 3,
+      "covered_endpoints": 0,
+      "uncovered_endpoints": 3,
+      "coverage_percent": 0
+    },
+    {
+      "phase": "41",
+      "logical_phase": null,
+      "total_endpoints": 4,
+      "covered_endpoints": 0,
+      "uncovered_endpoints": 4,
+      "coverage_percent": 0
+    },
+    {
+      "phase": "43",
+      "logical_phase": null,
+      "total_endpoints": 4,
+      "covered_endpoints": 0,
+      "uncovered_endpoints": 4,
+      "coverage_percent": 0
+    },
+    {
+      "phase": "44",
+      "logical_phase": null,
+      "total_endpoints": 2,
+      "covered_endpoints": 0,
+      "uncovered_endpoints": 2,
+      "coverage_percent": 0
+    },
+    {
+      "phase": "45",
+      "logical_phase": null,
+      "total_endpoints": 4,
+      "covered_endpoints": 0,
+      "uncovered_endpoints": 4,
+      "coverage_percent": 0
+    },
+    {
+      "phase": "46",
+      "logical_phase": "30",
+      "total_endpoints": 4,
+      "covered_endpoints": 0,
+      "uncovered_endpoints": 4,
+      "coverage_percent": 0
+    },
+    {
+      "phase": "47",
+      "logical_phase": "29",
+      "total_endpoints": 4,
+      "covered_endpoints": 0,
+      "uncovered_endpoints": 4,
+      "coverage_percent": 0
+    },
+    {
+      "phase": "48",
+      "logical_phase": "29",
+      "total_endpoints": 2,
+      "covered_endpoints": 0,
+      "uncovered_endpoints": 2,
+      "coverage_percent": 0
+    },
+    {
+      "phase": "49",
+      "logical_phase": "29",
+      "total_endpoints": 4,
+      "covered_endpoints": 0,
+      "uncovered_endpoints": 4,
+      "coverage_percent": 0
+    },
+    {
+      "phase": "50",
+      "logical_phase": "28",
+      "total_endpoints": 3,
+      "covered_endpoints": 0,
+      "uncovered_endpoints": 3,
+      "coverage_percent": 0
+    },
+    {
+      "phase": "51",
+      "logical_phase": "28",
+      "total_endpoints": 6,
+      "covered_endpoints": 0,
+      "uncovered_endpoints": 6,
+      "coverage_percent": 0
+    },
+    {
+      "phase": "52",
+      "logical_phase": "28",
+      "total_endpoints": 4,
+      "covered_endpoints": 0,
+      "uncovered_endpoints": 4,
+      "coverage_percent": 0
+    },
+    {
+      "phase": "53",
+      "logical_phase": "32",
+      "total_endpoints": 9,
+      "covered_endpoints": 0,
+      "uncovered_endpoints": 9,
+      "coverage_percent": 0
+    },
+    {
+      "phase": "54",
+      "logical_phase": "31",
+      "total_endpoints": 7,
+      "covered_endpoints": 0,
+      "uncovered_endpoints": 7,
+      "coverage_percent": 0
+    },
+    {
+      "phase": "55",
+      "logical_phase": "30",
+      "total_endpoints": 4,
+      "covered_endpoints": 0,
+      "uncovered_endpoints": 4,
+      "coverage_percent": 0
+    },
+    {
+      "phase": "56",
+      "logical_phase": "33",
+      "total_endpoints": 2,
+      "covered_endpoints": 0,
+      "uncovered_endpoints": 2,
+      "coverage_percent": 0
+    },
+    {
+      "phase": "58",
+      "logical_phase": "35",
+      "total_endpoints": 6,
+      "covered_endpoints": 0,
+      "uncovered_endpoints": 6,
+      "coverage_percent": 0
+    }
+  ],
   "matrix": [
     {
-      "phase": "00",
+      "phase": "56",
+      "logical_phase": "33",
       "requirement_id": null,
       "endpoint": "/api/v1/ai/chat",
       "method": "POST",
@@ -11,10 +220,11 @@
       "test": null,
       "test_covered": false,
       "spec": null,
-      "gate_status": "PASS"
+      "gate_status": "PENDING"
     },
     {
-      "phase": "00",
+      "phase": "56",
+      "logical_phase": "33",
       "requirement_id": null,
       "endpoint": "/api/v1/ai/conversations",
       "method": "GET",
@@ -23,22 +233,24 @@
       "test": null,
       "test_covered": false,
       "spec": null,
-      "gate_status": "PASS"
+      "gate_status": "PENDING"
     },
     {
-      "phase": "00",
+      "phase": null,
+      "logical_phase": null,
       "requirement_id": null,
       "endpoint": "/api/auth/login",
       "method": "POST",
       "controller": "ljwx-platform-app/src/main/java/com/ljwx/platform/app/controller/AuthController.java",
       "service": null,
-      "test": "ljwx-platform-app/src/test/java/com/ljwx/platform/app/MenuControllerIT.java",
+      "test": "ljwx-platform-app/src/test/java/com/ljwx/platform/app/DeptControllerIT.java",
       "test_covered": true,
       "spec": null,
-      "gate_status": "PASS"
+      "gate_status": "PENDING"
     },
     {
-      "phase": "00",
+      "phase": null,
+      "logical_phase": null,
       "requirement_id": null,
       "endpoint": "/api/auth/refresh",
       "method": "POST",
@@ -47,10 +259,11 @@
       "test": null,
       "test_covered": false,
       "spec": null,
-      "gate_status": "PASS"
+      "gate_status": "PENDING"
     },
     {
-      "phase": "00",
+      "phase": null,
+      "logical_phase": null,
       "requirement_id": null,
       "endpoint": "/api/auth/me",
       "method": "GET",
@@ -59,10 +272,11 @@
       "test": "ljwx-platform-app/src/test/java/com/ljwx/platform/phase00/SmokeTest.java",
       "test_covered": true,
       "spec": null,
-      "gate_status": "PASS"
+      "gate_status": "PENDING"
     },
     {
-      "phase": "00",
+      "phase": null,
+      "logical_phase": null,
       "requirement_id": null,
       "endpoint": "/api/auth/logout",
       "method": "POST",
@@ -71,10 +285,11 @@
       "test": null,
       "test_covered": false,
       "spec": null,
-      "gate_status": "PASS"
+      "gate_status": "PENDING"
     },
     {
-      "phase": "00",
+      "phase": "58",
+      "logical_phase": "35",
       "requirement_id": null,
       "endpoint": "/api/v1/billing/usage",
       "method": "GET",
@@ -83,10 +298,11 @@
       "test": null,
       "test_covered": false,
       "spec": null,
-      "gate_status": "PASS"
+      "gate_status": "PENDING"
     },
     {
-      "phase": "00",
+      "phase": "58",
+      "logical_phase": "35",
       "requirement_id": null,
       "endpoint": "/api/v1/billing/summary",
       "method": "GET",
@@ -95,10 +311,11 @@
       "test": null,
       "test_covered": false,
       "spec": null,
-      "gate_status": "PASS"
+      "gate_status": "PENDING"
     },
     {
-      "phase": "00",
+      "phase": "08",
+      "logical_phase": "08",
       "requirement_id": null,
       "endpoint": "/api/configs/{id}",
       "method": "PUT",
@@ -110,7 +327,8 @@
       "gate_status": "PASS"
     },
     {
-      "phase": "00",
+      "phase": "08",
+      "logical_phase": "08",
       "requirement_id": null,
       "endpoint": "/api/configs/key/{key}",
       "method": "GET",
@@ -122,7 +340,8 @@
       "gate_status": "PASS"
     },
     {
-      "phase": "00",
+      "phase": "54",
+      "logical_phase": "31",
       "requirement_id": null,
       "endpoint": "/api/v1/custom-fields/{id}",
       "method": "PUT",
@@ -131,10 +350,11 @@
       "test": null,
       "test_covered": false,
       "spec": null,
-      "gate_status": "PASS"
+      "gate_status": "PENDING"
     },
     {
-      "phase": "00",
+      "phase": "54",
+      "logical_phase": "31",
       "requirement_id": null,
       "endpoint": "/api/v1/custom-fields/{id}",
       "method": "DELETE",
@@ -143,10 +363,11 @@
       "test": null,
       "test_covered": false,
       "spec": null,
-      "gate_status": "PASS"
+      "gate_status": "PENDING"
     },
     {
-      "phase": "00",
+      "phase": "21",
+      "logical_phase": "21",
       "requirement_id": null,
       "endpoint": "/api/v1/depts/tree",
       "method": "GET",
@@ -158,7 +379,8 @@
       "gate_status": "PASS"
     },
     {
-      "phase": "00",
+      "phase": "21",
+      "logical_phase": "21",
       "requirement_id": null,
       "endpoint": "/api/v1/depts/{id}",
       "method": "GET",
@@ -170,7 +392,8 @@
       "gate_status": "PASS"
     },
     {
-      "phase": "00",
+      "phase": "21",
+      "logical_phase": "21",
       "requirement_id": null,
       "endpoint": "/api/v1/depts/{id}",
       "method": "PUT",
@@ -182,7 +405,8 @@
       "gate_status": "PASS"
     },
     {
-      "phase": "00",
+      "phase": "21",
+      "logical_phase": "21",
       "requirement_id": null,
       "endpoint": "/api/v1/depts/{id}",
       "method": "DELETE",
@@ -194,7 +418,8 @@
       "gate_status": "PASS"
     },
     {
-      "phase": "00",
+      "phase": "08",
+      "logical_phase": "08",
       "requirement_id": null,
       "endpoint": "/api/dicts/{id}",
       "method": "PUT",
@@ -206,7 +431,8 @@
       "gate_status": "PASS"
     },
     {
-      "phase": "00",
+      "phase": "08",
+      "logical_phase": "08",
       "requirement_id": null,
       "endpoint": "/api/dicts/type/{type}",
       "method": "GET",
@@ -218,7 +444,8 @@
       "gate_status": "PASS"
     },
     {
-      "phase": "00",
+      "phase": "09",
+      "logical_phase": "09",
       "requirement_id": null,
       "endpoint": "/api/files/upload",
       "method": "POST",
@@ -230,7 +457,8 @@
       "gate_status": "PASS"
     },
     {
-      "phase": "00",
+      "phase": "09",
+      "logical_phase": "09",
       "requirement_id": null,
       "endpoint": "/api/files/{id}",
       "method": "DELETE",
@@ -242,7 +470,8 @@
       "gate_status": "PASS"
     },
     {
-      "phase": "00",
+      "phase": "09",
+      "logical_phase": "09",
       "requirement_id": null,
       "endpoint": "/api/files/{id}/download",
       "method": "GET",
@@ -254,7 +483,8 @@
       "gate_status": "PASS"
     },
     {
-      "phase": "00",
+      "phase": "54",
+      "logical_phase": "31",
       "requirement_id": null,
       "endpoint": "/api/v1/form-data/{id}",
       "method": "GET",
@@ -263,10 +493,11 @@
       "test": null,
       "test_covered": false,
       "spec": null,
-      "gate_status": "PASS"
+      "gate_status": "PENDING"
     },
     {
-      "phase": "00",
+      "phase": "54",
+      "logical_phase": "31",
       "requirement_id": null,
       "endpoint": "/api/v1/form-data/{id}",
       "method": "PUT",
@@ -275,10 +506,11 @@
       "test": null,
       "test_covered": false,
       "spec": null,
-      "gate_status": "PASS"
+      "gate_status": "PENDING"
     },
     {
-      "phase": "00",
+      "phase": "54",
+      "logical_phase": "31",
       "requirement_id": null,
       "endpoint": "/api/v1/form-defs/{id}",
       "method": "GET",
@@ -287,10 +519,11 @@
       "test": null,
       "test_covered": false,
       "spec": null,
-      "gate_status": "PASS"
+      "gate_status": "PENDING"
     },
     {
-      "phase": "00",
+      "phase": "54",
+      "logical_phase": "31",
       "requirement_id": null,
       "endpoint": "/api/v1/form-defs/{id}",
       "method": "PUT",
@@ -299,10 +532,11 @@
       "test": null,
       "test_covered": false,
       "spec": null,
-      "gate_status": "PASS"
+      "gate_status": "PENDING"
     },
     {
-      "phase": "00",
+      "phase": "54",
+      "logical_phase": "31",
       "requirement_id": null,
       "endpoint": "/api/v1/form-defs/{id}",
       "method": "DELETE",
@@ -311,10 +545,11 @@
       "test": null,
       "test_covered": false,
       "spec": null,
-      "gate_status": "PASS"
+      "gate_status": "PENDING"
     },
     {
-      "phase": "00",
+      "phase": "58",
+      "logical_phase": "35",
       "requirement_id": null,
       "endpoint": "/api/v1/help-docs/{id}",
       "method": "GET",
@@ -323,10 +558,11 @@
       "test": null,
       "test_covered": false,
       "spec": null,
-      "gate_status": "PASS"
+      "gate_status": "PENDING"
     },
     {
-      "phase": "00",
+      "phase": "58",
+      "logical_phase": "35",
       "requirement_id": null,
       "endpoint": "/api/v1/help-docs/route",
       "method": "GET",
@@ -335,10 +571,11 @@
       "test": null,
       "test_covered": false,
       "spec": null,
-      "gate_status": "PASS"
+      "gate_status": "PENDING"
     },
     {
-      "phase": "00",
+      "phase": "58",
+      "logical_phase": "35",
       "requirement_id": null,
       "endpoint": "/api/v1/help-docs/{id}",
       "method": "PUT",
@@ -347,10 +584,11 @@
       "test": null,
       "test_covered": false,
       "spec": null,
-      "gate_status": "PASS"
+      "gate_status": "PENDING"
     },
     {
-      "phase": "00",
+      "phase": "58",
+      "logical_phase": "35",
       "requirement_id": null,
       "endpoint": "/api/v1/help-docs/{id}",
       "method": "DELETE",
@@ -359,10 +597,11 @@
       "test": null,
       "test_covered": false,
       "spec": null,
-      "gate_status": "PASS"
+      "gate_status": "PENDING"
     },
     {
-      "phase": "00",
+      "phase": "46",
+      "logical_phase": "30",
       "requirement_id": null,
       "endpoint": "/api/v1/import-export/import",
       "method": "POST",
@@ -374,7 +613,8 @@
       "gate_status": "PASS"
     },
     {
-      "phase": "00",
+      "phase": "46",
+      "logical_phase": "30",
       "requirement_id": null,
       "endpoint": "/api/v1/import-export/export",
       "method": "POST",
@@ -386,7 +626,8 @@
       "gate_status": "PASS"
     },
     {
-      "phase": "00",
+      "phase": "46",
+      "logical_phase": "30",
       "requirement_id": null,
       "endpoint": "/api/v1/import-export/tasks/{id}",
       "method": "GET",
@@ -398,7 +639,8 @@
       "gate_status": "PASS"
     },
     {
-      "phase": "00",
+      "phase": "46",
+      "logical_phase": "30",
       "requirement_id": null,
       "endpoint": "/api/v1/import-export/tasks",
       "method": "GET",
@@ -410,7 +652,8 @@
       "gate_status": "PASS"
     },
     {
-      "phase": "00",
+      "phase": "07",
+      "logical_phase": "07",
       "requirement_id": null,
       "endpoint": "/api/jobs/{id}",
       "method": "PUT",
@@ -422,7 +665,8 @@
       "gate_status": "PASS"
     },
     {
-      "phase": "00",
+      "phase": "07",
+      "logical_phase": "07",
       "requirement_id": null,
       "endpoint": "/api/jobs/{id}/execute",
       "method": "POST",
@@ -434,7 +678,8 @@
       "gate_status": "PASS"
     },
     {
-      "phase": "00",
+      "phase": "07",
+      "logical_phase": "07",
       "requirement_id": null,
       "endpoint": "/api/jobs/{id}/pause",
       "method": "POST",
@@ -446,7 +691,8 @@
       "gate_status": "PASS"
     },
     {
-      "phase": "00",
+      "phase": "07",
+      "logical_phase": "07",
       "requirement_id": null,
       "endpoint": "/api/jobs/{id}/resume",
       "method": "POST",
@@ -458,31 +704,34 @@
       "gate_status": "PASS"
     },
     {
-      "phase": "00",
+      "phase": "20",
+      "logical_phase": "20",
       "requirement_id": null,
       "endpoint": "/api/v1/menus/tree",
       "method": "GET",
       "controller": "ljwx-platform-app/src/main/java/com/ljwx/platform/app/controller/MenuController.java",
       "service": null,
-      "test": "ljwx-platform-app/src/test/java/com/ljwx/platform/app/MenuControllerIT.java",
+      "test": "ljwx-platform-app/src/test/java/com/ljwx/platform/phase20/MenuApiIntegrationTest.java",
       "test_covered": true,
       "spec": null,
       "gate_status": "PASS"
     },
     {
-      "phase": "00",
+      "phase": "20",
+      "logical_phase": "20",
       "requirement_id": null,
       "endpoint": "/api/v1/menus/{id}",
       "method": "GET",
       "controller": "ljwx-platform-app/src/main/java/com/ljwx/platform/app/controller/MenuController.java",
       "service": null,
-      "test": "ljwx-platform-app/src/test/java/com/ljwx/platform/app/MenuControllerIT.java",
+      "test": "ljwx-platform-app/src/test/java/com/ljwx/platform/phase20/MenuApiIntegrationTest.java",
       "test_covered": true,
       "spec": null,
       "gate_status": "PASS"
     },
     {
-      "phase": "00",
+      "phase": "20",
+      "logical_phase": "20",
       "requirement_id": null,
       "endpoint": "/api/v1/menus/{id}",
       "method": "PUT",
@@ -494,19 +743,21 @@
       "gate_status": "PASS"
     },
     {
-      "phase": "00",
+      "phase": "20",
+      "logical_phase": "20",
       "requirement_id": null,
       "endpoint": "/api/v1/menus/{id}",
       "method": "DELETE",
       "controller": "ljwx-platform-app/src/main/java/com/ljwx/platform/app/controller/MenuController.java",
       "service": null,
-      "test": "ljwx-platform-app/src/test/java/com/ljwx/platform/app/MenuControllerIT.java",
+      "test": "ljwx-platform-app/src/test/java/com/ljwx/platform/phase20/MenuApiIntegrationTest.java",
       "test_covered": true,
       "spec": null,
       "gate_status": "PASS"
     },
     {
-      "phase": "00",
+      "phase": "51",
+      "logical_phase": "28",
       "requirement_id": null,
       "endpoint": "/api/v1/messages/send",
       "method": "POST",
@@ -518,7 +769,8 @@
       "gate_status": "PASS"
     },
     {
-      "phase": "00",
+      "phase": "51",
+      "logical_phase": "28",
       "requirement_id": null,
       "endpoint": "/api/v1/messages/records",
       "method": "GET",
@@ -530,7 +782,8 @@
       "gate_status": "PASS"
     },
     {
-      "phase": "00",
+      "phase": "51",
+      "logical_phase": "28",
       "requirement_id": null,
       "endpoint": "/api/v1/messages/records/{id}",
       "method": "GET",
@@ -542,7 +795,8 @@
       "gate_status": "PASS"
     },
     {
-      "phase": "00",
+      "phase": "51",
+      "logical_phase": "28",
       "requirement_id": null,
       "endpoint": "/api/v1/messages/inbox",
       "method": "GET",
@@ -554,7 +808,8 @@
       "gate_status": "PASS"
     },
     {
-      "phase": "00",
+      "phase": "51",
+      "logical_phase": "28",
       "requirement_id": null,
       "endpoint": "/api/v1/messages/inbox/{id}/read",
       "method": "PUT",
@@ -566,7 +821,8 @@
       "gate_status": "PASS"
     },
     {
-      "phase": "00",
+      "phase": "51",
+      "logical_phase": "28",
       "requirement_id": null,
       "endpoint": "/api/v1/messages/inbox/{id}",
       "method": "DELETE",
@@ -578,7 +834,8 @@
       "gate_status": "PASS"
     },
     {
-      "phase": "00",
+      "phase": "25",
+      "logical_phase": "25",
       "requirement_id": null,
       "endpoint": "/api/v1/monitor/server",
       "method": "GET",
@@ -590,7 +847,8 @@
       "gate_status": "PASS"
     },
     {
-      "phase": "00",
+      "phase": "25",
+      "logical_phase": "25",
       "requirement_id": null,
       "endpoint": "/api/v1/monitor/jvm",
       "method": "GET",
@@ -602,7 +860,8 @@
       "gate_status": "PASS"
     },
     {
-      "phase": "00",
+      "phase": "25",
+      "logical_phase": "25",
       "requirement_id": null,
       "endpoint": "/api/v1/monitor/cache",
       "method": "GET",
@@ -614,7 +873,8 @@
       "gate_status": "PASS"
     },
     {
-      "phase": "00",
+      "phase": "52",
+      "logical_phase": "28",
       "requirement_id": null,
       "endpoint": "/api/v1/message/subscriptions/{id}",
       "method": "PUT",
@@ -626,7 +886,8 @@
       "gate_status": "PASS"
     },
     {
-      "phase": "00",
+      "phase": "52",
+      "logical_phase": "28",
       "requirement_id": null,
       "endpoint": "/api/v1/message/subscriptions/{id}",
       "method": "DELETE",
@@ -638,7 +899,8 @@
       "gate_status": "PASS"
     },
     {
-      "phase": "00",
+      "phase": "52",
+      "logical_phase": "28",
       "requirement_id": null,
       "endpoint": "/api/v1/message/subscriptions/{id}",
       "method": "GET",
@@ -650,7 +912,8 @@
       "gate_status": "PASS"
     },
     {
-      "phase": "00",
+      "phase": "52",
+      "logical_phase": "28",
       "requirement_id": null,
       "endpoint": "/api/v1/message/subscriptions/{id}/status",
       "method": "PUT",
@@ -662,7 +925,8 @@
       "gate_status": "PASS"
     },
     {
-      "phase": "00",
+      "phase": "50",
+      "logical_phase": "28",
       "requirement_id": null,
       "endpoint": "/api/v1/messages/templates/{id}",
       "method": "PUT",
@@ -674,7 +938,8 @@
       "gate_status": "PASS"
     },
     {
-      "phase": "00",
+      "phase": "50",
+      "logical_phase": "28",
       "requirement_id": null,
       "endpoint": "/api/v1/messages/templates/{id}",
       "method": "DELETE",
@@ -686,7 +951,8 @@
       "gate_status": "PASS"
     },
     {
-      "phase": "00",
+      "phase": "50",
+      "logical_phase": "28",
       "requirement_id": null,
       "endpoint": "/api/v1/messages/templates/{id}",
       "method": "GET",
@@ -698,7 +964,8 @@
       "gate_status": "PASS"
     },
     {
-      "phase": "00",
+      "phase": "09",
+      "logical_phase": "09",
       "requirement_id": null,
       "endpoint": "/api/notices/{id}",
       "method": "PUT",
@@ -710,7 +977,8 @@
       "gate_status": "PASS"
     },
     {
-      "phase": "00",
+      "phase": "09",
+      "logical_phase": "09",
       "requirement_id": null,
       "endpoint": "/api/notices/{id}/read",
       "method": "PUT",
@@ -722,7 +990,8 @@
       "gate_status": "PASS"
     },
     {
-      "phase": "00",
+      "phase": "09",
+      "logical_phase": "09",
       "requirement_id": null,
       "endpoint": "/api/notices/unread-count",
       "method": "GET",
@@ -734,7 +1003,8 @@
       "gate_status": "PASS"
     },
     {
-      "phase": "00",
+      "phase": "22",
+      "logical_phase": "22",
       "requirement_id": null,
       "endpoint": "/api/v1/online-users/{tokenId}",
       "method": "DELETE",
@@ -746,7 +1016,8 @@
       "gate_status": "PASS"
     },
     {
-      "phase": "00",
+      "phase": "47",
+      "logical_phase": "29",
       "requirement_id": null,
       "endpoint": "/api/v1/open-api/apps/{id}",
       "method": "PUT",
@@ -758,7 +1029,8 @@
       "gate_status": "PASS"
     },
     {
-      "phase": "00",
+      "phase": "47",
+      "logical_phase": "29",
       "requirement_id": null,
       "endpoint": "/api/v1/open-api/apps/{id}",
       "method": "DELETE",
@@ -770,7 +1042,8 @@
       "gate_status": "PASS"
     },
     {
-      "phase": "00",
+      "phase": "47",
+      "logical_phase": "29",
       "requirement_id": null,
       "endpoint": "/api/v1/open-api/apps/{id}",
       "method": "GET",
@@ -782,7 +1055,8 @@
       "gate_status": "PASS"
     },
     {
-      "phase": "00",
+      "phase": "47",
+      "logical_phase": "29",
       "requirement_id": null,
       "endpoint": "/api/v1/open-api/apps/{id}/regenerate-secret",
       "method": "POST",
@@ -794,7 +1068,8 @@
       "gate_status": "PASS"
     },
     {
-      "phase": "00",
+      "phase": "48",
+      "logical_phase": "29",
       "requirement_id": null,
       "endpoint": "/api/v1/open-api/apps/{appId}/secrets/{secretId}/rotate",
       "method": "PUT",
@@ -806,7 +1081,8 @@
       "gate_status": "PASS"
     },
     {
-      "phase": "00",
+      "phase": "48",
+      "logical_phase": "29",
       "requirement_id": null,
       "endpoint": "/api/v1/open-api/apps/{appId}/secrets/{secretId}",
       "method": "DELETE",
@@ -818,7 +1094,8 @@
       "gate_status": "PASS"
     },
     {
-      "phase": "00",
+      "phase": "09",
+      "logical_phase": "09",
       "requirement_id": null,
       "endpoint": "/api/logs/operation",
       "method": "GET",
@@ -830,7 +1107,8 @@
       "gate_status": "PASS"
     },
     {
-      "phase": "00",
+      "phase": "09",
+      "logical_phase": "09",
       "requirement_id": null,
       "endpoint": "/api/logs/export",
       "method": "POST",
@@ -842,7 +1120,8 @@
       "gate_status": "PASS"
     },
     {
-      "phase": "00",
+      "phase": "40",
+      "logical_phase": null,
       "requirement_id": null,
       "endpoint": "/api/v1/posts/{id}",
       "method": "GET",
@@ -854,7 +1133,8 @@
       "gate_status": "PASS"
     },
     {
-      "phase": "00",
+      "phase": "40",
+      "logical_phase": null,
       "requirement_id": null,
       "endpoint": "/api/v1/posts/{id}",
       "method": "PUT",
@@ -866,7 +1146,8 @@
       "gate_status": "PASS"
     },
     {
-      "phase": "00",
+      "phase": "40",
+      "logical_phase": null,
       "requirement_id": null,
       "endpoint": "/api/v1/posts/{id}",
       "method": "DELETE",
@@ -878,7 +1159,8 @@
       "gate_status": "PASS"
     },
     {
-      "phase": "00",
+      "phase": "22",
+      "logical_phase": "22",
       "requirement_id": null,
       "endpoint": "/api/v1/profile/password",
       "method": "PUT",
@@ -890,7 +1172,8 @@
       "gate_status": "PASS"
     },
     {
-      "phase": "00",
+      "phase": null,
+      "logical_phase": null,
       "requirement_id": null,
       "endpoint": "/api/roles/{id}",
       "method": "GET",
@@ -899,10 +1182,11 @@
       "test": null,
       "test_covered": false,
       "spec": null,
-      "gate_status": "PASS"
+      "gate_status": "PENDING"
     },
     {
-      "phase": "00",
+      "phase": null,
+      "logical_phase": null,
       "requirement_id": null,
       "endpoint": "/api/roles/{id}",
       "method": "PUT",
@@ -911,10 +1195,11 @@
       "test": null,
       "test_covered": false,
       "spec": null,
-      "gate_status": "PASS"
+      "gate_status": "PENDING"
     },
     {
-      "phase": "00",
+      "phase": null,
+      "logical_phase": null,
       "requirement_id": null,
       "endpoint": "/api/roles/{id}",
       "method": "DELETE",
@@ -923,10 +1208,11 @@
       "test": null,
       "test_covered": false,
       "spec": null,
-      "gate_status": "PASS"
+      "gate_status": "PENDING"
     },
     {
-      "phase": "00",
+      "phase": "44",
+      "logical_phase": null,
       "requirement_id": null,
       "endpoint": "/api/v1/roles/{roleId}/data-scope",
       "method": "GET",
@@ -938,7 +1224,8 @@
       "gate_status": "PASS"
     },
     {
-      "phase": "00",
+      "phase": "44",
+      "logical_phase": null,
       "requirement_id": null,
       "endpoint": "/api/v1/roles/{roleId}/data-scope",
       "method": "PUT",
@@ -950,7 +1237,8 @@
       "gate_status": "PASS"
     },
     {
-      "phase": "00",
+      "phase": "55",
+      "logical_phase": "30",
       "requirement_id": null,
       "endpoint": "/api/v1/reports/{id}",
       "method": "GET",
@@ -959,10 +1247,11 @@
       "test": null,
       "test_covered": false,
       "spec": null,
-      "gate_status": "PASS"
+      "gate_status": "PENDING"
     },
     {
-      "phase": "00",
+      "phase": "55",
+      "logical_phase": "30",
       "requirement_id": null,
       "endpoint": "/api/v1/reports/{id}",
       "method": "PUT",
@@ -971,10 +1260,11 @@
       "test": null,
       "test_covered": false,
       "spec": null,
-      "gate_status": "PASS"
+      "gate_status": "PENDING"
     },
     {
-      "phase": "00",
+      "phase": "55",
+      "logical_phase": "30",
       "requirement_id": null,
       "endpoint": "/api/v1/reports/{id}",
       "method": "DELETE",
@@ -983,10 +1273,11 @@
       "test": null,
       "test_covered": false,
       "spec": null,
-      "gate_status": "PASS"
+      "gate_status": "PENDING"
     },
     {
-      "phase": "00",
+      "phase": "55",
+      "logical_phase": "30",
       "requirement_id": null,
       "endpoint": "/api/v1/reports/{id}/execute",
       "method": "POST",
@@ -995,10 +1286,11 @@
       "test": null,
       "test_covered": false,
       "spec": null,
-      "gate_status": "PASS"
+      "gate_status": "PENDING"
     },
     {
-      "phase": "00",
+      "phase": "45",
+      "logical_phase": null,
       "requirement_id": null,
       "endpoint": "/api/v1/task-logs/{id}",
       "method": "GET",
@@ -1010,7 +1302,8 @@
       "gate_status": "PASS"
     },
     {
-      "phase": "00",
+      "phase": "45",
+      "logical_phase": null,
       "requirement_id": null,
       "endpoint": "/api/v1/task-logs/{id}",
       "method": "DELETE",
@@ -1022,7 +1315,8 @@
       "gate_status": "PASS"
     },
     {
-      "phase": "00",
+      "phase": "45",
+      "logical_phase": null,
       "requirement_id": null,
       "endpoint": "/api/v1/task-logs/clean",
       "method": "POST",
@@ -1034,7 +1328,8 @@
       "gate_status": "PASS"
     },
     {
-      "phase": "00",
+      "phase": "45",
+      "logical_phase": null,
       "requirement_id": null,
       "endpoint": "/api/v1/task-logs/stats",
       "method": "GET",
@@ -1046,7 +1341,8 @@
       "gate_status": "PASS"
     },
     {
-      "phase": "00",
+      "phase": "43",
+      "logical_phase": null,
       "requirement_id": null,
       "endpoint": "/api/v1/tenant/domains/{id}",
       "method": "GET",
@@ -1055,10 +1351,11 @@
       "test": null,
       "test_covered": false,
       "spec": null,
-      "gate_status": "PASS"
+      "gate_status": "FAIL"
     },
     {
-      "phase": "00",
+      "phase": "43",
+      "logical_phase": null,
       "requirement_id": null,
       "endpoint": "/api/v1/tenant/domains/{id}",
       "method": "DELETE",
@@ -1067,10 +1364,11 @@
       "test": null,
       "test_covered": false,
       "spec": null,
-      "gate_status": "PASS"
+      "gate_status": "FAIL"
     },
     {
-      "phase": "00",
+      "phase": "43",
+      "logical_phase": null,
       "requirement_id": null,
       "endpoint": "/api/v1/tenant/domains/{id}/verify",
       "method": "POST",
@@ -1079,10 +1377,11 @@
       "test": null,
       "test_covered": false,
       "spec": null,
-      "gate_status": "PASS"
+      "gate_status": "FAIL"
     },
     {
-      "phase": "00",
+      "phase": "43",
+      "logical_phase": null,
       "requirement_id": null,
       "endpoint": "/api/v1/tenant/domains/{id}/set-primary",
       "method": "POST",
@@ -1091,10 +1390,11 @@
       "test": null,
       "test_covered": false,
       "spec": null,
-      "gate_status": "PASS"
+      "gate_status": "FAIL"
     },
     {
-      "phase": "00",
+      "phase": "41",
+      "logical_phase": null,
       "requirement_id": null,
       "endpoint": "/api/v1/tenants/{id}/freeze",
       "method": "POST",
@@ -1106,7 +1406,8 @@
       "gate_status": "PASS"
     },
     {
-      "phase": "00",
+      "phase": "41",
+      "logical_phase": null,
       "requirement_id": null,
       "endpoint": "/api/v1/tenants/{id}/unfreeze",
       "method": "POST",
@@ -1118,7 +1419,8 @@
       "gate_status": "PASS"
     },
     {
-      "phase": "00",
+      "phase": "41",
+      "logical_phase": null,
       "requirement_id": null,
       "endpoint": "/api/v1/tenants/{id}/cancel",
       "method": "POST",
@@ -1130,7 +1432,8 @@
       "gate_status": "PASS"
     },
     {
-      "phase": "00",
+      "phase": "41",
+      "logical_phase": null,
       "requirement_id": null,
       "endpoint": "/api/v1/tenants/{id}/initialize",
       "method": "POST",
@@ -1142,7 +1445,8 @@
       "gate_status": "PASS"
     },
     {
-      "phase": "00",
+      "phase": "24",
+      "logical_phase": "24",
       "requirement_id": null,
       "endpoint": "/api/v1/tenant-packages/{id}",
       "method": "GET",
@@ -1154,7 +1458,8 @@
       "gate_status": "PASS"
     },
     {
-      "phase": "00",
+      "phase": "24",
+      "logical_phase": "24",
       "requirement_id": null,
       "endpoint": "/api/v1/tenant-packages/{id}",
       "method": "PUT",
@@ -1166,7 +1471,8 @@
       "gate_status": "PASS"
     },
     {
-      "phase": "00",
+      "phase": "24",
+      "logical_phase": "24",
       "requirement_id": null,
       "endpoint": "/api/v1/tenant-packages/{id}",
       "method": "DELETE",
@@ -1178,7 +1484,8 @@
       "gate_status": "PASS"
     },
     {
-      "phase": "00",
+      "phase": null,
+      "logical_phase": null,
       "requirement_id": null,
       "endpoint": "/api/users/{id}",
       "method": "GET",
@@ -1187,10 +1494,11 @@
       "test": null,
       "test_covered": false,
       "spec": null,
-      "gate_status": "PASS"
+      "gate_status": "PENDING"
     },
     {
-      "phase": "00",
+      "phase": null,
+      "logical_phase": null,
       "requirement_id": null,
       "endpoint": "/api/users/{id}",
       "method": "PUT",
@@ -1199,10 +1507,11 @@
       "test": null,
       "test_covered": false,
       "spec": null,
-      "gate_status": "PASS"
+      "gate_status": "PENDING"
     },
     {
-      "phase": "00",
+      "phase": null,
+      "logical_phase": null,
       "requirement_id": null,
       "endpoint": "/api/users/{id}",
       "method": "DELETE",
@@ -1211,10 +1520,11 @@
       "test": null,
       "test_covered": false,
       "spec": null,
-      "gate_status": "PASS"
+      "gate_status": "PENDING"
     },
     {
-      "phase": "00",
+      "phase": null,
+      "logical_phase": null,
       "requirement_id": null,
       "endpoint": "/api/users/export",
       "method": "GET",
@@ -1223,10 +1533,11 @@
       "test": null,
       "test_covered": false,
       "spec": null,
-      "gate_status": "PASS"
+      "gate_status": "PENDING"
     },
     {
-      "phase": "00",
+      "phase": null,
+      "logical_phase": null,
       "requirement_id": null,
       "endpoint": "/api/users/import",
       "method": "POST",
@@ -1235,10 +1546,11 @@
       "test": null,
       "test_covered": false,
       "spec": null,
-      "gate_status": "PASS"
+      "gate_status": "PENDING"
     },
     {
-      "phase": "00",
+      "phase": "49",
+      "logical_phase": "29",
       "requirement_id": null,
       "endpoint": "/api/v1/webhooks/{id}",
       "method": "PUT",
@@ -1250,7 +1562,8 @@
       "gate_status": "PASS"
     },
     {
-      "phase": "00",
+      "phase": "49",
+      "logical_phase": "29",
       "requirement_id": null,
       "endpoint": "/api/v1/webhooks/{id}",
       "method": "DELETE",
@@ -1262,7 +1575,8 @@
       "gate_status": "PASS"
     },
     {
-      "phase": "00",
+      "phase": "49",
+      "logical_phase": "29",
       "requirement_id": null,
       "endpoint": "/api/v1/webhooks/{id}",
       "method": "GET",
@@ -1274,7 +1588,8 @@
       "gate_status": "PASS"
     },
     {
-      "phase": "00",
+      "phase": "49",
+      "logical_phase": "29",
       "requirement_id": null,
       "endpoint": "/api/v1/webhooks/{id}/logs",
       "method": "GET",
@@ -1286,7 +1601,8 @@
       "gate_status": "PASS"
     },
     {
-      "phase": "00",
+      "phase": "53",
+      "logical_phase": "32",
       "requirement_id": null,
       "endpoint": "/api/v1/workflows/definitions",
       "method": "POST",
@@ -1298,7 +1614,8 @@
       "gate_status": "PASS"
     },
     {
-      "phase": "00",
+      "phase": "53",
+      "logical_phase": "32",
       "requirement_id": null,
       "endpoint": "/api/v1/workflows/definitions/{id}",
       "method": "PUT",
@@ -1310,7 +1627,8 @@
       "gate_status": "PASS"
     },
     {
-      "phase": "00",
+      "phase": "53",
+      "logical_phase": "32",
       "requirement_id": null,
       "endpoint": "/api/v1/workflows/definitions/{id}",
       "method": "DELETE",
@@ -1322,7 +1640,8 @@
       "gate_status": "PASS"
     },
     {
-      "phase": "00",
+      "phase": "53",
+      "logical_phase": "32",
       "requirement_id": null,
       "endpoint": "/api/v1/workflows/definitions",
       "method": "GET",
@@ -1334,7 +1653,8 @@
       "gate_status": "PASS"
     },
     {
-      "phase": "00",
+      "phase": "53",
+      "logical_phase": "32",
       "requirement_id": null,
       "endpoint": "/api/v1/workflows/instances",
       "method": "POST",
@@ -1346,7 +1666,8 @@
       "gate_status": "PASS"
     },
     {
-      "phase": "00",
+      "phase": "53",
+      "logical_phase": "32",
       "requirement_id": null,
       "endpoint": "/api/v1/workflows/instances/{id}",
       "method": "GET",
@@ -1358,7 +1679,8 @@
       "gate_status": "PASS"
     },
     {
-      "phase": "00",
+      "phase": "53",
+      "logical_phase": "32",
       "requirement_id": null,
       "endpoint": "/api/v1/workflows/tasks/my",
       "method": "GET",
@@ -1370,7 +1692,8 @@
       "gate_status": "PASS"
     },
     {
-      "phase": "00",
+      "phase": "53",
+      "logical_phase": "32",
       "requirement_id": null,
       "endpoint": "/api/v1/workflows/tasks/{id}/approve",
       "method": "POST",
@@ -1382,7 +1705,8 @@
       "gate_status": "PASS"
     },
     {
-      "phase": "00",
+      "phase": "53",
+      "logical_phase": "32",
       "requirement_id": null,
       "endpoint": "/api/v1/workflows/tasks/{id}/reject",
       "method": "POST",

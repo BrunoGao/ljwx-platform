@@ -1,9 +1,71 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+PROJECT_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
+SQL_FILE="${PROJECT_ROOT}/scripts/e2e/seed-fixtures.sql"
+
 DB_NAME="${DB_NAME:-ljwx_platform}"
+DB_USERNAME="${DB_USERNAME:-postgres}"
 POSTGRES_IMAGE_FILTER="${POSTGRES_IMAGE_FILTER:-postgres:16-alpine}"
 POSTGRES_CONTAINER_ID="${POSTGRES_CONTAINER_ID:-}"
+TENANT_B_ID="${TENANT_B_ID:-200001}"
+TENANT_B_ROLE_ID="${TENANT_B_ROLE_ID:-220001}"
+TENANT_B_USER_ID="${TENANT_B_USER_ID:-220002}"
+TENANT_B_USER="${TENANT_B_USER:-tenantB_admin}"
+TENANT_B_PASS="${TENANT_B_PASS:-}"
+TENANT_B_PASS_HASH="${TENANT_B_PASS_HASH:-}"
+
+if [[ ! -f "${SQL_FILE}" ]]; then
+  echo "未找到 SQL 文件: ${SQL_FILE}" >&2
+  exit 1
+fi
+
+generate_bcrypt_hash() {
+  local password="$1"
+
+  if command -v htpasswd >/dev/null 2>&1; then
+    htpasswd -bnBC 10 "" "${password}" | tr -d ':\n'
+    return 0
+  fi
+
+  if command -v python3 >/dev/null 2>&1; then
+    if TENANT_B_PASS="${password}" python3 - <<'PY' >/tmp/ljwx-bcrypt-hash.txt 2>/tmp/ljwx-bcrypt-hash.err
+import os
+import sys
+
+try:
+    import bcrypt
+except ModuleNotFoundError as exc:
+    print(f"missing dependency: {exc.name}", file=sys.stderr)
+    raise SystemExit(1)
+
+raw = os.environ["TENANT_B_PASS"].encode()
+print(bcrypt.hashpw(raw, bcrypt.gensalt(rounds=10)).decode())
+PY
+    then
+      cat /tmp/ljwx-bcrypt-hash.txt
+      rm -f /tmp/ljwx-bcrypt-hash.txt /tmp/ljwx-bcrypt-hash.err
+      return 0
+    fi
+    rm -f /tmp/ljwx-bcrypt-hash.txt /tmp/ljwx-bcrypt-hash.err
+  fi
+
+  if command -v docker >/dev/null 2>&1; then
+    docker run --rm httpd:2.4-alpine htpasswd -bnBC 10 "" "${password}" | tr -d ':\n'
+    return 0
+  fi
+
+  echo "缺少 BCrypt 生成方式，请安装 htpasswd，或提供带 bcrypt 模块的 python3，或安装 docker，或直接传入 TENANT_B_PASS_HASH" >&2
+  return 1
+}
+
+if [[ -z "${TENANT_B_PASS_HASH}" ]]; then
+  if [[ -z "${TENANT_B_PASS}" ]]; then
+    echo "缺少 TENANT_B_PASS 或 TENANT_B_PASS_HASH，无法执行夹具修复" >&2
+    exit 1
+  fi
+  TENANT_B_PASS_HASH="$(generate_bcrypt_hash "${TENANT_B_PASS}")"
+fi
 
 if [[ -z "${POSTGRES_CONTAINER_ID}" ]]; then
   POSTGRES_CONTAINER_ID="$(docker ps --filter "ancestor=${POSTGRES_IMAGE_FILTER}" --format '{{.ID}}' | head -n1)"
@@ -14,101 +76,15 @@ if [[ -z "${POSTGRES_CONTAINER_ID}" ]]; then
   exit 1
 fi
 
-docker exec -i "${POSTGRES_CONTAINER_ID}" psql -v ON_ERROR_STOP=1 -U postgres -d "${DB_NAME}" <<'SQL'
--- Ensure tenant B exists.
-INSERT INTO sys_tenant (id, name, code, status, tenant_id, created_by, updated_by, version)
-VALUES (200001, 'Tenant B', 'tenant_b', 1, 0, 0, 0, 1)
-ON CONFLICT (code) DO NOTHING;
+docker exec -i "${POSTGRES_CONTAINER_ID}" \
+  psql -v ON_ERROR_STOP=1 \
+  -v "tenant_b_id=${TENANT_B_ID}" \
+  -v "tenant_b_role_id=${TENANT_B_ROLE_ID}" \
+  -v "tenant_b_user_id=${TENANT_B_USER_ID}" \
+  -v "tenant_b_user=${TENANT_B_USER}" \
+  -v "tenant_b_password_hash=${TENANT_B_PASS_HASH}" \
+  -U "${DB_USERNAME}" \
+  -d "${DB_NAME}" \
+  -f - < "${SQL_FILE}"
 
--- Ensure tenant-B menu permissions exist.
-INSERT INTO sys_permission (id, tenant_id, code, name, created_by, updated_by, version) VALUES
-  (220024, 2, 'system:menu:list',   '菜单查询', 0, 0, 1),
-  (220025, 2, 'system:menu:detail', '菜单详情', 0, 0, 1),
-  (220026, 2, 'system:menu:create', '菜单新增', 0, 0, 1),
-  (220027, 2, 'system:menu:update', '菜单修改', 0, 0, 1),
-  (220028, 2, 'system:menu:delete', '菜单删除', 0, 0, 1)
-ON CONFLICT (tenant_id, code) DO NOTHING;
-
--- Ensure tenant-B role exists.
-INSERT INTO sys_role (id, tenant_id, name, code, status, created_by, updated_by, version)
-VALUES (220001, 2, 'Tenant B Menu Operator', 'TENANT_B_MENU_OPERATOR', 1, 0, 0, 1)
-ON CONFLICT (tenant_id, code) DO NOTHING;
-
--- Ensure tenant-B admin test account exists.
--- Password hash corresponds to plain text: Admin@12345
-INSERT INTO sys_user (id, tenant_id, username, password, nickname, status, created_by, updated_by, version)
-VALUES (220002, 2, 'tenantB_admin', '$2a$10$PnWlMR8Ox6UMTZj7Zm9uO.wSqzbjVt04UbeJ7q3RxDe8TSIP6efz2', 'Tenant B Admin', 1, 0, 0, 1)
-ON CONFLICT (tenant_id, username) DO UPDATE
-SET password = EXCLUDED.password,
-    status = 1,
-    deleted = FALSE,
-    updated_time = CURRENT_TIMESTAMP;
-
--- Ensure tenant-B role has required menu permissions.
-WITH role_row AS (
-  SELECT id AS role_id
-  FROM sys_role
-  WHERE tenant_id = 2 AND code = 'TENANT_B_MENU_OPERATOR'
-),
-perm_rows AS (
-  SELECT id AS permission_id
-  FROM sys_permission
-  WHERE tenant_id = 2
-    AND code IN (
-      'system:menu:list',
-      'system:menu:detail',
-      'system:menu:create',
-      'system:menu:update',
-      'system:menu:delete'
-    )
-  ORDER BY permission_id
-),
-pairs AS (
-  SELECT role_row.role_id, perm_rows.permission_id, ROW_NUMBER() OVER () AS rn
-  FROM role_row
-  CROSS JOIN perm_rows
-),
-base AS (
-  SELECT COALESCE(MAX(id), 320000) AS max_id FROM sys_role_permission
-)
-INSERT INTO sys_role_permission (id, tenant_id, role_id, permission_id, created_by, updated_by, version)
-SELECT base.max_id + pairs.rn, 2, pairs.role_id, pairs.permission_id, 0, 0, 1
-FROM pairs
-CROSS JOIN base
-WHERE NOT EXISTS (
-  SELECT 1
-  FROM sys_role_permission rp
-  WHERE rp.tenant_id = 2
-    AND rp.role_id = pairs.role_id
-    AND rp.permission_id = pairs.permission_id
-    AND rp.deleted = FALSE
-);
-
--- Ensure tenant-B user-role mapping exists.
-WITH role_row AS (
-  SELECT id AS role_id
-  FROM sys_role
-  WHERE tenant_id = 2 AND code = 'TENANT_B_MENU_OPERATOR'
-),
-user_row AS (
-  SELECT id AS user_id
-  FROM sys_user
-  WHERE tenant_id = 2 AND username = 'tenantB_admin'
-),
-base AS (
-  SELECT COALESCE(MAX(id), 330000) AS max_id FROM sys_user_role
-)
-INSERT INTO sys_user_role (id, tenant_id, user_id, role_id, created_by, updated_by, version)
-SELECT base.max_id + 1, 2, user_row.user_id, role_row.role_id, 0, 0, 1
-FROM role_row, user_row, base
-WHERE NOT EXISTS (
-  SELECT 1
-  FROM sys_user_role ur
-  WHERE ur.tenant_id = 2
-    AND ur.user_id = user_row.user_id
-    AND ur.role_id = role_row.role_id
-    AND ur.deleted = FALSE
-);
-SQL
-
-echo "E2E fixtures seeded for tenantB_admin"
+echo "E2E fixtures seeded for ${TENANT_B_USER}"

@@ -1,0 +1,207 @@
+# Phase 54 — 自定义表单设计器 测试契约
+# 关联 Spec：spec/phase/phase-54.md
+
+phase: 54
+module: "custom-form-designer"
+ac_ref: "spec/phase/phase-54.md"
+
+tests:
+  - id: TC-54-01
+    priority: P0
+    category: security
+    ac: AC-03
+    scenario: "无 Token 创建表单定义 → 401"
+    request:
+      method: POST
+      path: /api/v1/form-defs
+      auth: none
+    expect:
+      status: 401
+
+  - id: TC-54-02
+    priority: P0
+    category: security
+    ac: AC-03
+    scenario: "无 form:def:add 权限创建表单定义 → 403"
+    request:
+      method: POST
+      path: /api/v1/form-defs
+      auth: token_without_permission
+    expect:
+      status: 403
+
+  - id: TC-54-03
+    priority: P0
+    category: business
+    ac: AC-04
+    scenario: "创建表单定义，form_key 重复 → 409"
+    setup:
+      - create_form_def_key_leave_apply
+    request:
+      method: POST
+      path: /api/v1/form-defs
+      auth: token_with_form:def:add
+      body:
+        formName: "请假申请副本"
+        formKey: "leave_apply"
+        schema: "{\"type\":\"object\",\"properties\":{}}"
+    expect:
+      status: 409
+
+  - id: TC-54-04
+    priority: P0
+    category: crud
+    ac: AC-04
+    scenario: "创建表单定义成功，schema JSONB 正确存储"
+    request:
+      method: POST
+      path: /api/v1/form-defs
+      auth: token_with_form:def:add
+      body:
+        formName: "请假申请"
+        formKey: "leave_apply_v2"
+        schema: "{\"type\":\"object\",\"properties\":{\"days\":{\"type\":\"number\"}}}"
+    expect:
+      status: 200
+      db_assert: "sys_form_def.schema 为 JSONB 且包含 properties.days"
+
+  - id: TC-54-05
+    priority: P0
+    category: validation
+    ac: AC-05
+    scenario: "提交表单数据，formDefId 不存在 → 400"
+    request:
+      method: POST
+      path: /api/v1/form-data
+      auth: token_with_form:data:add
+      body:
+        formDefId: 99999999
+        fieldValues:
+          days: 2
+    expect:
+      status: 400
+
+  - id: TC-54-06
+    priority: P0
+    category: crud
+    ac: AC-05
+    scenario: "提交表单数据成功，field_values JSONB 正确存储"
+    request:
+      method: POST
+      path: /api/v1/form-data
+      auth: token_with_form:data:add
+      body:
+        formDefId: "{formDefId}"
+        fieldValues:
+          days: 3
+          reason: "年假"
+    expect:
+      status: 200
+      db_assert: "sys_form_data.field_values 包含 days=3 和 reason=年假"
+
+  - id: TC-54-07
+    priority: P0
+    category: query
+    ac: AC-05
+    scenario: "表单数据列表按 formDefId + created_time 范围过滤"
+    request:
+      method: GET
+      path: /api/v1/form-data
+      auth: token_with_form:data:list
+      query:
+        formDefId: "{formDefId}"
+        startTime: "2026-03-01T00:00:00"
+        endTime: "2026-03-31T23:59:59"
+    expect:
+      status: 200
+      note: "仅返回命中 formDefId 且时间范围内的数据"
+
+  - id: TC-54-08
+    priority: P0
+    category: tenant_isolation
+    ac: AC-05
+    scenario: "租户 A 无法查询租户 B 的表单数据"
+    setup:
+      - create_form_data_for_tenant_A
+      - create_form_data_for_tenant_B
+    request:
+      method: GET
+      path: /api/v1/form-data
+      auth: token_tenant_A
+      query:
+        formDefId: "{tenantBFormDefId}"
+    expect:
+      status: 200
+      body:
+        data:
+          list: "[不包含租户 B 数据]"
+
+  - id: TC-54-09
+    priority: P0
+    category: business
+    ac: AC-04
+    scenario: "自定义字段 fieldKey 重复 → 409"
+    setup:
+      - create_custom_field_USER_job_title
+    request:
+      method: POST
+      path: /api/v1/custom-fields
+      auth: token_with_system:customfield:add
+      body:
+        entityType: "USER"
+        fieldKey: "job_title"
+        fieldLabel: "岗位名称"
+        fieldType: "TEXT"
+        required: false
+    expect:
+      status: 409
+
+  - id: TC-54-10
+    priority: P0
+    category: db_schema
+    ac: AC-01
+    scenario: "V061 创建 sys_form_def/sys_form_data，无 IF NOT EXISTS，含审计字段"
+    expect:
+      db_assert: "V061 包含两表 + 索引 + 审计字段，且不含 IF NOT EXISTS"
+
+  - id: TC-54-11
+    priority: P0
+    category: db_schema
+    ac: AC-02
+    scenario: "V062 创建 sys_custom_field_def，无 IF NOT EXISTS，含审计字段"
+    expect:
+      db_assert: "V062 包含表与索引，且不含 IF NOT EXISTS"
+
+  - id: TC-54-12
+    priority: P0
+    category: dto_security
+    ac: AC-04
+    scenario: "DTO 禁止字段（tenantId/createdBy 等）不可由客户端注入"
+    request:
+      method: POST
+      path: /api/v1/form-defs
+      auth: token_with_form:def:add
+      body:
+        formName: "注入测试"
+        formKey: "inject_case"
+        schema: "{}"
+        tenantId: 9999
+        createdBy: 9999
+    expect:
+      status: 400
+
+# AC → TC 映射
+ac_tc_map:
+  AC-01: [TC-54-10]
+  AC-02: [TC-54-11]
+  AC-03: [TC-54-01, TC-54-02]
+  AC-04: [TC-54-03, TC-54-04, TC-54-09, TC-54-12]
+  AC-05: [TC-54-05, TC-54-06, TC-54-07, TC-54-08]
+  AC-06: []  # 编译与 Gate 全链路由 R01/R09 兜底
+
+gate_r09:
+  p0_required: true
+  p1_coverage_target: 0.7
+  p2_skip: true
+  test_class: "FormDefControllerTest"
+  note: "覆盖表单定义、表单数据、自定义字段、租户隔离与迁移规则"

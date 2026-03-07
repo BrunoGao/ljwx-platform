@@ -44,6 +44,8 @@ public class SecurityConfig {
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                         // Required for strict Kubernetes HTTP health probes.
                         .requestMatchers("/actuator/health", "/actuator/health/**").permitAll()
+                        // Allow Prometheus scraping without application JWT.
+                        .requestMatchers("/actuator/prometheus").permitAll()
                         .requestMatchers("/ws/**").permitAll()
                         .anyRequest().authenticated())
                 .exceptionHandling(ex -> ex

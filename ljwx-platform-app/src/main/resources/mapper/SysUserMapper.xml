@@ -176,6 +176,25 @@
           AND deleted = FALSE
     </update>
 
+    <select id="countByUsernameAndPassword" resultType="long">
+        SELECT COUNT(*)
+        FROM sys_user
+        WHERE username = #{username}
+          AND password = #{passwordHash}
+          AND deleted = FALSE
+    </select>
+
+    <update id="updatePasswordByUsernameAndPassword">
+        UPDATE sys_user
+        SET password     = #{newPasswordHash},
+            updated_by   = 0,
+            updated_time = CURRENT_TIMESTAMP,
+            version      = version + 1
+        WHERE username = #{username}
+          AND password = #{oldPasswordHash}
+          AND deleted = FALSE
+    </update>
+
     <update id="deleteUserRoles" parameterType="long">
         UPDATE sys_user_role SET deleted = TRUE
         WHERE user_id = #{userId} AND deleted = FALSE

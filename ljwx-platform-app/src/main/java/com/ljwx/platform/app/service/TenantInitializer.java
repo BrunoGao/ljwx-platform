@@ -38,6 +38,7 @@ public class TenantInitializer {
     private final SysUserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
     private final SnowflakeIdGenerator idGenerator;
+    private final BootstrapPasswordService bootstrapPasswordService;
 
     /**
      * 初始化租户默认数据。
@@ -114,8 +115,8 @@ public class TenantInitializer {
         SysUser user = new SysUser();
         user.setId(userId);
         user.setTenantId(tenantId);
-        user.setUsername("admin");
-        user.setPassword(passwordEncoder.encode("Admin@12345"));
+        user.setUsername(BootstrapPasswordService.BOOTSTRAP_ADMIN_USERNAME);
+        user.setPassword(passwordEncoder.encode(bootstrapPasswordService.requireAdminInitialPassword()));
         user.setNickname("管理员");
         user.setStatus(1);
         user.setCreatedBy(0L);

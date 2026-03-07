@@ -1,0 +1,171 @@
+# Phase 56 — AI 智能运维助手 测试契约
+# 关联 Spec：spec/phase/phase-56.md
+
+phase: 56
+module: "ai-operations-assistant"
+ac_ref: "spec/phase/phase-56.md"
+
+tests:
+  - id: TC-56-01
+    priority: P0
+    category: security
+    ac: AC-02
+    scenario: "无 Token 调用 AI 对话接口 → 401"
+    request:
+      method: POST
+      path: /api/v1/ai/chat
+      auth: none
+      body:
+        message: "当前在线人数是多少？"
+    expect:
+      status: 401
+
+  - id: TC-56-02
+    priority: P0
+    category: security
+    ac: AC-02
+    scenario: "无 system:ai:chat 权限调用 AI 对话 → 403"
+    request:
+      method: POST
+      path: /api/v1/ai/chat
+      auth: token_without_permission
+      body:
+        message: "查询最近 5 分钟错误日志"
+    expect:
+      status: 403
+
+  - id: TC-56-03
+    priority: P0
+    category: business
+    scenario: "AI 配置未启用时对话返回 503"
+    setup:
+      - disable_active_ai_config
+    request:
+      method: POST
+      path: /api/v1/ai/chat
+      auth: token_with_system:ai:chat
+      body:
+        message: "查询服务器状态"
+    expect:
+      status: 503
+
+  - id: TC-56-04
+    priority: P0
+    category: audit
+    ac: AC-04
+    scenario: "正常对话后写入 sys_ai_conversation_log"
+    request:
+      method: POST
+      path: /api/v1/ai/chat
+      auth: token_with_system:ai:chat
+      body:
+        sessionId: "ops-session-001"
+        message: "查询最近一次任务执行状态"
+    expect:
+      status: 200
+      db_assert: "sys_ai_conversation_log 存在对应 question/answer 记录"
+
+  - id: TC-56-05
+    priority: P0
+    category: audit
+    ac: AC-04
+    scenario: "对话日志包含 tool_calls JSONB"
+    request:
+      method: GET
+      path: /api/v1/ai/conversations
+      auth: token_with_system:ai:log:list
+    expect:
+      status: 200
+      db_assert: "sys_ai_conversation_log.tool_calls 非空且为 JSONB"
+
+  - id: TC-56-06
+    priority: P0
+    category: security
+    ac: AC-03
+    scenario: "查询 AI 配置仅返回脱敏 API Key"
+    request:
+      method: GET
+      path: /api/v1/ai/config
+      auth: token_with_system:ai:config:query
+    expect:
+      status: 200
+      body:
+        data:
+          apiKeyMasked: "sk-***"
+      note: "响应中不返回 apiKeyEncrypted 原文"
+
+  - id: TC-56-07
+    priority: P0
+    category: security
+    ac: AC-03
+    scenario: "更新 AI 配置后 API Key 以加密形式落库"
+    request:
+      method: PUT
+      path: /api/v1/ai/config
+      auth: token_with_system:ai:config:edit
+      body:
+        provider: "OPENAI"
+        modelName: "gpt-4o-mini"
+        apiKey: "sk-test-very-long-api-key-value"
+        baseUrl: "https://api.openai.com/v1"
+        temperature: 0.7
+        maxTokens: 2048
+    expect:
+      status: 200
+      db_assert: "sys_ai_config.api_key_encrypted 与明文不一致"
+
+  - id: TC-56-08
+    priority: P0
+    category: tenant_isolation
+    scenario: "租户 A 查询 AI 对话日志不返回租户 B 数据"
+    setup:
+      - create_ai_logs_for_tenant_A
+      - create_ai_logs_for_tenant_B
+    request:
+      method: GET
+      path: /api/v1/ai/conversations
+      auth: token_tenant_A
+    expect:
+      status: 200
+      body:
+        data:
+          list: "[仅租户 A 日志]"
+
+  - id: TC-56-09
+    priority: P0
+    category: db_schema
+    ac: AC-01
+    scenario: "V064 创建 sys_ai_config/sys_ai_conversation_log，无 IF NOT EXISTS，含审计字段"
+    expect:
+      db_assert: "V064 建两表与索引完整，且不含 IF NOT EXISTS"
+
+  - id: TC-56-10
+    priority: P0
+    category: tool_guard
+    ac: AC-05
+    scenario: "Agent 仅允许只读工具，拒绝写操作工具调用"
+    request:
+      method: POST
+      path: /api/v1/ai/chat
+      auth: token_with_system:ai:chat
+      body:
+        sessionId: "ops-session-guard"
+        message: "请删除用户 1001"
+    expect:
+      status: 200
+      note: "回答中应拒绝写操作，且日志无写工具调用记录"
+
+ac_tc_map:
+  AC-01: [TC-56-09]
+  AC-02: [TC-56-01, TC-56-02]
+  AC-03: [TC-56-06, TC-56-07]
+  AC-04: [TC-56-04, TC-56-05]
+  AC-05: [TC-56-10]
+  AC-06: []  # 编译与全量 Gate 校验由 R01/R09 兜底
+
+gate_r09:
+  p0_required: true
+  p1_coverage_target: 0.7
+  p2_skip: true
+  test_class: "AiChatControllerTest"
+  note: "覆盖权限控制、配置加密/脱敏、审计日志、工具只读约束与租户隔离"

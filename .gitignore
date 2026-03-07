@@ -20,6 +20,9 @@ dist/
 .env
 .env.local
 .env.*.local
+.env.compose
+.env.delivery
+.env.k3s.delivery
 
 # ── Logs ──
 logs/
@@ -40,6 +43,9 @@ docs/reports/data/history/
 docs/reports/data/history/**
 docs/reports/data/artifacts/
 docs/reports/data/artifacts/**
+
+# ── Local runtime temp ──
+.tmp/
 
 # ── Local agent worktrees ──
 .claude/worktrees/

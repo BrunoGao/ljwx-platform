@@ -45,7 +45,7 @@ This document records significant architectural and implementation decisions mad
 
 - Created `LjwxPlatformApplication` with `@SpringBootApplication`.
 - Created Flyway migrations V001–V009: schema init, user/role/permission tables, seed data.
-- Admin password `Admin@12345` stored as BCrypt cost=10 hash in V006.
+- Bootstrap admin password is no longer a fixed repository secret; runtime must supply `LJWX_BOOTSTRAP_ADMIN_INITIAL_PASSWORD`, and only BCrypt cost=10 hashes may be stored.
 - Decision: Flyway migrations never use `IF NOT EXISTS` — version numbers guarantee idempotency.
 
 ## Phase 6 — AI Context Docs (2026-02-23)
@@ -185,4 +185,3 @@ This document records significant architectural and implementation decisions mad
 - Update `FULL_MANIFEST.txt` to include all Phase 20–27 files.
 - Update `README.md` with new feature descriptions.
 - All 6 gates must pass: manifest, rules, compile, integration, contract, NFR.
-

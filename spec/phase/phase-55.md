@@ -327,3 +327,18 @@ P0 强制覆盖：
 - 禁止：`IF NOT EXISTS` · SQL 模板中的 `${}` 占位符
 - DAG 依赖：core ← {security, data} ← web ← app
 - 报表执行：只读 SQL，租户隔离，超时 30s，行数上限 1000
+
+## Test Cases
+
+| TC ID | Endpoint | 权限 | 预期状态码 | 关键断言 |
+|------|----------|------|------------|---------|
+| TC-55-01 | GET /api/** | read | 401 | 无 token 返回 Unauthorized |
+| TC-55-02 | GET /api/** | read | 403 | 无权限 token 返回 Forbidden |
+| TC-55-03 | GET /api/** | read | 200 | 成功返回统一响应结构 |
+| TC-55-04 | POST /api/** | write | 400 | 参数校验错误返回 400 |
+| TC-55-05 | POST /api/** | write | 200 | 创建成功并返回 ID/结果 |
+| TC-55-06 | PUT /api/**/{id} | write | 200 | 更新成功且可再次查询 |
+| TC-55-07 | DELETE /api/**/{id} | delete | 200 | 删除后数据不可见（软删/过滤） |
+| TC-55-08 | GET /api/** | read | 200 | 仅可见当前租户数据 |
+| TC-55-09 | GET /api/** | read | 401 | 过期 token 被拒绝 |
+| TC-55-10 | GET /api/** | read | 401 | 非法 token 被拒绝 |

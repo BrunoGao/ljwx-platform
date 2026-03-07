@@ -203,7 +203,7 @@ done
 # Login test
 RESP=$(curl -sf -X POST "$BASE_URL/api/auth/login" \
   -H 'Content-Type: application/json' \
-  -d '{"username":"admin","password":"Admin@12345"}')
+  -d "{\"username\":\"admin\",\"password\":\"${LJWX_BOOTSTRAP_ADMIN_INITIAL_PASSWORD}\"}")
 
 CODE=$(echo "$RESP" | grep -o '"code":[0-9]*' | head -1 | cut -d: -f2)
 if [[ "$CODE" != "200" ]]; then

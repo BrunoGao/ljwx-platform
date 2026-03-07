@@ -4,6 +4,7 @@ set -euo pipefail
 PROJECT_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 TMP_DIR="${TMP_DIR:-/tmp/ljwx-gate-results}"
 mkdir -p "$TMP_DIR"
+chmod 777 "$TMP_DIR"
 OUT_JSON="$TMP_DIR/R10.json"
 
 if ! command -v jq >/dev/null 2>&1; then
@@ -12,19 +13,33 @@ if ! command -v jq >/dev/null 2>&1; then
 fi
 
 run_k6() {
-  if command -v k6 >/dev/null 2>&1; then
+  if [[ "${K6_FORCE_DOCKER:-0}" != "1" ]] && command -v k6 >/dev/null 2>&1; then
     k6 "$@"
     return
   fi
 
   if command -v docker >/dev/null 2>&1; then
     local network_args=()
-    if [[ "$(uname -s)" == "Linux" ]]; then
+    local env_args=()
+    if [[ -n "${K6_DOCKER_NETWORK:-}" ]]; then
+      network_args+=(--network "${K6_DOCKER_NETWORK}")
+    elif [[ "$(uname -s)" == "Linux" ]]; then
       network_args+=(--network host)
     fi
 
+    local env_key
+    for env_key in \
+      BASE_URL LOGIN_PATH PROTECTED_PATH FORBIDDEN_PATH OK_PATH RESOURCE_BASE RESOURCE_LIST_PATH \
+      TENANT_A_USER TENANT_A_PASS TENANT_B_USER TENANT_B_PASS \
+      EXPECT_R_WRAPPER K6_VUS K6_ITERATIONS; do
+      if [[ -n "${!env_key:-}" ]]; then
+        env_args+=(-e "${env_key}")
+      fi
+    done
+
     docker run --rm -i \
       "${network_args[@]}" \
+      "${env_args[@]}" \
       -v "$PROJECT_ROOT:/work" \
       -v /tmp:/tmp \
       -w /work \
@@ -129,10 +144,15 @@ run_case() {
   local id="$1"
   local script="$2"
 
-  local summary_file raw_file log_file
-  summary_file="$(mktemp)"
-  raw_file="$(mktemp)"
-  log_file="$(mktemp)"
+  local case_tmp_dir summary_file raw_file log_file
+  case_tmp_dir="${TMP_DIR}/k6"
+  mkdir -p "$case_tmp_dir"
+  chmod 777 "$case_tmp_dir"
+
+  summary_file="${case_tmp_dir}/${id}.summary.$$.json"
+  raw_file="${case_tmp_dir}/${id}.raw.$$.json"
+  log_file="$(mktemp "${case_tmp_dir}/${id}.log.XXXXXX")"
+  rm -f "$summary_file" "$raw_file"
 
   local rc=0
   set +e
@@ -144,10 +164,10 @@ run_case() {
   set -e
 
   local checks_total checks_passed checks_failed p95
-  checks_passed="$(read_json_number_or_zero "$summary_file" '(.metrics.checks.values.passes // 0) | tonumber? // 0 | floor')"
-  checks_failed="$(read_json_number_or_zero "$summary_file" '(.metrics.checks.values.fails // 0) | tonumber? // 0 | floor')"
+  checks_passed="$(read_json_number_or_zero "$summary_file" '(.metrics.checks.values.passes // .metrics.checks.passes // 0) | tonumber? // 0 | floor')"
+  checks_failed="$(read_json_number_or_zero "$summary_file" '(.metrics.checks.values.fails // .metrics.checks.fails // 0) | tonumber? // 0 | floor')"
   checks_total=$((checks_passed + checks_failed))
-  p95="$(read_json_number_or_zero "$summary_file" '(.metrics.http_req_duration.values["p(95)"] // 0) | tonumber? // 0')"
+  p95="$(read_json_number_or_zero "$summary_file" '(.metrics.http_req_duration.values["p(95)"] // .metrics.http_req_duration["p(95)"] // 0) | tonumber? // 0')"
 
   local v_checks v_logs
   v_checks="$(build_violations_from_checks "$summary_file" "$script")"

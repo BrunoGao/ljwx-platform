@@ -1,6 +1,7 @@
 package com.ljwx.platform.app;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.ljwx.platform.app.test.support.TestCredentials;
 import com.ljwx.platform.security.blacklist.LoginLockoutService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -42,8 +43,8 @@ class ProfileControllerIT {
         loginLockoutService.clearFailure("admin");
 
         String loginBody = objectMapper.writeValueAsString(Map.of(
-                "username", "admin",
-                "password", "Admin@12345"
+                "username", TestCredentials.ADMIN_USERNAME,
+                "password", TestCredentials.ADMIN_PASSWORD
         ));
         MvcResult result = mockMvc.perform(post("/api/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -95,7 +96,7 @@ class ProfileControllerIT {
     @Test
     void updatePassword_unauthenticated_returns401() throws Exception {
         String body = objectMapper.writeValueAsString(Map.of(
-                "oldPassword", "Admin@12345",
+                "oldPassword", TestCredentials.ADMIN_PASSWORD,
                 "newPassword", "NewPass@12345"
         ));
         mockMvc.perform(put("/api/v1/profile/password")

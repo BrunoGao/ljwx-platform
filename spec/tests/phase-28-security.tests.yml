@@ -236,7 +236,7 @@ tests:
       auth: full_perm_token
       body:
         username: "newuser2"
-        password: "Admin@12345"
+        password: "${LJWX_BOOTSTRAP_ADMIN_INITIAL_PASSWORD}"
     expect:
       status: 200
 

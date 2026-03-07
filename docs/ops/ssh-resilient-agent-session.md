@@ -52,6 +52,20 @@ bash scripts/tools/install-ssh-autoreattach.sh ~/.bashrc
 - 你通过 SSH 登录且不在 tmux 内时，会优先 `attach` 到 `ljwx-agent-codex`
 - 若该会话不存在，会自动创建并启动 `codex`
 
+## 关闭 SSH 登录自动回连 / 菜单
+
+如果你希望 SSH 登录后直接进入服务器 Shell，可执行：
+
+```bash
+bash scripts/tools/uninstall-ssh-autoreattach.sh
+```
+
+也可指定其他 shell 配置文件：
+
+```bash
+bash scripts/tools/uninstall-ssh-autoreattach.sh ~/.bashrc
+```
+
 ## 可选增强（降低断线概率）
 
 在 MacBook 客户端 `~/.ssh/config` 增加：

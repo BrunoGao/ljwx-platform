@@ -331,3 +331,18 @@ P0 强制覆盖（Gate R09 检查）：
 - 前端版本号：仅 `~`（tilde），禁止 `^`（caret）
 - 缓存策略：CAFFEINE_REDIS,TTL 3600s
 - 自定义 CSS：必须过滤 `<script>`、`javascript:`
+
+## Test Cases
+
+| TC ID | Endpoint | 权限 | 预期状态码 | 关键断言 |
+|------|----------|------|------------|---------|
+| TC-38-01 | GET /api/** | read | 401 | 无 token 返回 Unauthorized |
+| TC-38-02 | GET /api/** | read | 403 | 无权限 token 返回 Forbidden |
+| TC-38-03 | GET /api/** | read | 200 | 成功返回统一响应结构 |
+| TC-38-04 | POST /api/** | write | 400 | 参数校验错误返回 400 |
+| TC-38-05 | POST /api/** | write | 200 | 创建成功并返回 ID/结果 |
+| TC-38-06 | PUT /api/**/{id} | write | 200 | 更新成功且可再次查询 |
+| TC-38-07 | DELETE /api/**/{id} | delete | 200 | 删除后数据不可见（软删/过滤） |
+| TC-38-08 | GET /api/** | read | 200 | 仅可见当前租户数据 |
+| TC-38-09 | GET /api/** | read | 401 | 过期 token 被拒绝 |
+| TC-38-10 | GET /api/** | read | 401 | 非法 token 被拒绝 |

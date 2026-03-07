@@ -12,87 +12,113 @@ permissions:
 
 jobs:
   nightly_regression:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, k3s-local]
     env:
-      GH_TOKEN: ${{ github.token }}
-      BASE_URL: http://localhost:8080
-      ENABLE_E2E: "1"
+      GH_TOKEN: ${{ secrets.PROJECT_TOKEN != '' && secrets.PROJECT_TOKEN || (secrets.PROJECT_V2_TOKEN != '' && secrets.PROJECT_V2_TOKEN || github.token) }}
+      APP_NAMESPACE: ljwx-platform
+      APP_SERVICE: ljwx-platform
+      APP_SERVICE_PORT: "80"
+      MONITORING_NAMESPACE: monitoring
+      PROM_SERVICE: prometheus-kube-prometheus-prometheus
+      LOKI_NAMESPACE: logging
+      LOKI_SERVICE: loki
+      TRACING_NAMESPACE: tracing
+      TEMPO_SERVICE: tempo
+      SERVICE_NAME: ljwx-platform
+      STRICT_TEMPO_SEARCH: "0"
+      TENANT_A_USER: ${{ secrets.E2E_TENANT_A_USER || 'admin' }}
+      TENANT_A_PASS: ${{ secrets.E2E_TENANT_A_PASS }}
+      TENANT_B_USER: ${{ secrets.E2E_TENANT_B_USER || 'tenantB_admin' }}
+      TENANT_B_PASS: ${{ secrets.E2E_TENANT_B_PASS }}
+      TENANT_B_PASS_HASH: ${{ secrets.E2E_TENANT_B_PASS_HASH || '' }}
+      K6_VUS_R10: "1"
+      K6_ITERATIONS_R10: "1"
+      K6_VUS_R11: "6"
+      K6_DURATION_R11: "45s"
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up Java 21
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: "21"
-          cache: maven
+      - name: Install kubectl (no sudo)
+        shell: bash
+        run: |
+          set -euo pipefail
+          BIN_DIR="${RUNNER_TEMP}/bin"
+          mkdir -p "${BIN_DIR}"
+          KUBECTL_BIN="kubectl"
+          if ! command -v kubectl >/dev/null 2>&1; then
+            curl -sSL -o "${BIN_DIR}/kubectl" "https://dl.k8s.io/release/$(curl -sSL https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+            chmod +x "${BIN_DIR}/kubectl"
+            echo "${BIN_DIR}" >> "${GITHUB_PATH}"
+            KUBECTL_BIN="${BIN_DIR}/kubectl"
+          fi
+          "${KUBECTL_BIN}" version --client
+
+      - name: Install gh (no sudo)
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash scripts/ci/install-gh.sh
 
       - name: Validate tools
         shell: bash
         run: |
           set -euo pipefail
           command -v jq >/dev/null
+          command -v kubectl >/dev/null
+          command -v curl >/dev/null
           command -v gh >/dev/null
-          command -v docker >/dev/null
 
-      - name: Start MySQL/Redis test environment
+      - name: Configure kubeconfig
         shell: bash
         run: |
           set -euo pipefail
-          START_APP_CONTAINER=false bash scripts/setup-test-env.sh up
-
-      - name: Start app locally
-        shell: bash
-        run: |
-          set -euo pipefail
-          SPRING_PROFILES_ACTIVE=test \
-          SPRING_DATASOURCE_URL='jdbc:mysql://127.0.0.1:3307/ljwx_platform?useUnicode=true&characterEncoding=UTF-8&serverTimezone=UTC' \
-          SPRING_DATASOURCE_USERNAME=ljwx \
-          SPRING_DATASOURCE_PASSWORD=ljwx \
-          SPRING_REDIS_HOST=127.0.0.1 \
-          SPRING_REDIS_PORT=6380 \
-          mvn -f ljwx-platform-app/pom.xml -DskipTests spring-boot:run > app.log 2>&1 &
-          echo $! > app.pid
-
-      - name: Wait app health
-        shell: bash
-        run: |
-          set -euo pipefail
-          for i in {1..240}; do
-            if curl -fsS "${BASE_URL}/actuator/health" >/dev/null 2>&1; then
-              echo "app is healthy"
-              exit 0
-            fi
-            sleep 2
-          done
-          echo "app health check timeout" >&2
-          tail -n 200 app.log || true
+          if [ -n "${{ secrets.KUBE_CONFIG_B64 }}" ]; then
+            KUBECONFIG_PATH="${RUNNER_TEMP}/kubeconfig"
+            echo "${{ secrets.KUBE_CONFIG_B64 }}" | base64 -d > "${KUBECONFIG_PATH}"
+            chmod 600 "${KUBECONFIG_PATH}"
+            echo "KUBECONFIG=${KUBECONFIG_PATH}" >> "${GITHUB_ENV}"
+            exit 0
+          fi
+          if [ -r "/etc/rancher/k3s/k3s.yaml" ]; then
+            echo "KUBECONFIG=/etc/rancher/k3s/k3s.yaml" >> "${GITHUB_ENV}"
+            exit 0
+          fi
+          echo "[FATAL] kubeconfig not found. Provide KUBE_CONFIG_B64 or make /etc/rancher/k3s/k3s.yaml readable."
           exit 1
 
-      - name: Run R10 E2E
-        id: r10
-        continue-on-error: true
+      - name: Verify cluster access
         shell: bash
         run: |
           set -euo pipefail
-          status="PASS"
-          if ! bash scripts/gates/gate-e2e.sh; then
-            status="FAIL"
-          fi
-          echo "status=$status" >> "$GITHUB_OUTPUT"
+          kubectl cluster-info
+          kubectl get nodes -o wide
 
-      - name: Run R11 Perf baseline
-        id: r11
+      - name: Run R10 + R11 on k3s
+        id: k3s_gate
         continue-on-error: true
         shell: bash
         run: |
           set -euo pipefail
           status="PASS"
-          if ! bash scripts/gates/gate-perf.sh; then
+          if ! RUN_R10=1 RUN_R11=1 bash scripts/check-observability-k3s.sh; then
             status="FAIL"
           fi
+
+          REPORT_FILE="/tmp/ljwx-gate-results/observability-e2e.json"
+          r10_status="$(jq -r '.gates.r10.status // "UNKNOWN"' "${REPORT_FILE}" 2>/dev/null || true)"
+          r11_status="$(jq -r '.gates.r11.status // "UNKNOWN"' "${REPORT_FILE}" 2>/dev/null || true)"
+
+          if [[ -z "${r10_status}" || "${r10_status}" == "null" ]]; then
+            r10_status="$status"
+          fi
+          if [[ -z "${r11_status}" || "${r11_status}" == "null" ]]; then
+            r11_status="$status"
+          fi
+
           echo "status=$status" >> "$GITHUB_OUTPUT"
+          echo "r10_status=${r10_status}" >> "$GITHUB_OUTPUT"
+          echo "r11_status=${r11_status}" >> "$GITHUB_OUTPUT"
 
       - name: Build report payload
         if: always()
@@ -106,13 +132,13 @@ jobs:
           bash scripts/gates/gate-summary.sh
 
       - name: Create regression issue on failure
-        if: always() && (steps.r10.outputs.status == 'FAIL' || steps.r11.outputs.status == 'FAIL')
+        if: always() && (steps.k3s_gate.outputs.r10_status == 'FAIL' || steps.k3s_gate.outputs.r11_status == 'FAIL')
         shell: bash
         run: |
           set -euo pipefail
           run_url="https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
           gate="R10"
-          if [[ "${{ steps.r11.outputs.status }}" == "FAIL" ]]; then gate="R11"; fi
+          if [[ "${{ steps.k3s_gate.outputs.r11_status }}" == "FAIL" ]]; then gate="R11"; fi
           title="[Bug][Regression][P0] Nightly ${gate} regression detected"
           if [[ "$gate" == "R10" ]]; then
             title="[Bug][Regression][P0] Cross-tenant access must return 404 (nightly)"
@@ -131,12 +157,10 @@ jobs:
         run: |
           set -euo pipefail
           overall="PASS"
-          if [[ "${{ steps.r10.outputs.status }}" != "PASS" || "${{ steps.r11.outputs.status }}" != "PASS" ]]; then
+          if [[ "${{ steps.k3s_gate.outputs.r10_status }}" != "PASS" || "${{ steps.k3s_gate.outputs.r11_status }}" != "PASS" ]]; then
             overall="FAIL"
           fi
-          if ! bash scripts/regression/regression-weekly.sh --mode nightly --status "$overall" --apply; then
-            echo "weekly campaign update failed; continue workflow" >&2
-          fi
+          bash scripts/regression/regression-weekly.sh --mode nightly --status "$overall" --apply
 
       - name: Upload gate reports for Pages
         if: always()
@@ -146,22 +170,15 @@ jobs:
           path: |
             docs/reports/**
             tests/results/**
-            app.log
-
-      - name: Teardown test environment
-        if: always()
-        shell: bash
-        run: |
-          set -euo pipefail
-          if [[ -f app.pid ]]; then kill "$(cat app.pid)" || true; fi
-          bash scripts/setup-test-env.sh clean || true
+            /tmp/ljwx-gate-results/**
+            /tmp/ljwx-gate-results/observability/**
 
       - name: Fail workflow on regression
         if: always()
         shell: bash
         run: |
           set -euo pipefail
-          if [[ "${{ steps.r10.outputs.status }}" != "PASS" || "${{ steps.r11.outputs.status }}" != "PASS" ]]; then
-            echo "Nightly regression detected: R10=${{ steps.r10.outputs.status }} R11=${{ steps.r11.outputs.status }}" >&2
+          if [[ "${{ steps.k3s_gate.outputs.r10_status }}" != "PASS" || "${{ steps.k3s_gate.outputs.r11_status }}" != "PASS" ]]; then
+            echo "Nightly regression detected: R10=${{ steps.k3s_gate.outputs.r10_status }} R11=${{ steps.k3s_gate.outputs.r11_status }}" >&2
             exit 1
           fi

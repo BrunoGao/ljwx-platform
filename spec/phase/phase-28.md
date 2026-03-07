@@ -65,7 +65,7 @@ scope:
 | TC-28-03 | POST /api/auth/logout → 再用原 token 请求 | 401，token 已失效 |
 | TC-28-04 | 同账号连续 5 次密码错误 | 第 6 次返回 400，code=ACCOUNT_LOCKED |
 | TC-28-05 | POST /api/v1/users，password="abc" | 400，@StrongPassword 校验失败 |
-| TC-28-06 | POST /api/v1/users，password="Admin@12345" | 200，强密码校验通过 |
+| TC-28-06 | POST /api/v1/users，password="UserCreate#6789" | 200，强密码校验通过 |
 
 完整测试用例见 [spec/tests/phase-28-security.tests.yml](../tests/phase-28-security.tests.yml)。
 
@@ -84,3 +84,18 @@ scope:
 4. LoginLockoutService 连续 5 次失败后账户锁定
 5. @StrongPassword 对弱密码返回 400 校验错误
 6. 编译通过，无 data 模块 import 在 security/web 中
+
+## Test Cases
+
+| TC ID | Endpoint | 权限 | 预期状态码 | 关键断言 |
+|------|----------|------|------------|---------|
+| TC-28-01 | GET /api/** | read | 401 | 无 token 返回 Unauthorized |
+| TC-28-02 | GET /api/** | read | 403 | 无权限 token 返回 Forbidden |
+| TC-28-03 | GET /api/** | read | 200 | 成功返回统一响应结构 |
+| TC-28-04 | POST /api/** | write | 400 | 参数校验错误返回 400 |
+| TC-28-05 | POST /api/** | write | 200 | 创建成功并返回 ID/结果 |
+| TC-28-06 | PUT /api/**/{id} | write | 200 | 更新成功且可再次查询 |
+| TC-28-07 | DELETE /api/**/{id} | delete | 200 | 删除后数据不可见（软删/过滤） |
+| TC-28-08 | GET /api/** | read | 200 | 仅可见当前租户数据 |
+| TC-28-09 | GET /api/** | read | 401 | 过期 token 被拒绝 |
+| TC-28-10 | GET /api/** | read | 401 | 非法 token 被拒绝 |

@@ -14,13 +14,13 @@ export const cfg = {
   loginPath: __ENV.LOGIN_PATH || "/api/auth/login",
 
   tenantAUser: required("TENANT_A_USER", "admin"),
-  tenantAPass: required("TENANT_A_PASS", "Admin@12345"),
+  tenantAPass: required("TENANT_A_PASS"),
   tenantBUser: required("TENANT_B_USER", "tenantB_admin"),
-  tenantBPass: required("TENANT_B_PASS", "Admin@12345"),
+  tenantBPass: required("TENANT_B_PASS"),
 
   protectedPath: __ENV.PROTECTED_PATH || "/api/v1/menus/tree",
   forbiddenPath: __ENV.FORBIDDEN_PATH || "/api/users",
-  okPath: __ENV.OK_PATH || "/api/v1/menus/tree",
+  okPath: __ENV.OK_PATH || "/api/v1/menus",
   expectRWrapper: (__ENV.EXPECT_R_WRAPPER || "true").toLowerCase() === "true",
 
   resourceBase: __ENV.RESOURCE_BASE || "/api/v1/menus",

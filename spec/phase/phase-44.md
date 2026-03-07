@@ -371,3 +371,18 @@ P0 强制覆盖（Gate R09 检查）：
 - ALL 数据范围：跳过所有拦截,不拼接 WHERE 条件
 - 缓存策略：CAFFEINE_REDIS,TTL 300s
 - SQL 注入防护：使用 PreparedStatement,禁止字符串拼接
+
+## Test Cases
+
+| TC ID | Endpoint | 权限 | 预期状态码 | 关键断言 |
+|------|----------|------|------------|---------|
+| TC-44-01 | GET /api/** | read | 401 | 无 token 返回 Unauthorized |
+| TC-44-02 | GET /api/** | read | 403 | 无权限 token 返回 Forbidden |
+| TC-44-03 | GET /api/** | read | 200 | 成功返回统一响应结构 |
+| TC-44-04 | POST /api/** | write | 400 | 参数校验错误返回 400 |
+| TC-44-05 | POST /api/** | write | 200 | 创建成功并返回 ID/结果 |
+| TC-44-06 | PUT /api/**/{id} | write | 200 | 更新成功且可再次查询 |
+| TC-44-07 | DELETE /api/**/{id} | delete | 200 | 删除后数据不可见（软删/过滤） |
+| TC-44-08 | GET /api/** | read | 200 | 仅可见当前租户数据 |
+| TC-44-09 | GET /api/** | read | 401 | 过期 token 被拒绝 |
+| TC-44-10 | GET /api/** | read | 401 | 非法 token 被拒绝 |

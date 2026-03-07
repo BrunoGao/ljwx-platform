@@ -48,5 +48,5 @@ CREATE TABLE sys_example (
 
 ## 种子数据
 
-- 管理员初始密码 `Admin@12345`，使用 BCrypt cost=10 哈希
+- 管理员初始密码必须通过 `LJWX_BOOTSTRAP_ADMIN_INITIAL_PASSWORD` 注入，数据库仅存 BCrypt cost=10 哈希
 - 写在 V006 种子 SQL 中

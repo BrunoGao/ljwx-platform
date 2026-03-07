@@ -4,6 +4,8 @@ set -euo pipefail
 PROJECT_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 cd "$PROJECT_ROOT"
 
+MISSING_CONTRACTS=0
+
 append_test_cases() {
   local file="$1"
   local base
@@ -36,6 +38,33 @@ EOT
 
 for file in spec/phase/phase-*.md; do
   append_test_cases "$file"
+  contract_ref="$(
+    (rg -n -o '`spec/tests/[^`]+\.tests\.yml`|spec/tests/[a-zA-Z0-9._/-]+\.tests\.yml' "$file" -m1 2>/dev/null || true) \
+      | head -n1 \
+      | sed -E 's/^.*:|`//g'
+  )"
+  if rg -q '\| 测试契约 \|.*N/A' "$file"; then
+    continue
+  fi
+  if [[ -z "$contract_ref" ]]; then
+    echo "Missing test contract reference: $file"
+    MISSING_CONTRACTS=$((MISSING_CONTRACTS + 1))
+    continue
+  fi
+  if [[ ! -f "$contract_ref" ]]; then
+    echo "Missing test contract file: $contract_ref (from $file)"
+    MISSING_CONTRACTS=$((MISSING_CONTRACTS + 1))
+    continue
+  fi
+  if ! rg -q '^ac_tc_map:' "$contract_ref"; then
+    echo "Missing ac_tc_map section: $contract_ref"
+    MISSING_CONTRACTS=$((MISSING_CONTRACTS + 1))
+  fi
 done
 
-echo "Test Cases ensured for all spec/phase files."
+if [[ "$MISSING_CONTRACTS" -gt 0 ]]; then
+  echo "Test Cases ensured, but $MISSING_CONTRACTS contract issues detected."
+  exit 1
+fi
+
+echo "Test Cases and contracts ensured for all spec/phase files."

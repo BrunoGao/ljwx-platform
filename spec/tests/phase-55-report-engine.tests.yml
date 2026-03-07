@@ -1,0 +1,191 @@
+# Phase 55 — 报表引擎 测试契约
+# 关联 Spec：spec/phase/phase-55.md
+
+phase: 55
+module: "report-engine"
+ac_ref: "spec/phase/phase-55.md"
+
+tests:
+  - id: TC-55-01
+    priority: P0
+    category: security
+    ac: AC-02
+    scenario: "无 Token 访问报表定义列表 → 401"
+    request:
+      method: GET
+      path: /api/v1/reports
+      auth: none
+    expect:
+      status: 401
+
+  - id: TC-55-02
+    priority: P0
+    category: security
+    ac: AC-02
+    scenario: "无 report:def:add 权限创建报表 → 403"
+    request:
+      method: POST
+      path: /api/v1/reports
+      auth: token_without_permission
+    expect:
+      status: 403
+
+  - id: TC-55-03
+    priority: P0
+    category: business
+    ac: AC-03
+    scenario: "创建报表时 report_key 重复 → 409"
+    setup:
+      - create_report_key_tenant_usage
+    request:
+      method: POST
+      path: /api/v1/reports
+      auth: token_with_report:def:add
+      body:
+        reportName: "租户用量副本"
+        reportKey: "tenant_usage"
+        dataSourceType: "SQL"
+        queryTemplate: "SELECT * FROM bill_usage_record WHERE metric_type = #{metricType}"
+        columnDef: "[{\"name\":\"usage_value\",\"title\":\"用量\"}]"
+    expect:
+      status: 409
+
+  - id: TC-55-04
+    priority: P0
+    category: sql_guard
+    ac: AC-04
+    scenario: "SQL 模板包含 DELETE 关键字 → 400"
+    request:
+      method: POST
+      path: /api/v1/reports
+      auth: token_with_report:def:add
+      body:
+        reportName: "危险语句"
+        reportKey: "danger_sql"
+        dataSourceType: "SQL"
+        queryTemplate: "DELETE FROM sys_user WHERE id = #{id}"
+        columnDef: "[{\"name\":\"id\",\"title\":\"ID\"}]"
+    expect:
+      status: 400
+
+  - id: TC-55-05
+    priority: P0
+    category: sql_guard
+    ac: AC-04
+    scenario: "SQL 模板包含 ${} 占位符 → 400"
+    request:
+      method: POST
+      path: /api/v1/reports
+      auth: token_with_report:def:add
+      body:
+        reportName: "危险占位符"
+        reportKey: "danger_placeholder"
+        dataSourceType: "SQL"
+        queryTemplate: "SELECT * FROM sys_user WHERE username = ${username}"
+        columnDef: "[{\"name\":\"username\",\"title\":\"用户名\"}]"
+    expect:
+      status: 400
+
+  - id: TC-55-06
+    priority: P0
+    category: execute
+    ac: AC-05
+    scenario: "执行报表查询成功返回分页数据"
+    request:
+      method: POST
+      path: /api/v1/reports/{reportId}/execute
+      auth: token_with_report:def:execute
+      body:
+        params:
+          metricType: "API_CALLS"
+        pageNum: 1
+        pageSize: 20
+    expect:
+      status: 200
+      body:
+        code: 200
+        data:
+          rows: "[有数据]"
+
+  - id: TC-55-07
+    priority: P0
+    category: execute
+    ac: AC-05
+    scenario: "执行报表时 pageSize=2000 自动截断到 1000"
+    request:
+      method: POST
+      path: /api/v1/reports/{reportId}/execute
+      auth: token_with_report:def:execute
+      body:
+        params: {}
+        pageNum: 1
+        pageSize: 2000
+    expect:
+      status: 200
+      body:
+        data:
+          pageSize: 1000
+
+  - id: TC-55-08
+    priority: P0
+    category: tenant_isolation
+    ac: AC-05
+    scenario: "租户 A 执行报表只返回租户 A 数据"
+    setup:
+      - seed_usage_records_for_tenant_A
+      - seed_usage_records_for_tenant_B
+    request:
+      method: POST
+      path: /api/v1/reports/{reportId}/execute
+      auth: token_tenant_A
+      body:
+        params: {}
+        pageNum: 1
+        pageSize: 50
+    expect:
+      status: 200
+      body:
+        data:
+          rows: "[仅租户 A 数据]"
+
+  - id: TC-55-09
+    priority: P0
+    category: db_schema
+    ac: AC-01
+    scenario: "V063 创建 rpt_report_def，无 IF NOT EXISTS，含审计字段"
+    expect:
+      db_assert: "V063 建表与索引完整，且不含 IF NOT EXISTS"
+
+  - id: TC-55-10
+    priority: P0
+    category: dto_security
+    ac: AC-03
+    scenario: "DTO 禁止字段（tenantId/createdBy 等）不可注入"
+    request:
+      method: POST
+      path: /api/v1/reports
+      auth: token_with_report:def:add
+      body:
+        reportName: "注入测试"
+        reportKey: "inject_case"
+        dataSourceType: "SQL"
+        queryTemplate: "SELECT 1"
+        columnDef: "[{\"name\":\"v\",\"title\":\"v\"}]"
+        tenantId: 9999
+    expect:
+      status: 400
+
+ac_tc_map:
+  AC-01: [TC-55-09]
+  AC-02: [TC-55-01, TC-55-02]
+  AC-03: [TC-55-03, TC-55-10]
+  AC-04: [TC-55-04, TC-55-05]
+  AC-05: [TC-55-06, TC-55-07, TC-55-08]
+  AC-06: []  # 编译与全量 Gate 校验由 R01/R09 兜底
+
+gate_r09:
+  p0_required: true
+  p1_coverage_target: 0.7
+  p2_skip: true
+  test_class: "ReportControllerTest"
+  note: "覆盖 SQL 安全校验、执行分页、租户隔离与迁移规则"

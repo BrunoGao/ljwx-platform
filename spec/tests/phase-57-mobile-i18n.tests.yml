@@ -1,0 +1,138 @@
+# Phase 57 — 移动端 H5 + 国际化 测试契约
+# 关联 Spec：spec/phase/phase-57.md
+
+phase: 57
+module: "mobile-i18n"
+ac_ref: "spec/phase/phase-57.md"
+
+note: >
+  本 Phase 同时包含移动端 H5 与 Admin 国际化能力，含自动化与手工验收项。
+
+tests:
+  - id: TC-57-01
+    priority: P0
+    category: mobile_auth
+    ac: AC-01
+    scenario: "移动端登录成功后 Token 写入 uni.storage"
+    request:
+      method: POST
+      path: /api/v1/auth/login
+      auth: none
+      body:
+        username: "mobile_user"
+        password: "Passw0rd!"
+    expect:
+      status: 200
+      note: "前端断言 uni.getStorageSync('token') 非空"
+
+  - id: TC-57-02
+    priority: P0
+    category: mobile_auth
+    ac: AC-02
+    scenario: "Token 过期时自动跳转登录页"
+    setup:
+      - mock_expired_token
+    request:
+      method: GET
+      path: /api/v1/profile
+      auth: expired_token
+    expect:
+      status: 401
+      note: "前端断言 redirectTo('/pages/login/index') 被触发"
+
+  - id: TC-57-03
+    priority: P0
+    category: mobile_workflow
+    ac: AC-01
+    scenario: "移动端待办列表加载并完成审批通过"
+    request:
+      method: POST
+      path: /api/v1/wf/tasks/{id}/approve
+      auth: token_with_workflow_task_approve
+      body:
+        comment: "同意"
+    expect:
+      status: 200
+
+  - id: TC-57-04
+    priority: P0
+    category: brand
+    ac: AC-05
+    scenario: "加载 mobile 品牌配置后主色调生效"
+    request:
+      method: GET
+      path: /api/v1/brand/config
+      auth: token_with_brand_query
+      query:
+        category: "mobile"
+    expect:
+      status: 200
+      note: "前端断言主题 CSS 变量更新为品牌主色"
+
+  - id: TC-57-05
+    priority: P0
+    category: i18n
+    ac: AC-03
+    scenario: "Admin 切换 en-US 后菜单/按钮文案变更"
+    expect:
+      note: "前端断言 locale='en-US' 后 common/menu 文案按英文展示"
+
+  - id: TC-57-06
+    priority: P0
+    category: i18n
+    ac: AC-04
+    scenario: "字典标签按语言动态显示"
+    expect:
+      note: "字典项 labels.zh / labels.en 根据 locale 选择展示"
+
+  - id: TC-57-07
+    priority: P0
+    category: i18n
+    ac: AC-04
+    scenario: "401 错误码按当前语言显示中文/英文提示"
+    expect:
+      note: "zh-CN 显示中文错误，en-US 显示英文错误"
+
+  - id: TC-57-08
+    priority: P0
+    category: mobile_request
+    ac: AC-02
+    scenario: "移动端请求头自动携带 Authorization 与 X-Tenant-Id"
+    request:
+      method: GET
+      path: /api/v1/messages/inbox
+      auth: token_with_message_query
+    expect:
+      status: 200
+      note: "抓包断言请求头包含 Authorization 与 X-Tenant-Id"
+
+  - id: TC-57-09
+    priority: P1
+    category: ui_acceptance
+    ac: AC-01
+    scenario: "移动端 6 大页面具备空态/加载态/错误态"
+    expect:
+      note: "登录、首页、待办、公告、个人中心、消息中心完成手工验收"
+
+  - id: TC-57-10
+    priority: P1
+    category: quality
+    ac: AC-06
+    scenario: "TypeScript 类型检查通过"
+    expect:
+      note: "pnpm run type-check 通过"
+
+ac_tc_map:
+  AC-01: [TC-57-01, TC-57-03, TC-57-09]
+  AC-02: [TC-57-02, TC-57-08]
+  AC-03: [TC-57-05]
+  AC-04: [TC-57-06, TC-57-07]
+  AC-05: [TC-57-04]
+  AC-06: [TC-57-10]
+
+gate_r09:
+  p0_required: true
+  p1_coverage_target: 0.7
+  p2_skip: true
+  test_class: "MobileI18nE2ETest"
+  note: "覆盖移动端关键路径、i18n 切换、品牌适配与类型检查"

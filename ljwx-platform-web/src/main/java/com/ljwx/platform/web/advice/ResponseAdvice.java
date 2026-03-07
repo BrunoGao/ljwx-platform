@@ -78,6 +78,12 @@ public class ResponseAdvice implements ResponseBodyAdvice<Object> {
                                   Class<? extends HttpMessageConverter<?>> selectedConverterType,
                                   ServerHttpRequest request,
                                   ServerHttpResponse response) {
+        String requestPath = request.getURI().getPath();
+        if (requestPath.startsWith("/actuator/")) {
+            // Keep actuator payloads in native format (e.g. Prometheus text exposition).
+            return body;
+        }
+
         // Already a Result — pass through to avoid double-wrapping
         if (body instanceof Result<?>) {
             return body;

@@ -37,9 +37,23 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-for cmd in jq gh; do
+require_cmd() {
+  local cmd="$1"
   command -v "$cmd" >/dev/null 2>&1 || { echo "missing command: $cmd" >&2; exit 1; }
-done
+}
+
+require_cmd jq
+if ! command -v gh >/dev/null 2>&1; then
+  installer="$ROOT_DIR/scripts/ci/install-gh.sh"
+  if [[ -x "$installer" ]]; then
+    echo "[信息] 检测到 gh 缺失，尝试自动安装..."
+    if ! bash "$installer"; then
+      echo "[警告] gh 自动安装失败，继续按原逻辑校验。" >&2
+    fi
+    PATH="${RUNNER_TEMP:-/tmp}/bin:${PATH}"
+  fi
+fi
+require_cmd gh
 
 [[ -f "$SUMMARY_JSON" ]] || { echo "missing summary file: $SUMMARY_JSON" >&2; exit 1; }
 [[ -f "$RTM_JSON" ]] || { echo "missing rtm file: $RTM_JSON" >&2; exit 1; }
@@ -330,7 +344,11 @@ fi
 
 COMMENT_URL=""
 if [[ "$DRY_RUN" == "false" ]]; then
-  comment_out="$(gh issue comment "$ISSUE_NUMBER" --repo "${OWNER}/${REPO}" --body "$COMMENT_MD" 2>&1 || true)"
+  if ! comment_out="$(gh issue comment "$ISSUE_NUMBER" --repo "${OWNER}/${REPO}" --body "$COMMENT_MD" 2>&1)"; then
+    echo "$comment_out" >&2
+    echo "周回归评论更新失败" >&2
+    exit 1
+  fi
   COMMENT_URL="$(grep -Eo 'https://github.com/[^[:space:]]+/issues/[0-9]+#issuecomment-[0-9]+' <<<"$comment_out" | tail -n1 || true)"
 
   if [[ ! -f "$ROOT_DIR/.github/projectv2/project.json" ]]; then

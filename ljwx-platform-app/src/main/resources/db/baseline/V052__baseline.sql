@@ -2588,7 +2588,7 @@ COPY public.qrtz_triggers (sched_name, trigger_name, trigger_group, job_name, jo
 
 COPY public.sys_config (id, config_name, config_key, config_value, config_type, remark, tenant_id, created_by, created_time, updated_by, updated_time, deleted, version) FROM stdin;
 2000000001	主框架页-默认皮肤样式名称	sys.index.skinName	skin-blue	1	蓝色 skin-blue、绿色 skin-green、紫色 skin-purple、红色 skin-red、黄色 skin-yellow	1	1	2026-03-02 15:50:28.893091	1	2026-03-02 15:50:28.893091	f	1
-2000000002	用户管理-账号初始密码	sys.user.initPassword	Admin@12345	1	初始化密码 Admin@12345	1	1	2026-03-02 15:50:28.893091	1	2026-03-02 15:50:28.893091	f	1
+2000000002	用户管理-账号初始密码	sys.user.initPassword		1	由环境变量 LJWX_BOOTSTRAP_USER_IMPORT_INITIAL_PASSWORD 提供	1	1	2026-03-02 15:50:28.893091	1	2026-03-02 15:50:28.893091	f	1
 2000000003	主框架页-侧边栏主题	sys.index.sideTheme	theme-dark	1	深色主题 theme-dark、浅色主题 theme-light	1	1	2026-03-02 15:50:28.893091	1	2026-03-02 15:50:28.893091	f	1
 2000000004	账号自助-是否开启用户注册功能	sys.account.registerUser	false	1	是否开启注册用户功能（true 开启，false 关闭）	1	1	2026-03-02 15:50:28.893091	1	2026-03-02 15:50:28.893091	f	1
 2000000005	文件上传-允许的文件后缀	sys.file.allowedSuffix	jpg,jpeg,png,gif,webp,svg,pdf,doc,docx,xls,xlsx,ppt,pptx,txt,csv,zip,rar,7z,mp4,mp3	1	允许上传的文件后缀白名单	1	1	2026-03-02 15:50:28.893091	1	2026-03-02 15:50:28.893091	f	1
@@ -2912,7 +2912,7 @@ COPY public.sys_tenant_package (id, name, menu_ids, max_users, max_storage_mb, s
 --
 
 COPY public.sys_user (id, username, password, nickname, email, phone, avatar, status, tenant_id, created_by, created_time, updated_by, updated_time, deleted, version) FROM stdin;
-1	admin	$2a$10$PnWlMR8Ox6UMTZj7Zm9uO.wSqzbjVt04UbeJ7q3RxDe8TSIP6efz2	系统管理员	\N	\N	\N	1	1	0	2026-03-02 15:50:28.464142	0	2026-03-02 15:50:28.464142	f	1
+1	admin	$2b$10$uCp2Sw/d8Ipq5FrRNfBUt.FOq8dszFY/XHDumEDk3u5IhrZz1JW9S	系统管理员	\N	\N	\N	1	1	0	2026-03-02 15:50:28.464142	0	2026-03-02 15:50:28.464142	f	1
 \.
 
 
@@ -4157,4 +4157,3 @@ ALTER TABLE ONLY public.qrtz_triggers
 --
 
 \unrestrict DahdbKxydmjkiS4Gaa5RrzAqJ7JZZkvN57delNi41l3PWQy0s1eI8IZr1FE34vy
-

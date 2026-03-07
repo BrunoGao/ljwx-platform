@@ -168,7 +168,7 @@ public class TenantInitializer {
             .tenantId(tenantId)
             .deptId(rootDept.getId())
             .username("admin")
-            .password(passwordEncoder.encode("Admin@12345"))
+            .password(passwordEncoder.encode(bootstrapPasswordService.requireAdminInitialPassword()))
             .nickname("管理员")
             .status(true)
             .build();
@@ -238,3 +238,18 @@ public void freeze(Long tenantId, String reason) {
 
 - [Phase 40: 岗位管理](./phase-40.md)
 - [Phase 42: 超级管理员机制](./phase-42.md)
+
+## Test Cases
+
+| TC ID | Endpoint | 权限 | 预期状态码 | 关键断言 |
+|------|----------|------|------------|---------|
+| TC-41-01 | GET /api/** | read | 401 | 无 token 返回 Unauthorized |
+| TC-41-02 | GET /api/** | read | 403 | 无权限 token 返回 Forbidden |
+| TC-41-03 | GET /api/** | read | 200 | 成功返回统一响应结构 |
+| TC-41-04 | POST /api/** | write | 400 | 参数校验错误返回 400 |
+| TC-41-05 | POST /api/** | write | 200 | 创建成功并返回 ID/结果 |
+| TC-41-06 | PUT /api/**/{id} | write | 200 | 更新成功且可再次查询 |
+| TC-41-07 | DELETE /api/**/{id} | delete | 200 | 删除后数据不可见（软删/过滤） |
+| TC-41-08 | GET /api/** | read | 200 | 仅可见当前租户数据 |
+| TC-41-09 | GET /api/** | read | 401 | 过期 token 被拒绝 |
+| TC-41-10 | GET /api/** | read | 401 | 非法 token 被拒绝 |

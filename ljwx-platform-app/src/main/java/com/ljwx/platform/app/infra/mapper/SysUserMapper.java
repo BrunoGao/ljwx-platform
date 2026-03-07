@@ -48,6 +48,13 @@ public interface SysUserMapper {
 
     void updatePassword(@Param("id") Long id, @Param("password") String password);
 
+    long countByUsernameAndPassword(@Param("username") String username,
+                                    @Param("passwordHash") String passwordHash);
+
+    int updatePasswordByUsernameAndPassword(@Param("username") String username,
+                                            @Param("oldPasswordHash") String oldPasswordHash,
+                                            @Param("newPasswordHash") String newPasswordHash);
+
     void insertUserRole(@Param("id") Long id,
                         @Param("userId") Long userId,
                         @Param("roleId") Long roleId,
