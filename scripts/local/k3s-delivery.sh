@@ -40,6 +40,36 @@ set +a
 : "${REGISTRY_USERNAME:=}"
 : "${REGISTRY_PASSWORD:=}"
 : "${ROLLOUT_TIMEOUT:=300s}"
+: "${BACKEND_SERVICE_NAME:=ljwx-platform}"
+: "${ADMIN_SERVICE_NAME:=ljwx-platform-admin-ui}"
+: "${SCREEN_SERVICE_NAME:=ljwx-platform-screen}"
+: "${BACKEND_LOCAL_PORT:=18080}"
+: "${ADMIN_LOCAL_PORT:=18081}"
+: "${SCREEN_LOCAL_PORT:=18082}"
+: "${SERVICE_PORT:=80}"
+: "${TENANT_A_USER:=admin}"
+: "${TENANT_A_PASS:=Admin@12345}"
+: "${TENANT_B_USER:=tenantB_admin}"
+: "${TENANT_B_PASS:=Admin@12345}"
+: "${LOGIN_PATH:=/api/auth/login}"
+: "${FORBIDDEN_PATH:=/api/users}"
+: "${RESOURCE_LIST_PATH:=/api/v1/menus}"
+: "${K8S_PSQL_IMAGE:=postgres:16-alpine}"
+
+PORT_FORWARD_PIDS=()
+
+cleanup_port_forwards() {
+  local pid
+  for pid in "${PORT_FORWARD_PIDS[@]:-}"; do
+    if [[ -n "${pid}" ]]; then
+      kill "${pid}" >/dev/null 2>&1 || true
+      wait "${pid}" >/dev/null 2>&1 || true
+    fi
+  done
+  PORT_FORWARD_PIDS=()
+}
+
+trap cleanup_port_forwards EXIT
 
 require_command() {
   local cmd="$1"
@@ -170,6 +200,137 @@ print_logs() {
   kubectl -n "${NAMESPACE}" logs deploy/ljwx-platform --tail=200
 }
 
+decode_secret_value() {
+  local secret_name="$1"
+  local key="$2"
+  kubectl -n "${NAMESPACE}" get secret "${secret_name}" -o "jsonpath={.data.${key}}" 2>/dev/null | base64 -d 2>/dev/null || true
+}
+
+resolve_db_credentials() {
+  if ! kubectl -n "${NAMESPACE}" get secret "${DB_SECRET_NAME}" >/dev/null 2>&1; then
+    return
+  fi
+
+  if [[ "${MANAGE_DB_SECRET}" != "1" || -z "${DB_PASSWORD}" || "${DB_PASSWORD}" == *"CHANGE_ME"* ]]; then
+    local secret_username secret_password
+    secret_username="$(decode_secret_value "${DB_SECRET_NAME}" DB_USERNAME)"
+    secret_password="$(decode_secret_value "${DB_SECRET_NAME}" DB_PASSWORD)"
+
+    if [[ -n "${secret_username}" ]]; then
+      DB_USERNAME="${secret_username}"
+    fi
+    if [[ -n "${secret_password}" ]]; then
+      DB_PASSWORD="${secret_password}"
+    fi
+  fi
+}
+
+start_port_forward() {
+  local service_name="$1"
+  local local_port="$2"
+  local service_port="$3"
+  local health_url="$4"
+  local log_file
+  log_file="$(mktemp "/tmp/${service_name}.port-forward.XXXXXX.log")"
+
+  kubectl -n "${NAMESPACE}" port-forward "svc/${service_name}" "${local_port}:${service_port}" >"${log_file}" 2>&1 &
+  local pf_pid=$!
+  PORT_FORWARD_PIDS+=("${pf_pid}")
+
+  local i
+  for i in $(seq 1 120); do
+    if curl -fsS "${health_url}" >/dev/null 2>&1; then
+      echo "${service_name} 已通过 port-forward 就绪: ${health_url}"
+      return 0
+    fi
+    if ! kill -0 "${pf_pid}" >/dev/null 2>&1; then
+      echo "port-forward 进程异常退出: svc/${service_name}" >&2
+      cat "${log_file}" >&2 || true
+      return 1
+    fi
+    sleep 2
+  done
+
+  echo "port-forward 健康检查超时: svc/${service_name} -> ${health_url}" >&2
+  cat "${log_file}" >&2 || true
+  return 1
+}
+
+run_smoke() {
+  require_command kubectl
+  require_command curl
+  cleanup_port_forwards
+
+  start_port_forward "${BACKEND_SERVICE_NAME}" "${BACKEND_LOCAL_PORT}" "${SERVICE_PORT}" "http://127.0.0.1:${BACKEND_LOCAL_PORT}/actuator/health"
+  start_port_forward "${ADMIN_SERVICE_NAME}" "${ADMIN_LOCAL_PORT}" "${SERVICE_PORT}" "http://127.0.0.1:${ADMIN_LOCAL_PORT}/"
+  start_port_forward "${SCREEN_SERVICE_NAME}" "${SCREEN_LOCAL_PORT}" "${SERVICE_PORT}" "http://127.0.0.1:${SCREEN_LOCAL_PORT}/"
+
+  echo "k3s smoke 检查通过"
+  cleanup_port_forwards
+}
+
+seed_fixtures() {
+  require_command kubectl
+  resolve_db_credentials
+
+  if [[ -z "${DB_PASSWORD}" || "${DB_PASSWORD}" == *"CHANGE_ME"* ]]; then
+    echo "缺少可用 DB_PASSWORD，无法在 k3s 集群内写入 E2E 夹具" >&2
+    exit 1
+  fi
+
+  PSQL_MODE=kubectl \
+  K8S_NAMESPACE="${NAMESPACE}" \
+  K8S_PSQL_IMAGE="${K8S_PSQL_IMAGE}" \
+  DB_HOST="${DB_HOST}" \
+  DB_PORT="${DB_PORT}" \
+  DB_NAME="${DB_NAME}" \
+  DB_USERNAME="${DB_USERNAME}" \
+  DB_PASSWORD="${DB_PASSWORD}" \
+  bash "${PROJECT_ROOT}/scripts/e2e/seed-fixtures.sh"
+}
+
+run_e2e() {
+  require_command kubectl
+  require_command curl
+  cleanup_port_forwards
+  seed_fixtures
+  start_port_forward "${BACKEND_SERVICE_NAME}" "${BACKEND_LOCAL_PORT}" "${SERVICE_PORT}" "http://127.0.0.1:${BACKEND_LOCAL_PORT}/actuator/health"
+
+  K6_FORCE_DOCKER="${K6_FORCE_DOCKER:-0}" \
+  BASE_URL="http://127.0.0.1:${BACKEND_LOCAL_PORT}" \
+  TENANT_A_USER="${TENANT_A_USER}" \
+  TENANT_A_PASS="${TENANT_A_PASS}" \
+  TENANT_B_USER="${TENANT_B_USER}" \
+  TENANT_B_PASS="${TENANT_B_PASS}" \
+  LOGIN_PATH="${LOGIN_PATH}" \
+  FORBIDDEN_PATH="${FORBIDDEN_PATH}" \
+  RESOURCE_LIST_PATH="${RESOURCE_LIST_PATH}" \
+  bash "${PROJECT_ROOT}/scripts/gates/gate-e2e.sh"
+
+  cleanup_port_forwards
+}
+
+run_perf() {
+  require_command kubectl
+  require_command curl
+  cleanup_port_forwards
+  start_port_forward "${BACKEND_SERVICE_NAME}" "${BACKEND_LOCAL_PORT}" "${SERVICE_PORT}" "http://127.0.0.1:${BACKEND_LOCAL_PORT}/actuator/health"
+
+  BASE_URL="http://127.0.0.1:${BACKEND_LOCAL_PORT}" \
+  TENANT_A_USER="${TENANT_A_USER}" \
+  TENANT_A_PASS="${TENANT_A_PASS}" \
+  LOGIN_PATH="${LOGIN_PATH}" \
+  bash "${PROJECT_ROOT}/scripts/gates/gate-perf.sh"
+
+  cleanup_port_forwards
+}
+
+run_system_tests() {
+  run_smoke
+  run_e2e
+  run_perf
+}
+
 run_apply() {
   require_command kubectl
   validate_images
@@ -195,6 +356,21 @@ case "${CMD}" in
     require_command kubectl
     print_logs
     ;;
+  smoke)
+    run_smoke
+    ;;
+  seed)
+    seed_fixtures
+    ;;
+  e2e)
+    run_e2e
+    ;;
+  perf)
+    run_perf
+    ;;
+  system-test)
+    run_system_tests
+    ;;
   render)
     require_command kubectl
     kubectl kustomize "${KUSTOMIZE_DIR}"
@@ -209,6 +385,11 @@ case "${CMD}" in
   bash scripts/local/k3s-delivery.sh apply     # 按交付镜像部署 backend/admin-ui/screen
   bash scripts/local/k3s-delivery.sh status    # 查看部署状态
   bash scripts/local/k3s-delivery.sh logs      # 查看 backend 日志
+  bash scripts/local/k3s-delivery.sh smoke     # 通过 port-forward 做 backend/admin/screen 健康检查
+  bash scripts/local/k3s-delivery.sh seed      # 在集群内写入 E2E 夹具
+  bash scripts/local/k3s-delivery.sh e2e       # 通过 port-forward 执行 R10 E2E
+  bash scripts/local/k3s-delivery.sh perf      # 通过 port-forward 执行 R11 基线
+  bash scripts/local/k3s-delivery.sh system-test  # 串行执行 smoke + e2e + perf
   bash scripts/local/k3s-delivery.sh render    # 渲染 kustomize 清单
   bash scripts/local/k3s-delivery.sh delete    # 删除命名空间（慎用）
 EOF
