@@ -102,11 +102,35 @@ query_issue_data() {
 
 find_project_item_for_issue() {
   local project_id="$1" issue_node_id="$2"
-  local q
-  q='query($project:ID!){ node(id:$project){ ... on ProjectV2 { items(first:200){ nodes { id content { __typename ... on Issue { id number } } } } } } }'
-  gh api graphql -f query="$q" -F project="$project_id" \
-    | jq -r --arg iid "$issue_node_id" '.data.node.items.nodes[] | select(.content.id == $iid) | .id' \
-    | head -n1
+  local q cursor="" response="" item_id="" has_next=""
+  q='query($project:ID!, $after:String){ node(id:$project){ ... on ProjectV2 { items(first:100, after:$after){ nodes { id content { __typename ... on Issue { id number } } } pageInfo { hasNextPage endCursor } } } } }'
+
+  while true; do
+    if [[ -n "$cursor" ]]; then
+      response="$(gh api graphql -f query="$q" -F project="$project_id" -f after="$cursor")"
+    else
+      response="$(gh api graphql -f query="$q" -F project="$project_id")"
+    fi
+
+    item_id="$(
+      jq -r --arg iid "$issue_node_id" '.data.node.items.nodes[]? | select(.content.id == $iid) | .id' <<<"$response" \
+        | head -n1
+    )"
+    if [[ -n "$item_id" ]]; then
+      printf '%s\n' "$item_id"
+      return 0
+    fi
+
+    has_next="$(jq -r '.data.node.items.pageInfo.hasNextPage // false' <<<"$response")"
+    if [[ "$has_next" != "true" ]]; then
+      return 0
+    fi
+
+    cursor="$(jq -r '.data.node.items.pageInfo.endCursor // empty' <<<"$response")"
+    if [[ -z "$cursor" ]]; then
+      return 0
+    fi
+  done
 }
 
 option_id_from_cache() {
@@ -158,8 +182,8 @@ extract_body_field_value() {
   local body="$1" name="$2"
   awk -v n="$name" '
     BEGIN { IGNORECASE = 1 }
-    $0 ~ "^[[:space:]]*" n "[[:space:]]*:[[:space:]]*" {
-      sub("^[[:space:]]*" n "[[:space:]]*:[[:space:]]*", "", $0)
+    $0 ~ "^[[:space:]]*([-*][[:space:]]*)?" n "[[:space:]]*:[[:space:]]*" {
+      sub("^[[:space:]]*([-*][[:space:]]*)?" n "[[:space:]]*:[[:space:]]*", "", $0)
       print $0
       exit
     }
