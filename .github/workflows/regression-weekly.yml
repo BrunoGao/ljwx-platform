@@ -22,7 +22,7 @@ jobs:
       GH_TOKEN: ${{ secrets.PROJECT_TOKEN != '' && secrets.PROJECT_TOKEN || (secrets.PROJECT_V2_TOKEN != '' && secrets.PROJECT_V2_TOKEN || github.token) }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Validate tools
         run: |
