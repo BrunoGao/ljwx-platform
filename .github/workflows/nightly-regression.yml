@@ -13,10 +13,40 @@ permissions:
 jobs:
   nightly_regression:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: ljwx_platform
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d ljwx_platform"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 20
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 20
     env:
       GH_TOKEN: ${{ github.token }}
       BASE_URL: http://localhost:8080
       ENABLE_E2E: "1"
+      LOGIN_PATH: /api/auth/login
+      FORBIDDEN_PATH: /api/users
+      RESOURCE_LIST_PATH: /api/v1/menus
+      TENANT_A_USER: admin
+      TENANT_A_PASS: Admin@12345
+      TENANT_B_USER: tenantB_admin
+      TENANT_B_PASS: Admin@12345
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -36,23 +66,56 @@ jobs:
           command -v gh >/dev/null
           command -v docker >/dev/null
 
-      - name: Start MySQL/Redis test environment
+      - name: Build and install all modules
         shell: bash
         run: |
           set -euo pipefail
-          START_APP_CONTAINER=false bash scripts/setup-test-env.sh up
+          mvn install -DskipTests -q
+
+      - name: Wait for PostgreSQL
+        shell: bash
+        run: |
+          set -euo pipefail
+          for i in {1..30}; do
+            if (echo > /dev/tcp/127.0.0.1/5432) >/dev/null 2>&1; then
+              echo "PostgreSQL is ready"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "PostgreSQL is not reachable on 127.0.0.1:5432" >&2
+          exit 1
+
+      - name: Wait for Redis
+        shell: bash
+        run: |
+          set -euo pipefail
+          for i in {1..30}; do
+            if (echo > /dev/tcp/127.0.0.1/6379) >/dev/null 2>&1; then
+              echo "Redis is ready"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "Redis is not reachable on 127.0.0.1:6379" >&2
+          exit 1
 
       - name: Start app locally
         shell: bash
         run: |
           set -euo pipefail
-          SPRING_PROFILES_ACTIVE=test \
-          SPRING_DATASOURCE_URL='jdbc:mysql://127.0.0.1:3307/ljwx_platform?useUnicode=true&characterEncoding=UTF-8&serverTimezone=UTC' \
-          SPRING_DATASOURCE_USERNAME=ljwx \
-          SPRING_DATASOURCE_PASSWORD=ljwx \
-          SPRING_REDIS_HOST=127.0.0.1 \
-          SPRING_REDIS_PORT=6380 \
-          mvn -f ljwx-platform-app/pom.xml -DskipTests spring-boot:run > app.log 2>&1 &
+          SPRING_PROFILES_ACTIVE=test,dev \
+          SPRING_DATASOURCE_URL='jdbc:postgresql://127.0.0.1:5432/ljwx_platform' \
+          SPRING_DATASOURCE_USERNAME=postgres \
+          SPRING_DATASOURCE_PASSWORD=postgres \
+          REDIS_HOST=127.0.0.1 \
+          REDIS_PORT=6379 \
+          mvn -f ljwx-platform-app/pom.xml \
+            -e \
+            -DskipTests \
+            -Dspring-boot.run.profiles=test,dev \
+            -Dspring-boot.run.useTestClasspath=true \
+            spring-boot:run > app.log 2>&1 &
           echo $! > app.pid
 
       - name: Wait app health
@@ -60,6 +123,11 @@ jobs:
         run: |
           set -euo pipefail
           for i in {1..240}; do
+            if [[ -f app.pid ]] && ! kill -0 "$(cat app.pid)" 2>/dev/null; then
+              echo "app process exited before health check passed" >&2
+              tail -n 300 app.log || true
+              exit 1
+            fi
             if curl -fsS "${BASE_URL}/actuator/health" >/dev/null 2>&1; then
               echo "app is healthy"
               exit 0
@@ -69,6 +137,12 @@ jobs:
           echo "app health check timeout" >&2
           tail -n 200 app.log || true
           exit 1
+
+      - name: Seed E2E fixtures
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash scripts/e2e/seed-fixtures.sh
 
       - name: Run R10 E2E
         id: r10
@@ -154,7 +228,6 @@ jobs:
         run: |
           set -euo pipefail
           if [[ -f app.pid ]]; then kill "$(cat app.pid)" || true; fi
-          bash scripts/setup-test-env.sh clean || true
 
       - name: Fail workflow on regression
         if: always()

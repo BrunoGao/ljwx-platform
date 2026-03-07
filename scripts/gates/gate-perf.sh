@@ -17,7 +17,30 @@ run_k6() {
     return
   fi
   if command -v docker >/dev/null 2>&1; then
-    docker run --rm -i -v "$PROJECT_ROOT:/work" -w /work grafana/k6:0.49.0 "$@"
+    local network_args=()
+    local env_args=()
+
+    if [[ -n "${K6_DOCKER_NETWORK:-}" ]]; then
+      network_args+=(--network "${K6_DOCKER_NETWORK}")
+    elif [[ "$(uname -s)" == "Linux" ]]; then
+      network_args+=(--network host)
+    fi
+
+    local env_key
+    for env_key in \
+      BASE_URL LOGIN_PATH TENANT_A_USER TENANT_A_PASS \
+      K6_VUS K6_DURATION PERF_ENDPOINTS; do
+      if [[ -n "${!env_key:-}" ]]; then
+        env_args+=(-e "${env_key}")
+      fi
+    done
+
+    docker run --rm -i \
+      "${network_args[@]}" \
+      "${env_args[@]}" \
+      -v "$PROJECT_ROOT:/work" \
+      -w /work \
+      grafana/k6:0.49.0 "$@"
     return
   fi
   echo "k6 is not available and docker fallback is unavailable" >&2

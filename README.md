@@ -95,7 +95,7 @@ pnpm dev
 
 数据大屏默认访问 `http://localhost:5174`。
 
-### 6. 一键 Docker Compose（推荐端到端验收）
+### 6. 一键 Docker Compose（快速本地栈）
 
 ```bash
 cp .env.compose.example .env.compose
@@ -143,12 +143,15 @@ DEPLOY_MODE=delivery bash scripts/local/compose-stack.sh e2e
 DEPLOY_MODE=delivery bash scripts/local/compose-stack.sh down
 ```
 
-### 8. 本地 k3s 纯交付件部署（不依赖 Argo）
+### 8. 本地 k3s 纯交付件部署与系统测试（推荐）
 
 ```bash
 cp .env.k3s.delivery.example .env.k3s.delivery
 # 必填：镜像引用、数据库口令；按需设置拉取凭据
 bash scripts/local/k3s-delivery.sh apply
+bash scripts/local/k3s-delivery.sh smoke
+bash scripts/local/k3s-delivery.sh e2e
+bash scripts/local/k3s-delivery.sh perf
 bash scripts/local/k3s-delivery.sh status
 ```
 
@@ -157,6 +160,8 @@ bash scripts/local/k3s-delivery.sh status
 - Secret 参考模板：`deploy/k3s/artifact/ljwx-platform-db.secret.example.yaml`
 - `MANAGE_DB_SECRET=1` 时脚本会根据 `.env.k3s.delivery` 创建/更新 `ljwx-platform-db`
 - `MANAGE_PULL_SECRET=1` 时脚本会创建镜像拉取 secret 并补丁 default service account
+- `smoke` / `e2e` / `perf` 通过 `kubectl port-forward` 访问本地 `127.0.0.1`
+- `system-test` 可串行执行 `smoke + e2e + perf`
 
 ### 9. 运行 Gate 检查
 
@@ -357,6 +362,9 @@ ljwx-platform/
 若只需要验证“交付件可直接落地 k3s”（不经过 Argo），可使用：
 
 - `bash scripts/local/k3s-delivery.sh apply`
+- `bash scripts/local/k3s-delivery.sh smoke`
+- `bash scripts/local/k3s-delivery.sh e2e`
+- `bash scripts/local/k3s-delivery.sh perf`
 - `bash scripts/local/k3s-delivery.sh status`
 
 ## Grafana 可观测看板（日志 + 链路 + 指标）

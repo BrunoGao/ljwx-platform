@@ -3,19 +3,22 @@ set -euo pipefail
 
 DB_NAME="${DB_NAME:-ljwx_platform}"
 DB_USERNAME="${DB_USERNAME:-postgres}"
+DB_HOST="${DB_HOST:-127.0.0.1}"
+DB_PORT="${DB_PORT:-5432}"
+DB_PASSWORD="${DB_PASSWORD:-}"
 POSTGRES_IMAGE_FILTER="${POSTGRES_IMAGE_FILTER:-postgres:16-alpine}"
 POSTGRES_CONTAINER_ID="${POSTGRES_CONTAINER_ID:-}"
+PSQL_MODE="${PSQL_MODE:-auto}"
+K8S_NAMESPACE="${K8S_NAMESPACE:-}"
+K8S_PSQL_IMAGE="${K8S_PSQL_IMAGE:-postgres:16-alpine}"
 
-if [[ -z "${POSTGRES_CONTAINER_ID}" ]]; then
-  POSTGRES_CONTAINER_ID="$(docker ps --filter "ancestor=${POSTGRES_IMAGE_FILTER}" --format '{{.ID}}' | head -n1)"
-fi
+TMP_SQL_FILE="$(mktemp)"
+cleanup() {
+  rm -f "${TMP_SQL_FILE}"
+}
+trap cleanup EXIT
 
-if [[ -z "${POSTGRES_CONTAINER_ID}" ]]; then
-  echo "未找到 PostgreSQL 容器，请确认 services.postgres 已启动" >&2
-  exit 1
-fi
-
-docker exec -i "${POSTGRES_CONTAINER_ID}" psql -v ON_ERROR_STOP=1 -U "${DB_USERNAME}" -d "${DB_NAME}" <<'SQL'
+cat >"${TMP_SQL_FILE}" <<'SQL'
 -- Ensure tenant B exists with tenant_id=200001, and keep seeded entities aligned.
 INSERT INTO sys_tenant (id, name, code, status, tenant_id, created_by, updated_by, version)
 VALUES (200001, 'Tenant B', 'tenant_b', 1, 0, 0, 0, 1)
@@ -124,5 +127,106 @@ WHERE NOT EXISTS (
     AND ur.deleted = FALSE
 );
 SQL
+
+run_via_docker() {
+  local container_id="${POSTGRES_CONTAINER_ID}"
+  if [[ -z "${container_id}" && -n "$(command -v docker || true)" ]]; then
+    container_id="$(docker ps --filter "ancestor=${POSTGRES_IMAGE_FILTER}" --format '{{.ID}}' | head -n1)"
+  fi
+
+  if [[ -z "${container_id}" ]]; then
+    echo "未找到 PostgreSQL 容器，请确认 compose/services.postgres 已启动" >&2
+    return 1
+  fi
+
+  docker exec -i "${container_id}" psql -v ON_ERROR_STOP=1 -U "${DB_USERNAME}" -d "${DB_NAME}" <"${TMP_SQL_FILE}"
+}
+
+run_via_local_psql() {
+  if ! command -v psql >/dev/null 2>&1; then
+    echo "未安装 psql，无法使用本地 PostgreSQL 直连写入夹具" >&2
+    return 1
+  fi
+
+  if [[ -z "${DB_PASSWORD}" ]]; then
+    echo "DB_PASSWORD 为空，无法使用本地 PostgreSQL 直连写入夹具" >&2
+    return 1
+  fi
+
+  PGPASSWORD="${DB_PASSWORD}" psql \
+    -v ON_ERROR_STOP=1 \
+    -h "${DB_HOST}" \
+    -p "${DB_PORT}" \
+    -U "${DB_USERNAME}" \
+    -d "${DB_NAME}" \
+    -f "${TMP_SQL_FILE}"
+}
+
+run_via_kubectl() {
+  if ! command -v kubectl >/dev/null 2>&1; then
+    echo "未安装 kubectl，无法通过 k3s/Kubernetes 临时 Pod 写入夹具" >&2
+    return 1
+  fi
+
+  if [[ -z "${K8S_NAMESPACE}" ]]; then
+    echo "K8S_NAMESPACE 未设置，无法通过 k3s/Kubernetes 临时 Pod 写入夹具" >&2
+    return 1
+  fi
+
+  if [[ -z "${DB_PASSWORD}" ]]; then
+    echo "DB_PASSWORD 为空，无法通过 k3s/Kubernetes 临时 Pod 写入夹具" >&2
+    return 1
+  fi
+
+  local pod_name
+  pod_name="ljwx-seed-fixtures-$(date +%s)"
+
+  set +e
+  kubectl -n "${K8S_NAMESPACE}" run "${pod_name}" \
+    --image="${K8S_PSQL_IMAGE}" \
+    --restart=Never \
+    --rm -i --attach=true \
+    --env="PGPASSWORD=${DB_PASSWORD}" \
+    --command -- \
+    psql \
+      -v ON_ERROR_STOP=1 \
+      -h "${DB_HOST}" \
+      -p "${DB_PORT}" \
+      -U "${DB_USERNAME}" \
+      -d "${DB_NAME}" <"${TMP_SQL_FILE}"
+  local rc=$?
+  set -e
+
+  kubectl -n "${K8S_NAMESPACE}" delete pod "${pod_name}" --ignore-not-found --wait=false >/dev/null 2>&1 || true
+  return "${rc}"
+}
+
+case "${PSQL_MODE}" in
+  auto)
+    if run_via_docker; then
+      :
+    elif [[ -n "${K8S_NAMESPACE}" ]] && run_via_kubectl; then
+      :
+    elif run_via_local_psql; then
+      :
+    else
+      echo "E2E fixture 写入失败：未找到可用 PostgreSQL 访问方式（docker / kubectl / psql）" >&2
+      exit 1
+    fi
+    ;;
+  docker)
+    run_via_docker
+    ;;
+  psql)
+    run_via_local_psql
+    ;;
+  kubectl)
+    run_via_kubectl
+    ;;
+  *)
+    echo "PSQL_MODE 非法: ${PSQL_MODE}，仅支持 auto/docker/psql/kubectl" >&2
+    exit 1
+    ;;
+esac
 
 echo "E2E fixtures seeded for tenantB_admin"
