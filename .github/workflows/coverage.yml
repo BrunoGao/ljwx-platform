@@ -114,7 +114,7 @@ jobs:
 
       - name: Upload to Codecov
         if: ${{ env.CODECOV_TOKEN != '' }}
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v5
         with:
           token: ${{ env.CODECOV_TOKEN }}
           files: ljwx-platform-app/target/site/jacoco/jacoco.xml
