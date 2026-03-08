@@ -101,4 +101,17 @@
         </if>
     </select>
 
+    <update id="deleteById">
+        UPDATE sys_operation_log
+        SET deleted = TRUE
+        WHERE id = #{id}
+          AND deleted = FALSE
+    </update>
+
+    <update id="cleanAll">
+        UPDATE sys_operation_log
+        SET deleted = TRUE
+        WHERE deleted = FALSE
+    </update>
+
 </mapper>

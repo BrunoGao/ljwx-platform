@@ -57,6 +57,8 @@ export type {
   NoticeUpdateDTO,
   ScreenOverviewVO,
   ScreenRealtimeVO,
+  ScreenStatItem,
+  ScreenRecentOperation,
   ScreenTrendItem,
   ScreenTrendVO,
   MenuVO,

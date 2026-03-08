@@ -44,6 +44,8 @@ public class AuthAppService {
     private final CurrentTenantHolder tenantHolder;
     private final TokenBlacklistService tokenBlacklistService;
     private final LoginLockoutService loginLockoutService;
+    private final LoginLogAppService loginLogAppService;
+    private final OnlineUserAppService onlineUserAppService;
 
     /**
      * 用户登录：校验密码 → 加载权限 → 签发双 Token。
@@ -52,8 +54,19 @@ public class AuthAppService {
      * selectByUsername 跨租户查询（LIMIT 1 取首条）。
      */
     public LoginVO login(LoginDTO dto) {
+        return login(dto, null, null);
+    }
+
+    /**
+     * 用户登录：校验密码 → 加载权限 → 签发双 Token。
+     *
+     * <p>登录时无 Auth 上下文，TenantLineInterceptor 绕过，
+     * selectByUsername 跨租户查询（LIMIT 1 取首条）。
+     */
+    public LoginVO login(LoginDTO dto, String clientIp, String userAgent) {
         // 0. 检查账号是否被锁定
         if (loginLockoutService.isLocked(dto.getUsername())) {
+            recordLogin(dto.getUsername(), clientIp, userAgent, false, "账号已锁定，请30分钟后重试");
             throw new BusinessException(ErrorCode.ACCOUNT_LOCKED, "账号已锁定，请30分钟后重试");
         }
 
@@ -61,17 +74,20 @@ public class AuthAppService {
         SysUser user = userMapper.selectByUsername(dto.getUsername());
         if (user == null) {
             loginLockoutService.recordFailure(dto.getUsername());
+            recordLogin(dto.getUsername(), clientIp, userAgent, false, "用户名或密码错误");
             throw new BusinessException(ErrorCode.TOKEN_INVALID, "用户名或密码错误");
         }
 
         // 2. BCrypt 密码校验（日志不输出 password）
         if (!passwordEncoder.matches(dto.getPassword(), user.getPassword())) {
             loginLockoutService.recordFailure(dto.getUsername());
+            recordLogin(dto.getUsername(), clientIp, userAgent, false, "用户名或密码错误");
             throw new BusinessException(ErrorCode.TOKEN_INVALID, "用户名或密码错误");
         }
 
         // 3. 账号状态校验
         if (user.getStatus() == null || user.getStatus() != 1) {
+            recordLogin(dto.getUsername(), clientIp, userAgent, false, "账号已禁用");
             throw new BusinessException(ErrorCode.TOKEN_INVALID, "账号已禁用");
         }
 
@@ -96,6 +112,8 @@ public class AuthAppService {
         vo.setRefreshToken(refreshToken);
         vo.setExpiresIn(jwtProperties.getAccessTokenExpiration());
         vo.setUserInfo(userInfo);
+        registerOnlineToken(accessToken, user.getUsername());
+        recordLogin(dto.getUsername(), clientIp, userAgent, true, "登录成功");
         return vo;
     }
 
@@ -125,6 +143,7 @@ public class AuthAppService {
         vo.setAccessToken(newAccess);
         vo.setRefreshToken(newRefresh);
         vo.setExpiresIn(jwtProperties.getAccessTokenExpiration());
+        registerOnlineToken(newAccess, username);
         return vo;
     }
 
@@ -172,7 +191,21 @@ public class AuthAppService {
             long remainingSeconds =
                     (claims.getExpiration().getTime() - System.currentTimeMillis()) / 1000;
             tokenBlacklistService.addToBlacklist(jti, remainingSeconds);
+            onlineUserAppService.remove(jti);
         }
+    }
+
+    private void registerOnlineToken(String token, String username) {
+        Claims claims = jwtTokenProvider.parseToken(token);
+        String jti = jwtTokenProvider.getJti(claims);
+        if (jti != null) {
+            onlineUserAppService.register(jti, username);
+        }
+    }
+
+    private void recordLogin(String username, String clientIp, String userAgent,
+                             boolean success, String message) {
+        loginLogAppService.recordLogin(username, clientIp, userAgent, success ? 1 : 0, message);
     }
 
     private UserInfoVO buildUserInfo(SysUser user, List<String> authorities, List<String> roles) {

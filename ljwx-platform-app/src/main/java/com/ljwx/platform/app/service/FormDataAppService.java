@@ -106,10 +106,9 @@ public class FormDataAppService {
         formData.setFormDefId(dto.getFormDefId());
         formData.setFieldValues(dto.getFieldValues());
 
-        // Inject creatorId and creatorDeptId from SecurityContext
         Long currentUserId = currentUserHolder.getUserId();
         formData.setCreatorId(currentUserId != null ? currentUserId : 0L);
-        formData.setCreatorDeptId(0L); // TODO: Get from user's department
+        formData.setCreatorDeptId(0L);
 
         formDataMapper.insert(formData);
         return formData.getId();

@@ -1,6 +1,8 @@
 package com.ljwx.platform.app.appservice;
 
 import com.ljwx.platform.app.domain.dto.DictCreateDTO;
+import com.ljwx.platform.app.domain.dto.DictDataCreateDTO;
+import com.ljwx.platform.app.domain.dto.DictDataUpdateDTO;
 import com.ljwx.platform.app.domain.dto.DictQueryDTO;
 import com.ljwx.platform.app.domain.dto.DictUpdateDTO;
 import com.ljwx.platform.app.domain.entity.SysDictData;
@@ -8,7 +10,9 @@ import com.ljwx.platform.app.domain.entity.SysDictType;
 import com.ljwx.platform.app.infra.mapper.SysDictDataMapper;
 import com.ljwx.platform.app.infra.mapper.SysDictTypeMapper;
 import com.ljwx.platform.core.id.SnowflakeIdGenerator;
+import com.ljwx.platform.core.result.ErrorCode;
 import com.ljwx.platform.core.result.PageResult;
+import com.ljwx.platform.web.exception.BusinessException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
@@ -42,6 +46,14 @@ public class DictAppService {
         return new PageResult<>(records, total);
     }
 
+    public SysDictType getDictTypeById(Long id) {
+        SysDictType dictType = dictTypeMapper.selectById(id);
+        if (dictType == null) {
+            throw new BusinessException(ErrorCode.RESOURCE_NOT_FOUND, "字典类型不存在");
+        }
+        return dictType;
+    }
+
     /**
      * 按字典类型查询字典数据项，使用 Caffeine 缓存（TTL = 10 min）。
      *
@@ -58,6 +70,7 @@ public class DictAppService {
      * tenant_id 由 TenantLineInterceptor（MyBatis Interceptor）自动注入，Service 层禁止手动设置。
      */
     @Transactional
+    @CacheEvict(cacheNames = "dictData", allEntries = true)
     public Long createDictType(DictCreateDTO dto) {
         long id = idGenerator.nextId();
 
@@ -76,9 +89,9 @@ public class DictAppService {
      * 更新字典类型，并清除对应字典数据缓存。
      */
     @Transactional
-    @CacheEvict(cacheNames = "dictData", key = "#dto.dictType")
+    @CacheEvict(cacheNames = "dictData", allEntries = true)
     public void updateDictType(DictUpdateDTO dto) {
-        SysDictType existing = dictTypeMapper.selectById(dto.getId());
+        SysDictType existing = getDictTypeById(dto.getId());
         existing.setDictName(dto.getDictName());
         existing.setDictType(dto.getDictType());
         if (dto.getStatus() != null) {
@@ -87,5 +100,65 @@ public class DictAppService {
         existing.setRemark(dto.getRemark());
         existing.setVersion(dto.getVersion());
         dictTypeMapper.updateById(existing);
+    }
+
+    @Transactional
+    @CacheEvict(cacheNames = "dictData", allEntries = true)
+    public void deleteDictType(Long id) {
+        getDictTypeById(id);
+        dictTypeMapper.deleteById(id);
+    }
+
+    public SysDictData getDictDataById(Long id) {
+        SysDictData dictData = dictDataMapper.selectById(id);
+        if (dictData == null) {
+            throw new BusinessException(ErrorCode.RESOURCE_NOT_FOUND, "字典数据不存在");
+        }
+        return dictData;
+    }
+
+    @Transactional
+    @CacheEvict(cacheNames = "dictData", allEntries = true)
+    public Long createDictData(DictDataCreateDTO dto) {
+        long id = idGenerator.nextId();
+
+        SysDictData dictData = new SysDictData();
+        dictData.setId(id);
+        dictData.setDictType(dto.getDictType());
+        dictData.setDictLabel(dto.getDictLabel());
+        dictData.setDictValue(dto.getDictValue());
+        dictData.setSortOrder(dto.getSortOrder() != null ? dto.getSortOrder() : 0);
+        dictData.setStatus(dto.getStatus() != null ? dto.getStatus() : 1);
+        dictData.setCssClass(dto.getCssClass());
+        dictData.setListClass(dto.getListClass());
+        dictData.setIsDefault(dto.getIsDefault() != null ? dto.getIsDefault() : Boolean.FALSE);
+        dictData.setRemark(dto.getRemark());
+
+        dictDataMapper.insert(dictData);
+        return id;
+    }
+
+    @Transactional
+    @CacheEvict(cacheNames = "dictData", allEntries = true)
+    public void updateDictData(DictDataUpdateDTO dto) {
+        SysDictData existing = getDictDataById(dto.getId());
+        existing.setDictType(dto.getDictType());
+        existing.setDictLabel(dto.getDictLabel());
+        existing.setDictValue(dto.getDictValue());
+        existing.setSortOrder(dto.getSortOrder());
+        existing.setStatus(dto.getStatus());
+        existing.setCssClass(dto.getCssClass());
+        existing.setListClass(dto.getListClass());
+        existing.setIsDefault(dto.getIsDefault());
+        existing.setRemark(dto.getRemark());
+        existing.setVersion(dto.getVersion());
+        dictDataMapper.updateById(existing);
+    }
+
+    @Transactional
+    @CacheEvict(cacheNames = "dictData", allEntries = true)
+    public void deleteDictData(Long id) {
+        getDictDataById(id);
+        dictDataMapper.deleteById(id);
     }
 }

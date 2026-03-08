@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { ElMessage } from 'element-plus'
 import { Upload, Download, Refresh } from '@element-plus/icons-vue'
-import { importData, exportData, listTasks, getTask } from '@/api/system/import-export'
+import { importData, exportData, listTasks } from '@/api/system/import-export'
 import type { ImportExportTaskVO, ImportExportTaskQueryDTO } from '@/api/system/import-export'
 import type { UploadProps, UploadFile } from 'element-plus'
 
@@ -53,8 +53,8 @@ async function loadTasks() {
   loading.value = true
   try {
     const res = await listTasks(queryParams.value)
-    tasks.value = res.data.rows
-    total.value = res.data.total
+    tasks.value = res.rows
+    total.value = res.total
   } finally {
     loading.value = false
   }
@@ -118,8 +118,8 @@ async function handleImport() {
 
   loading.value = true
   try {
-    const res = await importData(formData)
-    ElMessage.success(`导入任务已创建，任务ID: ${res.data}`)
+    const taskId = await importData(formData)
+    ElMessage.success(`导入任务已创建，任务ID: ${taskId}`)
     importDialogVisible.value = false
     loadTasks()
     startPolling()
@@ -142,12 +142,12 @@ async function handleExport() {
 
   loading.value = true
   try {
-    const res = await exportData({
+    const taskId = await exportData({
       taskType: 'EXPORT',
       businessType: exportForm.value.businessType,
       fileName: exportForm.value.fileName
     })
-    ElMessage.success(`导出任务已创建，任务ID: ${res.data}`)
+    ElMessage.success(`导出任务已创建，任务ID: ${taskId}`)
     exportDialogVisible.value = false
     loadTasks()
     startPolling()

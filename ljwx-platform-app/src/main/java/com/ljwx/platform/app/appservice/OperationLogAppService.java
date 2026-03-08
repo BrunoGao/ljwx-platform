@@ -4,10 +4,13 @@ import com.ljwx.platform.app.domain.dto.OperationLogQueryDTO;
 import com.ljwx.platform.app.domain.entity.SysOperationLog;
 import com.ljwx.platform.app.infra.mapper.SysOperationLogMapper;
 import com.ljwx.platform.core.id.SnowflakeIdGenerator;
+import com.ljwx.platform.core.result.ErrorCode;
 import com.ljwx.platform.core.result.PageResult;
+import com.ljwx.platform.web.exception.BusinessException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.regex.Pattern;
@@ -76,6 +79,14 @@ public class OperationLogAppService {
         return new PageResult<>(records, total);
     }
 
+    public SysOperationLog getOperationLogById(Long id) {
+        SysOperationLog log = operationLogMapper.selectById(id);
+        if (log == null) {
+            throw new BusinessException(ErrorCode.RESOURCE_NOT_FOUND, "操作日志不存在");
+        }
+        return log;
+    }
+
     /**
      * 导出操作日志（返回列表，不设页大小限制；调用方可进一步处理为文件）。
      */
@@ -83,6 +94,17 @@ public class OperationLogAppService {
         query.setPageSize(Integer.MAX_VALUE);
         query.setPageNum(1);
         return operationLogMapper.selectList(query);
+    }
+
+    @Transactional
+    public void deleteOperationLog(Long id) {
+        getOperationLogById(id);
+        operationLogMapper.deleteById(id);
+    }
+
+    @Transactional
+    public int cleanOperationLogs() {
+        return operationLogMapper.cleanAll();
     }
 
     // ── 私有工具方法 ─────────────────────────────────────────────

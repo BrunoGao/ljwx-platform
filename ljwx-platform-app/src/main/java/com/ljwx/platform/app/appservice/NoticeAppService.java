@@ -47,6 +47,17 @@ public class NoticeAppService {
     }
 
     /**
+     * 查询通知详情。
+     */
+    public SysNotice getNotice(Long id) {
+        SysNotice notice = noticeMapper.selectById(id);
+        if (notice == null) {
+            throw new BusinessException(ErrorCode.RESOURCE_NOT_FOUND, "通知不存在");
+        }
+        return notice;
+    }
+
+    /**
      * 创建通知/公告。
      * tenant_id 由 TenantLineInterceptor 自动注入，禁止手动设置。
      *
@@ -141,5 +152,17 @@ public class NoticeAppService {
         Long userId = userHolder.getUserId();
         if (userId == null) return 0L;
         return noticeUserMapper.countUnread(userId);
+    }
+
+    /**
+     * 删除通知。
+     */
+    @Transactional
+    public void deleteNotice(Long id) {
+        SysNotice notice = noticeMapper.selectById(id);
+        if (notice == null) {
+            throw new BusinessException(ErrorCode.RESOURCE_NOT_FOUND, "通知不存在");
+        }
+        noticeMapper.deleteById(id);
     }
 }

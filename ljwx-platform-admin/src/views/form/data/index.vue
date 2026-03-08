@@ -1,14 +1,12 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
-import { View, Edit } from '@element-plus/icons-vue'
+import { View } from '@element-plus/icons-vue'
 import {
   getFormDataList,
   getFormDataById,
-  updateFormData,
   type FormDataVO,
   type FormDataQueryDTO,
-  type FormDataUpdateDTO
 } from '@/api/form/form-data'
 import { getFormDefList, type FormDefVO } from '@/api/form/form-def'
 
@@ -34,7 +32,7 @@ const currentFormData = ref<FormDataVO>()
 async function fetchFormDefs() {
   try {
     const res = await getFormDefList({ pageNum: 1, pageSize: 100, status: 1 })
-    formDefOptions.value = res.data.rows
+    formDefOptions.value = res.rows
   } catch (error) {
     ElMessage.error('获取表单定义失败')
   }
@@ -49,8 +47,8 @@ async function fetchList() {
   loading.value = true
   try {
     const res = await getFormDataList(queryForm)
-    tableData.value = res.data.rows
-    total.value = res.data.total
+    tableData.value = res.rows
+    total.value = res.total
   } finally {
     loading.value = false
   }
@@ -75,8 +73,7 @@ async function handleView(row: FormDataVO) {
   dialogTitle.value = '查看表单数据'
   currentId.value = row.id
   try {
-    const res = await getFormDataById(row.id)
-    currentFormData.value = res.data
+    currentFormData.value = await getFormDataById(row.id)
     dialogVisible.value = true
   } catch (error) {
     ElMessage.error('获取详情失败')

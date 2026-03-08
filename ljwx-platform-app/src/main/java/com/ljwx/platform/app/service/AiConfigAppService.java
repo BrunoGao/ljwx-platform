@@ -7,8 +7,8 @@ import com.ljwx.platform.app.mapper.AiConfigMapper;
 import com.ljwx.platform.app.vo.ai.AiConfigVO;
 import com.ljwx.platform.core.context.CurrentTenantHolder;
 import com.ljwx.platform.web.exception.BusinessException;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,13 +24,20 @@ import java.util.Base64;
  */
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class AiConfigAppService {
 
     private final AiConfigMapper aiConfigMapper;
+    private final SensitiveDataCryptoService cryptoService;
+    private final String legacyAiKey;
 
-    // 简化实现：硬编码 AES 密钥（生产环境应从配置中心获取）
-    private static final String AES_KEY = "ljwx-ai-key-2026";
+    public AiConfigAppService(
+            AiConfigMapper aiConfigMapper,
+            SensitiveDataCryptoService cryptoService,
+            @Value("${ljwx.ai.legacy-aes-key:}") String legacyAiKey) {
+        this.aiConfigMapper = aiConfigMapper;
+        this.cryptoService = cryptoService;
+        this.legacyAiKey = legacyAiKey;
+    }
 
     /**
      * 获取当前租户的 AI 配置
@@ -44,7 +51,7 @@ public class AiConfigAppService {
         AiConfigVO vo = new AiConfigVO();
         vo.setProvider(config.getProvider());
         vo.setModelName(config.getModelName());
-        vo.setApiKeyMasked(maskApiKey(decrypt(config.getApiKeyEncrypted())));
+        vo.setApiKeyMasked(maskApiKey(decryptApiKey(config.getApiKeyEncrypted())));
         vo.setBaseUrl(config.getBaseUrl());
         vo.setTemperature(config.getTemperature());
         vo.setMaxTokens(config.getMaxTokens());
@@ -64,7 +71,7 @@ public class AiConfigAppService {
 
         config.setProvider(dto.getProvider());
         config.setModelName(dto.getModelName());
-        config.setApiKeyEncrypted(encrypt(dto.getApiKey()));
+        config.setApiKeyEncrypted(cryptoService.encrypt(dto.getApiKey()));
         config.setBaseUrl(dto.getBaseUrl());
         config.setTemperature(dto.getTemperature());
         config.setMaxTokens(dto.getMaxTokens());
@@ -91,40 +98,37 @@ public class AiConfigAppService {
         return config;
     }
 
-    /**
-     * 加密 API Key
-     *
-     * @param apiKey 明文 API Key
-     * @return 加密后的 API Key
-     */
-    private String encrypt(String apiKey) {
+    private String decryptApiKey(String encryptedApiKey) {
         try {
-            SecretKeySpec keySpec = new SecretKeySpec(AES_KEY.getBytes(StandardCharsets.UTF_8), "AES");
-            Cipher cipher = Cipher.getInstance("AES");
-            cipher.init(Cipher.ENCRYPT_MODE, keySpec);
-            byte[] encrypted = cipher.doFinal(apiKey.getBytes(StandardCharsets.UTF_8));
-            return Base64.getEncoder().encodeToString(encrypted);
-        } catch (Exception e) {
-            throw new BusinessException("API Key 加密失败", e);
+            return cryptoService.decrypt(encryptedApiKey);
+        } catch (BusinessException ex) {
+            return decryptLegacyApiKey(encryptedApiKey);
         }
     }
 
-    /**
-     * 解密 API Key
-     *
-     * @param encryptedApiKey 加密的 API Key
-     * @return 明文 API Key
-     */
-    private String decrypt(String encryptedApiKey) {
+    private String decryptLegacyApiKey(String encryptedApiKey) {
         try {
-            SecretKeySpec keySpec = new SecretKeySpec(AES_KEY.getBytes(StandardCharsets.UTF_8), "AES");
+            SecretKeySpec keySpec = new SecretKeySpec(legacyAiKeyBytes(), "AES");
             Cipher cipher = Cipher.getInstance("AES");
             cipher.init(Cipher.DECRYPT_MODE, keySpec);
             byte[] decrypted = cipher.doFinal(Base64.getDecoder().decode(encryptedApiKey));
             return new String(decrypted, StandardCharsets.UTF_8);
+        } catch (BusinessException ex) {
+            throw ex;
         } catch (Exception e) {
             throw new BusinessException("API Key 解密失败", e);
         }
+    }
+
+    private byte[] legacyAiKeyBytes() {
+        if (legacyAiKey == null || legacyAiKey.isBlank()) {
+            throw new BusinessException("API Key 解密失败：请配置 ljwx.ai.legacy-aes-key 以兼容旧版数据");
+        }
+        byte[] keyBytes = legacyAiKey.getBytes(StandardCharsets.UTF_8);
+        if (keyBytes.length != 16 && keyBytes.length != 24 && keyBytes.length != 32) {
+            throw new BusinessException("API Key 解密失败：ljwx.ai.legacy-aes-key 长度必须为 16/24/32 字节");
+        }
+        return keyBytes;
     }
 
     /**
@@ -142,4 +146,3 @@ public class AiConfigAppService {
         return prefix + "***...***" + suffix;
     }
 }
-

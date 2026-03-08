@@ -9,6 +9,7 @@ import com.ljwx.platform.core.result.Result;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.*;
 
 /**
@@ -29,7 +30,7 @@ public class ImportExportController {
      */
     @PreAuthorize("hasAuthority('system:importExport:import')")
     @PostMapping("/import")
-    public Result<Long> importData(@Valid @RequestBody ImportExportTaskDTO dto) {
+    public Result<Long> importData(@Valid @ModelAttribute ImportExportTaskDTO dto) {
         Long taskId = importExportService.createImportTask(dto);
         return Result.ok(taskId);
     }

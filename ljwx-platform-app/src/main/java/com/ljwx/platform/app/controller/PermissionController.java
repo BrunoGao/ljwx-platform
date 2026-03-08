@@ -16,7 +16,7 @@ import java.util.List;
  * 权限列表用于角色配置时的权限选择器。
  */
 @RestController
-@RequestMapping("/api/permissions")
+@RequestMapping({"/api/v1/permissions", "/api/permissions"})
 @RequiredArgsConstructor
 public class PermissionController {
 

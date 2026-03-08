@@ -31,8 +31,8 @@ async function fetchData() {
   loading.value = true
   try {
     const res = await getInstanceList(queryParams.value)
-    tableData.value = res.data.rows
-    total.value = res.data.total
+    tableData.value = res.rows
+    total.value = res.total
   } finally {
     loading.value = false
   }
@@ -53,8 +53,7 @@ function handleReset() {
 
 async function handleView(row: WfInstanceVO) {
   try {
-    const res = await getInstance(row.id)
-    currentInstance.value = res.data
+    currentInstance.value = await getInstance(row.id)
     detailDialogVisible.value = true
   } catch (error) {
     ElMessage.error('获取详情失败')

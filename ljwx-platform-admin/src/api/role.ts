@@ -14,35 +14,35 @@ import type {
  * 获取角色列表（分页）
  */
 export function getRoleList(params?: RoleQueryDTO): Promise<PageResult<RoleVO>> {
-  return request.get<PageResult<RoleVO>>('/api/roles', { params })
+  return request.get<PageResult<RoleVO>>('/api/v1/roles', { params })
 }
 
 /**
  * 创建角色
  */
 export function createRole(data: RoleCreateDTO): Promise<number> {
-  return request.post<number>('/api/roles', data)
+  return request.post<number>('/api/v1/roles', data)
 }
 
 /**
  * 更新角色
  */
 export function updateRole(id: number, data: RoleUpdateDTO): Promise<void> {
-  return request.put<void>(`/api/roles/${id}`, data)
+  return request.put<void>(`/api/v1/roles/${id}`, data)
 }
 
 /**
  * 删除角色
  */
 export function deleteRole(id: number): Promise<void> {
-  return request.delete<void>(`/api/roles/${id}`)
+  return request.delete<void>(`/api/v1/roles/${id}`)
 }
 
 /**
  * 获取权限列表
  */
 export function getPermissionList(): Promise<PermissionVO[]> {
-  return request.get<PermissionVO[]>('/api/permissions')
+  return request.get<PermissionVO[]>('/api/v1/permissions')
 }
 
 /**

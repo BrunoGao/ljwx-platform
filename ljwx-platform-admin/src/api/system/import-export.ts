@@ -1,5 +1,5 @@
 import request from '@/api/request'
-import type { Result, PageResult } from '@ljwx/shared'
+import type { PageResult } from '@ljwx/shared'
 
 export interface ImportExportTaskVO {
   id: number
@@ -39,7 +39,7 @@ export interface ExportRequestDTO {
 /**
  * 导入数据
  */
-export function importData(formData: FormData): Promise<Result<number>> {
+export function importData(formData: FormData): Promise<number> {
   return request.post('/api/v1/import-export/import', formData, {
     headers: {
       'Content-Type': 'multipart/form-data'
@@ -50,14 +50,14 @@ export function importData(formData: FormData): Promise<Result<number>> {
 /**
  * 导出数据
  */
-export function exportData(data: ExportRequestDTO): Promise<Result<number>> {
+export function exportData(data: ExportRequestDTO): Promise<number> {
   return request.post('/api/v1/import-export/export', data)
 }
 
-export function getTask(id: number): Promise<Result<ImportExportTaskVO>> {
+export function getTask(id: number): Promise<ImportExportTaskVO> {
   return request.get(`/api/v1/import-export/tasks/${id}`)
 }
 
-export function listTasks(params?: ImportExportTaskQueryDTO): Promise<Result<PageResult<ImportExportTaskVO>>> {
+export function listTasks(params?: ImportExportTaskQueryDTO): Promise<PageResult<ImportExportTaskVO>> {
   return request.get('/api/v1/import-export/tasks', { params })
 }

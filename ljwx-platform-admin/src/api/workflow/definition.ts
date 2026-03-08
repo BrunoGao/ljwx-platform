@@ -1,5 +1,5 @@
 import request from '@/api/request'
-import type { Result, PageResult } from '@ljwx/shared'
+import type { PageResult } from '@ljwx/shared'
 
 export interface WfDefinitionVO {
   id: number
@@ -26,18 +26,18 @@ export interface WfDefinitionQueryDTO {
   pageSize?: number
 }
 
-export function getDefinitionList(params?: WfDefinitionQueryDTO): Promise<Result<PageResult<WfDefinitionVO>>> {
+export function getDefinitionList(params?: WfDefinitionQueryDTO): Promise<PageResult<WfDefinitionVO>> {
   return request.get('/api/v1/workflows/definitions', { params })
 }
 
-export function createDefinition(data: WfDefinitionDTO): Promise<Result<number>> {
+export function createDefinition(data: WfDefinitionDTO): Promise<number> {
   return request.post('/api/v1/workflows/definitions', data)
 }
 
-export function updateDefinition(id: number, data: WfDefinitionDTO): Promise<Result<void>> {
+export function updateDefinition(id: number, data: WfDefinitionDTO): Promise<void> {
   return request.put(`/api/v1/workflows/definitions/${id}`, data)
 }
 
-export function deleteDefinition(id: number): Promise<Result<void>> {
+export function deleteDefinition(id: number): Promise<void> {
   return request.delete(`/api/v1/workflows/definitions/${id}`)
 }

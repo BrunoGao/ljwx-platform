@@ -17,14 +17,14 @@ import org.springframework.web.bind.annotation.RestController;
  * <p>路由：GET /api/v1/login-logs — 分页查询登录日志
  */
 @RestController
-@RequestMapping("/api/v1/login-logs")
+@RequestMapping({"/api/v1", "/api"})
 @RequiredArgsConstructor
 public class LoginLogController {
 
     private final LoginLogAppService loginLogAppService;
 
     @PreAuthorize("hasAuthority('system:log:login:list')")
-    @GetMapping
+    @GetMapping({"/login-logs", "/logs/login"})
     public Result<PageResult<LoginLogVO>> list(LoginLogQueryDTO query) {
         return Result.ok(loginLogAppService.listLoginLogs(query));
     }

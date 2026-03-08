@@ -2,9 +2,11 @@ package com.ljwx.platform.app.controller;
 
 import com.ljwx.platform.app.dto.WfDefinitionDTO;
 import com.ljwx.platform.app.dto.WfInstanceDTO;
+import com.ljwx.platform.app.dto.WfInstanceQueryDTO;
 import com.ljwx.platform.app.dto.WfTaskDTO;
 import com.ljwx.platform.app.service.WorkflowService;
 import com.ljwx.platform.app.vo.WfInstanceVO;
+import com.ljwx.platform.core.result.PageResult;
 import com.ljwx.platform.core.result.Result;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -75,6 +77,14 @@ public class WorkflowController {
         Long userId = Long.parseLong(authentication.getName());
         Long id = workflowService.startInstance(dto, userId);
         return Result.ok(id);
+    }
+
+    /**
+     * 查询流程实例列表
+     */
+    @GetMapping("/instances") @PreAuthorize("hasAuthority('system:workflow:instance:query')")
+    public Result<PageResult<WfInstanceVO>> listInstances(WfInstanceQueryDTO query) {
+        return Result.ok(workflowService.listInstances(query));
     }
 
     /**

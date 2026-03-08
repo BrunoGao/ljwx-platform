@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
+import { computed, ref, onMounted, onUnmounted } from 'vue'
 import { getScreenOverview, getScreenRealtime, getScreenTrend } from '@/api/screen'
 import type { ScreenOverviewVO, ScreenRealtimeVO, ScreenTrendVO } from '@ljwx/shared'
 import BarChart from '@/components/charts/BarChart.vue'
@@ -17,48 +17,60 @@ const loading = ref(false)
 
 let realtimeTimer: ReturnType<typeof setInterval> | null = null
 
-// ── Derived chart data ──────────────────────────────────────────────────────
+const trendXData = computed(() => trend.value?.userTrend.map((item) => item.date) ?? [])
+const userTrendData = computed(() => trend.value?.userTrend.map((item) => item.value) ?? [])
+const loginTrendData = computed(() => trend.value?.loginTrend.map((item) => item.value) ?? [])
 
-const trendXData = ref<string[]>([])
-const userTrendData = ref<number[]>([])
-const loginTrendData = ref<number[]>([])
+const roleDistData = computed(() => overview.value?.roleDistribution ?? [])
 
-const roleDistData = ref([
-  { name: '管理员', value: 12 },
-  { name: '普通用户', value: 88 },
-  { name: '访客', value: 24 },
-])
-
-const tenantBarData = ref({
-  xData: ['租户A', '租户B', '租户C', '租户D', '租户E'],
-  series: [{ name: '用户数', data: [120, 85, 200, 60, 145] }],
+const tenantBarData = computed(() => {
+  const distribution = overview.value?.tenantUserDistribution ?? []
+  return {
+    xData: distribution.map((item) => item.name),
+    series: [{ name: '用户数', data: distribution.map((item) => item.value) }],
+  }
 })
+
+const userStatusData = computed(() => overview.value?.userStatusDistribution ?? [])
 
 const scrollColumns = [
   { key: 'username', label: '用户名', width: '120px' },
-  { key: 'action', label: '操作', width: '100px' },
+  { key: 'action', label: '操作', width: '180px' },
   { key: 'time', label: '时间' },
 ]
 
-const scrollData = ref([
-  { username: 'admin', action: '登录', time: '10:01:23' },
-  { username: 'user01', action: '查询', time: '10:02:11' },
-  { username: 'user02', action: '新增', time: '10:03:05' },
-  { username: 'user03', action: '修改', time: '10:04:44' },
-  { username: 'user04', action: '删除', time: '10:05:30' },
-  { username: 'user05', action: '导出', time: '10:06:18' },
-  { username: 'user06', action: '登录', time: '10:07:02' },
-])
+const scrollData = computed(() => overview.value?.recentOperations ?? [])
+
+const healthConfig = computed(() => {
+  const metrics = [realtime.value?.cpuUsage ?? 0, realtime.value?.memoryUsage ?? 0]
+  let normal = 0
+  let warning = 0
+  let abnormal = 0
+
+  metrics.forEach((metric) => {
+    if (metric >= 90) {
+      abnormal += 1
+    } else if (metric >= 75) {
+      warning += 1
+    } else {
+      normal += 1
+    }
+  })
+
+  return {
+    data: [
+      { name: '正常', value: normal },
+      { name: '警告', value: warning },
+      { name: '异常', value: abnormal },
+    ],
+    radius: '60%',
+  }
+})
 
 // ── Data fetching ───────────────────────────────────────────────────────────
 
 async function fetchOverview() {
-  loading.value = true
-  try {
-    overview.value = await getScreenOverview()
-  } finally {
-    loading.value = false
-  }
+  overview.value = await getScreenOverview()
 }
 
 async function fetchRealtime() {
@@ -72,18 +84,22 @@ async function fetchRealtime() {
 async function fetchTrend() {
   try {
     trend.value = await getScreenTrend()
-    if (trend.value) {
-      trendXData.value = trend.value.userTrend.map((t) => t.date)
-      userTrendData.value = trend.value.userTrend.map((t) => t.value)
-      loginTrendData.value = trend.value.loginTrend.map((t) => t.value)
-    }
   } catch {
     // silently ignore
   }
 }
 
+async function loadScreen() {
+  loading.value = true
+  try {
+    await Promise.all([fetchOverview(), fetchRealtime(), fetchTrend()])
+  } finally {
+    loading.value = false
+  }
+}
+
 onMounted(async () => {
-  await Promise.all([fetchOverview(), fetchRealtime(), fetchTrend()])
+  await loadScreen()
   realtimeTimer = setInterval(fetchRealtime, 5000)
 })
 
@@ -222,14 +238,7 @@ onUnmounted(() => {
         <!-- Pie chart -->
         <dv-border-box-8 class="panel">
           <div class="panel-title">用户状态分布</div>
-          <PieChart
-            :data="[
-              { name: '活跃', value: 68 },
-              { name: '非活跃', value: 22 },
-              { name: '禁用', value: 10 },
-            ]"
-            height="200px"
-          />
+          <PieChart :data="userStatusData" height="200px" />
         </dv-border-box-8>
 
         <!-- Scroll table -->
@@ -246,14 +255,7 @@ onUnmounted(() => {
         <dv-border-box-8 class="panel">
           <div class="panel-title">系统状态</div>
           <dv-active-ring-chart
-            :config="{
-              data: [
-                { name: '正常', value: 95 },
-                { name: '警告', value: 4 },
-                { name: '异常', value: 1 },
-              ],
-              radius: '60%',
-            }"
+            :config="healthConfig"
             style="height: 180px"
           />
         </dv-border-box-8>
@@ -415,4 +417,3 @@ onUnmounted(() => {
   padding: 0 40px;
 }
 </style>
-

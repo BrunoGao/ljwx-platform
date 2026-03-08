@@ -37,7 +37,7 @@ import java.nio.charset.StandardCharsets;
  * </ul>
  */
 @RestController
-@RequestMapping("/api/files")
+@RequestMapping({"/api/v1/files", "/api/files"})
 @RequiredArgsConstructor
 public class FileController {
 

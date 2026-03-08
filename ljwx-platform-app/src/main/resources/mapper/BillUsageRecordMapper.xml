@@ -39,91 +39,73 @@
 
     <select id="countActiveTenants" resultType="java.lang.Long">
         SELECT COUNT(DISTINCT tenant_id)
-        FROM bill_usage_record
-        WHERE metric_type = 'LOGIN_COUNT'
-          AND record_date >= CURRENT_DATE - INTERVAL '#{recentDays} days'
+        FROM sys_login_log
+        WHERE status = 1
+          AND login_time >= CURRENT_DATE - (#{recentDays} - 1) * INTERVAL '1 day'
           AND deleted = FALSE
     </select>
 
     <select id="getDailyActiveUsers" resultType="com.ljwx.platform.app.vo.billing.DailyStatVO">
         SELECT
-            record_date AS date,
-            SUM(usage_value)::BIGINT AS count
-        FROM bill_usage_record
-        WHERE metric_type = 'LOGIN_COUNT'
-          AND record_date >= CURRENT_DATE - INTERVAL '#{recentDays} days'
+            CAST(login_time AS DATE) AS date,
+            COUNT(DISTINCT username)::BIGINT AS count
+        FROM sys_login_log
+        WHERE status = 1
+          AND login_time >= CURRENT_DATE - (#{recentDays} - 1) * INTERVAL '1 day'
           AND deleted = FALSE
-        GROUP BY record_date
-        ORDER BY record_date DESC
+        GROUP BY CAST(login_time AS DATE)
+        ORDER BY CAST(login_time AS DATE) DESC
     </select>
 
     <select id="sumStorageMb" resultType="java.math.BigDecimal">
-        SELECT COALESCE(SUM(usage_value), 0)
-        FROM (
-            SELECT DISTINCT ON (tenant_id) usage_value
-            FROM bill_usage_record
-            WHERE metric_type = 'STORAGE_MB'
-              AND deleted = FALSE
-            ORDER BY tenant_id, record_date DESC
-        ) latest_storage
+        SELECT COALESCE(ROUND(SUM(file_size)::numeric / 1048576, 2), 0)
+        FROM sys_file
+        WHERE deleted = FALSE
     </select>
 
     <select id="sumApiCallsToday" resultType="java.lang.Long">
-        SELECT COALESCE(SUM(usage_value)::BIGINT, 0)
-        FROM bill_usage_record
-        WHERE metric_type = 'API_CALLS'
-          AND record_date = CURRENT_DATE
+        SELECT COUNT(*)::BIGINT
+        FROM sys_operation_log
+        WHERE created_time >= CURRENT_DATE
+          AND created_time &lt; CURRENT_DATE + INTERVAL '1 day'
           AND deleted = FALSE
     </select>
 
     <select id="getTenantUsageSummaryList" resultType="com.ljwx.platform.app.vo.billing.TenantUsageSummaryVO">
         SELECT
             t.id AS tenantId,
-            t.tenant_name AS tenantName,
-            t.expire_time AS expireTime,
+            t.name AS tenantName,
+            NULL::TIMESTAMP AS expireTime,
             COALESCE(u.user_count, 0) AS userCount,
             COALESCE(s.storage_mb, 0) AS storageMb,
             COALESCE(a.api_calls_total, 0) AS apiCallsTotal,
             COALESCE(l.login_count_last30d, 0) AS loginCountLast30d,
-            CASE WHEN t.expire_time IS NOT NULL AND t.expire_time &lt;= CURRENT_TIMESTAMP + INTERVAL '30 days' THEN TRUE ELSE FALSE END AS isExpiringSoon
+            FALSE AS isExpiringSoon
         FROM sys_tenant t
         LEFT JOIN (
-            SELECT tenant_id, usage_value AS user_count
-            FROM bill_usage_record
-            WHERE metric_type = 'USER_COUNT'
-              AND deleted = FALSE
-              AND (tenant_id, record_date) IN (
-                  SELECT tenant_id, MAX(record_date)
-                  FROM bill_usage_record
-                  WHERE metric_type = 'USER_COUNT' AND deleted = FALSE
-                  GROUP BY tenant_id
-              )
+            SELECT tenant_id, COUNT(*)::BIGINT AS user_count
+            FROM sys_user
+            WHERE deleted = FALSE
+            GROUP BY tenant_id
         ) u ON t.id = u.tenant_id
         LEFT JOIN (
-            SELECT tenant_id, usage_value AS storage_mb
-            FROM bill_usage_record
-            WHERE metric_type = 'STORAGE_MB'
-              AND deleted = FALSE
-              AND (tenant_id, record_date) IN (
-                  SELECT tenant_id, MAX(record_date)
-                  FROM bill_usage_record
-                  WHERE metric_type = 'STORAGE_MB' AND deleted = FALSE
-                  GROUP BY tenant_id
-              )
+            SELECT tenant_id, COALESCE(ROUND(SUM(file_size)::numeric / 1048576, 2), 0) AS storage_mb
+            FROM sys_file
+            WHERE deleted = FALSE
+            GROUP BY tenant_id
         ) s ON t.id = s.tenant_id
         LEFT JOIN (
-            SELECT tenant_id, SUM(usage_value)::BIGINT AS api_calls_total
-            FROM bill_usage_record
-            WHERE metric_type = 'API_CALLS'
-              AND record_date >= CURRENT_DATE - INTERVAL '30 days'
+            SELECT tenant_id, COUNT(*)::BIGINT AS api_calls_total
+            FROM sys_operation_log
+            WHERE created_time >= CURRENT_DATE - INTERVAL '29 days'
               AND deleted = FALSE
             GROUP BY tenant_id
         ) a ON t.id = a.tenant_id
         LEFT JOIN (
-            SELECT tenant_id, SUM(usage_value)::BIGINT AS login_count_last30d
-            FROM bill_usage_record
-            WHERE metric_type = 'LOGIN_COUNT'
-              AND record_date >= CURRENT_DATE - INTERVAL '30 days'
+            SELECT tenant_id, COUNT(*)::BIGINT AS login_count_last30d
+            FROM sys_login_log
+            WHERE status = 1
+              AND login_time >= CURRENT_DATE - INTERVAL '29 days'
               AND deleted = FALSE
             GROUP BY tenant_id
         ) l ON t.id = l.tenant_id

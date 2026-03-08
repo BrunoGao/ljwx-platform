@@ -13,6 +13,13 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.naming.Context;
+import javax.naming.NamingEnumeration;
+import javax.naming.directory.Attribute;
+import javax.naming.directory.Attributes;
+import javax.naming.directory.DirContext;
+import javax.naming.directory.InitialDirContext;
+import java.util.Hashtable;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -150,8 +157,10 @@ public class TenantDomainAppService {
             throw new BusinessException(ErrorCode.DOMAIN_NOT_FOUND);
         }
 
-        // BL-43-08: 域名验证（简化版，实际应查询 DNS TXT 记录）
-        // 这里仅做标记，实际 DNS 验证需要集成 DNS 查询服务
+        if (!hasMatchingVerifyRecord(domain.getDomain(), domain.getVerifyToken())) {
+            throw new BusinessException(ErrorCode.DOMAIN_VERIFY_FAILED);
+        }
+
         domain.setVerified(true);
         domain.setVerifiedTime(LocalDateTime.now());
         tenantDomainMapper.updateById(domain);
@@ -164,5 +173,40 @@ public class TenantDomainAppService {
         TenantDomainVO vo = new TenantDomainVO();
         BeanUtils.copyProperties(domain, vo);
         return vo;
+    }
+
+    private boolean hasMatchingVerifyRecord(String domain, String verifyToken) {
+        String recordName = "_ljwx-verify." + domain;
+        Hashtable<String, String> env = new Hashtable<>();
+        env.put(Context.INITIAL_CONTEXT_FACTORY, "com.sun.jndi.dns.DnsContextFactory");
+
+        DirContext context = null;
+        try {
+            context = new InitialDirContext(env);
+            Attributes attributes = context.getAttributes(recordName, new String[]{"TXT"});
+            Attribute txt = attributes.get("TXT");
+            if (txt == null) {
+                return false;
+            }
+
+            NamingEnumeration<?> values = txt.getAll();
+            while (values.hasMore()) {
+                String candidate = String.valueOf(values.next()).replace("\"", "").trim();
+                if (verifyToken.equals(candidate)) {
+                    return true;
+                }
+            }
+            return false;
+        } catch (Exception e) {
+            log.warn("Tenant domain TXT lookup failed for {}: {}", recordName, e.getMessage());
+            throw new BusinessException(ErrorCode.DOMAIN_VERIFY_FAILED);
+        } finally {
+            if (context != null) {
+                try {
+                    context.close();
+                } catch (Exception ignored) {
+                }
+            }
+        }
     }
 }

@@ -33,8 +33,11 @@ public class AuthController {
 
     @PreAuthorize("permitAll()")
     @PostMapping("/login")
-    public Result<LoginVO> login(@RequestBody @Valid LoginDTO dto) {
-        return Result.ok(authAppService.login(dto));
+    public Result<LoginVO> login(@RequestBody @Valid LoginDTO dto, HttpServletRequest request) {
+        return Result.ok(authAppService.login(
+                dto,
+                extractClientIp(request),
+                request.getHeader("User-Agent")));
     }
 
     @PreAuthorize("permitAll()")
@@ -56,5 +59,13 @@ public class AuthController {
         String token = (header != null && header.startsWith("Bearer ")) ? header.substring(7) : null;
         authAppService.logout(token);
         return Result.ok();
+    }
+
+    private String extractClientIp(HttpServletRequest request) {
+        String forwardedFor = request.getHeader("X-Forwarded-For");
+        if (forwardedFor != null && !forwardedFor.isBlank()) {
+            return forwardedFor.split(",")[0].trim();
+        }
+        return request.getRemoteAddr();
     }
 }
