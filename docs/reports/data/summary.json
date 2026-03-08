@@ -1,14 +1,14 @@
 {
-  "generated_at": "2026-03-03T07:45:51Z",
+  "generated_at": "2026-03-08T00:34:35Z",
   "repo": {
     "owner": "unknown",
     "name": "unknown",
     "default_branch": "master"
   },
   "git": {
-    "branch": "master",
-    "commit": "d4b5a14",
-    "short": "d4b5a14"
+    "branch": "fix/sync-changes",
+    "commit": "aac2847",
+    "short": "aac2847"
   },
   "ci": {
     "run_id": null,
@@ -17,9 +17,9 @@
     "run_url": null
   },
   "totals": {
-    "pass": 32,
+    "pass": 31,
     "fail": 1,
-    "pending": 0,
+    "pending": 1,
     "critical": 3,
     "warnings": 0
   },
@@ -269,23 +269,14 @@
     },
     {
       "phase": "12",
-      "status": "PASS",
-      "pass_rate": 100,
-      "critical": 0,
-      "warnings": 0,
-      "timestamp": "2026-02-25T15:31:25Z",
-      "git_commit": "748007a",
+      "status": "PENDING",
+      "pass_rate": 0,
+      "critical": null,
+      "warnings": null,
+      "timestamp": "2026-03-08T00:34:35Z",
+      "git_commit": "aac2847",
       "r09_status": "PENDING",
-      "gate_status": {
-        "R01": "PASS",
-        "R02": "SKIP",
-        "R03": "SKIP",
-        "R04": "SKIP",
-        "R05": "SKIP",
-        "R06": "SKIP",
-        "R07": "SKIP",
-        "R08": "SKIP"
-      }
+      "gate_status": {}
     },
     {
       "phase": "13",
@@ -700,6 +691,17 @@
     }
   ],
   "history": [
+    {
+      "timestamp": "2026-03-08T00:34:35Z",
+      "phase": "12",
+      "status": "PENDING",
+      "pass_rate": 0,
+      "git_commit": "aac2847",
+      "critical": null,
+      "warnings": null,
+      "run_id": null,
+      "run_url": null
+    },
     {
       "timestamp": "2026-03-03T07:45:50Z",
       "phase": "32",
@@ -1231,17 +1233,6 @@
     {
       "timestamp": "2026-03-02T19:53:35Z",
       "phase": "50",
-      "status": "FAIL",
-      "pass_rate": 63.64,
-      "git_commit": "9e0cc83",
-      "critical": 3,
-      "warnings": 0,
-      "run_id": null,
-      "run_url": null
-    },
-    {
-      "timestamp": "2026-03-02T19:51:19Z",
-      "phase": "32",
       "status": "FAIL",
       "pass_rate": 63.64,
       "git_commit": "9e0cc83",

@@ -20,4 +20,8 @@ public interface SysOperationLogMapper {
     List<SysOperationLog> selectList(OperationLogQueryDTO query);
 
     long countList(OperationLogQueryDTO query);
+
+    int deleteById(Long id);
+
+    int cleanAll();
 }

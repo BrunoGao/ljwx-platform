@@ -183,6 +183,9 @@ fi
 echo ""
 
 run_rule "R11" "Baseline" "scripts/gates/gate-baseline.sh" "false"
+run_rule "R12" "No Placeholder" "scripts/gates/gate-no-placeholder.sh" "false"
+run_rule "R13" "Frontend API Contract" "scripts/gates/gate-frontend-api-contract.sh" "false"
+run_rule "R14" "Admin Route Coverage" "scripts/gates/gate-admin-route-coverage.sh" "false"
 
 if [[ -x "scripts/reports/collect-artifacts.sh" ]]; then
   bash scripts/reports/collect-artifacts.sh "$PHASE" >/dev/null 2>&1 || true

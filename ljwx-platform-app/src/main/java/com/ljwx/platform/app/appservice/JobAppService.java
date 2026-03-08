@@ -8,7 +8,9 @@ import com.ljwx.platform.app.infra.mapper.SysJobMapper;
 import com.ljwx.platform.app.infra.quartz.QuartzJobDispatcher;
 import com.ljwx.platform.core.context.CurrentTenantHolder;
 import com.ljwx.platform.core.id.SnowflakeIdGenerator;
+import com.ljwx.platform.core.result.ErrorCode;
 import com.ljwx.platform.core.result.PageResult;
+import com.ljwx.platform.web.exception.BusinessException;
 import lombok.RequiredArgsConstructor;
 import org.quartz.CronScheduleBuilder;
 import org.quartz.CronTrigger;
@@ -48,6 +50,14 @@ public class JobAppService {
         return new PageResult<>(records, total);
     }
 
+    public SysJob getJobById(Long id) {
+        SysJob job = jobMapper.selectById(id);
+        if (job == null) {
+            throw new BusinessException(ErrorCode.RESOURCE_NOT_FOUND, "任务不存在");
+        }
+        return job;
+    }
+
     @Transactional
     public Long createJob(JobCreateDTO dto) throws SchedulerException {
         long id = idGenerator.nextId();
@@ -82,7 +92,7 @@ public class JobAppService {
     public void updateJob(JobUpdateDTO dto) throws SchedulerException {
         Long tenantId = tenantHolder.getTenantId();
 
-        SysJob existing = jobMapper.selectById(dto.getId());
+        SysJob existing = getJobById(dto.getId());
         existing.setJobName(dto.getJobName());
         if (dto.getJobGroup() != null) {
             existing.setJobGroup(dto.getJobGroup());
@@ -114,7 +124,7 @@ public class JobAppService {
         JobKey jobKey = new JobKey(String.valueOf(id), "TENANT_" + tenantId);
         scheduler.pauseJob(jobKey);
 
-        SysJob job = jobMapper.selectById(id);
+        SysJob job = getJobById(id);
         job.setStatus(0);
         jobMapper.updateById(job);
     }
@@ -125,8 +135,16 @@ public class JobAppService {
         JobKey jobKey = new JobKey(String.valueOf(id), "TENANT_" + tenantId);
         scheduler.resumeJob(jobKey);
 
-        SysJob job = jobMapper.selectById(id);
+        SysJob job = getJobById(id);
         job.setStatus(1);
         jobMapper.updateById(job);
+    }
+
+    @Transactional
+    public void deleteJob(Long id) throws SchedulerException {
+        Long tenantId = tenantHolder.getTenantId();
+        getJobById(id);
+        scheduler.deleteJob(new JobKey(String.valueOf(id), "TENANT_" + tenantId));
+        jobMapper.deleteById(id);
     }
 }

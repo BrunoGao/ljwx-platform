@@ -1,10 +1,11 @@
 package com.ljwx.platform.app.ai.tool;
 
+import com.ljwx.platform.app.appservice.OnlineUserAppService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -17,6 +18,8 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class OnlineUserTool {
 
+    private final OnlineUserAppService onlineUserAppService;
+
     /**
      * 获取当前在线用户数
      * 权限约束：仅 system:online:list
@@ -24,11 +27,11 @@ public class OnlineUserTool {
      * @return 在线用户数
      */
     public Map<String, Object> getOnlineUserCount() {
-        Map<String, Object> result = new HashMap<>();
-        // 简化实现：返回占位数据
-        // 实际应从 Redis 或 Session 管理器获取
-        result.put("onlineCount", 0);
-        result.put("timestamp", System.currentTimeMillis());
-        return result;
+        List<Map<String, String>> onlineUsers = onlineUserAppService.listOnlineUsers();
+        return Map.of(
+                "onlineCount", onlineUsers.size(),
+                "users", onlineUsers.stream().limit(10).toList(),
+                "timestamp", System.currentTimeMillis()
+        );
     }
 }

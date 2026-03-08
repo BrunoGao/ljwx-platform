@@ -33,6 +33,7 @@ public class OpenAppSecretService {
 
     private final OpenAppSecretMapper secretMapper;
     private final SnowflakeIdGenerator idGenerator;
+    private final SensitiveDataCryptoService cryptoService;
 
     private static final int MAX_ACTIVE_SECRETS = 3;
     private static final String STATUS_ACTIVE = "ACTIVE";
@@ -63,7 +64,7 @@ public class OpenAppSecretService {
         OpenAppSecret secret = new OpenAppSecret();
         secret.setId(idGenerator.nextId());
         secret.setAppId(dto.getAppId());
-        secret.setSecretKey(plainSecretKey); // TODO: Encrypt in production
+        secret.setSecretKey(cryptoService.encrypt(plainSecretKey));
         secret.setSecretVersion(newVersion);
         secret.setStatus(STATUS_ACTIVE);
 
@@ -74,9 +75,9 @@ public class OpenAppSecretService {
 
         secretMapper.insert(secret);
 
-        // Return VO with plain text key (only on creation)
         OpenAppSecretVO vo = new OpenAppSecretVO();
         BeanUtils.copyProperties(secret, vo);
+        vo.setSecretKey(plainSecretKey);
         return vo;
     }
 
@@ -136,12 +137,7 @@ public class OpenAppSecretService {
         return secrets.stream().map(secret -> {
             OpenAppSecretVO vo = new OpenAppSecretVO();
             BeanUtils.copyProperties(secret, vo);
-
-            // Mask secret key (show only first 8 chars)
-            if (secret.getSecretKey() != null && secret.getSecretKey().length() > 8) {
-                vo.setSecretKey(secret.getSecretKey().substring(0, 8) + "****");
-            }
-
+            vo.setSecretKey(maskSecretKey(secret.getSecretKey()));
             return vo;
         }).collect(Collectors.toList());
     }
@@ -161,5 +157,23 @@ public class OpenAppSecretService {
         } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException("Failed to generate secret key", e);
         }
+    }
+
+    private String maskSecretKey(String storedSecretKey) {
+        if (storedSecretKey == null || storedSecretKey.isBlank()) {
+            return "";
+        }
+
+        String plainSecretKey = storedSecretKey;
+        try {
+            plainSecretKey = cryptoService.decrypt(storedSecretKey);
+        } catch (BusinessException ignored) {
+            // Keep compatibility with historical plaintext rows.
+        }
+
+        if (plainSecretKey.length() <= 8) {
+            return "****";
+        }
+        return plainSecretKey.substring(0, 8) + "****";
     }
 }

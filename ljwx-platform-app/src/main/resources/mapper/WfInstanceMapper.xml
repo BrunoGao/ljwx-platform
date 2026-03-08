@@ -50,6 +50,7 @@
         WHERE deleted = FALSE
         <if test="definitionId != null">AND definition_id = #{definitionId}</if>
         <if test="businessKey != null">AND business_key = #{businessKey}</if>
+        <if test="businessType != null">AND business_type = #{businessType}</if>
         <if test="status != null">AND status = #{status}</if>
         ORDER BY created_time DESC
         LIMIT #{limit} OFFSET #{offset}
@@ -60,6 +61,7 @@
         WHERE deleted = FALSE
         <if test="definitionId != null">AND definition_id = #{definitionId}</if>
         <if test="businessKey != null">AND business_key = #{businessKey}</if>
+        <if test="businessType != null">AND business_type = #{businessType}</if>
         <if test="status != null">AND status = #{status}</if>
     </select>
 

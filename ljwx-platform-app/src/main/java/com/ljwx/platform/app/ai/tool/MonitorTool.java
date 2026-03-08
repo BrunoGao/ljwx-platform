@@ -1,7 +1,11 @@
 package com.ljwx.platform.app.ai.tool;
 
+import com.github.benmanes.caffeine.cache.stats.CacheStats;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
+import org.springframework.cache.caffeine.CaffeineCache;
 import org.springframework.stereotype.Component;
 
 import java.lang.management.ManagementFactory;
@@ -19,6 +23,8 @@ import java.util.Map;
 @Component
 @RequiredArgsConstructor
 public class MonitorTool {
+
+    private final CacheManager cacheManager;
 
     /**
      * 获取服务器状态
@@ -69,13 +75,30 @@ public class MonitorTool {
      */
     public Map<String, Object> getCacheStats() {
         Map<String, Object> stats = new HashMap<>();
-        // 简化实现：返回占位数据
-        // 实际应从 CacheManager 获取 Caffeine 缓存统计
-        stats.put("hitRate", 0.85);
-        stats.put("missRate", 0.15);
-        stats.put("totalRequests", 10000);
-        stats.put("cacheSize", 500);
+        long totalRequests = 0L;
+        long totalHits = 0L;
+        long totalMisses = 0L;
+        long cacheSize = 0L;
+
+        for (String cacheName : cacheManager.getCacheNames()) {
+            Cache cache = cacheManager.getCache(cacheName);
+            if (cache instanceof CaffeineCache caffeineCache) {
+                cacheSize += caffeineCache.getNativeCache().estimatedSize();
+                CacheStats cacheStats = caffeineCache.getNativeCache().stats();
+                totalRequests += cacheStats.requestCount();
+                totalHits += cacheStats.hitCount();
+                totalMisses += cacheStats.missCount();
+            }
+        }
+
+        double hitRate = totalRequests == 0 ? 0D : (double) totalHits / totalRequests;
+        double missRate = totalRequests == 0 ? 0D : (double) totalMisses / totalRequests;
+
+        stats.put("hitRate", hitRate);
+        stats.put("missRate", missRate);
+        stats.put("totalRequests", totalRequests);
+        stats.put("cacheSize", cacheSize);
+        stats.put("cacheCount", cacheManager.getCacheNames().size());
         return stats;
     }
 }
-

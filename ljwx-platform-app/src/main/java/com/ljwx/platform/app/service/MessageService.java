@@ -61,11 +61,17 @@ public class MessageService {
         record.setReceiverAddress(dto.getReceiverAddress());
         record.setSubject(dto.getSubject());
         record.setContent(dto.getContent());
-        record.setSendStatus("PENDING");
+
+        if ("INBOX".equals(dto.getMessageType())) {
+            record.setSendStatus("SUCCESS");
+            record.setSendTime(LocalDateTime.now());
+        } else {
+            record.setSendStatus("FAILURE");
+            record.setErrorMessage("当前环境未配置 " + dto.getMessageType() + " 发送通道");
+        }
 
         msgRecordMapper.insert(record);
 
-        // 如果是站内信，写入收件箱
         if ("INBOX".equals(dto.getMessageType())) {
             MsgUserInbox inbox = new MsgUserInbox();
             inbox.setId(idGenerator.nextId());
@@ -78,8 +84,8 @@ public class MessageService {
             msgUserInboxMapper.insert(inbox);
         }
 
-        // TODO: 异步处理邮件和短信发送
-        log.info("消息发送请求已创建，消息ID: {}, 类型: {}", record.getId(), dto.getMessageType());
+        log.info("消息记录已创建，消息ID: {}, 类型: {}, 状态: {}",
+                record.getId(), dto.getMessageType(), record.getSendStatus());
 
         return record.getId();
     }

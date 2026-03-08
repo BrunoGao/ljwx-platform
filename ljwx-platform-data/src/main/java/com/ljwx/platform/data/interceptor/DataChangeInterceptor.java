@@ -2,6 +2,7 @@ package com.ljwx.platform.data.interceptor;
 
 import com.ljwx.platform.core.context.CurrentTenantHolder;
 import com.ljwx.platform.core.context.CurrentUserHolder;
+import com.ljwx.platform.core.id.SnowflakeIdGenerator;
 import com.ljwx.platform.data.annotation.AuditChange;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -12,12 +13,11 @@ import org.apache.ibatis.plugin.Interceptor;
 import org.apache.ibatis.plugin.Intercepts;
 import org.apache.ibatis.plugin.Invocation;
 import org.apache.ibatis.plugin.Signature;
-import org.apache.ibatis.session.Configuration;
-import org.apache.ibatis.session.SqlSession;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
+import javax.sql.DataSource;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.sql.Connection;
@@ -48,6 +48,8 @@ public class DataChangeInterceptor implements Interceptor {
 
     private final ObjectProvider<CurrentTenantHolder> tenantHolderProvider;
     private final ObjectProvider<CurrentUserHolder> userHolderProvider;
+    private final ObjectProvider<DataSource> dataSourceProvider;
+    private final ObjectProvider<SnowflakeIdGenerator> idGeneratorProvider;
 
     @Override
     public Object intercept(Invocation invocation) throws Throwable {
@@ -95,13 +97,18 @@ public class DataChangeInterceptor implements Interceptor {
             );
         }
 
+        Long tenantId = resolveTenantId();
+        Long userId = resolveUserId();
+
         // 异步记录变更
         recordChangesAsync(
             annotation.tableName(),
             recordId,
             oldData,
             newData,
-            sqlType == SqlCommandType.DELETE ? "DELETE" : "UPDATE"
+            sqlType == SqlCommandType.DELETE ? "DELETE" : "UPDATE",
+            tenantId,
+            userId
         );
 
         return result;
@@ -165,7 +172,6 @@ public class DataChangeInterceptor implements Interceptor {
     ) {
         try {
             Executor executor = (Executor) invocation.getTarget();
-            Configuration config = ((MappedStatement) invocation.getArgs()[0]).getConfiguration();
 
             // 使用原生 JDBC 查询（避免触发其他拦截器）
             Connection conn = executor.getTransaction().getConnection();
@@ -201,11 +207,11 @@ public class DataChangeInterceptor implements Interceptor {
         Long recordId,
         Map<String, Object> oldData,
         Map<String, Object> newData,
-        String operateType
+        String operateType,
+        Long tenantId,
+        Long userId
     ) {
         try {
-            Long tenantId = resolveTenantId();
-            Long userId = resolveUserId();
             LocalDateTime now = LocalDateTime.now();
 
             List<Map<String, Object>> changes = new ArrayList<>();
@@ -217,7 +223,7 @@ public class DataChangeInterceptor implements Interceptor {
                     change.put("table_name", tableName);
                     change.put("record_id", recordId);
                     change.put("field_name", entry.getKey());
-                    change.put("old_value", String.valueOf(entry.getValue()));
+                    change.put("old_value", stringifyValue(entry.getValue()));
                     change.put("new_value", "");
                     change.put("operate_type", "DELETE");
                     change.put("tenant_id", tenantId);
@@ -237,8 +243,8 @@ public class DataChangeInterceptor implements Interceptor {
                         change.put("table_name", tableName);
                         change.put("record_id", recordId);
                         change.put("field_name", fieldName);
-                        change.put("old_value", String.valueOf(oldValue));
-                        change.put("new_value", String.valueOf(newValue));
+                        change.put("old_value", stringifyValue(oldValue));
+                        change.put("new_value", stringifyValue(newValue));
                         change.put("operate_type", "UPDATE");
                         change.put("tenant_id", tenantId);
                         change.put("created_by", userId);
@@ -249,12 +255,52 @@ public class DataChangeInterceptor implements Interceptor {
             }
 
             if (!changes.isEmpty()) {
-                // TODO: 实际写入数据库（需要注入 SysDataChangeLogMapper）
+                persistChanges(changes, now, userId);
                 log.info("Recorded {} changes for {}.{}", changes.size(), tableName, recordId);
             }
         } catch (Exception e) {
             log.error("Failed to record changes: {}", e.getMessage(), e);
         }
+    }
+
+    private void persistChanges(List<Map<String, Object>> changes, LocalDateTime now, Long userId) throws Exception {
+        DataSource dataSource = dataSourceProvider.getIfAvailable();
+        SnowflakeIdGenerator idGenerator = idGeneratorProvider.getIfAvailable();
+        if (dataSource == null || idGenerator == null) {
+            log.warn("Data change audit skipped because datasource or id generator is unavailable");
+            return;
+        }
+
+        String insertSql = "INSERT INTO sys_data_change_log (" +
+                "id, table_name, record_id, field_name, old_value, new_value, operate_type, " +
+                "tenant_id, created_by, created_time, updated_by, updated_time, deleted, version" +
+                ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
+        try (Connection connection = dataSource.getConnection();
+             var statement = connection.prepareStatement(insertSql)) {
+            for (Map<String, Object> change : changes) {
+                statement.setLong(1, idGenerator.nextId());
+                statement.setString(2, (String) change.get("table_name"));
+                statement.setLong(3, (Long) change.get("record_id"));
+                statement.setString(4, (String) change.get("field_name"));
+                statement.setString(5, (String) change.get("old_value"));
+                statement.setString(6, (String) change.get("new_value"));
+                statement.setString(7, (String) change.get("operate_type"));
+                statement.setLong(8, (Long) change.get("tenant_id"));
+                statement.setLong(9, (Long) change.get("created_by"));
+                statement.setObject(10, change.get("created_time"));
+                statement.setLong(11, userId);
+                statement.setObject(12, now);
+                statement.setBoolean(13, false);
+                statement.setInt(14, 1);
+                statement.addBatch();
+            }
+            statement.executeBatch();
+        }
+    }
+
+    private String stringifyValue(Object value) {
+        return value == null ? "" : String.valueOf(value);
     }
 
     private Long resolveTenantId() {

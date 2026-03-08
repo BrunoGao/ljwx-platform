@@ -47,8 +47,8 @@ async function fetchData() {
   loading.value = true
   try {
     const res = await getDefinitionList(queryParams.value)
-    tableData.value = res.data.rows
-    total.value = res.data.total
+    tableData.value = res.rows
+    total.value = res.total
   } finally {
     loading.value = false
   }

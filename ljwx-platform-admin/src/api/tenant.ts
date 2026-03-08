@@ -13,21 +13,21 @@ import type {
  * 获取租户列表（分页）
  */
 export function getTenantList(params?: TenantQueryDTO): Promise<PageResult<TenantVO>> {
-  return request.get<PageResult<TenantVO>>('/api/tenants', { params })
+  return request.get<PageResult<TenantVO>>('/api/v1/tenants', { params })
 }
 
 /**
  * 创建租户
  */
 export function createTenant(data: TenantCreateDTO): Promise<number> {
-  return request.post<number>('/api/tenants', data)
+  return request.post<number>('/api/v1/tenants', data)
 }
 
 /**
  * 更新租户
  */
 export function updateTenant(id: number, data: TenantUpdateDTO): Promise<void> {
-  return request.put<void>(`/api/tenants/${id}`, data)
+  return request.put<void>(`/api/v1/tenants/${id}`, data)
 }
 
 /**
@@ -57,4 +57,3 @@ export function cancelTenant(id: number, data: TenantCancelDTO): Promise<void> {
 export function initializeTenant(id: number): Promise<void> {
   return request.post<void>(`/api/v1/tenants/${id}/initialize`)
 }
-

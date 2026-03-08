@@ -7,7 +7,9 @@ import com.ljwx.platform.core.result.PageResult;
 import com.ljwx.platform.core.result.Result;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -25,7 +27,7 @@ import java.util.List;
  * </ul>
  */
 @RestController
-@RequestMapping("/api/logs")
+@RequestMapping({"/api/v1", "/api"})
 @RequiredArgsConstructor
 public class OperationLogController {
 
@@ -35,17 +37,36 @@ public class OperationLogController {
      * 查询操作日志列表（分页）。
      */
     @PreAuthorize("hasAuthority('log:read')")
-    @GetMapping("/operation")
+    @GetMapping("/logs/operation")
     public Result<PageResult<SysOperationLog>> listOperationLogs(OperationLogQueryDTO query) {
         return Result.ok(operationLogAppService.listOperationLogs(query));
+    }
+
+    @PreAuthorize("hasAuthority('log:read')")
+    @GetMapping("/logs/operation/{id}")
+    public Result<SysOperationLog> getOperationLog(@PathVariable Long id) {
+        return Result.ok(operationLogAppService.getOperationLogById(id));
     }
 
     /**
      * 导出操作日志（返回 JSON 列表，客户端可自行处理为 Excel）。
      */
     @PreAuthorize("hasAuthority('log:export')")
-    @PostMapping("/export")
+    @PostMapping("/logs/export")
     public Result<List<SysOperationLog>> exportLogs(OperationLogQueryDTO query) {
         return Result.ok(operationLogAppService.exportLogs(query));
+    }
+
+    @PreAuthorize("hasAuthority('log:write')")
+    @DeleteMapping("/logs/operation/{id}")
+    public Result<Void> deleteOperationLog(@PathVariable Long id) {
+        operationLogAppService.deleteOperationLog(id);
+        return Result.ok();
+    }
+
+    @PreAuthorize("hasAuthority('log:write')")
+    @DeleteMapping("/logs/operation/clean")
+    public Result<Integer> cleanOperationLogs() {
+        return Result.ok(operationLogAppService.cleanOperationLogs());
     }
 }

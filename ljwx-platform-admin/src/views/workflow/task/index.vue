@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { ElMessage } from 'element-plus'
 import { Check, Close, Search } from '@element-plus/icons-vue'
 import {
   getMyTasks,
@@ -36,8 +36,8 @@ async function fetchData() {
   loading.value = true
   try {
     const res = await getMyTasks(queryParams.value)
-    tableData.value = res.data.rows
-    total.value = res.data.total
+    tableData.value = res.rows
+    total.value = res.total
   } finally {
     loading.value = false
   }

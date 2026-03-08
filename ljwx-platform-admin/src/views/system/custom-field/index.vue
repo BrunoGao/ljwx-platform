@@ -14,7 +14,7 @@ import {
 
 const loading = ref(false)
 const tableData = ref<CustomFieldDefVO[]>([])
-const entityTypeFilter = ref<string>('')
+const entityTypeFilter = ref<string>('USER')
 
 const dialogVisible = ref(false)
 const dialogTitle = ref('')
@@ -49,8 +49,7 @@ const optionInput = ref('')
 async function fetchList() {
   loading.value = true
   try {
-    const res = await getCustomFieldList(entityTypeFilter.value || undefined)
-    tableData.value = res.data
+    tableData.value = await getCustomFieldList(entityTypeFilter.value)
   } finally {
     loading.value = false
   }
@@ -61,7 +60,7 @@ function handleQuery() {
 }
 
 function handleReset() {
-  entityTypeFilter.value = ''
+  entityTypeFilter.value = 'USER'
   fetchList()
 }
 
@@ -87,6 +86,7 @@ function handleEdit(row: CustomFieldDefVO) {
   isEdit.value = true
   currentId.value = row.id
   Object.assign(formData, {
+    entityType: row.entityType,
     fieldLabel: row.fieldLabel,
     required: row.required,
     sortOrder: row.sortOrder,
@@ -155,7 +155,7 @@ onMounted(() => {
     <el-card class="search-card">
       <el-form inline>
         <el-form-item label="实体类型">
-          <el-select v-model="entityTypeFilter" placeholder="请选择实体类型" clearable>
+          <el-select v-model="entityTypeFilter" placeholder="请选择实体类型">
             <el-option
               v-for="type in entityTypes"
               :key="type.value"

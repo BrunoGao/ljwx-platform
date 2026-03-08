@@ -1,5 +1,5 @@
 import request from '@/api/request'
-import type { Result, PageResult } from '@ljwx/shared'
+import type { PageResult } from '@ljwx/shared'
 
 export interface WfInstanceVO {
   id: number
@@ -29,14 +29,14 @@ export interface WfInstanceQueryDTO {
   pageSize?: number
 }
 
-export function getInstanceList(params?: WfInstanceQueryDTO): Promise<Result<PageResult<WfInstanceVO>>> {
+export function getInstanceList(params?: WfInstanceQueryDTO): Promise<PageResult<WfInstanceVO>> {
   return request.get('/api/v1/workflows/instances', { params })
 }
 
-export function getInstance(id: number): Promise<Result<WfInstanceVO>> {
+export function getInstance(id: number): Promise<WfInstanceVO> {
   return request.get(`/api/v1/workflows/instances/${id}`)
 }
 
-export function startInstance(data: WfInstanceDTO): Promise<Result<number>> {
+export function startInstance(data: WfInstanceDTO): Promise<number> {
   return request.post('/api/v1/workflows/instances', data)
 }

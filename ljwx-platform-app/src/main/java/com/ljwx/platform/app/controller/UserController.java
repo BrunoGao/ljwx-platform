@@ -35,7 +35,7 @@ import java.util.List;
  * 用户管理 Controller。
  */
 @RestController
-@RequestMapping("/api/users")
+@RequestMapping({"/api/v1/users", "/api/users"})
 @RequiredArgsConstructor
 public class UserController {
 

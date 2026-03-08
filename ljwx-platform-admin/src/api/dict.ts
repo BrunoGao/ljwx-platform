@@ -12,26 +12,26 @@ import type {
  * 获取字典类型列表（分页）
  */
 export function getDictList(params?: DictTypeQueryDTO): Promise<PageResult<SysDictTypeVO>> {
-  return request.get<PageResult<SysDictTypeVO>>('/api/dicts', { params })
+  return request.get<PageResult<SysDictTypeVO>>('/api/v1/dicts', { params })
 }
 
 /**
  * 创建字典类型
  */
 export function createDict(data: DictTypeCreateDTO): Promise<number> {
-  return request.post<number>('/api/dicts', data)
+  return request.post<number>('/api/v1/dicts', data)
 }
 
 /**
  * 更新字典类型
  */
 export function updateDict(id: number, data: DictTypeUpdateDTO): Promise<void> {
-  return request.put<void>(`/api/dicts/${id}`, data)
+  return request.put<void>(`/api/v1/dicts/${id}`, data)
 }
 
 /**
  * 按类型查询字典数据列表
  */
 export function getDictDataByType(type: string): Promise<SysDictDataVO[]> {
-  return request.get<SysDictDataVO[]>(`/api/dicts/type/${type}`)
+  return request.get<SysDictDataVO[]>(`/api/v1/dicts/type/${type}`)
 }

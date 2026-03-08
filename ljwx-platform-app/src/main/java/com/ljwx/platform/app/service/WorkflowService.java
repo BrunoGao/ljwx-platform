@@ -2,6 +2,7 @@ package com.ljwx.platform.app.service;
 
 import com.ljwx.platform.app.dto.WfDefinitionDTO;
 import com.ljwx.platform.app.dto.WfInstanceDTO;
+import com.ljwx.platform.app.dto.WfInstanceQueryDTO;
 import com.ljwx.platform.app.dto.WfTaskDTO;
 import com.ljwx.platform.app.infra.mapper.WfDefinitionMapper;
 import com.ljwx.platform.app.infra.mapper.WfHistoryMapper;
@@ -17,6 +18,7 @@ import com.ljwx.platform.core.domain.WfTask;
 import com.ljwx.platform.web.exception.BusinessException;
 import com.ljwx.platform.core.id.SnowflakeIdGenerator;
 import com.ljwx.platform.core.result.ErrorCode;
+import com.ljwx.platform.core.result.PageResult;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
@@ -119,6 +121,24 @@ public class WorkflowService {
         recordHistory(instance.getId(), null, "START", userId, "启动流程");
 
         return instance.getId();
+    }
+
+    /**
+     * 查询流程实例列表。
+     */
+    public PageResult<WfInstanceVO> listInstances(WfInstanceQueryDTO query) {
+        Map<String, Object> params = new HashMap<>();
+        params.put("businessKey", query.getBusinessKey());
+        params.put("businessType", query.getBusinessType());
+        params.put("status", query.getStatus());
+        params.put("limit", query.getPageSize());
+        params.put("offset", (query.getPageNum() - 1) * query.getPageSize());
+
+        List<WfInstanceVO> list = instanceMapper.selectList(params).stream()
+                .map(this::convertToInstanceVO)
+                .toList();
+        long total = instanceMapper.countList(params);
+        return new PageResult<>(list, total);
     }
 
     /**

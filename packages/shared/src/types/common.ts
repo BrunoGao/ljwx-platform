@@ -375,6 +375,14 @@ export interface ScreenOverviewVO {
   totalTenants: number
   /** 今日登录次数 */
   todayLoginCount: number
+  /** 租户用户分布 */
+  tenantUserDistribution: ScreenStatItem[]
+  /** 角色分布 */
+  roleDistribution: ScreenStatItem[]
+  /** 用户状态分布 */
+  userStatusDistribution: ScreenStatItem[]
+  /** 最近操作日志 */
+  recentOperations: ScreenRecentOperation[]
 }
 
 export interface ScreenRealtimeVO {
@@ -393,6 +401,17 @@ export interface ScreenRealtimeVO {
 export interface ScreenTrendItem {
   date: string
   value: number
+}
+
+export interface ScreenStatItem {
+  name: string
+  value: number
+}
+
+export interface ScreenRecentOperation {
+  username: string
+  action: string
+  time: string
 }
 
 export interface ScreenTrendVO {
@@ -449,4 +468,3 @@ export interface TaskLogStatsVO {
   /** 最小耗时（毫秒） */
   minDuration: number
 }
-

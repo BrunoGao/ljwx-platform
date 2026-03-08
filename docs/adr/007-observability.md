@@ -226,7 +226,7 @@ histogram_quantile(0.99, rate(http_request_duration_seconds_bucket[5m]))
 
 - [The Twelve-Factor App: Logs](https://12factor.net/logs)
 - [Grafana Loki Best Practices](https://grafana.com/docs/loki/latest/best-practices/)
-- [MDC in SLF4J](http://www.slf4j.org/manual.html#mdc)
+- [MDC in SLF4J](https://www.slf4j.org/manual.html#mdc)
 - Phase 29 Implementation: `spec/phase/phase-29.md`
 
 ## Related ADRs

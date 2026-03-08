@@ -64,8 +64,8 @@ async function fetchList() {
   loading.value = true
   try {
     const res = await getFormDefList(queryForm)
-    tableData.value = res.data.rows
-    total.value = res.data.total
+    tableData.value = res.rows
+    total.value = res.total
   } finally {
     loading.value = false
   }

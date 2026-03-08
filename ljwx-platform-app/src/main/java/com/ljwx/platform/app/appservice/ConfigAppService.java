@@ -6,7 +6,9 @@ import com.ljwx.platform.app.domain.dto.ConfigUpdateDTO;
 import com.ljwx.platform.app.domain.entity.SysConfig;
 import com.ljwx.platform.app.infra.mapper.SysConfigMapper;
 import com.ljwx.platform.core.id.SnowflakeIdGenerator;
+import com.ljwx.platform.core.result.ErrorCode;
 import com.ljwx.platform.core.result.PageResult;
+import com.ljwx.platform.web.exception.BusinessException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
@@ -37,6 +39,14 @@ public class ConfigAppService {
         List<SysConfig> records = configMapper.selectList(query);
         long total = configMapper.countList(query);
         return new PageResult<>(records, total);
+    }
+
+    public SysConfig getConfigById(Long id) {
+        SysConfig config = configMapper.selectById(id);
+        if (config == null) {
+            throw new BusinessException(ErrorCode.RESOURCE_NOT_FOUND, "配置不存在");
+        }
+        return config;
     }
 
     /**
@@ -74,9 +84,9 @@ public class ConfigAppService {
      * 更新系统配置，并清除对应配置缓存。
      */
     @Transactional
-    @CacheEvict(cacheNames = "sysConfig", key = "#dto.configKey")
+    @CacheEvict(cacheNames = "sysConfig", allEntries = true)
     public void updateConfig(ConfigUpdateDTO dto) {
-        SysConfig existing = configMapper.selectById(dto.getId());
+        SysConfig existing = getConfigById(dto.getId());
         existing.setConfigName(dto.getConfigName());
         existing.setConfigKey(dto.getConfigKey());
         existing.setConfigValue(dto.getConfigValue());
@@ -86,5 +96,17 @@ public class ConfigAppService {
         existing.setRemark(dto.getRemark());
         existing.setVersion(dto.getVersion());
         configMapper.updateById(existing);
+    }
+
+    @Transactional
+    @CacheEvict(cacheNames = "sysConfig", allEntries = true)
+    public void deleteConfig(Long id) {
+        getConfigById(id);
+        configMapper.deleteById(id);
+    }
+
+    @CacheEvict(cacheNames = "sysConfig", allEntries = true)
+    public void refreshConfigs() {
+        // Cache eviction is handled by the annotation.
     }
 }

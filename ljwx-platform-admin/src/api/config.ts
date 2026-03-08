@@ -11,26 +11,26 @@ import type {
  * 获取配置列表（分页）
  */
 export function getConfigList(params?: ConfigQueryDTO): Promise<PageResult<SysConfigVO>> {
-  return request.get<PageResult<SysConfigVO>>('/api/configs', { params })
+  return request.get<PageResult<SysConfigVO>>('/api/v1/configs', { params })
 }
 
 /**
  * 创建配置
  */
 export function createConfig(data: ConfigCreateDTO): Promise<number> {
-  return request.post<number>('/api/configs', data)
+  return request.post<number>('/api/v1/configs', data)
 }
 
 /**
  * 更新配置
  */
 export function updateConfig(id: number, data: ConfigUpdateDTO): Promise<void> {
-  return request.put<void>(`/api/configs/${id}`, data)
+  return request.put<void>(`/api/v1/configs/${id}`, data)
 }
 
 /**
  * 按 key 查询配置
  */
 export function getConfigByKey(key: string): Promise<SysConfigVO> {
-  return request.get<SysConfigVO>(`/api/configs/key/${key}`)
+  return request.get<SysConfigVO>(`/api/v1/configs/key/${key}`)
 }

@@ -9,6 +9,7 @@ import com.ljwx.platform.core.result.PageResult;
 import com.ljwx.platform.core.result.Result;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.quartz.SchedulerException;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -24,7 +25,7 @@ import org.springframework.web.bind.annotation.RestController;
  * 权限按 spec/03-api.md §Jobs 路由定义。
  */
 @RestController
-@RequestMapping("/api/jobs")
+@RequestMapping({"/api/v1/jobs", "/api/jobs"})
 @RequiredArgsConstructor
 public class JobController {
 
@@ -42,6 +43,12 @@ public class JobController {
         return Result.ok(jobAppService.createJob(dto));
     }
 
+    @PreAuthorize("hasAuthority('job:read')")
+    @GetMapping("/{id}")
+    public Result<SysJob> detail(@PathVariable Long id) {
+        return Result.ok(jobAppService.getJobById(id));
+    }
+
     @PreAuthorize("hasAuthority('job:write')")
     @PutMapping("/{id}")
     public Result<Void> update(@PathVariable Long id,
@@ -52,7 +59,7 @@ public class JobController {
     }
 
     @PreAuthorize("hasAuthority('job:execute')")
-    @PostMapping("/{id}/execute")
+    @PostMapping({"/{id}/execute", "/{id}/run"})
     public Result<Void> execute(@PathVariable Long id) throws SchedulerException {
         jobAppService.executeNow(id);
         return Result.ok();
@@ -69,6 +76,13 @@ public class JobController {
     @PostMapping("/{id}/resume")
     public Result<Void> resume(@PathVariable Long id) throws SchedulerException {
         jobAppService.resumeJob(id);
+        return Result.ok();
+    }
+
+    @PreAuthorize("hasAuthority('job:write')")
+    @DeleteMapping("/{id}")
+    public Result<Void> delete(@PathVariable Long id) throws SchedulerException {
+        jobAppService.deleteJob(id);
         return Result.ok();
     }
 }

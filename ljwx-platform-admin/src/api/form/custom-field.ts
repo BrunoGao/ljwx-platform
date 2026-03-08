@@ -1,5 +1,4 @@
 import request from '@/api/request'
-import type { Result } from '@ljwx/shared'
 
 export interface CustomFieldDefVO {
   id: number
@@ -30,18 +29,18 @@ export interface CustomFieldDefUpdateDTO {
   options?: unknown[]
 }
 
-export function getCustomFieldList(entityType?: string): Promise<Result<CustomFieldDefVO[]>> {
+export function getCustomFieldList(entityType: string): Promise<CustomFieldDefVO[]> {
   return request.get('/api/v1/custom-fields', { params: { entityType } })
 }
 
-export function createCustomField(data: CustomFieldDefCreateDTO): Promise<Result<number>> {
+export function createCustomField(data: CustomFieldDefCreateDTO): Promise<number> {
   return request.post('/api/v1/custom-fields', data)
 }
 
-export function updateCustomField(id: number, data: CustomFieldDefUpdateDTO): Promise<Result<void>> {
+export function updateCustomField(id: number, data: CustomFieldDefUpdateDTO): Promise<void> {
   return request.put(`/api/v1/custom-fields/${id}`, data)
 }
 
-export function deleteCustomField(id: number): Promise<Result<void>> {
+export function deleteCustomField(id: number): Promise<void> {
   return request.delete(`/api/v1/custom-fields/${id}`)
 }

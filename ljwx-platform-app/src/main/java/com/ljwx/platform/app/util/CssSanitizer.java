@@ -61,7 +61,7 @@ public class CssSanitizer {
         }
 
         // 2. 解析 CSS 并验证属性白名单
-        // 简化实现：使用正则提取 property: value; 对
+        // 使用属性级正则提取，保留白名单中的声明
         Pattern propertyPattern = Pattern.compile("([a-z-]+)\\s*:\\s*([^;]+);");
         Matcher matcher = propertyPattern.matcher(css);
 

@@ -263,7 +263,7 @@ onMounted(() => {
 
       <el-empty
         v-if="!loading && tableData.length === 0"
-        description="暂无密钥，请点击"生成密钥"按钮创建"
+        description="暂无密钥，请点击“生成密钥”按钮创建"
       />
     </el-card>
 

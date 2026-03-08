@@ -10,6 +10,7 @@ import com.ljwx.platform.core.result.Result;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -23,7 +24,7 @@ import org.springframework.web.bind.annotation.RestController;
  * 权限按 spec/03-api.md §Configs 路由定义。
  */
 @RestController
-@RequestMapping("/api/configs")
+@RequestMapping({"/api/v1/configs", "/api/configs"})
 @RequiredArgsConstructor
 public class ConfigController {
 
@@ -51,8 +52,28 @@ public class ConfigController {
     }
 
     @PreAuthorize("hasAuthority('config:read')")
+    @GetMapping("/{id}")
+    public Result<SysConfig> detail(@PathVariable Long id) {
+        return Result.ok(configAppService.getConfigById(id));
+    }
+
+    @PreAuthorize("hasAuthority('config:write')")
+    @DeleteMapping("/{id}")
+    public Result<Void> delete(@PathVariable Long id) {
+        configAppService.deleteConfig(id);
+        return Result.ok();
+    }
+
+    @PreAuthorize("hasAuthority('config:read')")
     @GetMapping("/key/{key}")
     public Result<SysConfig> getByKey(@PathVariable String key) {
         return Result.ok(configAppService.getConfigByKey(key));
+    }
+
+    @PreAuthorize("hasAuthority('config:write')")
+    @PostMapping("/refresh")
+    public Result<Void> refresh() {
+        configAppService.refreshConfigs();
+        return Result.ok();
     }
 }

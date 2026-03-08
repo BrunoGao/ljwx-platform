@@ -5,14 +5,14 @@ import type { PageResult, SysFileVO, FileQueryDTO } from '@ljwx/shared'
  * 获取文件列表（分页）
  */
 export function getFileList(params?: FileQueryDTO): Promise<PageResult<SysFileVO>> {
-  return request.get<PageResult<SysFileVO>>('/api/files', { params })
+  return request.get<PageResult<SysFileVO>>('/api/v1/files', { params })
 }
 
 /**
  * 上传文件
  */
 export function uploadFile(formData: FormData): Promise<SysFileVO> {
-  return request.post<SysFileVO>('/api/files/upload', formData, {
+  return request.post<SysFileVO>('/api/v1/files/upload', formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
   })
 }
@@ -21,7 +21,7 @@ export function uploadFile(formData: FormData): Promise<SysFileVO> {
  * 删除文件
  */
 export function deleteFile(id: number): Promise<void> {
-  return request.delete<void>(`/api/files/${id}`)
+  return request.delete<void>(`/api/v1/files/${id}`)
 }
 
 /**

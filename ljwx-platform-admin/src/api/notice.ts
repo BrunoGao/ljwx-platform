@@ -11,19 +11,19 @@ import type {
  * 获取通知列表（分页）
  */
 export function getNoticeList(params?: NoticeQueryDTO): Promise<PageResult<SysNoticeVO>> {
-  return request.get<PageResult<SysNoticeVO>>('/api/notices', { params })
+  return request.get<PageResult<SysNoticeVO>>('/api/v1/notices', { params })
 }
 
 /**
  * 创建通知
  */
 export function createNotice(data: NoticeCreateDTO): Promise<number> {
-  return request.post<number>('/api/notices', data)
+  return request.post<number>('/api/v1/notices', data)
 }
 
 /**
  * 更新通知
  */
 export function updateNotice(id: number, data: NoticeUpdateDTO): Promise<void> {
-  return request.put<void>(`/api/notices/${id}`, data)
+  return request.put<void>(`/api/v1/notices/${id}`, data)
 }
